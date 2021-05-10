@@ -1,0 +1,5 @@
+ray==1.2
+acoular==21.05
+tensorflow==2.4.1
+tqdm
+
