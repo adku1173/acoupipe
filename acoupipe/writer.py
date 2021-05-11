@@ -123,7 +123,7 @@ class WriteH5Dataset(BaseWriteDataset):
         subf = self.get_filtered_features() 
         for data in self.source.get_data():
             #create a group for each Sample
-            ac = f5h.create_new_group(str(data['idx']+'_sample'))
+            ac = f5h.create_new_group(str(data['idx'])+'_sample')
             #store dict in the group
             if not subf:
                 [f5h.create_array(ac,key, value) for key, value in data.items()]   
