@@ -1,4 +1,4 @@
 
 docs/.vscode/
-
 docs/
+*/__pycache__/*

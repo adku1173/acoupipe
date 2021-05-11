@@ -106,8 +106,6 @@ if "sourcemap" in args.features:
     bb = acoular.BeamformerBase(
                     freq_data=ps_csm, steer=st, cached=False, r_diag=True, precision='float32')
 
-
-
 # Computational Pipeline AcouPipe 
 
 # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
@@ -194,53 +192,27 @@ feature_dict = {
     "nsources": (lambda smix: len(smix.sources), sources_mix),
     "p2": (get_source_p2, sources_mix, ps_ref, fidx, ns, config.cache_dir),
 }
-# set up encoder functions to write to .tfrecord
-encoder_dict = {
-                "loc": float_list_feature,
-                "p2": float_list_feature,
-                "nsources": int64_feature,
-                "idx": int64_feature,
-                "seeds": int_list_feature,
-                }
 
 if "csm" in args.features:
     feature_dict.update(
         csm=(get_csm, ps_csm, fidx, config.cache_dir),
-    )
-    encoder_dict.update(
-        csm=float_list_feature
     )
 
 if "csmtriu" in args.features:
     feature_dict.update(
         csmtriu=(get_csmtriu, ps_csm, fidx, config.cache_dir),
     )
-    encoder_dict.update(
-        csmtriu=float_list_feature
-    )
 
 if "sourcemap" in args.features:
     feature_dict.update(
         sourcemap=(get_sourcemap, bb, freq, 0, config.cache_dir),
     )    
-    encoder_dict.update(
-        sourcemap=float_list_feature
-    )
 
 # add features to the pipeline
 pipeline.features = feature_dict
 
-# Create writer object to write data set to file
-if args.file_format == "tfrecord":
-    # create TFRecordWriter to save pipeline output to TFRecord File
-    writer = WriteTFRecord(source=pipeline,
-                            encoder_funcs=encoder_dict)
-elif args.file_format == "h5":
-    writer = WriteH5Dataset(source=pipeline,)
-
 # compute the data sets
 for dataset in args.datasets:
-    print(dataset)
     if dataset == "training":
         samples = args.tsamples
         path = args.tpath
@@ -248,8 +220,31 @@ for dataset in args.datasets:
         samples = args.vsamples
         path = args.vpath
     set_pipeline_seeds(pipeline, samples, dataset)
-    set_filename(writer,path,*[dataset,samples]+args.features+[f"{ns}src",f"he{args.he}",VERSION])
     
+    # Create chain of writer objects to write data sets to file
+    source=pipeline
+    for input_feature in args.features:
+        if args.file_format == "tfrecord":
+            # set up encoder functions to write to .tfrecord
+            encoder_dict = {
+                            "loc": float_list_feature,
+                            "p2": float_list_feature,
+                            "nsources": int64_feature,
+                            "idx": int64_feature,
+                            "seeds": int_list_feature,
+                            input_feature : float_list_feature
+                            }
+            # create TFRecordWriter to save pipeline output to TFRecord File
+            writer = WriteTFRecord(source=source,
+                                    encoder_funcs=encoder_dict)
+        elif args.file_format == "h5":
+            features=["loc","p2","nsources","idx","seeds"]
+            features.append(input_feature)
+            writer = WriteH5Dataset(source=source,
+                                    features=features)    
+        set_filename(writer,path,*[dataset,samples]+[input_feature]+[f"{ns}src",f"he{args.he}",VERSION])
+        source=writer
+
     # for debugging and timing statistics
     if args.log:
         pipeline_log = logging.FileHandler(".".join(writer.name.split('.')[:-1]) + ".log",mode="w") # log everything to file
