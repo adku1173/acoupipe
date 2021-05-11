@@ -199,7 +199,6 @@ def get_source_p2(source_mixer, power_spectra, fidx=None, nsources=16, cache_dir
         The sources Pa^2 values at the reference microphone with shape (nsources,) or (nsources,B/2+1). 
         B: Blocksize of the FFT.
     """
-    config.h5library = 'pytables'
     p2 = get_ref_mic_pow(source_mixer, power_spectra, fidx)
     if cache_dir:
         config.cache_dir = cache_dir

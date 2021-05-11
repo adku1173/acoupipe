@@ -14,6 +14,8 @@ from acoupipe import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
 from features import get_source_loc, get_source_p2, get_csm, get_csmtriu, get_sourcemap
 from helper import set_pipeline_seeds, set_filename
 
+config.h5library = 'h5py'
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--datasets', nargs="+", default=["training"], choices=["training", "validation"],
                     help="Whether to compute both data sets ('all') or only the 'training' / 'validation' data set. Default is 'all'")
@@ -66,7 +68,6 @@ pos_rvar = norm(loc=0,scale=0.1688) # source positions
 nsrc_rvar = poisson(mu=3,loc=1) # number of sources
 
 # Acoular Config
-config.h5library = 'pytables' # set acoular cache file backend to pytables
 config.cache_dir = path.join(args.cache_dir,'cache') # set up cache file dir
 print("cache file directory at: ",config.cache_dir)
 
@@ -99,12 +100,14 @@ ps_ref.time_data = MaskedTimeInOut(source=sources_mix,invalid_channels=[_ for _ 
 
 # Set up Beamformer object to calculate sourcemap feature
 if "sourcemap" in args.features:
+    bb_args = {'r_diag':True,}
+    sv_args = {'steer_type':'true level', 'ref':mg_fixed.mpos[:,REF_MIC]}
     rg = acoular.RectGrid(
                     x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z=.5,increment=0.02)           
     st = acoular.SteeringVector(
-                    grid=rg, mics=mg_fixed, steer_type='true level', ref=mg_fixed.mpos[:,REF_MIC])
+                    grid=rg, mics=mg_fixed, **sv_args)
     bb = acoular.BeamformerBase(
-                    freq_data=ps_csm, steer=st, cached=False, r_diag=True, precision='float32')
+                    freq_data=ps_csm, steer=st, cached=False, precision='float32',**bb_args)
 
 # Computational Pipeline AcouPipe 
 
@@ -208,6 +211,18 @@ if "sourcemap" in args.features:
         sourcemap=(get_sourcemap, bb, freq, 0, config.cache_dir),
     )    
 
+metadata = {
+    'VERSION' : VERSION,
+    'Helmholtz Number' : args.he,
+    'frequency': freq,
+    'frequency index' : fidx,
+    'mic_geometry' : mg_fixed.mpos_tot.copy(),
+    'reference_mic_index' : REF_MIC,
+    'c' : C,
+    'sample_freq': SFREQ,
+}
+metadata.update(ps_args) # add power spectra arguments to metadata
+
 # add features to the pipeline
 pipeline.features = feature_dict
 
@@ -224,6 +239,10 @@ for dataset in args.datasets:
     # Create chain of writer objects to write data sets to file
     source=pipeline
     for input_feature in args.features:
+        if input_feature == 'sourcemap':
+            metadata.update(bb_args)
+            metadata.update(sv_args)
+
         if args.file_format == "tfrecord":
             # set up encoder functions to write to .tfrecord
             encoder_dict = {
@@ -241,7 +260,8 @@ for dataset in args.datasets:
             features=["loc","p2","nsources","idx","seeds"]
             features.append(input_feature)
             writer = WriteH5Dataset(source=source,
-                                    features=features)    
+                                    features=features,
+                                    metadata=metadata)    
         set_filename(writer,path,*[dataset,samples]+[input_feature]+[f"{ns}src",f"he{args.he}",VERSION])
         source=writer
 
