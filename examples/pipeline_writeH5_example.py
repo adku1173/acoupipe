@@ -69,8 +69,8 @@ metadata = {'sample_freq': 51200,
 #create TFRecordWriter to save pipeline output to TFRecord File
 writer_sourcemap = WriteH5Dataset(source=pipeline, 
                         name="sourcemap_"+DATASET_NAME,
-                        features=['sourceMap'])
-                        #metadata=metadata)
+                        features=['sourceMap'],
+                        metadata=metadata)
 
 writer_rms = WriteH5Dataset(source=writer_sourcemap,
                         name="rms_"+DATASET_NAME,
@@ -99,7 +99,7 @@ print(loader_sourcemap.dataset)
 #%% Alternatively one can write the data to a TFRecord file
 
 try:
-    from sampling import WriteTFRecord, float_list_feature, float_feature
+    from acoupipe import WriteTFRecord, float_list_feature, float_feature
 except:
     sys.exit()
 
