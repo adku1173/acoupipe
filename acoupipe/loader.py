@@ -122,7 +122,7 @@ class LoadH5Dataset(BaseLoadDataset):
         """ loads metadata from .h5 file. Only for internal use. """
         self.metadata = {}
         for key in self.h5f.keys():
-            if key != '/metadata':
+            if key == 'metadata':
                 for feature in self.h5f['/metadata'].keys():
                     self.metadata[feature] = self.h5f['/metadata'][feature][()]
         
