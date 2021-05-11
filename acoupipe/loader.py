@@ -116,7 +116,11 @@ class LoadH5Dataset(BaseLoadDataset):
                 for feature in self.h5f[key].keys():
                     self.dataset[key][feature] = self.h5f[key][feature][()]
         
-        self.numsamples = len(self.h5f.keys())
+        if 'metadata' in self.h5f.keys():
+            self.numsamples = len(self.h5f.keys())-1
+        else:
+            self.numsamples = len(self.h5f.keys())
+            
         
     def load_metadata( self ):
         """ loads metadata from .h5 file. Only for internal use. """
