@@ -156,16 +156,18 @@ if args.nsources: src_sampling.numsamples = args.nsources
 rms_sampling = ContainerSampler(
                     random_func=sample_rms)
 
-nsrc_sampling =  NumericAttributeSampler(
-                    random_var=nsrc_rvar, 
-                    target=[src_sampling], 
-                    attribute='numsamples',
-                    )
-
 if not args.nsources: # if no number of sources is specified, the number of sources will be samples randomly
+    nsrc_sampling =  NumericAttributeSampler(
+                        random_var=nsrc_rvar, 
+                        target=[src_sampling], 
+                        attribute='numsamples',
+                        )
+
     sampler_list = [mic_sampling, nsrc_sampling, src_sampling, rms_sampling, pos_sampling]
+    ns = args.nsources # max. number of sources
 else:
     sampler_list = [mic_sampling, src_sampling, rms_sampling, pos_sampling]
+    ns = 16
  
 if args.tasks > 1:
     pipeline = DistributedPipeline(
@@ -176,14 +178,6 @@ else:
     pipeline = BasePipeline(
                     sampler=sampler_list,
                     )
-
-
-# Set up features to be stored in the data set
-# desired (max.) number of sources
-if args.nsources: 
-    ns = args.nsources
-else:
-    ns = 16 
 
 # desired frequency/helmholtz number
 fidx = args.freq_index
