@@ -20,8 +20,12 @@ parser.add_argument('--datasets', nargs="+", default=["training"], choices=["tra
                     help="Whether to compute both data sets ('all') or only the 'training' / 'validation' data set. Default is 'all'")
 parser.add_argument('--tsamples', type=int, default=500000,
                     help="Total number of  training samples to simulate")
+parser.add_argument('--tstart', type=int, default=1,
+                    help="Start simulation at a specific sample of the data set")                    
 parser.add_argument('--vsamples', type=int, default=10000,
                     help="Total number of  validation samples to simulate")
+parser.add_argument('--vstart', type=int, default=1,
+                    help="Start simulation at a specific sample of the data set")                          
 parser.add_argument('--tpath', type=str, default=".",
                     help="path of simulated training data. Default is current working directory")
 parser.add_argument('--vpath', type=str, default=".",
@@ -42,6 +46,8 @@ parser.add_argument('--head', type=str, default=None,
                     help="IP address of the head node in the ray cluster. Only necessary when running in distributed mode.") 
 parser.add_argument('--cache_csm', action="store_true",
                     help="Whether to cache the results of the CSM calculation") 
+parser.add_argument('--cache_bf', action="store_true",
+                    help="Whether to cache the results of the beamformer calculation. Only relevant if 'sourcemap' is included in --features list.")                     
 parser.add_argument('--log', action="store_true",
                     help="Whether to log timing statistics to file. Only for internal use.")                          
 args = parser.parse_args()
@@ -109,7 +115,7 @@ if "sourcemap" in args.features:
     st = acoular.SteeringVector(
                     grid=rg, mics=mg_fixed, **sv_args)
     bb = acoular.BeamformerBase(
-                    freq_data=ps_csm, steer=st, cached=False, precision='float32',**bb_args)
+                    freq_data=ps_csm, steer=st, cached=args.cache_bf, precision='float32',**bb_args)
 
 # Computational Pipeline AcouPipe 
 
@@ -231,12 +237,14 @@ pipeline.features = feature_dict
 # compute the data sets
 for dataset in args.datasets:
     if dataset == "training":
+        start_sample = args.tstart
         samples = args.tsamples
         path = args.tpath
     elif dataset == "validation":
+        start_sample = args.vstart
         samples = args.vsamples
         path = args.vpath
-    set_pipeline_seeds(pipeline, samples, dataset)
+    set_pipeline_seeds(pipeline, start_sample, samples, dataset)
     
     # Create chain of writer objects to write data sets to file
     source=pipeline
@@ -264,7 +272,7 @@ for dataset in args.datasets:
             writer = WriteH5Dataset(source=source,
                                     features=features,
                                     metadata=metadata)    
-        set_filename(writer,path,*[dataset,samples]+[input_feature]+[f"{ns}src",f"he{args.he}",VERSION])
+        set_filename(writer,path,*[dataset,f"{start_sample}-{start_sample+samples-1}"]+[input_feature]+[f"{ns}src",f"he{args.he}",VERSION])
         source=writer
 
     # for debugging and timing statistics
