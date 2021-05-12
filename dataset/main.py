@@ -13,8 +13,7 @@ from acoupipe import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
             int64_feature
 from features import get_source_loc, get_source_p2, get_csm, get_csmtriu, get_sourcemap
 from helper import set_pipeline_seeds, set_filename
-
-config.h5library = 'h5py'
+import numba
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--datasets', nargs="+", default=["training"], choices=["training", "validation"],
@@ -68,12 +67,15 @@ pos_rvar = norm(loc=0,scale=0.1688) # source positions
 nsrc_rvar = poisson(mu=3,loc=1) # number of sources
 
 # Acoular Config
+num_threads = numba.get_num_threads()
+config.h5library = 'h5py'
 config.cache_dir = path.join(args.cache_dir,'cache') # set up cache file dir
 print("cache file directory at: ",config.cache_dir)
 
 # Ray Config
 if args.tasks > 1:
     ray.init(address=args.head)
+    num_threads=1
 
 # Computational Pipeline Acoular
 # Microphone Geometry
