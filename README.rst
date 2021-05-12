@@ -12,7 +12,7 @@ AcouPipe Data Set- A Large-Scale Microphone Array Data Set for Machine Learning
 Microphone Array Data Set
 ==========================
 
-
+.. image:: src/msm_layout.png
 
 
 
