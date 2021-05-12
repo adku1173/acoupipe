@@ -1,7 +1,8 @@
 from acoular import config
 from numpy import zeros, array, float32, concatenate, real, imag, triu_indices
+import numba
 
-def get_eigmap(beamformer, n=16, f=None, num=0, cache_dir=None):
+def get_eigmap(beamformer, n=16, f=None, num=0, cache_dir=None, num_threads=1):
     """Calculates the sourcemap with a specified beamformer instance
     of class (or derived class) of type acoular.BeamformerBase.
 
@@ -27,6 +28,8 @@ def get_eigmap(beamformer, n=16, f=None, num=0, cache_dir=None):
     cache_dir : str, optional
         directory to store the cache files (only necessary if PowerSpectra.cached=True), 
         by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
 
     Returns
     -------
@@ -34,6 +37,7 @@ def get_eigmap(beamformer, n=16, f=None, num=0, cache_dir=None):
         sourcemap feature of either shape (n,nxsteps,nysteps) or (n,B/2+1,n,nxsteps,nysteps). 
         B: Blocksize of the FFT.
     """
+    numba.set_num_threads(num_threads)
     if cache_dir:
         config.cache_dir = cache_dir
     if not f:
@@ -51,7 +55,7 @@ def get_eigmap(beamformer, n=16, f=None, num=0, cache_dir=None):
 
 
 
-def get_sourcemap(beamformer, f=None, num=0, cache_dir=None):
+def get_sourcemap(beamformer, f=None, num=0, cache_dir=None, num_threads=1):
     """Calculates the sourcemap with a specified beamformer instance
     of class (or derived class) of type acoular.BeamformerBase.
 
@@ -75,6 +79,8 @@ def get_sourcemap(beamformer, f=None, num=0, cache_dir=None):
     cache_dir : str, optional
         directory to store the cache files (only necessary if PowerSpectra.cached=True), 
         by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
 
     Returns
     -------
@@ -82,6 +88,7 @@ def get_sourcemap(beamformer, f=None, num=0, cache_dir=None):
         sourcemap feature of either shape (nxsteps,nysteps) or (B/2+1,nxsteps,nysteps). 
         B: Blocksize of the FFT.
     """
+    numba.set_num_threads(num_threads)
     if cache_dir:
         config.cache_dir = cache_dir
     if not f:
@@ -91,7 +98,7 @@ def get_sourcemap(beamformer, f=None, num=0, cache_dir=None):
     
 
 
-def get_csm(power_spectra, fidx=None, cache_dir=None):
+def get_csm(power_spectra, fidx=None, cache_dir=None, num_threads=1):
     """Calculates the cross-spectral matrix (CSM). 
 
     Parameters
@@ -104,6 +111,8 @@ def get_csm(power_spectra, fidx=None, cache_dir=None):
     cache_dir : str, optional
         directory to store the cache files (only necessary if PowerSpectra.cached=True), 
         by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
 
     Returns
     -------
@@ -113,6 +122,7 @@ def get_csm(power_spectra, fidx=None, cache_dir=None):
         be stored at the first entry of the first dimension. 
         Imaginary values will be stored at the second entry of the first dimension.
     """
+    numba.set_num_threads(num_threads)
     if cache_dir:
         config.cache_dir = cache_dir
     if fidx:
@@ -122,7 +132,7 @@ def get_csm(power_spectra, fidx=None, cache_dir=None):
 
 
 
-def get_csmtriu(power_spectra, fidx=None, cache_dir=None): 
+def get_csmtriu(power_spectra, fidx=None, cache_dir=None, num_threads=1): 
     """Calculates the cross-spectral matrix (CSM) and returns it with the same representation
     as in:
 
@@ -140,6 +150,8 @@ def get_csmtriu(power_spectra, fidx=None, cache_dir=None):
     cache_dir : str, optional
         directory to store the cache files (only necessary if PowerSpectra.cached=True), 
         by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
 
     Returns
     -------
@@ -149,6 +161,7 @@ def get_csmtriu(power_spectra, fidx=None, cache_dir=None):
         be stored at the upper triangular matrix. 
         Imaginary values will be stored at the lower triangular matrix.
     """
+    numba.set_num_threads(num_threads)
     if cache_dir:
         config.cache_dir = cache_dir
     num_mics = power_spectra.numchannels
@@ -174,7 +187,7 @@ def get_csmtriu(power_spectra, fidx=None, cache_dir=None):
 
 
 
-def get_source_p2(source_mixer, power_spectra, fidx=None, nsources=16, cache_dir=None):
+def get_source_p2(source_mixer, power_spectra, fidx=None, nsources=16, cache_dir=None, num_threads=1):
     """Returns the [Pa^2] values at the reference microphone emitted by the sources 
     contained in the `sources` list of the acoular.SourceMixer object.
 
@@ -192,6 +205,8 @@ def get_source_p2(source_mixer, power_spectra, fidx=None, nsources=16, cache_dir
         entries will be padded with zeros.
     cache_dir : str, optional
         directory to store the cache files (only necessary if PowerSpectra.cached=True), by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
 
     Returns
     -------
@@ -199,7 +214,7 @@ def get_source_p2(source_mixer, power_spectra, fidx=None, nsources=16, cache_dir
         The sources Pa^2 values at the reference microphone with shape (nsources,) or (nsources,B/2+1). 
         B: Blocksize of the FFT.
     """
-    config.h5library = 'pytables'
+    numba.set_num_threads(num_threads)
     p2 = get_ref_mic_pow(source_mixer, power_spectra, fidx)
     if cache_dir:
         config.cache_dir = cache_dir

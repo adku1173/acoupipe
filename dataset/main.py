@@ -1,3 +1,4 @@
+from acoular.environments import Environment
 import ray
 import argparse
 import logging
@@ -6,21 +7,26 @@ import numpy as np
 from os import path
 from scipy.stats import poisson, norm 
 from acoular import config, MicGeom, WNoiseGenerator, PointSource, SourceMixer,\
-    PowerSpectra, MaskedTimeInOut
+    PowerSpectra, MaskedTimeInOut, Environment
 from acoupipe import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
     NumericAttributeSampler, ContainerSampler, DistributedPipeline, BasePipeline,\
         WriteTFRecord, WriteH5Dataset, float_list_feature, int_list_feature,\
             int64_feature
 from features import get_source_loc, get_source_p2, get_csm, get_csmtriu, get_sourcemap
 from helper import set_pipeline_seeds, set_filename
+import numba
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--datasets', nargs="+", default=["training"], choices=["training", "validation"],
                     help="Whether to compute both data sets ('all') or only the 'training' / 'validation' data set. Default is 'all'")
 parser.add_argument('--tsamples', type=int, default=500000,
                     help="Total number of  training samples to simulate")
+parser.add_argument('--tstart', type=int, default=1,
+                    help="Start simulation at a specific sample of the data set")                    
 parser.add_argument('--vsamples', type=int, default=10000,
                     help="Total number of  validation samples to simulate")
+parser.add_argument('--vstart', type=int, default=1,
+                    help="Start simulation at a specific sample of the data set")                          
 parser.add_argument('--tpath', type=str, default=".",
                     help="path of simulated training data. Default is current working directory")
 parser.add_argument('--vpath', type=str, default=".",
@@ -29,8 +35,8 @@ parser.add_argument('--file_format', type=str, default="tfrecord", choices=["tfr
                     help="Desired file format to store the data sets.")
 parser.add_argument('--cache_dir', type=str, default=".",
                     help="path of cached data. Default is current working directory")
-parser.add_argument('--he', type=float, default=None,
-                    help="Returns only the features and targets for the specified helmholtz number, default is -1 (all frequencies will be considered)")
+parser.add_argument('--freq_index', type=int, default=None,
+                    help="Returns only the features and targets for the specified frequency index, default is None (all frequencies will be calculated and included in the data set)")
 parser.add_argument('--nsources', type=int, default=None,
                     help="Calculates the data set with a fixed number of sources. Default is 'None', meaning that the number of sources present will be sampled randomly.")
 parser.add_argument('--features', nargs="+", default=["csm"], choices=["sourcemap", "csmtriu", "csm"],
@@ -41,6 +47,8 @@ parser.add_argument('--head', type=str, default=None,
                     help="IP address of the head node in the ray cluster. Only necessary when running in distributed mode.") 
 parser.add_argument('--cache_csm', action="store_true",
                     help="Whether to cache the results of the CSM calculation") 
+parser.add_argument('--cache_bf', action="store_true",
+                    help="Whether to cache the results of the beamformer calculation. Only relevant if 'sourcemap' is included in --features list.")                     
 parser.add_argument('--log', action="store_true",
                     help="Whether to log timing statistics to file. Only for internal use.")                          
 args = parser.parse_args()
@@ -55,7 +63,7 @@ VERSION="ds1-v001" # data set 1 , version 1.0
 C = 343. # speed of sound
 HE = 40 # Helmholtz number (defines the sampling frequency) 
 SFREQ = HE*C # /ap with ap=1.0
-BLOCKSIZE = 128 # block size used for FFT
+BLOCKSIZE = 128 # block size used for FFT 
 SIGLENGTH=5 # length of the simulated signal
 MFILE = "tub_vogel64_ap1.xml" # Microphone Geometry
 REF_MIC = 63 # index of the reference microphone 
@@ -66,25 +74,29 @@ pos_rvar = norm(loc=0,scale=0.1688) # source positions
 nsrc_rvar = poisson(mu=3,loc=1) # number of sources
 
 # Acoular Config
-config.h5library = 'pytables' # set acoular cache file backend to pytables
+num_threads = numba.get_num_threads()
+config.h5library = 'h5py'
 config.cache_dir = path.join(args.cache_dir,'cache') # set up cache file dir
 print("cache file directory at: ",config.cache_dir)
 
 # Ray Config
 if args.tasks > 1:
     ray.init(address=args.head)
+    num_threads=1
 
 # Computational Pipeline Acoular
 # Microphone Geometry
 mg_manipulated = MicGeom(from_file=MFILE) 
 mg_fixed = MicGeom(from_file=MFILE)
+# Environment
+env = Environment(c=C)
 # Signals
 white_noise_signals = [
     WNoiseGenerator(sample_freq=SFREQ,seed=i+1,numsamples=SIGLENGTH*SFREQ) for i in range(16)
     ] 
 # Monopole sources emitting the white noise signals
 point_sources = [
-    PointSource(signal=signal,mics=mg_manipulated) for signal in white_noise_signals
+    PointSource(signal=signal,mics=mg_manipulated,env=env) for signal in white_noise_signals
     ]
 # Source Mixer mixing the signals of all sources (number will be sampled)
 sources_mix = SourceMixer(sources=point_sources)
@@ -99,12 +111,14 @@ ps_ref.time_data = MaskedTimeInOut(source=sources_mix,invalid_channels=[_ for _ 
 
 # Set up Beamformer object to calculate sourcemap feature
 if "sourcemap" in args.features:
+    bb_args = {'r_diag':True,}
+    sv_args = {'steer_type':'true level', 'ref':mg_fixed.mpos[:,REF_MIC]}
     rg = acoular.RectGrid(
                     x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z=.5,increment=0.02)           
     st = acoular.SteeringVector(
-                    grid=rg, mics=mg_fixed, steer_type='true level', ref=mg_fixed.mpos[:,REF_MIC])
+                    grid=rg, mics=mg_fixed, **sv_args)
     bb = acoular.BeamformerBase(
-                    freq_data=ps_csm, steer=st, cached=False, r_diag=True, precision='float32')
+                    freq_data=ps_csm, steer=st, cached=args.cache_bf, precision='float32',**bb_args)
 
 # Computational Pipeline AcouPipe 
 
@@ -142,16 +156,18 @@ if args.nsources: src_sampling.numsamples = args.nsources
 rms_sampling = ContainerSampler(
                     random_func=sample_rms)
 
-nsrc_sampling =  NumericAttributeSampler(
-                    random_var=nsrc_rvar, 
-                    target=[src_sampling], 
-                    attribute='numsamples',
-                    )
-
 if not args.nsources: # if no number of sources is specified, the number of sources will be samples randomly
+    nsrc_sampling =  NumericAttributeSampler(
+                        random_var=nsrc_rvar, 
+                        target=[src_sampling], 
+                        attribute='numsamples',
+                        )
+
     sampler_list = [mic_sampling, nsrc_sampling, src_sampling, rms_sampling, pos_sampling]
+    ns = args.nsources # max. number of sources
 else:
     sampler_list = [mic_sampling, src_sampling, rms_sampling, pos_sampling]
+    ns = 16
  
 if args.tasks > 1:
     pipeline = DistributedPipeline(
@@ -163,28 +179,20 @@ else:
                     sampler=sampler_list,
                     )
 
-
-# Set up features to be stored in the data set
-# desired (max.) number of sources
-if args.nsources: 
-    ns = args.nsources
+# desired frequency/helmholtz number
+fidx = args.freq_index
+if fidx:
+    freq = ps_csm.fftfreq()[fidx]
+    he = freq/C
+    ps_csm.ind_low = fidx
+    ps_csm.ind_high = fidx+1
+    freq_str=f"he{he}-{freq}Hz"
 else:
-    ns = 16 
-# determine desired frequency / frequency index (fidx) 
-if args.he:
-    freq = args.he*C # with apertur = 1.0
-    # if data shall be calculated only for a certain frequency
-    freq_data = list(ps_csm.fftfreq())
-    if not freq in freq_data:
-        fidx = ps_csm.fftfreq().searchsorted(freq)
-        freq = ps_csm.fftfreq()[fidx]
-    else:
-        fidx = freq_data.index(freq)
-        ps_csm.ind_low = fidx
-        ps_csm.ind_high = fidx+1
-else:
-    fidx = None
     freq = None
+    he = None
+    ps_csm.ind_low = 1
+    ps_csm.ind_high = -1
+    freq_str=f"fullfreq"
 
 # set up feature dict
 feature_dict = {
@@ -208,22 +216,42 @@ if "sourcemap" in args.features:
         sourcemap=(get_sourcemap, bb, freq, 0, config.cache_dir),
     )    
 
+metadata = {
+    'VERSION' : VERSION,
+    'Helmholtz number' : he,
+    'fft_frequencies': ps_csm.fftfreq(),
+    'frequency': freq,
+    'frequency index' : fidx,
+    'mic_geometry' : mg_fixed.mpos_tot.copy(),
+    'reference_mic_index' : REF_MIC,
+    'c' : C,
+    'sample_freq': SFREQ,
+}
+metadata.update(ps_args) # add power spectra arguments to metadata
+
 # add features to the pipeline
 pipeline.features = feature_dict
 
 # compute the data sets
 for dataset in args.datasets:
     if dataset == "training":
+        start_sample = args.tstart
         samples = args.tsamples
         path = args.tpath
     elif dataset == "validation":
+        start_sample = args.vstart
         samples = args.vsamples
         path = args.vpath
-    set_pipeline_seeds(pipeline, samples, dataset)
+    set_pipeline_seeds(pipeline, start_sample, samples, dataset)
     
     # Create chain of writer objects to write data sets to file
+    # Individual files will be written for all features 
     source=pipeline
     for input_feature in args.features:
+        if input_feature == 'sourcemap':
+            metadata.update(bb_args)
+            metadata.update(sv_args)
+
         if args.file_format == "tfrecord":
             # set up encoder functions to write to .tfrecord
             encoder_dict = {
@@ -241,8 +269,9 @@ for dataset in args.datasets:
             features=["loc","p2","nsources","idx","seeds"]
             features.append(input_feature)
             writer = WriteH5Dataset(source=source,
-                                    features=features)    
-        set_filename(writer,path,*[dataset,samples]+[input_feature]+[f"{ns}src",f"he{args.he}",VERSION])
+                                    features=features,
+                                    metadata=metadata)    
+        set_filename(writer,path,*[dataset,f"{start_sample}-{start_sample+samples-1}"]+[input_feature]+[f"{ns}src",freq_str,VERSION])
         source=writer
 
     # for debugging and timing statistics
