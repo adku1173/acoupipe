@@ -1,0 +1,151 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>Welcome to AcouPipe documentation! &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/agogo.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Reference Manual" href="api_ref/index_apiref.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="#">AcouPipe 01.06.2021 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="api_ref/index_apiref.html" title="Reference Manual"
+             accesskey="N">next</a> |
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="welcome-to-acoupipe-documentation">
+<h1>Welcome to AcouPipe documentation!<a class="headerlink" href="#welcome-to-acoupipe-documentation" title="Permalink to this headline">¶</a></h1>
+<p>AcouPipe is a Python package that is intended to simplify the creation of microphone array data for machine learning.
+The aim of the library is to generate large data sets according to specific distributions, properties and parameters.
+For the creation of acoustic data, the simulation capabilities of the <a class="reference external" href="http://www.acoular.org/">Acoular</a> Python library are required.
+To enable fast calculation, computations of data (or features) can be distributed to multiple CPUs and Nodes. Therefore AcouPipe uses the <a class="reference external" href="https://docs.ray.io/en/master//">Ray</a> core package under the hood.</p>
+<section id="module-overview">
+<h2>Module Overview<a class="headerlink" href="#module-overview" title="Permalink to this headline">¶</a></h2>
+<p>The AcouPipe module consists of several files containing different tools that are explained in the following.</p>
+<figure class="align-center">
+<a class="reference internal image-reference" href="_images/acoupipe.png"><img alt="_images/acoupipe.png" src="_images/acoupipe.png" style="width: 608.0px; height: 732.5px;" /></a>
+</figure>
+<section id="sampler-py">
+<h3>sampler.py<a class="headerlink" href="#sampler-py" title="Permalink to this headline">¶</a></h3>
+<p>All sampler classes are random processes that can be used to manipulate the attributes of different objects according to a specified distribution.
+A random process is defined by the settable properties random_var and random_state.
+The random variable that can be passed to class instances of the sampler module must be derived from or be part of the <a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/stats.html/">scipy.stats</a> module.</p>
+</section>
+<section id="pipeline-py">
+<h3>pipeline.py<a class="headerlink" href="#pipeline-py" title="Permalink to this headline">¶</a></h3>
+<p>Classes defined in the pipeline.py module have the task to iteratively extract/generate and pass a specified or unspecified amount of data.
+Control about the state of the sampling process is maintained via instances of the classes defined in the sampler module.
+Feature extraction tasks can be specified by passing callable functions that are evoked at each iteration.</p>
+</section>
+<section id="writer-py">
+<h3>writer.py<a class="headerlink" href="#writer-py" title="Permalink to this headline">¶</a></h3>
+<p>Provides classes to store the data extracted by the pipeline. Current implementation includes a classes to save data to .h5 files and .tfrecord files.
+The latter can be efficiently consumed by the <a class="reference external" href="https://www.tensorflow.org//">Tensorflow</a> framework for machine learning.</p>
+</section>
+<section id="loader-py">
+<h3>loader.py<a class="headerlink" href="#loader-py" title="Permalink to this headline">¶</a></h3>
+<p>Provides classes to load the datasets from file. Currently, only the loading of data stored in .h5 files is possible.</p>
+</section>
+</section>
+</section>
+<section id="content">
+<h1>Content:<a class="headerlink" href="#content" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="api_ref/index_apiref.html">Reference Manual</a></li>
+</ul>
+</div>
+</section>
+<section id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul>
+<li class="toctree-l1"><a class="reference internal" href="api_ref/index_apiref.html">Reference Manual</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </div>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="api_ref/index_apiref.html" title="Reference Manual"
+              >next</a> |
+            <a href="py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="_sources/index.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

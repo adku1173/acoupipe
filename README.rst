@@ -372,9 +372,6 @@ The main.py script has some further command line options that can be used to inf
                                 specified frequency index, default is None (all
                                 frequencies will be calculated and included in the
                                 data set)
-        --nsources NSOURCES   Calculates the data set with a fixed number of
-                                sources. Default is 'None', meaning that the number of
-                                sources present will be sampled randomly.
         --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
                                 Whether to compute data set containing the csm or the
                                 beamforming map as the main feature. Default is 'csm'
@@ -386,13 +383,7 @@ The main.py script has some further command line options that can be used to inf
         --cache_bf            Whether to cache the results of the beamformer
                                 calculation. Only relevant if 'sourcemap' is included
                                 in --features list.
-        --log                 Whether to log timing statistics to file. Only for
-                                internal use.
 
-
-
-
-                                
 
 Simulation on a High-Performance Cluster (HPC)
 -----------------------------------------------
@@ -630,6 +621,14 @@ Examples
 ------------------
 
 
+.. toctree::
+    :maxdepth: 2
+    :numbered:
+    :titlesonly:
+    :glob:
+    :hidden:
+
+    docs/source/index.rst
 
 
 .. Links:
