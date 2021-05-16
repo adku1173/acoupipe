@@ -5,7 +5,9 @@
 AcouPipe Data Set – A Large-Scale Microphone Array Data Set for Machine Learning  
 ================================================================================
 
-
+This repository provides a Python toolbox and additional material to create a source localization and characterization data set for machine learning.
+The data set is created by a simulation process running inside a Docker container.
+Only the desired input features (Cross-Spectral Matrix, Beamforming Map) are stored to a .h5 file or .tfrecord file.
 
 
 .. contents:: 
@@ -15,11 +17,11 @@ AcouPipe Data Set – A Large-Scale Microphone Array Data Set for Machine Learni
 Microphone Array Data Set
 ==========================
 
-This repository provides a data set for source localization and characterization.
-The synthetic data can be created by running a simulation process inside a Docker container.
+The following figure illustrates the virtual measurement setup.
+The training data set comprises 500,000 different simulated source cases, whereas the validation
+data set consists of further 10,000 independent samples. The amount of cases can be easily extended.
 
-
-.. image:: src/msm_layout.png
+.. figure:: src/msm_layout.png
 
 
 
@@ -31,31 +33,259 @@ Data Set Characteristics
 ===================== ========================================  
 Environment           Unechoic, Resting, Homogeneous Fluid
 Microphone Array      Vogel's spiral, M=64, Aperture Size 1m
-Observation Area      :math:`x,y \in [-0.5,0.5], z=0.5`
+Observation Area      x,y in [-0.5,0.5], z=0.5
 Source Type           Monopole 
 Source Signals        Uncorrelated White Noise (T=5s)
-Sampling Rate         :math:`\mathit{He} = 40$, $F_s=13720\,$Hz` 
+Sampling Rate         He = 40, Fs=13720 Hz 
 No. of Time Samples   68.600 
 ===================== ========================================
 
 **sampled characteristics:**
 
 ==================================================================   ===================================================  
-Sensor Position Deviation [m]                                        Normal distributed :math:`(\sigma = 0.001)`
-No. of Sources                                                       Poisson distributed :math:`(\lambda=3)` 
-Source Positions                                                     Normal distributed :math:`(\sigma = 0.1688)` 
-Source Strength :math:`(\text{Pa}^2` at :math:`x_{\text{ref}})`      Rayleigh distributed :math:`(\sigma_{\text{R}}=5)`
+Sensor Position Deviation [m]                                        Normal distributed (sigma = 0.001)
+No. of Sources                                                       Poisson distributed (lambda=3)
+Source Positions                                                     Normal distributed (sigma = 0.1688) 
+Source Strength (Pa^2 at reference microphone)                       Rayleigh distributed (sigma_R=5)
 ==================================================================   ===================================================
 
 Input Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+One can save one of the three different input features to file:
+
+* **Cross-Spectral Matrix (CSM):**; :code:`'csm'` with shape: (65,64,64,2)
+* **non-redundant Cross-Spectral Matrix:**; :code:`'csmtriu'` with shape: (65,64,64)
+* **Source Map:** created with Beamforming: :code:`'sourcemap'` with shape: (65,51,51)
+
+The first axis of each feature corresponds to the FFT coefficient. The non-redundant CSM follows the 
+approach stated in [Cas21]_ (the conjugate complex of the normal CSM is neglected). 
+The underlying processing parameters used to calculate the CSM and/or the source map are:
+
+===================== ========================================  
+Block size            128 samples
+Block overlap         50 %
+Windowing             von Hann / Hanning
+Steering vector       fromulation 3, see [Sar12]_
+Evaluation basis      single frequency coefficient
+===================== ========================================
+
+with the following FFT frequency indices, frequencies and Helmholtz numbers:
+
++-------+----------------+------------------+
+| Index | Frequency [Hz] | Helmholtz Number |
++-------+----------------+------------------+
+| 0     | 0.0            | 0.0              |
++-------+----------------+------------------+
+| 1     | 107.1875       | 0.3125           |
++-------+----------------+------------------+
+| 2     | 214.375        | 0.625            |
++-------+----------------+------------------+
+| 3     | 321.5625       | 0.9375           |
++-------+----------------+------------------+
+| 4     | 428.75         | 1.25             |
++-------+----------------+------------------+
+| 5     | 535.9375       | 1.5625           |
++-------+----------------+------------------+
+| 6     | 643.125        | 1.875            |
++-------+----------------+------------------+
+| 7     | 750.3125       | 2.1875           |
++-------+----------------+------------------+
+| 8     | 857.5          | 2.5              |
++-------+----------------+------------------+
+| 9     | 964.6875       | 2.8125           |
++-------+----------------+------------------+
+| 10    | 1071.875       | 3.125            |
++-------+----------------+------------------+
+| 11    | 1179.0625      | 3.4375           |
++-------+----------------+------------------+
+| 12    | 1286.25        | 3.75             |
++-------+----------------+------------------+
+| 13    | 1393.4375      | 4.0625           |
++-------+----------------+------------------+
+| 14    | 1500.625       | 4.375            |
++-------+----------------+------------------+
+| 15    | 1607.8125      | 4.6875           |
++-------+----------------+------------------+
+| 16    | 1715.0         | 5.0              |
++-------+----------------+------------------+
+| 17    | 1822.1875      | 5.3125           |
++-------+----------------+------------------+
+| 18    | 1929.375       | 5.625            |
++-------+----------------+------------------+
+| 19    | 2036.5625      | 5.9375           |
++-------+----------------+------------------+
+| 20    | 2143.75        | 6.25             |
++-------+----------------+------------------+
+| 21    | 2250.9375      | 6.5625           |
++-------+----------------+------------------+
+| 22    | 2358.125       | 6.875            |
++-------+----------------+------------------+
+| 23    | 2465.3125      | 7.1875           |
++-------+----------------+------------------+
+| 24    | 2572.5         | 7.5              |
++-------+----------------+------------------+
+| 25    | 2679.6875      | 7.8125           |
++-------+----------------+------------------+
+| 26    | 2786.875       | 8.125            |
++-------+----------------+------------------+
+| 27    | 2894.0625      | 8.4375           |
++-------+----------------+------------------+
+| 28    | 3001.25        | 8.75             |
++-------+----------------+------------------+
+| 29    | 3108.4375      | 9.0625           |
++-------+----------------+------------------+
+| 30    | 3215.625       | 9.375            |
++-------+----------------+------------------+
+| 31    | 3322.8125      | 9.6875           |
++-------+----------------+------------------+
+| 32    | 3430.0         | 10.0             |
++-------+----------------+------------------+
+| 33    | 3537.1875      | 10.3125          |
++-------+----------------+------------------+
+| 34    | 3644.375       | 10.625           |
++-------+----------------+------------------+
+| 35    | 3751.5625      | 10.9375          |
++-------+----------------+------------------+
+| 36    | 3858.75        | 11.25            |
++-------+----------------+------------------+
+| 37    | 3965.9375      | 11.5625          |
++-------+----------------+------------------+
+| 38    | 4073.125       | 11.875           |
++-------+----------------+------------------+
+| 39    | 4180.3125      | 12.1875          |
++-------+----------------+------------------+
+| 40    | 4287.5         | 12.5             |
++-------+----------------+------------------+
+| 41    | 4394.6875      | 12.8125          |
++-------+----------------+------------------+
+| 42    | 4501.875       | 13.125           |
++-------+----------------+------------------+
+| 43    | 4609.0625      | 13.4375          |
++-------+----------------+------------------+
+| 44    | 4716.25        | 13.75            |
++-------+----------------+------------------+
+| 45    | 4823.4375      | 14.0625          |
++-------+----------------+------------------+
+| 46    | 4930.625       | 14.375           |
++-------+----------------+------------------+
+| 47    | 5037.8125      | 14.6875          |
++-------+----------------+------------------+
+| 48    | 5145.0         | 15.0             |
++-------+----------------+------------------+
+| 49    | 5252.1875      | 15.3125          |
++-------+----------------+------------------+
+| 50    | 5359.375       | 15.625           |
++-------+----------------+------------------+
+| 51    | 5466.5625      | 15.9375          |
++-------+----------------+------------------+
+| 52    | 5573.75        | 16.25            |
++-------+----------------+------------------+
+| 53    | 5680.9375      | 16.5625          |
++-------+----------------+------------------+
+| 54    | 5788.125       | 16.875           |
++-------+----------------+------------------+
+| 55    | 5895.3125      | 17.1875          |
++-------+----------------+------------------+
+| 56    | 6002.5         | 17.5             |
++-------+----------------+------------------+
+| 57    | 6109.6875      | 17.8125          |
++-------+----------------+------------------+
+| 58    | 6216.875       | 18.125           |
++-------+----------------+------------------+
+| 59    | 6324.0625      | 18.4375          |
++-------+----------------+------------------+
+| 60    | 6431.25        | 18.75            |
++-------+----------------+------------------+
+| 61    | 6538.4375      | 19.0625          |
++-------+----------------+------------------+
+| 62    | 6645.625       | 19.375           |
++-------+----------------+------------------+
+| 63    | 6752.8125      | 19.6875          |
++-------+----------------+------------------+
+| 64    | 6860.0         | 20.0             |
++-------+----------------+------------------+
+
+
 Labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The data set comprises labels for each source case:
 
-Simulate the Data with Docker
------------------------------
+**Source strength at the reference microphone:** :code:`'p2'`
+
+The averaged squared sound pressure value at the reference microphone position (red dot) is
+stored as an estimate of the source strength for each individual source and 65 FFT coefficients.
+A value of zero is stored for non-existing sources. With a maximum number of 16 possible sources, this results 
+in an array of shape (65,16) per case. 
+It should be noted that the entries are sorted in descending order according to the overall RMS value of the source signal. 
+The ordering might be different when considering the Pa^2 value at the reference microphone for a single frequency coefficient.
+
+**Source location:** :code:`'loc'`
+
+The location in the x,y plane of each source is stored. Non-existing source locations are set to zero (center of the plane).
+The source location array is of shape (16,2). The source ordering is the same as for the source strength.
+
+**Number of sources:** :code:`'nsources'`
+
+An integer providing the number of sources.
+
+**Sample index:** :code:`'idx'`
+
+The index of type int referencing the sampled case in the data set file (starts at 1). 
+
+**Involved random seeds:** :code:`'seeds'`
+
+A list with random seeds for each object that performs a random sampling of data set properties.
+The combination is unique for each source case in the data set. This enables to re-simulate every 
+specific sample of the data set. 
+
+File Formats
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The user can save the data to two different file formats (HDF5_ or TFRecord_). 
+It is recommended to use the .h5 file format.
+
+**HDF5 format**
+
+HDF5_ is a container-like format storing data in hierarchical order. 
+Each case and the corresponding data is stored into a separate group of the file. An additional :code:`metadata`
+groups includes important metadata (e.g. sampling frequency, FFT block size, ...).
+
+.. code-block:: bash
+
+    └──'1'
+        |── 'csm' (or 'sourcemap', or 'csmtriu') 
+        |── 'loc' 
+        |── 'p2'  
+        |── 'nsources'
+        |── 'seeds'
+    └──'2'
+        |── 'csm' 
+        |── 'loc' 
+        |── 'p2'  
+        |── 'nsources'
+        |── 'seeds'
+    └──...
+        |   ...
+        |  
+    └──'metadata'
+        |   'sample_freq'
+        |   ...
+
+Since the sample index acts as the group header, correct order is always maintained. 
+This is important when multiple source cases are simulated in parallel tasks.
+
+**TFRecord format**
+
+The TFRecord_ file format is a binary file format to store sequences of data developed by Tensorflow_. 
+In case of running the simulation with multiple CPU threads, the initial simulation order of the source cases may not be maintained in the file. 
+The exact case number can be reconstructed with the :code:`idx` and :code:`seeds` features.  
+
+
+
+Simulate the Data Set with Docker
+---------------------------------
 
 The easiest way to create the data set is by using an existing
 Docker image from DockerHub_. Simply pull the latest image with the command
@@ -164,17 +394,11 @@ The main.py script has some further command line options that can be used to inf
 Distributed Simulation with SLURM
 ----------------------------------
 
-Load the Data
+Load the Data Set
 ------------------
 
-H5 Data Set Structure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-TFrecord Data Set Structure
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Loader class
-* explain metadata
+.. * Loader class
+.. * explain metadata
 
 AcouPipe Toolbox
 =================
@@ -294,5 +518,14 @@ Examples
 
 .. _Ray: https://docs.ray.io/en/master/
 .. _Tensorflow: https://www.tensorflow.org/
+.. _TFRecord: https://www.tensorflow.org/tutorials/load_data/tfrecord
 .. _DockerHub: https://hub.docker.com/repository/docker/adku1173/acoupipe
 .. _Acoular: http://www.acoular.org
+.. _HDF5: https://portal.hdfgroup.org/display/HDF5/HDF5
+
+Literature
+==========================
+
+.. [Sar12] Sarradj, Ennes: Three-dimensional acoustic source mapping with different beamforming steering vector formulations. Advances in Acoustics and Vibration, pages 1–12, 2012.
+.. [Cas21] Paolo Castellini, Nicola Giulietti, Nicola Falcionelli, Aldo Franco Dragoni, Paolo Chiariotti, A neural network based microphone array approach to grid-less noise source localization, Applied Acoustics, Volume 177, 2021, 107947, ISSN 0003-682X, https://doi.org/10.1016/j.apacoust.2021.107947.
+.. [Kuj19] Adam Kujawski, Gert Herold, and Ennes Sarradj , "A deep learning method for grid-free localization and quantification of sound sources", The Journal of the Acoustical Society of America 146, EL225-EL231 (2019) https://doi.org/10.1121/1.5126020
