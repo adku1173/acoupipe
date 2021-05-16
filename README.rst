@@ -280,11 +280,11 @@ This is important when multiple source cases are simulated in parallel tasks.
 
 The TFRecord_ file format is a binary file format to store sequences of data developed by Tensorflow_. 
 In case of running the simulation with multiple CPU threads, the initial simulation order of the source cases may not be maintained in the file. 
-The exact case number can be reconstructed with the :code:`idx` and :code:`seeds` features.  
+The exact case number can be reconstructed with the :code:`idx` and :code:`seeds` features when the file is parsed.  
 
 
 
-Simulate the Data Set with Docker
+Simulation with Docker
 ---------------------------------
 
 The easiest way to create the data set is by using an existing
@@ -333,72 +333,190 @@ Now one can open the dashboard by accessing the web address http://0.0.0.0:8265 
 
 The main.py script has some further command line options that can be used to influence the simulation process:
 
-.. code-block::
+.. sidebar:: command line arguments of the main.py script
 
-    usage: main.py [-h]
-                [--datasets {training,validation} [{training,validation} ...]]
-                [--tsamples TSAMPLES] [--tstart TSTART] [--vsamples VSAMPLES]
-                [--vstart VSTART] [--tpath TPATH] [--vpath VPATH]
-                [--file_format {tfrecord,h5}] [--cache_dir CACHE_DIR]
-                [--freq_index FREQ_INDEX] [--nsources NSOURCES]
-                [--features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]]
-                [--tasks TASKS] [--head HEAD] [--cache_csm] [--cache_bf]
-                [--log]
+    .. code-block::
 
-    optional arguments:
-    -h, --help            show this help message and exit
-    --datasets {training,validation} [{training,validation} ...]
-                            Whether to compute both data sets ('training
-                            validation') or only the 'training' / 'validation'
-                            data set. Defaults to compute training and validation
-                            data set
-    --tsamples TSAMPLES   Total number of training samples to simulate
-    --tstart TSTART       Start simulation at a specific sample of the data set
-    --vsamples VSAMPLES   Total number of validation samples to simulate
-    --vstart VSTART       Start simulation at a specific sample of the data set
-    --tpath TPATH         Path of simulated training data. Default is current
-                            working directory
-    --vpath VPATH         Path of simulated validation data. Default is current
-                            working directory
-    --file_format {tfrecord,h5}
-                            Desired file format to store the data sets.
-    --cache_dir CACHE_DIR
-                            Path of cached data. Default is current working
-                            directory
-    --freq_index FREQ_INDEX
-                            Returns only the features and targets for the
-                            specified frequency index, default is None (all
-                            frequencies will be calculated and included in the
-                            data set)
-    --nsources NSOURCES   Calculates the data set with a fixed number of
-                            sources. Default is 'None', meaning that the number of
-                            sources present will be sampled randomly.
-    --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
-                            Whether to compute data set containing the csm or the
-                            beamforming map as the main feature. Default is 'csm'
-    --tasks TASKS         Number of asynchronous tasks. Defaults to '1' (non-
-                            distributed)
-    --head HEAD           IP address of the head node in the ray cluster. Only
-                            necessary when running in distributed mode.
-    --cache_csm           Whether to cache the results of the CSM calculation
-    --cache_bf            Whether to cache the results of the beamformer
-                            calculation. Only relevant if 'sourcemap' is included
-                            in --features list.
-    --log                 Whether to log timing statistics to file. Only for
-                            internal use.
+        usage: main.py [-h]
+                    [--datasets {training,validation} [{training,validation} ...]]
+                    [--tsamples TSAMPLES] [--tstart TSTART] [--vsamples VSAMPLES]
+                    [--vstart VSTART] [--tpath TPATH] [--vpath VPATH]
+                    [--file_format {tfrecord,h5}] [--cache_dir CACHE_DIR]
+                    [--freq_index FREQ_INDEX] [--nsources NSOURCES]
+                    [--features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]]
+                    [--tasks TASKS] [--head HEAD] [--cache_csm] [--cache_bf]
+                    [--log]
+
+        optional arguments:
+        -h, --help            show this help message and exit
+        --datasets {training,validation} [{training,validation} ...]
+                                Whether to compute both data sets ('training
+                                validation') or only the 'training' / 'validation'
+                                data set. Defaults to compute training and validation
+                                data set
+        --tsamples TSAMPLES   Total number of training samples to simulate
+        --tstart TSTART       Start simulation at a specific sample of the data set
+        --vsamples VSAMPLES   Total number of validation samples to simulate
+        --vstart VSTART       Start simulation at a specific sample of the data set
+        --tpath TPATH         Path of simulated training data. Default is current
+                                working directory
+        --vpath VPATH         Path of simulated validation data. Default is current
+                                working directory
+        --file_format {tfrecord,h5}
+                                Desired file format to store the data sets.
+        --cache_dir CACHE_DIR
+                                Path of cached data. Default is current working
+                                directory
+        --freq_index FREQ_INDEX
+                                Returns only the features and targets for the
+                                specified frequency index, default is None (all
+                                frequencies will be calculated and included in the
+                                data set)
+        --nsources NSOURCES   Calculates the data set with a fixed number of
+                                sources. Default is 'None', meaning that the number of
+                                sources present will be sampled randomly.
+        --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
+                                Whether to compute data set containing the csm or the
+                                beamforming map as the main feature. Default is 'csm'
+        --tasks TASKS         Number of asynchronous tasks. Defaults to '1' (non-
+                                distributed)
+        --head HEAD           IP address of the head node in the ray cluster. Only
+                                necessary when running in distributed mode.
+        --cache_csm           Whether to cache the results of the CSM calculation
+        --cache_bf            Whether to cache the results of the beamformer
+                                calculation. Only relevant if 'sourcemap' is included
+                                in --features list.
+        --log                 Whether to log timing statistics to file. Only for
+                                internal use.
 
 
 
 
+                                
 
-Distributed Simulation with SLURM
-----------------------------------
+Simulation on a High-Performance Cluster (HPC)
+-----------------------------------------------
+
+If you plan to simulate the data by means of multiple machines (e.g. on a high-performance cluster (HPC))
+you can use the `Ray Cluster`_ interface.
+
+The following code snippet gives an example of a job script that can
+be scheduled with the SLURM_ job manager and by using a Singularity_ image. 
+
+.. code-block:: bash
+
+    #!/bin/bash
+    #SBATCH --job-name=acoupipe_dataset
+    #SBATCH --cpus-per-task=16 
+    #SBATCH --nodes=4
+    #SBATCH --tasks-per-node=1 # Give all resources to a single Ray task, ray can manage the resources internally
+    #SBATCH --output=acoupipe_dataset.stdout
+
+    DIRPATH=<path-to-the-acoupipe-dataset-folder>
+    IMGNAME=<name-of-the-singularity-image> 
+
+    let "worker_num=(${SLURM_NTASKS} - 1)" ### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)-1 
+    echo "Number of workers" $worker_num
+
+    # Define the total number of CPU cores available to ray
+    let "total_cores=${worker_num} * ${SLURM_CPUS_PER_TASK}"
+
+    suffix='6379'
+    ip_head=`hostname`:$suffix
+    export ip_head # Exporting for latter access by trainer.py
+    echo $ip_head
+
+    # Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`
+    # We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all
+    # network interfaces. This allows to access the dashboard through port-forwarding:
+    # z. B.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144 
+    srun --nodes=1 --ntasks=1 --cpus-per-task=${SLURM_CPUS_PER_TASK} --nodelist=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --head --block --dashboard-host 0.0.0.0 --port=6379 --num-cpus ${SLURM_CPUS_PER_TASK} &
+    sleep 10
+
+    # Now we execute worker_num worker nodes on all nodes in the allocation except hostname by
+    # specifying --nodes=${worker_num} and --exclude=`hostname`. Use 1 task per node, so worker_num tasks in total
+    # (--ntasks=${worker_num}) and 5 CPUs per task (--cps-per-task=${SLURM_CPUS_PER_TASK}).
+    srun --nodes=${worker_num} --ntasks=${worker_num} --cpus-per-task=${SLURM_CPUS_PER_TASK} --exclude=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --address $ip_head --block --num-cpus ${SLURM_CPUS_PER_TASK} &
+    sleep 10
+
+    singularity exec -B $DIRPATH $IMGNAME python -u $DIRPATH/main.py --head=${ip_head} --tasks=${total_cores}
+
 
 Load the Data Set
 ------------------
 
-.. * Loader class
-.. * explain metadata
+**HDF5 format**
+
+The AcouPipe toolbox provides the :code:`LoadH5Dataset` class to load the data sets stored into HDF5 format:
+
+.. code-block:: Python
+
+    from acoupipe import LoadH5Dataset
+
+    dataset = LoadH5Dataset(name="<data-set.h5>")
+
+    s1 = dataset.dataset['1'] # returns the first sample of the data set
+
+    print(dataset.metadata) # prints the corresponding metadata information
+
+
+A Python generator can be created which can be consumed by the `Tensorflow Dataset API`_:
+
+.. code-block:: Python
+
+    import tensorflow as tf
+
+    data_generator = dataset.get_dataset_generator(
+                features=['loc','nsources','p2','csmtriu','idx'], # the desired features to return from the file
+                )
+
+    # provide the signature of the features
+    output_signature = {
+                'loc' : tf.TensorSpec(shape=(16,2), dtype=tf.float32),
+                'nsources':tf.TensorSpec(shape=(),dtype=tf.int64),
+                'idx':tf.TensorSpec(shape=(),dtype=tf.int64),
+                'p2' : tf.TensorSpec(shape=(16,), dtype=tf.float32),
+                'csmtriu':  tf.TensorSpec(shape=(64,64), dtype=tf.float32),
+                }
+
+    dataset = tf.data.Dataset.from_generator(
+                generator=data_generator,
+                output_signature=output_signature
+                )
+
+    dataset_iter = iter(dataset)
+    dataset_sample = next(dataset_iter) # return samples iteratively
+
+
+**TFRecord format**
+
+To parse the data from TFRecord files it is necessary to write a custom function that parses the file sequentially
+ (see: TFRecord_ documentation for details).
+
+A potential parser function for the :code:`'csmtriu'` feature can be similar to:
+
+.. code-block:: Python
+
+
+    def tfrecord_parser_csmtriu(record):
+        """ parser for tfrecord datasets with 'csmtriu' feature """
+        parsed = tf.io.parse_single_example(
+            record, 
+            {
+            'csmtriu': tf.io.VarLenFeature(tf.float32),
+            'p2': tf.io.VarLenFeature(tf.float32),
+            'loc' : tf.io.VarLenFeature(tf.float32),
+            'nsources' : tf.io.FixedLenFeature((),tf.int64),
+            }
+        )
+        # get and reshape parsed data
+        csmtriu = tf.reshape(tf.sparse.to_dense(parsed['csmtriu']),shape=(65,64,64,1))
+        p2 = tf.reshape(tf.sparse.to_dense(parsed['p2']),shape=(65,16))
+        loc = tf.reshape(tf.sparse.to_dense(parsed['loc']),[-1,2])  
+        nsources = tf.cast(parsed['nsources'],tf.int32)
+        return (csmtriu, p2, loc, nsources)
+
+
 
 AcouPipe Toolbox
 =================
@@ -516,12 +634,17 @@ Examples
 
 .. Links:
 
+.. _SLURM: https://slurm.schedmd.com/quickstart.html
+.. _Singularity: https://sylabs.io/guides/3.0/user-guide/quick_start.html
 .. _Ray: https://docs.ray.io/en/master/
+.. _`Ray Cluster`: https://docs.ray.io/en/master/cluster/index.html
 .. _Tensorflow: https://www.tensorflow.org/
+.. _`Tensorflow Dataset API`: https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator
 .. _TFRecord: https://www.tensorflow.org/tutorials/load_data/tfrecord
 .. _DockerHub: https://hub.docker.com/repository/docker/adku1173/acoupipe
 .. _Acoular: http://www.acoular.org
 .. _HDF5: https://portal.hdfgroup.org/display/HDF5/HDF5
+
 
 Literature
 ==========================
