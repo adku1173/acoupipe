@@ -1,4 +1,26 @@
+# files and file types to ignore
+*.pyc
+*.pyd
+*.so
+*~
+
+# ignore the build directories
+*.egg-info/
+.eggs/
+build/
+__pycache__/
+dist/
+cache/
+td/
+docs/build/
+**/cache/
+**/td/
+__pycache__/
+*.nbc
+*.nbi
+*.pyd
+docs/source/api_ref/generated/
+.vscode/
 
 docs/.vscode/
-docs/
 */__pycache__/*

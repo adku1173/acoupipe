@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+    <title>LoadH5Dataset &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="prev" title="BaseLoadDataset" href="acoupipe.loader.BaseLoadDataset.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../../index.html">AcouPipe 01.06.2021 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="acoupipe.loader.BaseLoadDataset.html" title="BaseLoadDataset"
+             accesskey="P">previous</a> |
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="loadh5dataset">
+<h1>LoadH5Dataset<a class="headerlink" href="#loadh5dataset" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="acoupipe.loader.LoadH5Dataset">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">acoupipe.loader.</span></code><code class="sig-name descname"><span class="pre">LoadH5Dataset</span></code><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="acoupipe.loader.BaseLoadDataset.html#acoupipe.loader.BaseLoadDataset" title="acoupipe.loader.BaseLoadDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.loader.BaseLoadDataset</span></code></a></p>
+<p>Loads data sets stored into <cite>*.h5</cite> file format.</p>
+<p>This class loads data from .h5 files and
+and provides information like the number of 
+samples (<a class="reference internal" href="#acoupipe.loader.LoadH5Dataset.numsamples" title="acoupipe.loader.LoadH5Dataset.numsamples"><code class="xref py py-attr docutils literal notranslate"><span class="pre">numsamples</span></code></a>).</p>
+<dl class="py attribute">
+<dt id="acoupipe.loader.LoadH5Dataset.name">
+<code class="sig-name descname"><span class="pre">name</span></code><em class="property"> <span class="pre">=</span> <span class="pre">File(filter=['*.h5'],</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full name of the .h5 file with data.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="acoupipe.loader.LoadH5Dataset.basename">
+<code class="sig-name descname"><span class="pre">basename</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Property(</span> <span class="pre">depends_on</span> <span class="pre">=</span> <span class="pre">'name',</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.basename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basename of the .h5 file with data, is set automatically.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="acoupipe.loader.LoadH5Dataset.dataset">
+<code class="sig-name descname"><span class="pre">dataset</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Dict(</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>The  data as array.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="acoupipe.loader.LoadH5Dataset.numsamples">
+<code class="sig-name descname"><span class="pre">numsamples</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CLong(0,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.numsamples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of data samples, is set automatically / read from file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="acoupipe.loader.LoadH5Dataset.numfeatures">
+<code class="sig-name descname"><span class="pre">numfeatures</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CLong(0,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.numfeatures" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of features, is set automatically / read from file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="acoupipe.loader.LoadH5Dataset.h5f">
+<code class="sig-name descname"><span class="pre">h5f</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Instance(H5FileBase,</span> <span class="pre">transient</span> <span class="pre">=</span> <span class="pre">True)</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.h5f" title="Permalink to this definition">¶</a></dt>
+<dd><p>HDF5 file object</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="acoupipe.loader.LoadH5Dataset.metadata">
+<code class="sig-name descname"><span class="pre">metadata</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Dict(</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Provides metadata stored in HDF5 file object</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="acoupipe.loader.LoadH5Dataset.load_data">
+<code class="sig-name descname"><span class="pre">load_data</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Open the .h5 file and set attributes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="acoupipe.loader.LoadH5Dataset.load_dataset">
+<code class="sig-name descname"><span class="pre">load_dataset</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads dataset from .h5 file. Only for internal use.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="acoupipe.loader.LoadH5Dataset.load_metadata">
+<code class="sig-name descname"><span class="pre">load_metadata</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads metadata from .h5 file. Only for internal use.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="acoupipe.loader.LoadH5Dataset.get_dataset_generator">
+<code class="sig-name descname"><span class="pre">get_dataset_generator</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.get_dataset_generator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a callable that returns a generator object.</p>
+<p>This object can be used in conjunction with the Tensorflow <cite>tf.data.Dataset</cite> API to create
+a data generator with the <a href="#id1"><span class="problematic" id="id2">`</span></a>from_generator`method to feed machine learning models.</p>
+<p>Example to create a repeatable data set with the Tensorflow  <cite>tf.data.Dataset</cite> API:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">h5data</span> <span class="o">=</span> <span class="n">LoadH5Dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;some_dataset.h5&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">generator</span> <span class="o">=</span> <span class="n">h5data</span><span class="o">.</span><span class="n">get_dataset_generator</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;p2&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">output_signature</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">... </span>   <span class="s1">&#39;p2&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+<span class="gp">... </span><span class="p">}</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span><span class="n">generator</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">output_signature</span><span class="o">=</span><span class="n">output_signature</span><span class="p">)</span><span class="o">.</span><span class="n">repeat</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p2</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">dataset</span><span class="p">))</span> <span class="c1"># return p2</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>features</strong><span class="classifier">list, optional</span></dt><dd><p>a list with names of the features to be yielded by the generator, by default [], 
+meaning that all features will be considered.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><dl class="simple">
+<dt>callable</dt><dd><p>A callable that returns a generator object</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index_apiref.html">Reference Manual</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </div>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="acoupipe.loader.BaseLoadDataset.html" title="BaseLoadDataset"
+              >previous</a> |
+            <a href="../../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../../_sources/api_ref/generated/acoupipe.loader.LoadH5Dataset.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>

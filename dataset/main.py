@@ -1,4 +1,3 @@
-from acoular.environments import Environment
 import ray
 import argparse
 import logging
@@ -17,26 +16,26 @@ from helper import set_pipeline_seeds, set_filename
 import numba
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--datasets', nargs="+", default=["training"], choices=["training", "validation"],
-                    help="Whether to compute both data sets ('all') or only the 'training' / 'validation' data set. Default is 'all'")
+parser.add_argument('--datasets', nargs="+", default=["training","validation"], choices=["training", "validation"],
+                    help="Whether to compute both data sets ('training validation') or only the 'training' / 'validation' data set. Defaults to compute training and validation data set")
 parser.add_argument('--tsamples', type=int, default=500000,
-                    help="Total number of  training samples to simulate")
+                    help="Total number of  training samples to simulate. Default : 500,000")
 parser.add_argument('--tstart', type=int, default=1,
-                    help="Start simulation at a specific sample of the data set")                    
+                    help="Start simulation at a specific sample of the data set. Default: 1")                    
 parser.add_argument('--vsamples', type=int, default=10000,
-                    help="Total number of  validation samples to simulate")
+                    help="Total number of validation samples to simulate. Default : 10,000")
 parser.add_argument('--vstart', type=int, default=1,
-                    help="Start simulation at a specific sample of the data set")                          
-parser.add_argument('--tpath', type=str, default=".",
-                    help="path of simulated training data. Default is current working directory")
-parser.add_argument('--vpath', type=str, default=".",
-                    help="path of simulated validation data. Default is current working directory")
-parser.add_argument('--file_format', type=str, default="tfrecord", choices=["tfrecord", "h5"],
+                    help="Start simulation at a specific sample of the data set. Default: 1")                          
+parser.add_argument('--tpath', type=str, default="./datasets",
+                    help="Path of simulated training data. Default is the current working directory")
+parser.add_argument('--vpath', type=str, default="./datasets",
+                    help="Path of simulated validation data. Default is the current working directory")
+parser.add_argument('--file_format', type=str, default="h5", choices=["tfrecord", "h5"],
                     help="Desired file format to store the data sets.")
-parser.add_argument('--cache_dir', type=str, default=".",
-                    help="path of cached data. Default is current working directory")
+parser.add_argument('--cache_dir', type=str, default="./datasets",
+                    help="Path of cached data. Default is the current working directory")
 parser.add_argument('--freq_index', type=int, default=None,
-                    help="Returns only the features and targets for the specified frequency index, default is None (all frequencies will be calculated and included in the data set)")
+                    help="Returns only the features and targets for the specified frequency index. Default is 'None' (all frequencies will be calculated and included in the data set)")
 parser.add_argument('--nsources', type=int, default=None,
                     help="Calculates the data set with a fixed number of sources. Default is 'None', meaning that the number of sources present will be sampled randomly.")
 parser.add_argument('--features', nargs="+", default=["csm"], choices=["sourcemap", "csmtriu", "csm"],
@@ -46,9 +45,9 @@ parser.add_argument('--tasks', type=int, default=1,
 parser.add_argument('--head', type=str, default=None,
                     help="IP address of the head node in the ray cluster. Only necessary when running in distributed mode.") 
 parser.add_argument('--cache_csm', action="store_true",
-                    help="Whether to cache the results of the CSM calculation") 
+                    help="Caches the results of the CSM calculation when added as an argument") 
 parser.add_argument('--cache_bf', action="store_true",
-                    help="Whether to cache the results of the beamformer calculation. Only relevant if 'sourcemap' is included in --features list.")                     
+                    help="Caches the results of the beamformer calculation when added as an argument. Only relevant if 'sourcemap' is included in --features list.")                     
 parser.add_argument('--log', action="store_true",
                     help="Whether to log timing statistics to file. Only for internal use.")                          
 args = parser.parse_args()
@@ -81,7 +80,7 @@ print("cache file directory at: ",config.cache_dir)
 
 # Ray Config
 if args.tasks > 1:
-    ray.init(address=args.head)
+    ray.init(address=args.head,dashboard_host="0.0.0.0")
     num_threads=1
 
 # Computational Pipeline Acoular
@@ -116,7 +115,7 @@ if "sourcemap" in args.features:
     rg = acoular.RectGrid(
                     x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z=.5,increment=0.02)           
     st = acoular.SteeringVector(
-                    grid=rg, mics=mg_fixed, **sv_args)
+                    grid=rg, mics=mg_fixed, env=env, **sv_args)
     bb = acoular.BeamformerBase(
                     freq_data=ps_csm, steer=st, cached=args.cache_bf, precision='float32',**bb_args)
 
@@ -164,10 +163,10 @@ if not args.nsources: # if no number of sources is specified, the number of sour
                         )
 
     sampler_list = [mic_sampling, nsrc_sampling, src_sampling, rms_sampling, pos_sampling]
-    ns = args.nsources # max. number of sources
+    ns = 16
 else:
     sampler_list = [mic_sampling, src_sampling, rms_sampling, pos_sampling]
-    ns = 16
+    ns = args.nsources # exact number of sources
  
 if args.tasks > 1:
     pipeline = DistributedPipeline(
