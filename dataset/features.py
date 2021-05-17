@@ -1,6 +1,8 @@
 from acoular import config
 from numpy import zeros, array, float32, concatenate, real, imag, triu_indices
 import numba
+import warnings
+warnings.filterwarnings("ignore") # suppress pickling warnings
 
 def get_eigmap(beamformer, n=16, f=None, num=0, cache_dir=None, num_threads=1):
     """Calculates the sourcemap with a specified beamformer instance

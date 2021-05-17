@@ -9,8 +9,8 @@ This repository provides a Python toolbox and additional material to create a un
 A pre-built Docker container can be downloaded from DockerHub_ to simplify the creation process.
 Instead of the raw time data, only the most common input features are stored to file:
 
-* Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in Cas21)
-* Conventional Beamforming Map (e.g. in Kuj19)
+* Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
+* Conventional Beamforming Map (e.g. in [Kuj19]_)
 
 This keeps the data set files in a manageable size.
 

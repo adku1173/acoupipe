@@ -1,4 +1,3 @@
-from acoular.environments import Environment
 import ray
 import argparse
 import logging
@@ -116,7 +115,7 @@ if "sourcemap" in args.features:
     rg = acoular.RectGrid(
                     x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z=.5,increment=0.02)           
     st = acoular.SteeringVector(
-                    grid=rg, mics=mg_fixed, **sv_args)
+                    grid=rg, mics=mg_fixed, env=env, **sv_args)
     bb = acoular.BeamformerBase(
                     freq_data=ps_csm, steer=st, cached=args.cache_bf, precision='float32',**bb_args)
 
