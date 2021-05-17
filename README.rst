@@ -5,10 +5,14 @@
 AcouPipe Data Set – A Large-Scale Microphone Array Data Set for Machine Learning  
 ================================================================================
 
-This repository provides a Python toolbox and additional material to create a source localization and characterization data set for machine learning.
-The data set is created by a simulation process running inside a Docker container.
-Only the desired input features (Cross-Spectral Matrix, Beamforming Map) are stored to a .h5 file or .tfrecord file.
+This repository provides a Python toolbox and additional material to create a unique source localization and characterization data set for machine learning.
+A pre-built Docker container can be downloaded from DockerHub_ to simplify the creation process.
+Instead of the raw time data, only the most common input features are stored to file:
 
+* Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in Cas21)
+* Conventional Beamforming Map (e.g. in Kuj19)
+
+This keeps the data set files in a manageable size.
 
 .. contents:: 
 
@@ -17,11 +21,16 @@ Only the desired input features (Cross-Spectral Matrix, Beamforming Map) are sto
 Microphone Array Data Set
 ==========================
 
-The following figure illustrates the virtual measurement setup.
-The training data set comprises 500,000 different simulated source cases, whereas the validation
-data set consists of further 10,000 independent samples. The amount of cases can be easily extended.
+The data set comprises:
 
-.. figure:: src/msm_layout.png
+* 500,000 source cases for training 
+* 10,000 source cases for validation
+
+The data set is created by a simulation process with Acoular_. The amount of cases can be easily extended. 
+The following figure illustrates the virtual measurement setup.
+
+
+.. figure:: docs/source/_static/msm_layout.png
 
 
 
@@ -54,9 +63,9 @@ Input Features
 
 One can save one of the three different input features to file:
 
-* **Cross-Spectral Matrix (CSM):**; :code:`'csm'` with shape: (65,64,64,2)
-* **non-redundant Cross-Spectral Matrix:**; :code:`'csmtriu'` with shape: (65,64,64)
-* **Source Map:** created with Beamforming: :code:`'sourcemap'` with shape: (65,51,51)
+* **Cross-Spectral Matrix (CSM):** :code:`'csm'` of shape: (65,64,64,2)
+* **non-redundant Cross-Spectral Matrix:** :code:`'csmtriu'` of shape: (65,64,64)
+* **Conventional Beamforming Map:** :code:`'sourcemap'` of shape: (65,51,51)
 
 The first axis of each feature corresponds to the FFT coefficient. The non-redundant CSM follows the 
 approach stated in [Cas21]_ (the conjugate complex of the normal CSM is neglected). 
@@ -219,12 +228,12 @@ stored as an estimate of the source strength for each individual source and 65 F
 A value of zero is stored for non-existing sources. With a maximum number of 16 possible sources, this results 
 in an array of shape (65,16) per case. 
 It should be noted that the entries are sorted in descending order according to the overall RMS value of the source signal. 
-The ordering might be different when considering the Pa^2 value at the reference microphone for a single frequency coefficient.
+The descending order is not strictly maintained when only a single frequency coefficient is considered.
 
 **Source location:** :code:`'loc'`
 
 The location in the x,y plane of each source is stored. Non-existing source locations are set to zero (center of the plane).
-The source location array is of shape (16,2). The source ordering is the same as for the source strength.
+The source location array is of shape (16,2). The source ordering is the same as for the source strength estimate :code:`p2`.
 
 **Number of sources:** :code:`'nsources'`
 
@@ -232,7 +241,7 @@ An integer providing the number of sources.
 
 **Sample index:** :code:`'idx'`
 
-The index of type int referencing the sampled case in the data set file (starts at 1). 
+The index referencing the sampled case in the data set (starts at 1). 
 
 **Involved random seeds:** :code:`'seeds'`
 
@@ -249,8 +258,9 @@ It is recommended to use the .h5 file format.
 **HDF5 format**
 
 HDF5_ is a container-like format storing data in hierarchical order. 
-Each case and the corresponding data is stored into a separate group of the file. An additional :code:`metadata`
-groups includes important metadata (e.g. sampling frequency, FFT block size, ...).
+Each case and the corresponding data is stored into a separate group of the file. 
+The sample index acts as the group header. 
+An additional :code:`metadata` group includes important metadata (e.g. sampling frequency, FFT block size, ...).
 
 .. code-block:: bash
 
@@ -273,13 +283,13 @@ groups includes important metadata (e.g. sampling frequency, FFT block size, ...
         |   'sample_freq'
         |   ...
 
-Since the sample index acts as the group header, correct order is always maintained. 
+Correct order is always maintained.  
 This is important when multiple source cases are simulated in parallel tasks.
 
 **TFRecord format**
 
 The TFRecord_ file format is a binary file format to store sequences of data developed by Tensorflow_. 
-In case of running the simulation with multiple CPU threads, the initial simulation order of the source cases may not be maintained in the file. 
+In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file. 
 The exact case number can be reconstructed with the :code:`idx` and :code:`seeds` features when the file is parsed.  
 
 
@@ -324,11 +334,11 @@ of the simulation process when running the simulation on multiple CPU threads
 
     2021-05-14 08:50:16,533	INFO services.py:1267 -- View the Ray dashboard at http://0.0.0.0:8265
 
-When running the simulation inside a Docker container it is necessary to forward the corresponding TCP port  with :code:`-p 8265:8265` to access the server serving the dashboard.
-Now one can open the dashboard by accessing the web address http://0.0.0.0:8265 which should display the following web interface
+It is necessary to forward the corresponding TCP port with :code:`docker run -p 8265:8265 ...` at the start-up of the container to access the server serving the dashboard.
+One can open the dashboard by accessing the web address http://0.0.0.0:8265 which should display the following web interface
 
 
-.. image:: src/dashboard.png
+.. image:: docs/source/_static/dashboard.png
 
 
 The main.py script has some further command line options that can be used to influence the simulation process:
@@ -482,7 +492,7 @@ A Python generator can be created which can be consumed by the `Tensorflow Datas
 **TFRecord format**
 
 To parse the data from TFRecord files it is necessary to write a custom function that parses the file sequentially
- (see: TFRecord_ documentation for details).
+(see: TFRecord_ documentation for details).
 
 A potential parser function for the :code:`'csmtriu'` feature can be similar to:
 
@@ -529,7 +539,7 @@ Module Overview
 The following UML flowchart gives a rough overview of AcouPipe's 
 classes and their inheritance relationships. 
 
-.. image:: src/acoupipe_uml.png
+.. image:: docs/source/_static/acoupipe_uml.png
 
 
 Sampler Module
@@ -620,15 +630,6 @@ The :code:`loader.py` module provides the :code:`LoadH5Dataset` class to load th
 Examples
 ------------------
 
-
-.. toctree::
-    :maxdepth: 2
-    :numbered:
-    :titlesonly:
-    :glob:
-    :hidden:
-
-    docs/source/index.rst
 
 
 .. Links:
