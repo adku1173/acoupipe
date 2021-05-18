@@ -20,7 +20,7 @@ This package depends on the acoustical beamforming library Acoular_.
 
 Quickstart
 ==========
-
+This section will walk you through the necessary steps to quickly generate the default data set.
 The data set comprises:
 
 * 500,000 source cases for training 
@@ -31,11 +31,6 @@ The following figure illustrates the virtual measurement setup.
 
 
 .. figure:: docs/source/_static/msm_layout.png
-
-
-
- 
-
 
 
 Simulation with Docker
@@ -520,7 +515,7 @@ A potential parser function for the :code:`'csmtriu'` feature can be similar to:
 
 
 
-AcouPipe Toolbox
+Documentation
 =================
 
 The AcouPipe module extends the computational 
