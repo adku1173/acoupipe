@@ -11,9 +11,10 @@ This allows the user to create data sets of manageable size that are portable an
 
 AcouPipe supports distributed computation with Ray_ and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_.
 
-.. contents::
 .. toctree::
    :maxdepth: 2
+
+	      dependency
 
 Dependencies
 =============
