@@ -6,6 +6,7 @@ AcouPipe
 ================================================================================
 
 **AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets that can be used for training of deep neural networks and machine learning. The storage requirements of the generated data sets are minimized by storing only the necessary input features for acoustical beamforming such as
+
 * Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
 * Conventional Beamforming Map (e.g. in [Kuj19]_)
   instead of raw time-data. This way the user can create protable data sets of manageable size, which faciliates reproducible research.
