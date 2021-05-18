@@ -15,11 +15,11 @@ AcouPipe supports distributed computation with Ray_ and comes with a default con
 
 Dependencies
 =============
-This package depends on the acoustical beamforming library Acoular_
+This package depends on the acoustical beamforming library Acoular_.
    
 
-Microphone Array Data Set
-==========================
+Quickstart
+==========
 
 The data set comprises:
 
@@ -33,6 +33,158 @@ The following figure illustrates the virtual measurement setup.
 .. figure:: docs/source/_static/msm_layout.png
 
 
+
+ 
+
+
+
+Simulation with Docker
+---------------------------------
+
+The easiest way to create the data set is by using an existing
+Docker image from DockerHub_. Simply pull the latest image with the command
+
+.. code-block:: 
+
+    docker pull adku1173/acoupipe:latest
+
+The image contains the simulation source code and an up-to-date version of Acoular_, 
+AcouPipe and Tensorflow_.
+One can run the data set simulation given by the main.py script from inside the Docker container by typing
+
+.. code-block:: 
+
+    HOSTDIR="<enter the desired host directory>" # stores the data sets inside this directory
+    NTASKS=<enter the number of parallel tasks> # should match the number of CPUs on the host
+    docker run -it --user "$(id -u)":"$(id -g)" -v $HOSTDIR:/data/datasets adku1173/acoupipe python main.py --tasks=$NTASKS
+
+Note that the current user on the host is specified as the user of the docker environment with the additional argument :code:`--user "$(id -u)":"$(id -g)"`.
+It is not recommended to run the container as a root user.
+Further, a directory where the data set files are stored needs to be binded to the container (:code:`HOSTDIR=<dir>`). With the 
+:code:`HOSTDIR=$(pwd)` command, the current working directory on Linux or macOS hosts are binded. 
+The simulation can be run on multiple CPU threads in parallel to speed up computations. The exact number of threads can be specified by the 
+user with the :code:`--tasks` argument. 
+
+After starting the main script, a progress bar should appear that logs the current simulation status:
+
+.. code-block:: 
+
+    1%|█▍                           | 83/10000 [01:04<1:40:35,  1.64it/s]
+
+It is possible to view the CPU usage via a dashboard application served by the Ray_ API. One should find the following output at the beginning 
+of the simulation process when running the simulation on multiple CPU threads
+
+.. code-block:: 
+
+    2021-05-14 08:50:16,533	INFO services.py:1267 -- View the Ray dashboard at http://0.0.0.0:8265
+
+It is necessary to forward the corresponding TCP port with :code:`docker run -p 8265:8265 ...` at the start-up of the container to access the server serving the dashboard.
+One can open the dashboard by accessing the web address http://0.0.0.0:8265 which should display the following web interface
+
+
+.. image:: docs/source/_static/dashboard.png
+
+
+The main.py script has some further command line options that can be used to influence the simulation process:
+
+.. sidebar:: command line arguments of the main.py script
+
+    .. code-block::
+
+        usage: main.py [-h]
+                    [--datasets {training,validation} [{training,validation} ...]]
+                    [--tsamples TSAMPLES] [--tstart TSTART] [--vsamples VSAMPLES]
+                    [--vstart VSTART] [--tpath TPATH] [--vpath VPATH]
+                    [--file_format {tfrecord,h5}] [--cache_dir CACHE_DIR]
+                    [--freq_index FREQ_INDEX] [--nsources NSOURCES]
+                    [--features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]]
+                    [--tasks TASKS] [--head HEAD] [--cache_csm] [--cache_bf]
+                    [--log]
+
+        optional arguments:
+        -h, --help            show this help message and exit
+        --datasets {training,validation} [{training,validation} ...]
+                                Whether to compute both data sets ('training
+                                validation') or only the 'training' / 'validation'
+                                data set. Defaults to compute training and validation
+                                data set
+        --tsamples TSAMPLES   Total number of training samples to simulate
+        --tstart TSTART       Start simulation at a specific sample of the data set
+        --vsamples VSAMPLES   Total number of validation samples to simulate
+        --vstart VSTART       Start simulation at a specific sample of the data set
+        --tpath TPATH         Path of simulated training data. Default is current
+                                working directory
+        --vpath VPATH         Path of simulated validation data. Default is current
+                                working directory
+        --file_format {tfrecord,h5}
+                                Desired file format to store the data sets.
+        --cache_dir CACHE_DIR
+                                Path of cached data. Default is current working
+                                directory
+        --freq_index FREQ_INDEX
+                                Returns only the features and targets for the
+                                specified frequency index, default is None (all
+                                frequencies will be calculated and included in the
+                                data set)
+        --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
+                                Whether to compute data set containing the csm or the
+                                beamforming map as the main feature. Default is 'csm'
+        --tasks TASKS         Number of asynchronous tasks. Defaults to '1' (non-
+                                distributed)
+        --head HEAD           IP address of the head node in the ray cluster. Only
+                                necessary when running in distributed mode.
+        --cache_csm           Whether to cache the results of the CSM calculation
+        --cache_bf            Whether to cache the results of the beamformer
+                                calculation. Only relevant if 'sourcemap' is included
+                                in --features list.
+
+
+Simulation on a High-Performance Cluster (HPC)
+-----------------------------------------------
+
+If you plan to simulate the data by means of multiple machines (e.g. on a high-performance cluster (HPC))
+you can use the `Ray Cluster`_ interface.
+
+The following code snippet gives an example of a job script that can
+be scheduled with the SLURM_ job manager and by using a Singularity_ image. 
+
+.. code-block:: bash
+
+    #!/bin/bash
+    #SBATCH --job-name=acoupipe_dataset
+    #SBATCH --cpus-per-task=16 
+    #SBATCH --nodes=4
+    #SBATCH --tasks-per-node=1 # Give all resources to a single Ray task, ray can manage the resources internally
+    #SBATCH --output=acoupipe_dataset.stdout
+
+    DIRPATH=<path-to-the-acoupipe-dataset-folder>
+    IMGNAME=<name-of-the-singularity-image> 
+
+    let "worker_num=(${SLURM_NTASKS} - 1)" ### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)-1 
+    echo "Number of workers" $worker_num
+
+    # Define the total number of CPU cores available to ray
+    let "total_cores=${worker_num} * ${SLURM_CPUS_PER_TASK}"
+
+    suffix='6379'
+    ip_head=`hostname`:$suffix
+    export ip_head # Exporting for latter access by trainer.py
+    echo $ip_head
+
+    # Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`
+    # We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all
+    # network interfaces. This allows to access the dashboard through port-forwarding:
+    # z. B.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144 
+    srun --nodes=1 --ntasks=1 --cpus-per-task=${SLURM_CPUS_PER_TASK} --nodelist=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --head --block --dashboard-host 0.0.0.0 --port=6379 --num-cpus ${SLURM_CPUS_PER_TASK} &
+    sleep 10
+
+    # Now we execute worker_num worker nodes on all nodes in the allocation except hostname by
+    # specifying --nodes=${worker_num} and --exclude=`hostname`. Use 1 task per node, so worker_num tasks in total
+    # (--ntasks=${worker_num}) and 5 CPUs per task (--cps-per-task=${SLURM_CPUS_PER_TASK}).
+    srun --nodes=${worker_num} --ntasks=${worker_num} --cpus-per-task=${SLURM_CPUS_PER_TASK} --exclude=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --address $ip_head --block --num-cpus ${SLURM_CPUS_PER_TASK} &
+    sleep 10
+
+    singularity exec -B $DIRPATH $IMGNAME python -u $DIRPATH/main.py --head=${ip_head} --tasks=${total_cores}
 
 Data Set Characteristics
 -------------------------
@@ -290,158 +442,7 @@ This is important when multiple source cases are simulated in parallel tasks.
 
 The TFRecord_ file format is a binary file format to store sequences of data developed by Tensorflow_. 
 In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file. 
-The exact case number can be reconstructed with the :code:`idx` and :code:`seeds` features when the file is parsed.  
-
-
-
-Simulation with Docker
----------------------------------
-
-The easiest way to create the data set is by using an existing
-Docker image from DockerHub_. Simply pull the latest image with the command
-
-.. code-block:: 
-
-    docker pull adku1173/acoupipe:latest
-
-The image contains the simulation source code and an up-to-date version of Acoular_, 
-AcouPipe and Tensorflow_.
-One can run the data set simulation given by the main.py script from inside the Docker container by typing
-
-.. code-block:: 
-
-    HOSTDIR="<enter the desired host directory>" # stores the data sets inside this directory
-    NTASKS=<enter the number of parallel tasks> # should match the number of CPUs on the host
-    docker run -it --user "$(id -u)":"$(id -g)" -v $HOSTDIR:/data/datasets adku1173/acoupipe python main.py --tasks=$NTASKS
-
-Note that the current user on the host is specified as the user of the docker environment with the additional argument :code:`--user "$(id -u)":"$(id -g)"`.
-It is not recommended to run the container as a root user.
-Further, a directory where the data set files are stored needs to be binded to the container (:code:`HOSTDIR=<dir>`). With the 
-:code:`HOSTDIR=$(pwd)` command, the current working directory on Linux or macOS hosts are binded. 
-The simulation can be run on multiple CPU threads in parallel to speed up computations. The exact number of threads can be specified by the 
-user with the :code:`--tasks` argument. 
-
-After starting the main script, a progress bar should appear that logs the current simulation status:
-
-.. code-block:: 
-
-    1%|█▍                           | 83/10000 [01:04<1:40:35,  1.64it/s]
-
-It is possible to view the CPU usage via a dashboard application served by the Ray_ API. One should find the following output at the beginning 
-of the simulation process when running the simulation on multiple CPU threads
-
-.. code-block:: 
-
-    2021-05-14 08:50:16,533	INFO services.py:1267 -- View the Ray dashboard at http://0.0.0.0:8265
-
-It is necessary to forward the corresponding TCP port with :code:`docker run -p 8265:8265 ...` at the start-up of the container to access the server serving the dashboard.
-One can open the dashboard by accessing the web address http://0.0.0.0:8265 which should display the following web interface
-
-
-.. image:: docs/source/_static/dashboard.png
-
-
-The main.py script has some further command line options that can be used to influence the simulation process:
-
-.. sidebar:: command line arguments of the main.py script
-
-    .. code-block::
-
-        usage: main.py [-h]
-                    [--datasets {training,validation} [{training,validation} ...]]
-                    [--tsamples TSAMPLES] [--tstart TSTART] [--vsamples VSAMPLES]
-                    [--vstart VSTART] [--tpath TPATH] [--vpath VPATH]
-                    [--file_format {tfrecord,h5}] [--cache_dir CACHE_DIR]
-                    [--freq_index FREQ_INDEX] [--nsources NSOURCES]
-                    [--features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]]
-                    [--tasks TASKS] [--head HEAD] [--cache_csm] [--cache_bf]
-                    [--log]
-
-        optional arguments:
-        -h, --help            show this help message and exit
-        --datasets {training,validation} [{training,validation} ...]
-                                Whether to compute both data sets ('training
-                                validation') or only the 'training' / 'validation'
-                                data set. Defaults to compute training and validation
-                                data set
-        --tsamples TSAMPLES   Total number of training samples to simulate
-        --tstart TSTART       Start simulation at a specific sample of the data set
-        --vsamples VSAMPLES   Total number of validation samples to simulate
-        --vstart VSTART       Start simulation at a specific sample of the data set
-        --tpath TPATH         Path of simulated training data. Default is current
-                                working directory
-        --vpath VPATH         Path of simulated validation data. Default is current
-                                working directory
-        --file_format {tfrecord,h5}
-                                Desired file format to store the data sets.
-        --cache_dir CACHE_DIR
-                                Path of cached data. Default is current working
-                                directory
-        --freq_index FREQ_INDEX
-                                Returns only the features and targets for the
-                                specified frequency index, default is None (all
-                                frequencies will be calculated and included in the
-                                data set)
-        --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
-                                Whether to compute data set containing the csm or the
-                                beamforming map as the main feature. Default is 'csm'
-        --tasks TASKS         Number of asynchronous tasks. Defaults to '1' (non-
-                                distributed)
-        --head HEAD           IP address of the head node in the ray cluster. Only
-                                necessary when running in distributed mode.
-        --cache_csm           Whether to cache the results of the CSM calculation
-        --cache_bf            Whether to cache the results of the beamformer
-                                calculation. Only relevant if 'sourcemap' is included
-                                in --features list.
-
-
-Simulation on a High-Performance Cluster (HPC)
------------------------------------------------
-
-If you plan to simulate the data by means of multiple machines (e.g. on a high-performance cluster (HPC))
-you can use the `Ray Cluster`_ interface.
-
-The following code snippet gives an example of a job script that can
-be scheduled with the SLURM_ job manager and by using a Singularity_ image. 
-
-.. code-block:: bash
-
-    #!/bin/bash
-    #SBATCH --job-name=acoupipe_dataset
-    #SBATCH --cpus-per-task=16 
-    #SBATCH --nodes=4
-    #SBATCH --tasks-per-node=1 # Give all resources to a single Ray task, ray can manage the resources internally
-    #SBATCH --output=acoupipe_dataset.stdout
-
-    DIRPATH=<path-to-the-acoupipe-dataset-folder>
-    IMGNAME=<name-of-the-singularity-image> 
-
-    let "worker_num=(${SLURM_NTASKS} - 1)" ### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)-1 
-    echo "Number of workers" $worker_num
-
-    # Define the total number of CPU cores available to ray
-    let "total_cores=${worker_num} * ${SLURM_CPUS_PER_TASK}"
-
-    suffix='6379'
-    ip_head=`hostname`:$suffix
-    export ip_head # Exporting for latter access by trainer.py
-    echo $ip_head
-
-    # Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`
-    # We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all
-    # network interfaces. This allows to access the dashboard through port-forwarding:
-    # z. B.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144 
-    srun --nodes=1 --ntasks=1 --cpus-per-task=${SLURM_CPUS_PER_TASK} --nodelist=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --head --block --dashboard-host 0.0.0.0 --port=6379 --num-cpus ${SLURM_CPUS_PER_TASK} &
-    sleep 10
-
-    # Now we execute worker_num worker nodes on all nodes in the allocation except hostname by
-    # specifying --nodes=${worker_num} and --exclude=`hostname`. Use 1 task per node, so worker_num tasks in total
-    # (--ntasks=${worker_num}) and 5 CPUs per task (--cps-per-task=${SLURM_CPUS_PER_TASK}).
-    srun --nodes=${worker_num} --ntasks=${worker_num} --cpus-per-task=${SLURM_CPUS_PER_TASK} --exclude=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --address $ip_head --block --num-cpus ${SLURM_CPUS_PER_TASK} &
-    sleep 10
-
-    singularity exec -B $DIRPATH $IMGNAME python -u $DIRPATH/main.py --head=${ip_head} --tasks=${total_cores}
-
+The exact case number can be reconstructed with the :code:`idx` and :code:`seeds` features when the file is parsed.
 
 Load the Data Set
 ------------------
