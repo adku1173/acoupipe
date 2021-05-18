@@ -2,17 +2,21 @@
 AcouPipe
 ================================================================================
 
-**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with Acoular_ that can be used for training of deep neural networks and machine learning. The storage requirements of the generated data sets are minimized by storing only the necessary input features for acoustical beamforming such as
+**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with Acoular_ that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:
 
 * Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
 * Conventional Beamforming Map (e.g. in [Kuj19]_)
 
-instead of raw time-data. This way the user can create portable data sets of manageable size, which faciliates reproducible research.
-AcouPipe supports distributed computations with Ray_ and ships with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_.
+This allows the user to create data sets of manageable size that are portable and facilitate reproducible research.
 
-.. contents:: 
+AcouPipe supports distributed computation with Ray_ and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_.
 
+.. contents::
 
+Dependencies
+=============
+This package depends on the acoustical beamforming library Acoular_
+   
 
 Microphone Array Data Set
 ==========================
