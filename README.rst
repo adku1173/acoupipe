@@ -2,10 +2,10 @@
 .. sectnum::
 
 ================================================================================
-AcouPipe Data Set – A Large-Scale Microphone Array Data Set for Machine Learning  
+AcouPipe
 ================================================================================
 
-This repository provides a Python toolbox and additional material to create a unique source localization and characterization data set for machine learning.
+**AcouPipe** is a Python toolbox built on top of Acoular_ to generate unique source localization and characterization data sets for machine learning.
 A pre-built Docker container can be downloaded from DockerHub_ to simplify the creation process.
 Instead of the raw time data, only the most common input features are stored to file:
 
