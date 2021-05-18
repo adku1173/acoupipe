@@ -1,6 +1,3 @@
-
-.. sectnum::
-
 ================================================================================
 AcouPipe
 ================================================================================
@@ -11,7 +8,7 @@ AcouPipe
 * Conventional Beamforming Map (e.g. in [Kuj19]_)
 
 instead of raw time-data. This way the user can create portable data sets of manageable size, which faciliates reproducible research.
-AcouPipe supports distributed computations with Ray_ and ships with a default configuration data set inside a pre-built Docker_ container that can be downloaded from DockerHub_.
+AcouPipe supports distributed computations with Ray_ and ships with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_.
 
 .. contents:: 
 
