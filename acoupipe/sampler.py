@@ -54,8 +54,6 @@ class BaseSampler(HasPrivateTraits):
     single_value = Bool(False, #TODO: better rename to same_sample
         desc="manages if a single value is chosen for all targets")
 
-    #TODO: implement condition trait (resample if condition fails)
-
     def rvs(self, size=1):
         """random variable sampling (for internal use)"""
         return self.random_var.rvs(size=size, random_state=self.random_state)
@@ -86,6 +84,11 @@ class NumericAttributeSampler(BaseSampler):
     #: if :attr:`single_value` is set to True, this has no effect. If no value is set (:attr:`order` `=None`), no ordering is performed.
     order = Either("ascending","descending")
 
+    #: sampled value filter (resample if callable filter returns False)
+    filter = Callable(
+        desc="a callable function that returns a bool"
+        )
+
     def order_samples(self, samples):
         """internal function to order drawn values"""
         samples = sort(samples)
@@ -110,10 +113,16 @@ class NumericAttributeSampler(BaseSampler):
         """
         if self.single_value:
             value = self.rvs()[0] 
+            if self.filter: # resample if filter returns False
+                while not self.filter(value):
+                    value = self.rvs()[0] 
             for target in self.target:       
                 self.set_value(target, value)   
         else:
             values = self.rvs(len(self.target))
+            if self.filter: # resample if filter returns False
+                while not self.filter(values):
+                    values = self.rvs(len(self.target))
             if self.normalize:
                 values /= max(abs(values))
             if self.order:

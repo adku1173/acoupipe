@@ -160,6 +160,7 @@ if not args.nsources: # if no number of sources is specified, the number of sour
                         random_var=nsrc_rvar, 
                         target=[src_sampling], 
                         attribute='numsamples',
+                        #filter=lambda x: x<=10,
                         )
 
     sampler_list = [mic_sampling, nsrc_sampling, src_sampling, rms_sampling, pos_sampling]
