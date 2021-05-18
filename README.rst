@@ -10,16 +10,8 @@ AcouPipe
 * Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
 * Conventional Beamforming Map (e.g. in [Kuj19]_)
 
-  instead of raw time-data. This way the user can create protable data sets of manageable size, which faciliates reproducible research.
-
-The time-data and training features are created with the beamforming toolbox Acoular_
-AcouPipe comes with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_
-  
-* extensibi
-* distributed with ray
-* standard configuration data set with docker
-
-Instead of the raw time data, only the most common input features are stored to file:
+instead of raw time-data. This way the user can create portable data sets of manageable size, which faciliates reproducible research.
+AcouPipe supports distributed computations with Ray_ and ships with a default configuration data set inside a pre-built Docker_ container that can be downloaded from DockerHub_.
 
 .. contents:: 
 
