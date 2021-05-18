@@ -13,9 +13,7 @@ AcouPipe supports distributed computation with Ray_ and comes with a default con
 
 .. toctree::
    :maxdepth: 2
-.. contents::
 
-.. _header1:
 Dependencies
 =============
 This package depends on the acoustical beamforming library Acoular_.
