@@ -5,14 +5,19 @@
 AcouPipe
 ================================================================================
 
-**AcouPipe** is a Python toolbox built on top of Acoular_ to generate unique source localization and characterization data sets for machine learning.
-A pre-built Docker container can be downloaded from DockerHub_ to simplify the creation process.
-Instead of the raw time data, only the most common input features are stored to file:
-
+**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets that can be used for training of deep neural networks and machine learning. The storage requirements of the generated data sets are minimized by storing only the necessary input features for acoustical beamforming such as
 * Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
 * Conventional Beamforming Map (e.g. in [Kuj19]_)
+  instead of raw time-data. This way the user can create protable data sets of manageable size, which faciliates reproducible research.
 
-This keeps the data set files in a manageable size.
+The time-data and training features are created with the beamforming toolbox Acoular_
+AcouPipe comes with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_
+  
+* extensibi
+* distributed with ray
+* standard configuration data set with docker
+
+Instead of the raw time data, only the most common input features are stored to file:
 
 .. contents:: 
 
@@ -641,7 +646,7 @@ Examples
 .. _Tensorflow: https://www.tensorflow.org/
 .. _`Tensorflow Dataset API`: https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator
 .. _TFRecord: https://www.tensorflow.org/tutorials/load_data/tfrecord
-.. _DockerHub: https://hub.docker.com/repository/docker/adku1173/acoupipe
+.. _DockerHub: https://hub.docker.com/r/adku1173/acoupipe/tags?page=1&ordering=last_updated
 .. _Acoular: http://www.acoular.org
 .. _HDF5: https://portal.hdfgroup.org/display/HDF5/HDF5
 
