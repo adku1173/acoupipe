@@ -67,6 +67,11 @@ SIGLENGTH=5 # length of the simulated signal
 MFILE = "tub_vogel64_ap1.xml" # Microphone Geometry
 REF_MIC = 63 # index of the reference microphone 
 
+if args.nsources:
+    MAXSRCS = args.nsources # maximum number of sources
+else:    
+    MAXSRCS = 10 # maximum number of sources
+
 # Random Variables
 mic_rvar = norm(loc=0, scale=0.001) # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
 pos_rvar = norm(loc=0,scale=0.1688) # source positions
@@ -91,7 +96,7 @@ mg_fixed = MicGeom(from_file=MFILE)
 env = Environment(c=C)
 # Signals
 white_noise_signals = [
-    WNoiseGenerator(sample_freq=SFREQ,seed=i+1,numsamples=SIGLENGTH*SFREQ) for i in range(16)
+    WNoiseGenerator(sample_freq=SFREQ,seed=i+1,numsamples=SIGLENGTH*SFREQ) for i in range(MAXSRCS)
     ] 
 # Monopole sources emitting the white noise signals
 point_sources = [
@@ -160,13 +165,12 @@ if not args.nsources: # if no number of sources is specified, the number of sour
                         random_var=nsrc_rvar, 
                         target=[src_sampling], 
                         attribute='numsamples',
+                        filter=lambda x: x<=MAXSRCS,
                         )
 
     sampler_list = [mic_sampling, nsrc_sampling, src_sampling, rms_sampling, pos_sampling]
-    ns = 16
 else:
     sampler_list = [mic_sampling, src_sampling, rms_sampling, pos_sampling]
-    ns = args.nsources # exact number of sources
  
 if args.tasks > 1:
     pipeline = DistributedPipeline(
@@ -195,9 +199,9 @@ else:
 
 # set up feature dict
 feature_dict = {
-    "loc": (get_source_loc, sources_mix, ns), # (callable, arg1, arg2, ...)
+    "loc": (get_source_loc, sources_mix, MAXSRCS), # (callable, arg1, arg2, ...)
     "nsources": (lambda smix: len(smix.sources), sources_mix),
-    "p2": (get_source_p2, sources_mix, ps_ref, fidx, ns, config.cache_dir),
+    "p2": (get_source_p2, sources_mix, ps_ref, fidx, MAXSRCS, config.cache_dir),
 }
 
 if "csm" in args.features:
@@ -270,7 +274,7 @@ for dataset in args.datasets:
             writer = WriteH5Dataset(source=source,
                                     features=features,
                                     metadata=metadata)    
-        set_filename(writer,path,*[dataset,f"{start_sample}-{start_sample+samples-1}"]+[input_feature]+[f"{ns}src",freq_str,VERSION])
+        set_filename(writer,path,*[dataset,f"{start_sample}-{start_sample+samples-1}"]+[input_feature]+[f"{MAXSRCS}src",freq_str,VERSION])
         source=writer
 
     # for debugging and timing statistics
