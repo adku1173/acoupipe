@@ -535,11 +535,19 @@ This package works with Python 3.6-3.8 and depends on:
 
 Installation
 ------------------
-Having installed all dependencies, the module can be installed.
 
-enter directory
+Download or clone the acoupipe repository and enter the directory, e.g.
 
-pip install .
+.. code-block::
+
+   git clone git@github.com:adku1173/acoupipe.git /path/to/  && cd /path/to/repository
+
+
+Install module with pip. This will install all necessary dependencies
+
+.. code-block::
+
+   pip install .
 
 
 Module Overview
