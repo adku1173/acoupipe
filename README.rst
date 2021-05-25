@@ -525,25 +525,25 @@ Dependencies
 ------------
 This package works with Python 3.6-3.8 and depends on:
 
-* _Acoular
-* _Ray
-* _Pandas
-* _h5py
-* _tqdm
-* _Tensorflow (optional)
+* Acoular_
+* Ray_
+* Pandas_
+* h5py_
+* tqdm_
+* Tensorflow_ (optional)
 
 
 Installation
 ------------------
 
-Download or clone the acoupipe repository and enter the directory, e.g.
+Download or clone the acoupipe repository and enter the directory, e.g. change "</path/to/dir>" to the desired path and execute:
 
 .. code-block::
 
    DIR=</path/to/dir> && git clone git@github.com:adku1173/acoupipe.git $DIR  && cd $DIR && unset DIR
 
 
-Install module with pip. This will install all necessary dependencies
+Next, install module with pip. This will install all necessary dependencies:
 
 .. code-block::
 
