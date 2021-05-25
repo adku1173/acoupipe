@@ -521,12 +521,25 @@ of features in a predefined random process.
 
 
 
-Installation
-------------------
-
 Dependencies
 ------------
-This package depends on the acoustical beamforming library Acoular_.
+This package works with Python 3.6-3.8 and depends on
+* Acoular
+* Ray
+* Pandas
+* h5py
+* tqdm
+* Tensorflow (optional)
+
+
+Installation
+------------------
+Having installed all dependencies, the module can be installed.
+
+enter directory
+
+pip install .
+
 
 Module Overview
 ------------------
