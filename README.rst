@@ -523,7 +523,8 @@ of features in a predefined random process.
 
 Dependencies
 ------------
-This package works with Python 3.6-3.8 and depends on
+This package works with Python 3.6-3.8 and depends on:
+
 * Acoular
 * Ray
 * Pandas
