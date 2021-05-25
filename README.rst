@@ -1,6 +1,4 @@
-|python version|   
-.. |python-version| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8-blue
-   :target: https://www.python.org/
+|python-version|
 
 ================================================================================
 AcouPipe
@@ -677,7 +675,10 @@ Examples
 .. _h5py: https://docs.h5py.org/en/stable/
 .. _tqdm: https://github.com/tqdm/tqdm
 
-
+.. Badges:
+.. |python-version| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8-blue
+   :target: https://www.python.org/
+	    
 Literature
 ==========================
 
