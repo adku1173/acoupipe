@@ -550,6 +550,15 @@ Next, install module with pip. This will install all necessary dependencies:
    pip install .
 
 
+Optionally, also install Tensorflow with (requires pip >19.0):
+
+.. code-block::
+   
+   pip install tensorflow
+   
+
+or follow the instructions in https://www.tensorflow.org/install.
+
 Module Overview
 ------------------
 
@@ -663,7 +672,7 @@ Examples
 .. _HDF5: https://portal.hdfgroup.org/display/HDF5/HDF5
 .. _Pandas: https://pandas.pydata.org/docs/
 .. _h5py: https://docs.h5py.org/en/stable/
-.. _tdqm: https://github.com/tqdm/tqdm
+.. _tqdm: https://github.com/tqdm/tqdm
 
 
 Literature
