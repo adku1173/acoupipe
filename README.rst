@@ -1,4 +1,4 @@
-================================================================================
+2================================================================================
 AcouPipe
 ================================================================================
 
@@ -11,15 +11,7 @@ This allows the user to create data sets of manageable size that are portable an
 
 AcouPipe supports distributed computation with Ray_ and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_.
 
-.. toctree::
-   :maxdepth: 2
-
-	      dependency
-
-Dependencies
-=============
-This package depends on the acoustical beamforming library Acoular_.
-   
+.. contents::
 
 Quickstart
 ==========
@@ -531,6 +523,10 @@ of features in a predefined random process.
 
 Installation
 ------------------
+
+Dependencies
+------------
+This package depends on the acoustical beamforming library Acoular_.
 
 Module Overview
 ------------------
