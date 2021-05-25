@@ -525,12 +525,12 @@ Dependencies
 ------------
 This package works with Python 3.6-3.8 and depends on:
 
-* Acoular
-* Ray
-* Pandas
-* h5py
-* tqdm
-* Tensorflow (optional)
+* _Acoular
+* _Ray
+* _Pandas
+* _h5py
+* _tqdm
+* _Tensorflow (optional)
 
 
 Installation
@@ -540,7 +540,7 @@ Download or clone the acoupipe repository and enter the directory, e.g.
 
 .. code-block::
 
-   git clone git@github.com:adku1173/acoupipe.git /path/to/  && cd /path/to/repository
+   DIR=</path/to/dir> && git clone git@github.com:adku1173/acoupipe.git $DIR  && cd $DIR && unset DIR
 
 
 Install module with pip. This will install all necessary dependencies
@@ -661,6 +661,9 @@ Examples
 .. _DockerHub: https://hub.docker.com/r/adku1173/acoupipe/tags?page=1&ordering=last_updated
 .. _Acoular: http://www.acoular.org
 .. _HDF5: https://portal.hdfgroup.org/display/HDF5/HDF5
+.. _Pandas: https://pandas.pydata.org/docs/
+.. _h5py: https://docs.h5py.org/en/stable/
+.. _tdqm: https://github.com/tqdm/tqdm
 
 
 Literature
