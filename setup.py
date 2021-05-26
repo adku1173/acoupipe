@@ -12,7 +12,7 @@ bf_author = "Adam Kujawski"
 
 # Get the long description from the relevant file
 here = abspath(dirname(__file__))
-with open(join(here, 'README.md')) as f:
+with open(join(here, 'README.rst')) as f:
     long_description = f.read()
 
 
