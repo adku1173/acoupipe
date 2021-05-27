@@ -29,6 +29,7 @@ jobs:
 
     - name: Test 
       run: |
+        pip install parameterized
         chmod +x ../acoupipe/tests/run_tests.sh
         cd ../acoupipe/tests/
         bash run_tests.sh
