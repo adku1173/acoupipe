@@ -118,7 +118,7 @@ if "sourcemap" in args.features:
     bb_args = {'r_diag':True,}
     sv_args = {'steer_type':'true level', 'ref':mg_fixed.mpos[:,REF_MIC]}
     rg = acoular.RectGrid(
-                    x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z=.5,increment=0.02)           
+                    x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z=.5,increment=1/63) # 64 x 64 grid           
     st = acoular.SteeringVector(
                     grid=rg, mics=mg_fixed, env=env, **sv_args)
     bb = acoular.BeamformerBase(

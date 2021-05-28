@@ -209,7 +209,7 @@ One can save one of the three different input features to file:
 
 * **Cross-Spectral Matrix (CSM):** :code:`'csm'` of shape: (65,64,64,2)
 * **non-redundant Cross-Spectral Matrix:** :code:`'csmtriu'` of shape: (65,64,64)
-* **Conventional Beamforming Map:** :code:`'sourcemap'` of shape: (65,51,51)
+* **Conventional Beamforming Map:** :code:`'sourcemap'` of shape: (65,64,64)
 
 The first axis of each feature corresponds to the FFT coefficient. The non-redundant CSM follows the 
 approach stated in [Cas21]_ (the conjugate complex of the normal CSM is neglected). 
