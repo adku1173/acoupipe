@@ -102,7 +102,7 @@ class LoadH5Dataset(BaseLoadDataset):
             except IOError:
                 pass
         file = _get_h5file_class()
-        self.h5f = file(self.name)
+        self.h5f = file(self.name,mode="r")
         self.load_dataset()
         self.load_metadata()
 
