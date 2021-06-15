@@ -51,6 +51,8 @@ parser.add_argument('--cache_bf', action="store_true",
 parser.add_argument('--log', action="store_true",
                     help="Whether to log timing statistics to file. Only for internal use.")                          
 args = parser.parse_args()
+#args = parser.parse_args(["--datasets=training","--tsamples=1","--file_format=h5","--freq_index=10"])
+
 
 # logging for debugging and timing statistic purpose
 if args.log:
@@ -58,7 +60,7 @@ if args.log:
     logger = logging.getLogger()
 
 # Fixed Parameters
-VERSION="ds1-v001" # data set 1 , version 1.0
+VERSION="ds1-v001" # data set version
 C = 343. # speed of sound
 HE = 40 # Helmholtz number (defines the sampling frequency) 
 SFREQ = HE*C # /ap with ap=1.0
@@ -80,7 +82,8 @@ nsrc_rvar = poisson(mu=3,loc=1) # number of sources
 # Acoular Config
 num_threads = numba.get_num_threads()
 config.h5library = 'h5py'
-config.cache_dir = path.join(args.cache_dir,'cache') # set up cache file dir
+if args.cache_bf or args.cache_csm:
+    config.cache_dir = path.join(args.cache_dir,'cache') # set up cache file dir
 print("cache file directory at: ",config.cache_dir)
 
 # Ray Config
@@ -100,7 +103,7 @@ white_noise_signals = [
     ] 
 # Monopole sources emitting the white noise signals
 point_sources = [
-    PointSource(signal=signal,mics=mg_manipulated,env=env) for signal in white_noise_signals
+    PointSource(signal=signal,mics=mg_manipulated,env=env, loc=(0,0,.5)) for signal in white_noise_signals
     ]
 # Source Mixer mixing the signals of all sources (number will be sampled)
 sources_mix = SourceMixer(sources=point_sources)
@@ -219,12 +222,14 @@ if "sourcemap" in args.features:
         sourcemap=(get_sourcemap, bb, freq, 0, config.cache_dir),
     )    
 
+if not args.freq_index:
+    freq = ps_csm.fftfreq()
+
 metadata = {
     'VERSION' : VERSION,
-    'Helmholtz number' : he,
+    'Helmholtz number' : freq/C,
     'fft_frequencies': ps_csm.fftfreq(),
     'frequency': freq,
-    'frequency index' : fidx,
     'mic_geometry' : mg_fixed.mpos_tot.copy(),
     'reference_mic_index' : REF_MIC,
     'c' : C,
