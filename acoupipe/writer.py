@@ -19,9 +19,9 @@ The latter can be efficiently consumed by the `Tensorflow <https://www.tensorflo
 """
 
 
-from traits.api import HasPrivateTraits, Instance, Int, Dict, Str, File,\
+from traits.api import Instance, Dict, Str, File,\
     Function, Trait, Bool, List
-from .pipeline import BasePipeline, DataGenerator
+from .pipeline import DataGenerator
 
 from acoular.h5files import  _get_h5file_class
 from acoular import config

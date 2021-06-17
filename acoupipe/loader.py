@@ -26,9 +26,10 @@ from os import path
 from acoular import config
 config.h5library = "h5py"
 
+from .pipeline import DataGenerator
 
 
-class BaseLoadDataset(HasPrivateTraits):
+class BaseLoadDataset(DataGenerator):
     """
     Base class for all derived classes intended to load 
     data stored with instances of type :class:`~acoupipe.writer.BaseWriteDataset`.
@@ -162,11 +163,24 @@ class LoadH5Dataset(BaseLoadDataset):
         """
         def sample_generator():
             if not features:
-                for data in self.dataset:
-                    yield self.dataset[data]
+                for i in range(1,self.numsamples+1):
+                    yield self.dataset[str(i)]
             else:
-                for data in self.dataset:
+                for i in range(1,self.numsamples+1):
                     yield {
-                        key:value for (key,value) in self.dataset[data].items() if key in features}
+                        key:value for (key,value) in self.dataset[str(i)].items() if key in features}
             return
         return sample_generator
+
+    def get_data(self):
+        """ 
+        Python generator that iteratively yields the samples of the
+        dataset in ascending sample index order (e.g. 1,2,...,N). 
+        
+        Returns
+        -------
+        Dictionary containing a sample of the data set 
+        {feature_name[key] : feature[values]}. 
+        """
+        for i in range(1,self.numsamples+1):
+            yield self.dataset[str(i)]
