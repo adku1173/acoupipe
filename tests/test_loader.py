@@ -21,14 +21,13 @@ class Test_Loader(unittest.TestCase):
     def test_h5_data(self):
         ds =  LoadH5Dataset(name='test_data.h5')
         
-        self.assertEqual(ds.numsamples,1)
-        self.assertEqual(ds.numfeatures,3)
+        self.assertEqual(ds.numsamples,100)
+        self.assertEqual(ds.numfeatures,6)
         self.assertEqual(ds.basename,'test_data')
-        self.assertEqual(ds.dataset['Sample_1']['rms'],5.19425566014605)
+        ds.load_dataset()
+        self.assertEqual(ds.dataset['1']['rms_sources'][()][0],5.25081601669544)
         
         
-        
-        
-    
+
 
     

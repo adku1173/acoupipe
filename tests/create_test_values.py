@@ -8,6 +8,7 @@ Script to create reference data for testing.
 
 import pandas as pd
 from pipeline_value_test import get_pipeline
+from acoupipe import WriteH5Dataset
 
 NSAMPLES = 100
 
@@ -29,3 +30,6 @@ pipeline = get_pipeline(NSAMPLES,mfile="array64_d0o686.xml")
 pipeline.random_seeds = start_seeds
 df = pd.DataFrame(pipeline.get_data())
 df.to_csv("test_data_seeds.csv")
+
+writer = WriteH5Dataset(source=pipeline,name="test_data.h5")
+writer.save()
