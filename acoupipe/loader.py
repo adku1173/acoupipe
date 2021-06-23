@@ -18,7 +18,7 @@ Currently, only the loading of data stored in .h5 files is possible.
 
 from traits.api import   Property,\
 cached_property,  CLong, File, Instance, \
-    on_trait_change, Dict ,HasPrivateTraits
+    on_trait_change, Dict ,HasPrivateTraits, List
 
 from acoular.h5files import H5FileBase ,_get_h5file_class
 from os import path
@@ -27,7 +27,6 @@ from acoular import config
 config.h5library = "h5py"
 
 from .pipeline import DataGenerator
-
 
 class BaseLoadDataset(DataGenerator):
     """
@@ -71,11 +70,19 @@ class LoadH5Dataset(BaseLoadDataset):
     #: Number of data samples, is set automatically / read from file.
     numsamples = CLong(0, 
         desc="number of samples in the dataset")
+
+    #: Names of features, is set automatically / read from file.
+    features = List( 
+        desc="names of the features in the dataset")
     
     #: Number of features, is set automatically / read from file.
     numfeatures = CLong(0, 
         desc="number of features in the dataset")
     
+    #: Number of features, is set automatically / read from file.
+    indices = List( 
+        desc="the indices of the dataset")
+
     #: HDF5 file object
     h5f = Instance(H5FileBase, transient = True)
     
@@ -96,7 +103,7 @@ class LoadH5Dataset(BaseLoadDataset):
             # no file there
             self.numsamples = 0
             self.numfeatures = 0
-            raise IOError("No such file: %s" % self.name)
+            raise FileNotFoundError("No such file: %s" % self.name)
         if self.h5f != None:
             try:
                 self.h5f.close()
@@ -104,33 +111,32 @@ class LoadH5Dataset(BaseLoadDataset):
                 pass
         file = _get_h5file_class()
         self.h5f = file(self.name,mode="r")
-        self.load_dataset()
+        #self.load_dataset()
         self.load_metadata()
 
     def load_dataset( self ):
-        """ loads dataset from .h5 file. Only for internal use. """
-        
-        for key in self.h5f.keys():
-            if key != 'metadata':
-                self.dataset[key] = {}
-                self.numfeatures = len(self.h5f[key].keys())
-                for feature in self.h5f[key].keys():
-                    self.dataset[key][feature] = self.h5f[key][feature][()]
-        
-        if 'metadata' in self.h5f.keys():
-            self.numsamples = len(self.h5f.keys())-1
-        else:
-            self.numsamples = len(self.h5f.keys())
-            
-        
+        """ loads dataset from .h5 file into the dataset attribute.
+        Should only be used if dataset is small in memory. """
+        for key in self.indices:
+            self.dataset[key] = {}
+            for feature in self.h5f[key].keys():
+                self.dataset[key][feature] = self.h5f[key][feature]
+                    
     def load_metadata( self ):
         """ loads metadata from .h5 file. Only for internal use. """
         self.metadata = {}
-        for key in self.h5f.keys():
-            if key == 'metadata':
-                for feature in self.h5f['/metadata'].keys():
-                    self.metadata[feature] = self.h5f['/metadata'][feature][()]
-        
+        indices = list(self.h5f.keys())
+        if'metadata' in indices:
+            indices.remove('metadata')
+            for feature in self.h5f['/metadata'].keys():
+                self.metadata[feature] = self.h5f['/metadata'][feature][()]
+        int_indices = list(map(int,indices))
+        int_indices.sort()
+        self.indices = list(map(str,int_indices))
+        self.numsamples=len(self.indices)        
+        if self.numsamples > 0:
+            self.numfeatures = len(self.h5f[self.indices[0]].keys()) # assumes the same number of features in every sample of the dataset
+            self.features = list(self.h5f[self.indices[0]].keys())
 
     def get_dataset_generator(self, features=[]):
         """Creates a callable that returns a generator object. 
@@ -164,11 +170,11 @@ class LoadH5Dataset(BaseLoadDataset):
         def sample_generator():
             if not features:
                 for i in range(1,self.numsamples+1):
-                    yield self.dataset[str(i)]
+                    yield {key:value[()] for key,value in self.h5f[str(i)].items()}
             else:
                 for i in range(1,self.numsamples+1):
                     yield {
-                        key:value for (key,value) in self.dataset[str(i)].items() if key in features}
+                        key:value[()] for key,value in self.h5f[str(i)].items() if key in features}
             return
         return sample_generator
 
@@ -183,4 +189,4 @@ class LoadH5Dataset(BaseLoadDataset):
         {feature_name[key] : feature[values]}. 
         """
         for i in range(1,self.numsamples+1):
-            yield self.dataset[str(i)]
+            yield {key:value[()] for key,value in self.h5f[str(i)].items()}
