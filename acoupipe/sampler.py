@@ -173,7 +173,7 @@ class SetSampler(BaseSampler):
         if not self.prob_list:
             prob_list = None 
         else:
-            prob_list = self.problist  
+            prob_list = self.prob_list  
         return prob_list        
 
     def set_value(self, target, value):
