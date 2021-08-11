@@ -4,12 +4,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>BaseSampler &#8212; AcouPipe 01.06.2021 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/agogo.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
@@ -46,46 +46,46 @@
   <section id="basesampler">
 <h1>BaseSampler<a class="headerlink" href="#basesampler" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="acoupipe.sampler.BaseSampler">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></code><code class="sig-name descname"><span class="pre">BaseSampler</span></code><a class="headerlink" href="#acoupipe.sampler.BaseSampler" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">BaseSampler</span></span><a class="headerlink" href="#acoupipe.sampler.BaseSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">traits.has_traits.HasPrivateTraits</span></code></p>
 <p>Base class that represents a random process manipulating attributes of an instance or a list of
 instances according to a specified random distribution.</p>
 <p>This class has no functionality and should not be used in practice.</p>
 <dl class="py attribute">
-<dt id="acoupipe.sampler.BaseSampler.target">
-<code class="sig-name descname"><span class="pre">target</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Trait(list,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.target" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.target">
+<span class="sig-name descname"><span class="pre">target</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Trait(list,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.target" title="Permalink to this definition">¶</a></dt>
 <dd><p>a list of instances which attributes are to be manipulated</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.BaseSampler.random_var">
-<code class="sig-name descname"><span class="pre">random_var</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Instance(_distn_infrastructure.rv_frozen,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.random_var" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.random_var">
+<span class="sig-name descname"><span class="pre">random_var</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Instance(_distn_infrastructure.rv_frozen,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.random_var" title="Permalink to this definition">¶</a></dt>
 <dd><p>the random variable specifying the random distribution</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.BaseSampler.random_state">
-<code class="sig-name descname"><span class="pre">random_state</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Either(int,RandomState,Generator,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.random_state" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.random_state">
+<span class="sig-name descname"><span class="pre">random_state</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Either(int,RandomState,Generator,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.random_state" title="Permalink to this definition">¶</a></dt>
 <dd><p>the state of the random variable <a class="reference internal" href="#acoupipe.sampler.BaseSampler.random_var" title="acoupipe.sampler.BaseSampler.random_var"><code class="xref py py-attr docutils literal notranslate"><span class="pre">random_var</span></code></a></p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.BaseSampler.single_value">
-<code class="sig-name descname"><span class="pre">single_value</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Bool(False,</span> <span class="pre">#TODO:</span> <span class="pre">better</span> <span class="pre">rename</span> <span class="pre">to</span> <span class="pre">same_sample</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.single_value" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.single_value">
+<span class="sig-name descname"><span class="pre">single_value</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Bool(False,</span> <span class="pre">#TODO:</span> <span class="pre">better</span> <span class="pre">rename</span> <span class="pre">to</span> <span class="pre">same_sample</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.BaseSampler.single_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>manages if the same sampled value is chosen for all objects in the <a class="reference internal" href="#acoupipe.sampler.BaseSampler.target" title="acoupipe.sampler.BaseSampler.target"><code class="xref py py-attr docutils literal notranslate"><span class="pre">target</span></code></a> list 
 if False, one value for each target is drawn</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.sampler.BaseSampler.rvs">
-<code class="sig-name descname"><span class="pre">rvs</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.BaseSampler.rvs" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.BaseSampler.rvs" title="Permalink to this definition">¶</a></dt>
 <dd><p>random variable sampling (for internal use)</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.sampler.BaseSampler.sample">
-<code class="sig-name descname"><span class="pre">sample</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.BaseSampler.sample" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.BaseSampler.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>this function utilizes <a class="reference internal" href="#acoupipe.sampler.BaseSampler.rvs" title="acoupipe.sampler.BaseSampler.rvs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code></a> function to draw random values
 from <a class="reference internal" href="#acoupipe.sampler.BaseSampler.random_var" title="acoupipe.sampler.BaseSampler.random_var"><code class="xref py py-attr docutils literal notranslate"><span class="pre">random_var</span></code></a> (no functionality in this class).</p>
 </dd></dl>
@@ -144,7 +144,7 @@ from <a class="reference internal" href="#acoupipe.sampler.BaseSampler.random_va
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
         </div>
         <div class="clearer"></div>

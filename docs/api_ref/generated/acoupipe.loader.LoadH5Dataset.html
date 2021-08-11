@@ -4,12 +4,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>LoadH5Dataset &#8212; AcouPipe 01.06.2021 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/agogo.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
@@ -43,76 +43,89 @@
   <section id="loadh5dataset">
 <h1>LoadH5Dataset<a class="headerlink" href="#loadh5dataset" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="acoupipe.loader.LoadH5Dataset">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">acoupipe.loader.</span></code><code class="sig-name descname"><span class="pre">LoadH5Dataset</span></code><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.loader.</span></span><span class="sig-name descname"><span class="pre">LoadH5Dataset</span></span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="acoupipe.loader.BaseLoadDataset.html#acoupipe.loader.BaseLoadDataset" title="acoupipe.loader.BaseLoadDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.loader.BaseLoadDataset</span></code></a></p>
 <p>Loads data sets stored into <cite>*.h5</cite> file format.</p>
 <p>This class loads data from .h5 files and
 and provides information like the number of 
 samples (<a class="reference internal" href="#acoupipe.loader.LoadH5Dataset.numsamples" title="acoupipe.loader.LoadH5Dataset.numsamples"><code class="xref py py-attr docutils literal notranslate"><span class="pre">numsamples</span></code></a>).</p>
 <dl class="py attribute">
-<dt id="acoupipe.loader.LoadH5Dataset.name">
-<code class="sig-name descname"><span class="pre">name</span></code><em class="property"> <span class="pre">=</span> <span class="pre">File(filter=['*.h5'],</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.name" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"> <span class="pre">=</span> <span class="pre">File(filter=['*.h5'],</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Full name of the .h5 file with data.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.loader.LoadH5Dataset.basename">
-<code class="sig-name descname"><span class="pre">basename</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Property(</span> <span class="pre">depends_on</span> <span class="pre">=</span> <span class="pre">'name',</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.basename" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.basename">
+<span class="sig-name descname"><span class="pre">basename</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Property(</span> <span class="pre">depends_on</span> <span class="pre">=</span> <span class="pre">'name',</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.basename" title="Permalink to this definition">¶</a></dt>
 <dd><p>Basename of the .h5 file with data, is set automatically.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.loader.LoadH5Dataset.dataset">
-<code class="sig-name descname"><span class="pre">dataset</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Dict(</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.dataset" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.dataset">
+<span class="sig-name descname"><span class="pre">dataset</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Dict(</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>The  data as array.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.loader.LoadH5Dataset.numsamples">
-<code class="sig-name descname"><span class="pre">numsamples</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CLong(0,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.numsamples" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.numsamples">
+<span class="sig-name descname"><span class="pre">numsamples</span></span><em class="property"> <span class="pre">=</span> <span class="pre">CLong(0,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.numsamples" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of data samples, is set automatically / read from file.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.loader.LoadH5Dataset.numfeatures">
-<code class="sig-name descname"><span class="pre">numfeatures</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CLong(0,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.numfeatures" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.features">
+<span class="sig-name descname"><span class="pre">features</span></span><em class="property"> <span class="pre">=</span> <span class="pre">List(</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Names of features, is set automatically / read from file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.numfeatures">
+<span class="sig-name descname"><span class="pre">numfeatures</span></span><em class="property"> <span class="pre">=</span> <span class="pre">CLong(0,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.numfeatures" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of features, is set automatically / read from file.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.loader.LoadH5Dataset.h5f">
-<code class="sig-name descname"><span class="pre">h5f</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Instance(H5FileBase,</span> <span class="pre">transient</span> <span class="pre">=</span> <span class="pre">True)</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.h5f" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.indices">
+<span class="sig-name descname"><span class="pre">indices</span></span><em class="property"> <span class="pre">=</span> <span class="pre">List(</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of features, is set automatically / read from file.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.h5f">
+<span class="sig-name descname"><span class="pre">h5f</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Instance(H5FileBase,</span> <span class="pre">transient</span> <span class="pre">=</span> <span class="pre">True)</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.h5f" title="Permalink to this definition">¶</a></dt>
 <dd><p>HDF5 file object</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.loader.LoadH5Dataset.metadata">
-<code class="sig-name descname"><span class="pre">metadata</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Dict(</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.metadata" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.metadata">
+<span class="sig-name descname"><span class="pre">metadata</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Dict(</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.metadata" title="Permalink to this definition">¶</a></dt>
 <dd><p>Provides metadata stored in HDF5 file object</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.loader.LoadH5Dataset.load_data">
-<code class="sig-name descname"><span class="pre">load_data</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_data" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.load_data">
+<span class="sig-name descname"><span class="pre">load_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Open the .h5 file and set attributes.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.loader.LoadH5Dataset.load_dataset">
-<code class="sig-name descname"><span class="pre">load_dataset</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_dataset" title="Permalink to this definition">¶</a></dt>
-<dd><p>loads dataset from .h5 file. Only for internal use.</p>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.load_dataset">
+<span class="sig-name descname"><span class="pre">load_dataset</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>loads dataset from .h5 file into the dataset attribute.
+Should only be used if dataset is small in memory.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.loader.LoadH5Dataset.load_metadata">
-<code class="sig-name descname"><span class="pre">load_metadata</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_metadata" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.load_metadata">
+<span class="sig-name descname"><span class="pre">load_metadata</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.load_metadata" title="Permalink to this definition">¶</a></dt>
 <dd><p>loads metadata from .h5 file. Only for internal use.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.loader.LoadH5Dataset.get_dataset_generator">
-<code class="sig-name descname"><span class="pre">get_dataset_generator</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.get_dataset_generator" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.get_dataset_generator">
+<span class="sig-name descname"><span class="pre">get_dataset_generator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.get_dataset_generator" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a callable that returns a generator object.</p>
 <p>This object can be used in conjunction with the Tensorflow <cite>tf.data.Dataset</cite> API to create
 a data generator with the <a href="#id1"><span class="problematic" id="id2">`</span></a>from_generator`method to feed machine learning models.</p>
@@ -140,6 +153,21 @@ meaning that all features will be considered.</p>
 <dd class="field-even"><dl class="simple">
 <dt>callable</dt><dd><p>A callable that returns a generator object</p>
 </dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.loader.LoadH5Dataset.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.loader.LoadH5Dataset.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python generator that iteratively yields the samples of the
+dataset in ascending sample index order (e.g. 1,2,…,N).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Dictionary containing a sample of the data set</dt><dd></dd>
+<dt><strong>{feature_name[key]</strong><span class="classifier">feature[values]}.</span></dt><dd></dd>
 </dl>
 </dd>
 </dl>
@@ -197,7 +225,7 @@ meaning that all features will be considered.</p>
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
         </div>
         <div class="clearer"></div>

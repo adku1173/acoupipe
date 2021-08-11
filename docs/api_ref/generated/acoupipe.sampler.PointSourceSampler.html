@@ -4,12 +4,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>PointSourceSampler &#8212; AcouPipe 01.06.2021 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/agogo.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
@@ -46,57 +46,57 @@
   <section id="pointsourcesampler">
 <h1>PointSourceSampler<a class="headerlink" href="#pointsourcesampler" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="acoupipe.sampler.PointSourceSampler">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></code><code class="sig-name descname"><span class="pre">PointSourceSampler</span></code><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">PointSourceSampler</span></span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="acoupipe.sampler.BaseSampler.html#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.sampler.BaseSampler</span></code></a></p>
 <p>Random process that samples the locations of one or more 
 instances of type <code class="xref py py-class docutils literal notranslate"><span class="pre">PointSource</span></code>.</p>
 <dl class="py attribute">
-<dt id="acoupipe.sampler.PointSourceSampler.target">
-<code class="sig-name descname"><span class="pre">target</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Trait(list,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.target" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.target">
+<span class="sig-name descname"><span class="pre">target</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Trait(list,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.target" title="Permalink to this definition">¶</a></dt>
 <dd><p>a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.PointSource</span></code> instances</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.PointSourceSampler.single_value">
-<code class="sig-name descname"><span class="pre">single_value</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Enum(False,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.single_value" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.single_value">
+<span class="sig-name descname"><span class="pre">single_value</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Enum(False,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.single_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>manages if a single value is chosen for all targets 
 is fixed to False (one value for each object in <a class="reference internal" href="#acoupipe.sampler.PointSourceSampler.target" title="acoupipe.sampler.PointSourceSampler.target"><code class="xref py py-attr docutils literal notranslate"><span class="pre">target</span></code></a> list is drawn)</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.PointSourceSampler.x_bounds">
-<code class="sig-name descname"><span class="pre">x_bounds</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Tuple(None,</span> <span class="pre">None,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.x_bounds" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.x_bounds">
+<span class="sig-name descname"><span class="pre">x_bounds</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Tuple(None,</span> <span class="pre">None,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.x_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>limits of the allowed locations of a source along the x-axis (lower,upper)</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.PointSourceSampler.y_bounds">
-<code class="sig-name descname"><span class="pre">y_bounds</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Tuple(None,</span> <span class="pre">None,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.y_bounds" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.y_bounds">
+<span class="sig-name descname"><span class="pre">y_bounds</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Tuple(None,</span> <span class="pre">None,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.y_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>limits of the allowed locations of a source along the y-axis (lower,upper)</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.PointSourceSampler.z_bounds">
-<code class="sig-name descname"><span class="pre">z_bounds</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Tuple(None,</span> <span class="pre">None,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.z_bounds" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.z_bounds">
+<span class="sig-name descname"><span class="pre">z_bounds</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Tuple(None,</span> <span class="pre">None,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.z_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>limits of the allowed locations of a source along the z-axis (lower,upper)</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.sampler.PointSourceSampler.ldir">
-<code class="sig-name descname"><span class="pre">ldir</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CArray(</span> <span class="pre">dtype=float,</span> <span class="pre">shape=(3,</span> <span class="pre">(1,</span> <span class="pre">3)),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.ldir" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.ldir">
+<span class="sig-name descname"><span class="pre">ldir</span></span><em class="property"> <span class="pre">=</span> <span class="pre">CArray(</span> <span class="pre">dtype=float,</span> <span class="pre">shape=(3,</span> <span class="pre">(1,</span> <span class="pre">3)),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.ldir" title="Permalink to this definition">¶</a></dt>
 <dd><p>(x,y,z)-directions of location sampling</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.sampler.PointSourceSampler.sample_loc">
-<code class="sig-name descname"><span class="pre">sample_loc</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.sample_loc" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.sample_loc">
+<span class="sig-name descname"><span class="pre">sample_loc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.sample_loc" title="Permalink to this definition">¶</a></dt>
 <dd><p>sampling of a single target location (internal use)</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.sampler.PointSourceSampler.sample">
-<code class="sig-name descname"><span class="pre">sample</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.sample" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.sample" title="Permalink to this definition">¶</a></dt>
 <dd><p>this function utilizes <code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code> function to draw random 
 values from <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_var</span></code> that are going to be assigned 
 to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">loc</span></code> attribute of a <code class="xref py py-class docutils literal notranslate"><span class="pre">PointSource</span></code> instance.</p>
@@ -156,7 +156,7 @@ to the <code class="xref py py-attr docutils literal notranslate"><span class="p
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
         </div>
         <div class="clearer"></div>

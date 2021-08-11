@@ -4,12 +4,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>DistributedPipeline &#8212; AcouPipe 01.06.2021 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/agogo.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
@@ -46,8 +46,8 @@
   <section id="distributedpipeline">
 <h1>DistributedPipeline<a class="headerlink" href="#distributedpipeline" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="acoupipe.pipeline.DistributedPipeline">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></code><code class="sig-name descname"><span class="pre">DistributedPipeline</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.DistributedPipeline">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></span><span class="sig-name descname"><span class="pre">DistributedPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.pipeline.BasePipeline</span></code></a></p>
 <p>Class to calculate data (extract features) in parallel to build large datasets.</p>
 <p>This class can be used to calculate data (extract various features) 
@@ -57,15 +57,15 @@ of type <code class="xref py py-class docutils literal notranslate"><span class=
 Re-seeding is performed at each iteration if <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seeds</span></code> are
 given.</p>
 <dl class="py attribute">
-<dt id="acoupipe.pipeline.DistributedPipeline.numworkers">
-<code class="sig-name descname"><span class="pre">numworkers</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Int(1,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline.numworkers" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.DistributedPipeline.numworkers">
+<span class="sig-name descname"><span class="pre">numworkers</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Int(1,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline.numworkers" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of workers to be used for parallel calculation (usually number of CPUs). 
 each worker is associated with a stateless task.</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.pipeline.DistributedPipeline.get_data">
-<code class="sig-name descname"><span class="pre">get_data</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline.get_data" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.DistributedPipeline.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline.get_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>provides the extracted features, sampler seeds and indices.</p>
 <p>The calculation of all data samples is performed in parallel and asynchronously.
 In case of specifying more than one worker in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">numworker</span></code> attribute, 
@@ -136,7 +136,7 @@ provided in the output dictionary.</p>
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
         </div>
         <div class="clearer"></div>

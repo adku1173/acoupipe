@@ -4,12 +4,12 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>BasePipeline &#8212; AcouPipe 01.06.2021 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/agogo.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
@@ -46,8 +46,8 @@
   <section id="basepipeline">
 <h1>BasePipeline<a class="headerlink" href="#basepipeline" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
-<dt id="acoupipe.pipeline.BasePipeline">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></code><code class="sig-name descname"><span class="pre">BasePipeline</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BasePipeline" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></span><span class="sig-name descname"><span class="pre">BasePipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BasePipeline" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="acoupipe.pipeline.DataGenerator.html#acoupipe.pipeline.DataGenerator" title="acoupipe.pipeline.DataGenerator"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.pipeline.DataGenerator</span></code></a></p>
 <p>Class to control the random process and iteratively extract and pass a specified amount of data.</p>
 <p>This class can be used to calculate data (extract features) 
@@ -57,22 +57,22 @@ of type <code class="xref py py-class docutils literal notranslate"><span class=
 Re-seeding is performed at each iteration if <a class="reference internal" href="#acoupipe.pipeline.BasePipeline.random_seeds" title="acoupipe.pipeline.BasePipeline.random_seeds"><code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seeds</span></code></a> are
 given.</p>
 <dl class="py attribute">
-<dt id="acoupipe.pipeline.BasePipeline.sampler">
-<code class="sig-name descname"><span class="pre">sampler</span></code><em class="property"> <span class="pre">=</span> <span class="pre">List([],</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.sampler" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.sampler">
+<span class="sig-name descname"><span class="pre">sampler</span></span><em class="property"> <span class="pre">=</span> <span class="pre">List([],</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.sampler" title="Permalink to this definition">¶</a></dt>
 <dd><p>a list with instances of <a class="reference internal" href="acoupipe.sampler.BaseSampler.html#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a> derived classes</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.pipeline.BasePipeline.features">
-<code class="sig-name descname"><span class="pre">features</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Dict(key_trait=Str(&quot;&quot;),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.features" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.features">
+<span class="sig-name descname"><span class="pre">features</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Dict(key_trait=Str(&quot;&quot;),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.features" title="Permalink to this definition">¶</a></dt>
 <dd><p>dictionary consisting of feature names (key) and their extraction functions as callable (value)
 one can either pass a callable (e.g. <cite>features = {“print” : lambda: print(“extract..”)}</cite>) or a tuple containing the callable and 
 their arguments (e.g.: <cite>features = {“print” : (lambda: print(x), “extract..”)}</cite>).</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.pipeline.BasePipeline.random_seeds">
-<code class="sig-name descname"><span class="pre">random_seeds</span></code><em class="property"> <span class="pre">=</span> <span class="pre">List(range,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.random_seeds" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.random_seeds">
+<span class="sig-name descname"><span class="pre">random_seeds</span></span><em class="property"> <span class="pre">=</span> <span class="pre">List(range,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.random_seeds" title="Permalink to this definition">¶</a></dt>
 <dd><p>a list of <cite>range(seeds)</cite> associated with sampler objects in <a class="reference internal" href="#acoupipe.pipeline.BasePipeline.sampler" title="acoupipe.pipeline.BasePipeline.sampler"><code class="xref py py-attr docutils literal notranslate"><span class="pre">sampler</span></code></a>. 
 A new seed will be collected from each range object during an evaluation of the <a class="reference internal" href="#acoupipe.pipeline.BasePipeline.get_data" title="acoupipe.pipeline.BasePipeline.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a> generator.
 This seed is used to initialize an instance of <code class="xref py py-class docutils literal notranslate"><span class="pre">numpy.random._generator.Generator</span></code> which is passed to 
@@ -81,20 +81,20 @@ the <code class="xref py py-attr docutils literal notranslate"><span class="pre"
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.pipeline.BasePipeline.numsamples">
-<code class="sig-name descname"><span class="pre">numsamples</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Int(0,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.numsamples" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.numsamples">
+<span class="sig-name descname"><span class="pre">numsamples</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Int(0,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.numsamples" title="Permalink to this definition">¶</a></dt>
 <dd><p>number of data samples to calculate by <a class="reference internal" href="#acoupipe.pipeline.BasePipeline.get_data" title="acoupipe.pipeline.BasePipeline.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>. Will be superseded by the <a class="reference internal" href="#acoupipe.pipeline.BasePipeline.random_seeds" title="acoupipe.pipeline.BasePipeline.random_seeds"><code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seeds</span></code></a> attribute if specified.</p>
 </dd></dl>
 
 <dl class="py attribute">
-<dt id="acoupipe.pipeline.BasePipeline.logger">
-<code class="sig-name descname"><span class="pre">logger</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Trait(logging.getLogger(__name__),</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.logger" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.logger">
+<span class="sig-name descname"><span class="pre">logger</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Trait(logging.getLogger(__name__),</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.logger" title="Permalink to this definition">¶</a></dt>
 <dd><p>logger instance to log calculation times for each data sample</p>
 </dd></dl>
 
 <dl class="py method">
-<dt id="acoupipe.pipeline.BasePipeline.get_data">
-<code class="sig-name descname"><span class="pre">get_data</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.get_data" title="Permalink to this definition">¶</a></dt>
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.get_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>provides the extracted features, sampler seeds and indices.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Yields</dt>
@@ -160,7 +160,7 @@ the <code class="xref py py-attr docutils literal notranslate"><span class="pre"
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
     </div>
         </div>
         <div class="clearer"></div>
