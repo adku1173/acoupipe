@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>WriteTFRecord &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/agogo.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="loader" href="../acoupipe.loader.html" />
+    <link rel="prev" title="WriteH5Dataset" href="acoupipe.writer.WriteH5Dataset.html" /> 
+  </head><body>
+    <div class="header-wrapper" role="banner">
+      <div class="header">
+        <div class="headertitle"><a
+          href="../../index.html">AcouPipe 01.06.2021 documentation</a></div>
+        <div class="rel" role="navigation" aria-label="related navigation">
+          <a href="acoupipe.writer.WriteH5Dataset.html" title="WriteH5Dataset"
+             accesskey="P">previous</a> |
+          <a href="../acoupipe.loader.html" title="loader"
+             accesskey="N">next</a> |
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a>
+        </div>
+       </div>
+    </div>
+
+    <div class="content-wrapper">
+      <div class="content">
+        <div class="document">
+            
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="writetfrecord">
+<h1>WriteTFRecord<a class="headerlink" href="#writetfrecord" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.writer.</span></span><span class="sig-name descname"><span class="pre">WriteTFRecord</span></span><a class="headerlink" href="#acoupipe.writer.WriteTFRecord" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="acoupipe.writer.BaseWriteDataset.html#acoupipe.writer.BaseWriteDataset" title="acoupipe.writer.BaseWriteDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.writer.BaseWriteDataset</span></code></a></p>
+<p>Class intended to write data from <a class="reference internal" href="acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePipeline</span></code></a> 
+instances to a .tfrecord file that can be consumed by tensorflows 
+tf.data API. Stores data in binary format.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"> <span class="pre">=</span> <span class="pre">File(filter=['*.tfrecords'],</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the file to be saved.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.encoder_funcs">
+<span class="sig-name descname"><span class="pre">encoder_funcs</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Dict(key_trait=Str(),</span> <span class="pre">value_trait=Function(),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.encoder_funcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary with encoding functions (dict values) to convert data yielded by the pipeline to binary format of .tfrecord file.
+The key values of this dictionary are the feature names specified in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">features</span></code> attribute
+of the <code class="xref py py-attr docutils literal notranslate"><span class="pre">source</span></code> object.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.write_infofile">
+<span class="sig-name descname"><span class="pre">write_infofile</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Bool(True,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.write_infofile" title="Permalink to this definition">¶</a></dt>
+<dd><p>if True, writes an additional .txt file containing the names, types and shapes of the features stored in the
+tfrecord data set.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.options">
+<span class="sig-name descname"><span class="pre">options</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Trait(None,tf.io.TFRecordOptions)</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trait to set specific options to the .tfrecord file.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>saves the output of the <a class="reference internal" href="#acoupipe.writer.WriteTFRecord.get_data" title="acoupipe.writer.WriteTFRecord.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a> method of a <a class="reference internal" href="acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePipeline</span></code></a> 
+derived class instance specified at <code class="xref py py-attr docutils literal notranslate"><span class="pre">source</span></code> to .tfrecord file format.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Python generator that saves the data passed by the source to a <cite>*.tfrecord</cite> file and
+yields the data to the next object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>Dictionary containing a sample of the data set</dt><dd></dd>
+<dt><strong>{feature_name[key]</strong><span class="classifier">feature[values]}.</span></dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+        </div>
+        <div class="sidebar">
+          
+          <h3>Table of Contents</h3>
+          <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index_apiref.html">Reference Manual</a></li>
+</ul>
+
+          <div role="search">
+            <h3 style="margin-top: 1.5em;">Search</h3>
+            <form class="search" action="../../search.html" method="get">
+                <input type="text" name="q" />
+                <input type="submit" value="Go" />
+            </form>
+          </div>
+
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+    <div class="footer-wrapper">
+      <div class="footer">
+        <div class="left">
+          <div role="navigation" aria-label="related navigaton">
+            <a href="acoupipe.writer.WriteH5Dataset.html" title="WriteH5Dataset"
+              >previous</a> |
+            <a href="../acoupipe.loader.html" title="loader"
+              >next</a> |
+            <a href="../../py-modindex.html" title="Python Module Index"
+              >modules</a> |
+            <a href="../../genindex.html" title="General Index"
+              >index</a>
+          </div>
+          <div role="note" aria-label="source link">
+              <br/>
+              <a href="../../_sources/api_ref/generated/acoupipe.writer.WriteTFRecord.rst.txt"
+                rel="nofollow">Show Source</a>
+          </div>
+        </div>
+
+        <div class="right">
+          
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+    </div>
+        </div>
+        <div class="clearer"></div>
+      </div>
+    </div>
+
+  </body>
+</html>
