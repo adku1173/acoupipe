@@ -4,31 +4,23 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
     <title>MicGeomSampler &#8212; AcouPipe 01.06.2021 documentation</title>
-    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../../_static/agogo.css" type="text/css" />
-    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/agogo.css" />
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../../genindex.html" />
-    <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="pipeline" href="../acoupipe.pipeline.html" />
-    <link rel="prev" title="PointSourceSampler" href="acoupipe.sampler.PointSourceSampler.html" /> 
+    <link rel="search" title="Search" href="../../search.html" /> 
   </head><body>
     <div class="header-wrapper" role="banner">
       <div class="header">
         <div class="headertitle"><a
           href="../../index.html">AcouPipe 01.06.2021 documentation</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
-          <a href="acoupipe.sampler.PointSourceSampler.html" title="PointSourceSampler"
-             accesskey="P">previous</a> |
-          <a href="../acoupipe.pipeline.html" title="pipeline"
-             accesskey="N">next</a> |
-          <a href="../../py-modindex.html" title="Python Module Index"
-             >modules</a> |
           <a href="../../genindex.html" title="General Index"
              accesskey="I">index</a>
         </div>
@@ -45,84 +37,6 @@
             
   <section id="micgeomsampler">
 <h1>MicGeomSampler<a class="headerlink" href="#micgeomsampler" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
-<dt id="acoupipe.sampler.MicGeomSampler">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></code><code class="sig-name descname"><span class="pre">MicGeomSampler</span></code><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="acoupipe.sampler.BaseSampler.html#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.sampler.BaseSampler</span></code></a></p>
-<p>Random process that samples the microphone positions of one
-instance of type <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.MicGeom</span></code>.</p>
-<dl class="py attribute">
-<dt id="acoupipe.sampler.MicGeomSampler.target">
-<code class="sig-name descname"><span class="pre">target</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Instance(MicGeom,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.target" title="Permalink to this definition">¶</a></dt>
-<dd><p>the microphone geometry instance (type <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.MicGeom</span></code>)</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="acoupipe.sampler.MicGeomSampler.single_value">
-<code class="sig-name descname"><span class="pre">single_value</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Enum(True,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.single_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>manages if a single value is chosen for all targets 
-if False one value for each target is drawn</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="acoupipe.sampler.MicGeomSampler.mpos_init">
-<code class="sig-name descname"><span class="pre">mpos_init</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Property(depends_on=[&quot;target&quot;],</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.mpos_init" title="Permalink to this definition">¶</a></dt>
-<dd><p>a copy of the initial microphone geometry object provided as the 
-<a class="reference internal" href="#acoupipe.sampler.MicGeomSampler.target" title="acoupipe.sampler.MicGeomSampler.target"><code class="xref py py-attr docutils literal notranslate"><span class="pre">target</span></code></a> attribute value.</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="acoupipe.sampler.MicGeomSampler.tdir">
-<code class="sig-name descname"><span class="pre">tdir</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CArray(</span> <span class="pre">dtype=float,</span> <span class="pre">shape=(3,</span> <span class="pre">(1,</span> <span class="pre">3)),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.tdir" title="Permalink to this definition">¶</a></dt>
-<dd><p>(x,y,z)-directions of full geometry translation</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="acoupipe.sampler.MicGeomSampler.ddir">
-<code class="sig-name descname"><span class="pre">ddir</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CArray(shape=(3,</span> <span class="pre">(1,</span> <span class="pre">3)),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.ddir" title="Permalink to this definition">¶</a></dt>
-<dd><p>(x,y,z)-directions of individual position deviation</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="acoupipe.sampler.MicGeomSampler.rvec">
-<code class="sig-name descname"><span class="pre">rvec</span></code><em class="property"> <span class="pre">=</span> <span class="pre">CArray(</span> <span class="pre">dtype=float,</span> <span class="pre">shape=(3,(1,</span> <span class="pre">3)),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.rvec" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reference vector for rotation</p>
-</dd></dl>
-
-<dl class="py attribute">
-<dt id="acoupipe.sampler.MicGeomSampler.rscale">
-<code class="sig-name descname"><span class="pre">rscale</span></code><em class="property"> <span class="pre">=</span> <span class="pre">Float(1.0,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.rscale" title="Permalink to this definition">¶</a></dt>
-<dd><p>scaling factor of rotation deviation</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="acoupipe.sampler.MicGeomSampler.rotate">
-<code class="sig-name descname"><span class="pre">rotate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.rotate" title="Permalink to this definition">¶</a></dt>
-<dd><p>rotates the microphone array</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="acoupipe.sampler.MicGeomSampler.translate">
-<code class="sig-name descname"><span class="pre">translate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.translate" title="Permalink to this definition">¶</a></dt>
-<dd><p>translates the microphone array</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="acoupipe.sampler.MicGeomSampler.deviate">
-<code class="sig-name descname"><span class="pre">deviate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.deviate" title="Permalink to this definition">¶</a></dt>
-<dd><p>deviates the individual microphone positions</p>
-</dd></dl>
-
-<dl class="py method">
-<dt id="acoupipe.sampler.MicGeomSampler.sample">
-<code class="sig-name descname"><span class="pre">sample</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.sample" title="Permalink to this definition">¶</a></dt>
-<dd><p>this function utilizes <code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code> function to draw random 
-values from <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_var</span></code> that are going to be used to variate 
-the microphone positions of a <code class="xref py py-class docutils literal notranslate"><span class="pre">MicGeom</span></code> instance.</p>
-</dd></dl>
-
-</dd></dl>
-
 </section>
 
 
@@ -134,10 +48,7 @@ the microphone positions of a <code class="xref py py-class docutils literal not
         <div class="sidebar">
           
           <h3>Table of Contents</h3>
-          <ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="../index_apiref.html">Reference Manual</a></li>
-</ul>
-
+          
           <div role="search">
             <h3 style="margin-top: 1.5em;">Search</h3>
             <form class="search" action="../../search.html" method="get">
@@ -155,12 +66,6 @@ the microphone positions of a <code class="xref py py-class docutils literal not
       <div class="footer">
         <div class="left">
           <div role="navigation" aria-label="related navigaton">
-            <a href="acoupipe.sampler.PointSourceSampler.html" title="PointSourceSampler"
-              >previous</a> |
-            <a href="../acoupipe.pipeline.html" title="pipeline"
-              >next</a> |
-            <a href="../../py-modindex.html" title="Python Module Index"
-              >modules</a> |
             <a href="../../genindex.html" title="General Index"
               >index</a>
           </div>
@@ -175,7 +80,7 @@ the microphone positions of a <code class="xref py py-class docutils literal not
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.5.3.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
         </div>
         <div class="clearer"></div>

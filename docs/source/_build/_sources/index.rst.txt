@@ -27,7 +27,7 @@ The data set is created by a simulation process with Acoular_. The amount of cas
 The following figure illustrates the virtual measurement setup.
 
 
-.. figure:: docs/source/_static/msm_layout.png
+.. figure:: ../source/_static/msm_layout.png
 
 
 Simulation with Docker
@@ -74,7 +74,7 @@ It is necessary to forward the corresponding TCP port with :code:`docker run -p 
 One can open the dashboard by accessing the web address http://0.0.0.0:8265 which should display the following web interface
 
 
-.. image:: docs/source/_static/dashboard.png
+.. image:: ../source/_static/dashboard.png
 
 
 The main.py script has some further command line options that can be used to influence the simulation process:
@@ -567,7 +567,7 @@ Module Overview
 The following UML flowchart gives a rough overview of AcouPipe's 
 classes and their inheritance relationships. 
 
-.. image:: docs/source/_static/acoupipe_uml.png
+.. image:: ../source/_static/acoupipe_uml.png
 
 
 Sampler Module
