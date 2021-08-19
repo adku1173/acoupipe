@@ -9,8 +9,11 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=source
 set BUILDDIR=build
+set HTMLDIR=build\html
+set HTMLCOPYDIR=..\docs\
 
 if "%1" == "" goto help
+if "%1" == "html" goto html
 
 %SPHINXBUILD% >NUL 2>NUL
 if errorlevel 9009 (
@@ -30,6 +33,12 @@ goto end
 
 :help
 %SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+goto end
+
+:html 
+%SPHINXBUILD% -M html %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+xcopy /s/e/y %HTMLDIR% %HTMLCOPYDIR%
+goto end
 
 :end
 popd

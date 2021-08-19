@@ -28,7 +28,6 @@ The following figure illustrates the virtual measurement setup.
 
 
 .. figure:: ../source/_static/msm_layout.png
-    :width: 780
 
 
 Simulation with Docker
@@ -76,61 +75,60 @@ One can open the dashboard by accessing the web address http://0.0.0.0:8265 whic
 
 
 .. image:: ../source/_static/dashboard.png
-    :width: 780
 
 
 The main.py script has some further command line options that can be used to influence the simulation process:
 
+.. sidebar:: command line arguments of the main.py script
 
-.. code-block::
-    :caption: command line arguments of the main.py script
+    .. code-block::
 
-    usage: main.py [-h]
-                [--datasets {training,validation} [{training,validation} ...]]
-                [--tsamples TSAMPLES] [--tstart TSTART] [--vsamples VSAMPLES]
-                [--vstart VSTART] [--tpath TPATH] [--vpath VPATH]
-                [--file_format {tfrecord,h5}] [--cache_dir CACHE_DIR]
-                [--freq_index FREQ_INDEX] [--nsources NSOURCES]
-                [--features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]]
-                [--tasks TASKS] [--head HEAD] [--cache_csm] [--cache_bf]
-                [--log]
+        usage: main.py [-h]
+                    [--datasets {training,validation} [{training,validation} ...]]
+                    [--tsamples TSAMPLES] [--tstart TSTART] [--vsamples VSAMPLES]
+                    [--vstart VSTART] [--tpath TPATH] [--vpath VPATH]
+                    [--file_format {tfrecord,h5}] [--cache_dir CACHE_DIR]
+                    [--freq_index FREQ_INDEX] [--nsources NSOURCES]
+                    [--features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]]
+                    [--tasks TASKS] [--head HEAD] [--cache_csm] [--cache_bf]
+                    [--log]
 
-    optional arguments:
-    -h, --help            show this help message and exit
-    --datasets {training,validation} [{training,validation} ...]
-                            Whether to compute both data sets ('training
-                            validation') or only the 'training' / 'validation'
-                            data set. Defaults to compute training and validation
-                            data set
-    --tsamples TSAMPLES   Total number of training samples to simulate
-    --tstart TSTART       Start simulation at a specific sample of the data set
-    --vsamples VSAMPLES   Total number of validation samples to simulate
-    --vstart VSTART       Start simulation at a specific sample of the data set
-    --tpath TPATH         Path of simulated training data. Default is current
-                            working directory
-    --vpath VPATH         Path of simulated validation data. Default is current
-                            working directory
-    --file_format {tfrecord,h5}
-                            Desired file format to store the data sets.
-    --cache_dir CACHE_DIR
-                            Path of cached data. Default is current working
-                            directory
-    --freq_index FREQ_INDEX
-                            Returns only the features and targets for the
-                            specified frequency index, default is None (all
-                            frequencies will be calculated and included in the
-                            data set)
-    --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
-                            Whether to compute data set containing the csm or the
-                            beamforming map as the main feature. Default is 'csm'
-    --tasks TASKS         Number of asynchronous tasks. Defaults to '1' (non-
-                            distributed)
-    --head HEAD           IP address of the head node in the ray cluster. Only
-                            necessary when running in distributed mode.
-    --cache_csm           Whether to cache the results of the CSM calculation
-    --cache_bf            Whether to cache the results of the beamformer
-                            calculation. Only relevant if 'sourcemap' is included
-                            in --features list.
+        optional arguments:
+        -h, --help            show this help message and exit
+        --datasets {training,validation} [{training,validation} ...]
+                                Whether to compute both data sets ('training
+                                validation') or only the 'training' / 'validation'
+                                data set. Defaults to compute training and validation
+                                data set
+        --tsamples TSAMPLES   Total number of training samples to simulate
+        --tstart TSTART       Start simulation at a specific sample of the data set
+        --vsamples VSAMPLES   Total number of validation samples to simulate
+        --vstart VSTART       Start simulation at a specific sample of the data set
+        --tpath TPATH         Path of simulated training data. Default is current
+                                working directory
+        --vpath VPATH         Path of simulated validation data. Default is current
+                                working directory
+        --file_format {tfrecord,h5}
+                                Desired file format to store the data sets.
+        --cache_dir CACHE_DIR
+                                Path of cached data. Default is current working
+                                directory
+        --freq_index FREQ_INDEX
+                                Returns only the features and targets for the
+                                specified frequency index, default is None (all
+                                frequencies will be calculated and included in the
+                                data set)
+        --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
+                                Whether to compute data set containing the csm or the
+                                beamforming map as the main feature. Default is 'csm'
+        --tasks TASKS         Number of asynchronous tasks. Defaults to '1' (non-
+                                distributed)
+        --head HEAD           IP address of the head node in the ray cluster. Only
+                                necessary when running in distributed mode.
+        --cache_csm           Whether to cache the results of the CSM calculation
+        --cache_bf            Whether to cache the results of the beamformer
+                                calculation. Only relevant if 'sourcemap' is included
+                                in --features list.
 
 
 Simulation on a High-Performance Cluster (HPC)
@@ -570,7 +568,6 @@ The following UML flowchart gives a rough overview of AcouPipe's
 classes and their inheritance relationships. 
 
 .. image:: ../source/_static/acoupipe_uml.png
-    :width: 780
 
 
 Sampler Module
