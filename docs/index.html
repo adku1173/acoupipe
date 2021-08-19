@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Welcome to AcouPipe documentation! &#8212; AcouPipe 01.06.2021 documentation</title>
+    <title>AcouPipe &#8212; AcouPipe 01.06.2021 documentation</title>
     <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="_static/agogo.css" />
     <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
@@ -14,16 +14,13 @@
     <script src="_static/underscore.js"></script>
     <script src="_static/doctools.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Reference Manual" href="api_ref/index_apiref.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
   </head><body>
     <div class="header-wrapper" role="banner">
       <div class="header">
         <div class="headertitle"><a
           href="#">AcouPipe 01.06.2021 documentation</a></div>
         <div class="rel" role="navigation" aria-label="related navigation">
-          <a href="api_ref/index_apiref.html" title="Reference Manual"
-             accesskey="N">next</a> |
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |
           <a href="genindex.html" title="General Index"
@@ -40,22 +37,723 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <section id="welcome-to-acoupipe-documentation">
-<h1>Welcome to AcouPipe documentation!<a class="headerlink" href="#welcome-to-acoupipe-documentation" title="Permalink to this headline">¶</a></h1>
-<p>AcouPipe is a Python package that is intended to simplify the creation of microphone array data for machine learning.
-The aim of the library is to generate large data sets according to specific distributions, properties and parameters.
-For the creation of acoustic data, the simulation capabilities of the <a class="reference external" href="http://www.acoular.org/">Acoular</a> Python library are required.
-To enable fast calculation, computations of data (or features) can be distributed to multiple CPUs and Nodes. Therefore AcouPipe uses the <a class="reference external" href="https://docs.ray.io/en/master//">Ray</a> core package under the hood.</p>
+  <p><a class="reference external" href="https://www.python.org/"><img alt="python-version" src="https://img.shields.io/badge/python-3.7%20%7C%203.8-blue" /></a></p>
+<section id="acoupipe">
+<h1><a class="toc-backref" href="#id6">AcouPipe</a><a class="headerlink" href="#acoupipe" title="Permalink to this headline">¶</a></h1>
+<p><strong>AcouPipe</strong> is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with <a class="reference external" href="http://www.acoular.org">Acoular</a> that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:</p>
+<ul class="simple">
+<li><p>Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in <a class="reference internal" href="#cas21" id="id1"><span>[Cas21]</span></a>)</p></li>
+<li><p>Conventional Beamforming Map (e.g. in <a class="reference internal" href="#kuj19" id="id2"><span>[Kuj19]</span></a>)</p></li>
+</ul>
+<p>This allows the user to create data sets of manageable size that are portable and facilitate reproducible research.</p>
+<p>AcouPipe supports distributed computation with <a class="reference external" href="https://docs.ray.io/en/master/">Ray</a> and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from <a class="reference external" href="https://hub.docker.com/r/adku1173/acoupipe/tags?page=1&amp;ordering=last_updated">DockerHub</a>.</p>
+<div class="contents topic" id="contents">
+<p class="topic-title">Contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#acoupipe" id="id6">AcouPipe</a></p>
+<ul>
+<li><p><a class="reference internal" href="#quickstart" id="id7">Quickstart</a></p>
+<ul>
+<li><p><a class="reference internal" href="#simulation-with-docker" id="id8">Simulation with Docker</a></p></li>
+<li><p><a class="reference internal" href="#simulation-on-a-high-performance-cluster-hpc" id="id9">Simulation on a High-Performance Cluster (HPC)</a></p></li>
+<li><p><a class="reference internal" href="#data-set-characteristics" id="id10">Data Set Characteristics</a></p>
+<ul>
+<li><p><a class="reference internal" href="#input-features" id="id11">Input Features</a></p></li>
+<li><p><a class="reference internal" href="#labels" id="id12">Labels</a></p></li>
+<li><p><a class="reference internal" href="#file-formats" id="id13">File Formats</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#load-the-data-set" id="id14">Load the Data Set</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#documentation" id="id15">Documentation</a></p>
+<ul>
+<li><p><a class="reference internal" href="#dependencies" id="id16">Dependencies</a></p></li>
+<li><p><a class="reference internal" href="#installation" id="id17">Installation</a></p></li>
+<li><p><a class="reference internal" href="#module-overview" id="id18">Module Overview</a></p>
+<ul>
+<li><p><a class="reference internal" href="#sampler-module" id="id19">Sampler Module</a></p></li>
+<li><p><a class="reference internal" href="#pipeline-module" id="id20">Pipeline Module</a></p></li>
+<li><p><a class="reference internal" href="#writer-module" id="id21">Writer Module</a></p></li>
+<li><p><a class="reference internal" href="#loader-module" id="id22">Loader Module</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#examples" id="id23">Examples</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference internal" href="#literature" id="id24">Literature</a></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<section id="quickstart">
+<h2><a class="toc-backref" href="#id7">Quickstart</a><a class="headerlink" href="#quickstart" title="Permalink to this headline">¶</a></h2>
+<p>This section will walk you through the necessary steps to quickly generate the default data set.
+The data set comprises:</p>
+<ul class="simple">
+<li><p>500,000 source cases for training</p></li>
+<li><p>10,000 source cases for validation</p></li>
+</ul>
+<p>The data set is created by a simulation process with <a class="reference external" href="http://www.acoular.org">Acoular</a>. The amount of cases can be easily extended.
+The following figure illustrates the virtual measurement setup.</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="_images/msm_layout.png"><img alt="_images/msm_layout.png" src="_images/msm_layout.png" style="width: 780px;" /></a>
+</figure>
+<section id="simulation-with-docker">
+<h3><a class="toc-backref" href="#id8">Simulation with Docker</a><a class="headerlink" href="#simulation-with-docker" title="Permalink to this headline">¶</a></h3>
+<p>The easiest way to create the data set is by using an existing
+Docker image from <a class="reference external" href="https://hub.docker.com/r/adku1173/acoupipe/tags?page=1&amp;ordering=last_updated">DockerHub</a>. Simply pull the latest image with the command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">pull</span> <span class="n">adku1173</span><span class="o">/</span><span class="n">acoupipe</span><span class="p">:</span><span class="n">latest</span>
+</pre></div>
+</div>
+<p>The image contains the simulation source code and an up-to-date version of <a class="reference external" href="http://www.acoular.org">Acoular</a>,
+AcouPipe and <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
+One can run the data set simulation given by the main.py script from inside the Docker container by typing</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>HOSTDIR=&quot;&lt;enter the desired host directory&gt;&quot; # stores the data sets inside this directory
+NTASKS=&lt;enter the number of parallel tasks&gt; # should match the number of CPUs on the host
+docker run -it --user &quot;$(id -u)&quot;:&quot;$(id -g)&quot; -v $HOSTDIR:/data/datasets adku1173/acoupipe python main.py --tasks=$NTASKS
+</pre></div>
+</div>
+<p>Note that the current user on the host is specified as the user of the docker environment with the additional argument <code class="code docutils literal notranslate"><span class="pre">--user</span> <span class="pre">&quot;$(id</span> <span class="pre">-u)&quot;:&quot;$(id</span> <span class="pre">-g)&quot;</span></code>.
+It is not recommended to run the container as a root user.
+Further, a directory where the data set files are stored needs to be binded to the container (<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=&lt;dir&gt;</span></code>). With the
+<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=$(pwd)</span></code> command, the current working directory on Linux or macOS hosts are binded.
+The simulation can be run on multiple CPU threads in parallel to speed up computations. The exact number of threads can be specified by the
+user with the <code class="code docutils literal notranslate"><span class="pre">--tasks</span></code> argument.</p>
+<p>After starting the main script, a progress bar should appear that logs the current simulation status:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1%|█▍                           | 83/10000 [01:04&lt;1:40:35,  1.64it/s]
+</pre></div>
+</div>
+<p>It is possible to view the CPU usage via a dashboard application served by the <a class="reference external" href="https://docs.ray.io/en/master/">Ray</a> API. One should find the following output at the beginning
+of the simulation process when running the simulation on multiple CPU threads</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2021</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">14</span> <span class="mi">08</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">16</span><span class="p">,</span><span class="mi">533</span>     <span class="n">INFO</span> <span class="n">services</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">1267</span> <span class="o">--</span> <span class="n">View</span> <span class="n">the</span> <span class="n">Ray</span> <span class="n">dashboard</span> <span class="n">at</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">0.0.0.0</span><span class="p">:</span><span class="mi">8265</span>
+</pre></div>
+</div>
+<p>It is necessary to forward the corresponding TCP port with <code class="code docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">-p</span> <span class="pre">8265:8265</span> <span class="pre">...</span></code> at the start-up of the container to access the server serving the dashboard.
+One can open the dashboard by accessing the web address <a class="reference external" href="http://0.0.0.0:8265">http://0.0.0.0:8265</a> which should display the following web interface</p>
+<a class="reference internal image-reference" href="_images/dashboard.png"><img alt="_images/dashboard.png" src="_images/dashboard.png" style="width: 780px;" /></a>
+<p>The main.py script has some further command line options that can be used to influence the simulation process:</p>
+<div class="literal-block-wrapper docutils container" id="id5">
+<div class="code-block-caption"><span class="caption-text">command line arguments of the main.py script</span><a class="headerlink" href="#id5" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">datasets</span> <span class="p">{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="p">[{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="o">...</span><span class="p">]]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">tsamples</span> <span class="n">TSAMPLES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">tstart</span> <span class="n">TSTART</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vsamples</span> <span class="n">VSAMPLES</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">vstart</span> <span class="n">VSTART</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">tpath</span> <span class="n">TPATH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vpath</span> <span class="n">VPATH</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">file_format</span> <span class="p">{</span><span class="n">tfrecord</span><span class="p">,</span><span class="n">h5</span><span class="p">}]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_dir</span> <span class="n">CACHE_DIR</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">freq_index</span> <span class="n">FREQ_INDEX</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nsources</span> <span class="n">NSOURCES</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">features</span> <span class="p">{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="p">[{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="o">...</span><span class="p">]]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">tasks</span> <span class="n">TASKS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">head</span> <span class="n">HEAD</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_csm</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_bf</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">log</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="o">--</span><span class="n">datasets</span> <span class="p">{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="p">[{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
+                        <span class="n">Whether</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">both</span> <span class="n">data</span> <span class="n">sets</span> <span class="p">(</span><span class="s1">&#39;training</span>
+                        <span class="n">validation</span><span class="s1">&#39;) or only the &#39;</span><span class="n">training</span><span class="s1">&#39; / &#39;</span><span class="n">validation</span><span class="s1">&#39;</span>
+                        <span class="n">data</span> <span class="nb">set</span><span class="o">.</span> <span class="n">Defaults</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">training</span> <span class="ow">and</span> <span class="n">validation</span>
+                        <span class="n">data</span> <span class="nb">set</span>
+<span class="o">--</span><span class="n">tsamples</span> <span class="n">TSAMPLES</span>   <span class="n">Total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">training</span> <span class="n">samples</span> <span class="n">to</span> <span class="n">simulate</span>
+<span class="o">--</span><span class="n">tstart</span> <span class="n">TSTART</span>       <span class="n">Start</span> <span class="n">simulation</span> <span class="n">at</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">data</span> <span class="nb">set</span>
+<span class="o">--</span><span class="n">vsamples</span> <span class="n">VSAMPLES</span>   <span class="n">Total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">validation</span> <span class="n">samples</span> <span class="n">to</span> <span class="n">simulate</span>
+<span class="o">--</span><span class="n">vstart</span> <span class="n">VSTART</span>       <span class="n">Start</span> <span class="n">simulation</span> <span class="n">at</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">data</span> <span class="nb">set</span>
+<span class="o">--</span><span class="n">tpath</span> <span class="n">TPATH</span>         <span class="n">Path</span> <span class="n">of</span> <span class="n">simulated</span> <span class="n">training</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span>
+                        <span class="n">working</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">vpath</span> <span class="n">VPATH</span>         <span class="n">Path</span> <span class="n">of</span> <span class="n">simulated</span> <span class="n">validation</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span>
+                        <span class="n">working</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">file_format</span> <span class="p">{</span><span class="n">tfrecord</span><span class="p">,</span><span class="n">h5</span><span class="p">}</span>
+                        <span class="n">Desired</span> <span class="n">file</span> <span class="nb">format</span> <span class="n">to</span> <span class="n">store</span> <span class="n">the</span> <span class="n">data</span> <span class="n">sets</span><span class="o">.</span>
+<span class="o">--</span><span class="n">cache_dir</span> <span class="n">CACHE_DIR</span>
+                        <span class="n">Path</span> <span class="n">of</span> <span class="n">cached</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span> <span class="n">working</span>
+                        <span class="n">directory</span>
+<span class="o">--</span><span class="n">freq_index</span> <span class="n">FREQ_INDEX</span>
+                        <span class="n">Returns</span> <span class="n">only</span> <span class="n">the</span> <span class="n">features</span> <span class="ow">and</span> <span class="n">targets</span> <span class="k">for</span> <span class="n">the</span>
+                        <span class="n">specified</span> <span class="n">frequency</span> <span class="n">index</span><span class="p">,</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">(</span><span class="nb">all</span>
+                        <span class="n">frequencies</span> <span class="n">will</span> <span class="n">be</span> <span class="n">calculated</span> <span class="ow">and</span> <span class="n">included</span> <span class="ow">in</span> <span class="n">the</span>
+                        <span class="n">data</span> <span class="nb">set</span><span class="p">)</span>
+<span class="o">--</span><span class="n">features</span> <span class="p">{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="p">[{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
+                        <span class="n">Whether</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">data</span> <span class="nb">set</span> <span class="n">containing</span> <span class="n">the</span> <span class="n">csm</span> <span class="ow">or</span> <span class="n">the</span>
+                        <span class="n">beamforming</span> <span class="nb">map</span> <span class="k">as</span> <span class="n">the</span> <span class="n">main</span> <span class="n">feature</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;csm&#39;</span>
+<span class="o">--</span><span class="n">tasks</span> <span class="n">TASKS</span>         <span class="n">Number</span> <span class="n">of</span> <span class="n">asynchronous</span> <span class="n">tasks</span><span class="o">.</span> <span class="n">Defaults</span> <span class="n">to</span> <span class="s1">&#39;1&#39;</span> <span class="p">(</span><span class="n">non</span><span class="o">-</span>
+                        <span class="n">distributed</span><span class="p">)</span>
+<span class="o">--</span><span class="n">head</span> <span class="n">HEAD</span>           <span class="n">IP</span> <span class="n">address</span> <span class="n">of</span> <span class="n">the</span> <span class="n">head</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">ray</span> <span class="n">cluster</span><span class="o">.</span> <span class="n">Only</span>
+                        <span class="n">necessary</span> <span class="n">when</span> <span class="n">running</span> <span class="ow">in</span> <span class="n">distributed</span> <span class="n">mode</span><span class="o">.</span>
+<span class="o">--</span><span class="n">cache_csm</span>           <span class="n">Whether</span> <span class="n">to</span> <span class="n">cache</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">the</span> <span class="n">CSM</span> <span class="n">calculation</span>
+<span class="o">--</span><span class="n">cache_bf</span>            <span class="n">Whether</span> <span class="n">to</span> <span class="n">cache</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">the</span> <span class="n">beamformer</span>
+                        <span class="n">calculation</span><span class="o">.</span> <span class="n">Only</span> <span class="n">relevant</span> <span class="k">if</span> <span class="s1">&#39;sourcemap&#39;</span> <span class="ow">is</span> <span class="n">included</span>
+                        <span class="ow">in</span> <span class="o">--</span><span class="n">features</span> <span class="nb">list</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="simulation-on-a-high-performance-cluster-hpc">
+<h3><a class="toc-backref" href="#id9">Simulation on a High-Performance Cluster (HPC)</a><a class="headerlink" href="#simulation-on-a-high-performance-cluster-hpc" title="Permalink to this headline">¶</a></h3>
+<p>If you plan to simulate the data by means of multiple machines (e.g. on a high-performance cluster (HPC))
+you can use the <a class="reference external" href="https://docs.ray.io/en/master/cluster/index.html">Ray Cluster</a> interface.</p>
+<p>The following code snippet gives an example of a job script that can
+be scheduled with the <a class="reference external" href="https://slurm.schedmd.com/quickstart.html">SLURM</a> job manager and by using a <a class="reference external" href="https://sylabs.io/guides/3.0/user-guide/quick_start.html">Singularity</a> image.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1">#SBATCH --job-name=acoupipe_dataset</span>
+<span class="c1">#SBATCH --cpus-per-task=16</span>
+<span class="c1">#SBATCH --nodes=4</span>
+<span class="c1">#SBATCH --tasks-per-node=1 # Give all resources to a single Ray task, ray can manage the resources internally</span>
+<span class="c1">#SBATCH --output=acoupipe_dataset.stdout</span>
+
+<span class="nv">DIRPATH</span><span class="o">=</span>&lt;path-to-the-acoupipe-dataset-folder&gt;
+<span class="nv">IMGNAME</span><span class="o">=</span>&lt;name-of-the-singularity-image&gt;
+
+<span class="nb">let</span> <span class="s2">&quot;worker_num=(</span><span class="si">${</span><span class="nv">SLURM_NTASKS</span><span class="si">}</span><span class="s2"> - 1)&quot;</span> <span class="c1">### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)-1</span>
+<span class="nb">echo</span> <span class="s2">&quot;Number of workers&quot;</span> <span class="nv">$worker_num</span>
+
+<span class="c1"># Define the total number of CPU cores available to ray</span>
+<span class="nb">let</span> <span class="s2">&quot;total_cores=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span><span class="s2"> * </span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="nv">suffix</span><span class="o">=</span><span class="s1">&#39;6379&#39;</span>
+<span class="nv">ip_head</span><span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span>:<span class="nv">$suffix</span>
+<span class="nb">export</span> ip_head <span class="c1"># Exporting for latter access by trainer.py</span>
+<span class="nb">echo</span> <span class="nv">$ip_head</span>
+
+<span class="c1"># Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`</span>
+<span class="c1"># We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all</span>
+<span class="c1"># network interfaces. This allows to access the dashboard through port-forwarding:</span>
+<span class="c1"># z. B.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144</span>
+srun --nodes<span class="o">=</span><span class="m">1</span> --ntasks<span class="o">=</span><span class="m">1</span> --cpus-per-task<span class="o">=</span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> --nodelist<span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span> singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <span class="nv">$IMGNAME</span> ray start --head --block --dashboard-host <span class="m">0</span>.0.0.0 --port<span class="o">=</span><span class="m">6379</span> --num-cpus <span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> <span class="p">&amp;</span>
+sleep <span class="m">10</span>
+
+<span class="c1"># Now we execute worker_num worker nodes on all nodes in the allocation except hostname by</span>
+<span class="c1"># specifying --nodes=${worker_num} and --exclude=`hostname`. Use 1 task per node, so worker_num tasks in total</span>
+<span class="c1"># (--ntasks=${worker_num}) and 5 CPUs per task (--cps-per-task=${SLURM_CPUS_PER_TASK}).</span>
+srun --nodes<span class="o">=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span> --ntasks<span class="o">=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span> --cpus-per-task<span class="o">=</span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> --exclude<span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span> singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <span class="nv">$IMGNAME</span> ray start --address <span class="nv">$ip_head</span> --block --num-cpus <span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> <span class="p">&amp;</span>
+sleep <span class="m">10</span>
+
+singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <span class="nv">$IMGNAME</span> python -u <span class="nv">$DIRPATH</span>/main.py --head<span class="o">=</span><span class="si">${</span><span class="nv">ip_head</span><span class="si">}</span> --tasks<span class="o">=</span><span class="si">${</span><span class="nv">total_cores</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+<section id="data-set-characteristics">
+<h3><a class="toc-backref" href="#id10">Data Set Characteristics</a><a class="headerlink" href="#data-set-characteristics" title="Permalink to this headline">¶</a></h3>
+<p><strong>fixed characteristics:</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 66%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Environment</p></td>
+<td><p>Unechoic, Resting, Homogeneous Fluid</p></td>
+</tr>
+<tr class="row-even"><td><p>Microphone Array</p></td>
+<td><p>Vogel’s spiral, M=64, Aperture Size 1m</p></td>
+</tr>
+<tr class="row-odd"><td><p>Observation Area</p></td>
+<td><p>x,y in [-0.5,0.5], z=0.5</p></td>
+</tr>
+<tr class="row-even"><td><p>Source Type</p></td>
+<td><p>Monopole</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source Signals</p></td>
+<td><p>Uncorrelated White Noise (T=5s)</p></td>
+</tr>
+<tr class="row-even"><td><p>Sampling Rate</p></td>
+<td><p>He = 40, Fs=13720 Hz</p></td>
+</tr>
+<tr class="row-odd"><td><p>No. of Time Samples</p></td>
+<td><p>68.600</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>sampled characteristics:</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 56%" />
+<col style="width: 44%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Sensor Position Deviation [m]</p></td>
+<td><p>Normal distributed (sigma = 0.001)</p></td>
+</tr>
+<tr class="row-even"><td><p>No. of Sources</p></td>
+<td><p>Poisson distributed (lambda=3)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source Positions</p></td>
+<td><p>Normal distributed (sigma = 0.1688)</p></td>
+</tr>
+<tr class="row-even"><td><p>Source Strength (Pa^2 at reference microphone)</p></td>
+<td><p>Rayleigh distributed (sigma_R=5)</p></td>
+</tr>
+</tbody>
+</table>
+<section id="input-features">
+<h4><a class="toc-backref" href="#id11">Input Features</a><a class="headerlink" href="#input-features" title="Permalink to this headline">¶</a></h4>
+<p>One can save one of the three different input features to file:</p>
+<ul class="simple">
+<li><p><strong>Cross-Spectral Matrix (CSM):</strong> <code class="code docutils literal notranslate"><span class="pre">'csm'</span></code> of shape: (65,64,64,2)</p></li>
+<li><p><strong>non-redundant Cross-Spectral Matrix:</strong> <code class="code docutils literal notranslate"><span class="pre">'csmtriu'</span></code> of shape: (65,64,64)</p></li>
+<li><p><strong>Conventional Beamforming Map:</strong> <code class="code docutils literal notranslate"><span class="pre">'sourcemap'</span></code> of shape: (65,64,64)</p></li>
+</ul>
+<p>The first axis of each feature corresponds to the FFT coefficient. The non-redundant CSM follows the
+approach stated in <a class="reference internal" href="#cas21" id="id3"><span>[Cas21]</span></a> (the conjugate complex of the normal CSM is neglected).
+The underlying processing parameters used to calculate the CSM and/or the source map are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 66%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Block size</p></td>
+<td><p>128 samples</p></td>
+</tr>
+<tr class="row-even"><td><p>Block overlap</p></td>
+<td><p>50 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>Windowing</p></td>
+<td><p>von Hann / Hanning</p></td>
+</tr>
+<tr class="row-even"><td><p>Steering vector</p></td>
+<td><p>fromulation 3, see <a class="reference internal" href="#sar12" id="id4"><span>[Sar12]</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Evaluation basis</p></td>
+<td><p>single frequency coefficient</p></td>
+</tr>
+</tbody>
+</table>
+<p>with the following FFT frequency indices, frequencies and Helmholtz numbers:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 39%" />
+<col style="width: 44%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Index</p></td>
+<td><p>Frequency [Hz]</p></td>
+<td><p>Helmholtz Number</p></td>
+</tr>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>107.1875</p></td>
+<td><p>0.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>214.375</p></td>
+<td><p>0.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>321.5625</p></td>
+<td><p>0.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>428.75</p></td>
+<td><p>1.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>535.9375</p></td>
+<td><p>1.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>643.125</p></td>
+<td><p>1.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>750.3125</p></td>
+<td><p>2.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>857.5</p></td>
+<td><p>2.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>964.6875</p></td>
+<td><p>2.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>1071.875</p></td>
+<td><p>3.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>11</p></td>
+<td><p>1179.0625</p></td>
+<td><p>3.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>12</p></td>
+<td><p>1286.25</p></td>
+<td><p>3.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>13</p></td>
+<td><p>1393.4375</p></td>
+<td><p>4.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>14</p></td>
+<td><p>1500.625</p></td>
+<td><p>4.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>15</p></td>
+<td><p>1607.8125</p></td>
+<td><p>4.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>16</p></td>
+<td><p>1715.0</p></td>
+<td><p>5.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>17</p></td>
+<td><p>1822.1875</p></td>
+<td><p>5.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>18</p></td>
+<td><p>1929.375</p></td>
+<td><p>5.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>19</p></td>
+<td><p>2036.5625</p></td>
+<td><p>5.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>20</p></td>
+<td><p>2143.75</p></td>
+<td><p>6.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>21</p></td>
+<td><p>2250.9375</p></td>
+<td><p>6.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>22</p></td>
+<td><p>2358.125</p></td>
+<td><p>6.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>23</p></td>
+<td><p>2465.3125</p></td>
+<td><p>7.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>24</p></td>
+<td><p>2572.5</p></td>
+<td><p>7.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>25</p></td>
+<td><p>2679.6875</p></td>
+<td><p>7.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>26</p></td>
+<td><p>2786.875</p></td>
+<td><p>8.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>27</p></td>
+<td><p>2894.0625</p></td>
+<td><p>8.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>28</p></td>
+<td><p>3001.25</p></td>
+<td><p>8.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>29</p></td>
+<td><p>3108.4375</p></td>
+<td><p>9.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>30</p></td>
+<td><p>3215.625</p></td>
+<td><p>9.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>31</p></td>
+<td><p>3322.8125</p></td>
+<td><p>9.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>32</p></td>
+<td><p>3430.0</p></td>
+<td><p>10.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>33</p></td>
+<td><p>3537.1875</p></td>
+<td><p>10.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>34</p></td>
+<td><p>3644.375</p></td>
+<td><p>10.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>35</p></td>
+<td><p>3751.5625</p></td>
+<td><p>10.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>36</p></td>
+<td><p>3858.75</p></td>
+<td><p>11.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>37</p></td>
+<td><p>3965.9375</p></td>
+<td><p>11.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>38</p></td>
+<td><p>4073.125</p></td>
+<td><p>11.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>39</p></td>
+<td><p>4180.3125</p></td>
+<td><p>12.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>40</p></td>
+<td><p>4287.5</p></td>
+<td><p>12.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>41</p></td>
+<td><p>4394.6875</p></td>
+<td><p>12.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>42</p></td>
+<td><p>4501.875</p></td>
+<td><p>13.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>43</p></td>
+<td><p>4609.0625</p></td>
+<td><p>13.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>44</p></td>
+<td><p>4716.25</p></td>
+<td><p>13.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>45</p></td>
+<td><p>4823.4375</p></td>
+<td><p>14.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>46</p></td>
+<td><p>4930.625</p></td>
+<td><p>14.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>47</p></td>
+<td><p>5037.8125</p></td>
+<td><p>14.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>48</p></td>
+<td><p>5145.0</p></td>
+<td><p>15.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>49</p></td>
+<td><p>5252.1875</p></td>
+<td><p>15.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>50</p></td>
+<td><p>5359.375</p></td>
+<td><p>15.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>51</p></td>
+<td><p>5466.5625</p></td>
+<td><p>15.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>52</p></td>
+<td><p>5573.75</p></td>
+<td><p>16.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>53</p></td>
+<td><p>5680.9375</p></td>
+<td><p>16.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>54</p></td>
+<td><p>5788.125</p></td>
+<td><p>16.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>55</p></td>
+<td><p>5895.3125</p></td>
+<td><p>17.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>56</p></td>
+<td><p>6002.5</p></td>
+<td><p>17.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>57</p></td>
+<td><p>6109.6875</p></td>
+<td><p>17.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>58</p></td>
+<td><p>6216.875</p></td>
+<td><p>18.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>59</p></td>
+<td><p>6324.0625</p></td>
+<td><p>18.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>60</p></td>
+<td><p>6431.25</p></td>
+<td><p>18.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>61</p></td>
+<td><p>6538.4375</p></td>
+<td><p>19.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>62</p></td>
+<td><p>6645.625</p></td>
+<td><p>19.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>63</p></td>
+<td><p>6752.8125</p></td>
+<td><p>19.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>64</p></td>
+<td><p>6860.0</p></td>
+<td><p>20.0</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="labels">
+<h4><a class="toc-backref" href="#id12">Labels</a><a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h4>
+<p>The data set comprises labels for each source case:</p>
+<p><strong>Source strength at the reference microphone:</strong> <code class="code docutils literal notranslate"><span class="pre">'p2'</span></code></p>
+<p>The averaged squared sound pressure value at the reference microphone position (red dot) is
+stored as an estimate of the source strength for each individual source and 65 FFT coefficients.
+A value of zero is stored for non-existing sources. With a maximum number of 16 possible sources, this results
+in an array of shape (65,16) per case.
+It should be noted that the entries are sorted in descending order according to the overall RMS value of the source signal.
+The descending order is not strictly maintained when only a single frequency coefficient is considered.</p>
+<p><strong>Source location:</strong> <code class="code docutils literal notranslate"><span class="pre">'loc'</span></code></p>
+<p>The location in the x,y plane of each source is stored. Non-existing source locations are set to zero (center of the plane).
+The source location array is of shape (16,2). The source ordering is the same as for the source strength estimate <code class="code docutils literal notranslate"><span class="pre">p2</span></code>.</p>
+<p><strong>Number of sources:</strong> <code class="code docutils literal notranslate"><span class="pre">'nsources'</span></code></p>
+<p>An integer providing the number of sources.</p>
+<p><strong>Sample index:</strong> <code class="code docutils literal notranslate"><span class="pre">'idx'</span></code></p>
+<p>The index referencing the sampled case in the data set (starts at 1).</p>
+<p><strong>Involved random seeds:</strong> <code class="code docutils literal notranslate"><span class="pre">'seeds'</span></code></p>
+<p>A list with random seeds for each object that performs a random sampling of data set properties.
+The combination is unique for each source case in the data set. This enables to re-simulate every
+specific sample of the data set.</p>
+</section>
+<section id="file-formats">
+<h4><a class="toc-backref" href="#id13">File Formats</a><a class="headerlink" href="#file-formats" title="Permalink to this headline">¶</a></h4>
+<p>The user can save the data to two different file formats (<a class="reference external" href="https://portal.hdfgroup.org/display/HDF5/HDF5">HDF5</a> or <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a>).
+It is recommended to use the .h5 file format.</p>
+<p><strong>HDF5 format</strong></p>
+<p><a class="reference external" href="https://portal.hdfgroup.org/display/HDF5/HDF5">HDF5</a> is a container-like format storing data in hierarchical order.
+Each case and the corresponding data is stored into a separate group of the file.
+The sample index acts as the group header.
+An additional <code class="code docutils literal notranslate"><span class="pre">metadata</span></code> group includes important metadata (e.g. sampling frequency, FFT block size, …).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>└──<span class="s1">&#39;1&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;csm&#39;</span> <span class="o">(</span>or <span class="s1">&#39;sourcemap&#39;</span>, or <span class="s1">&#39;csmtriu&#39;</span><span class="o">)</span>
+    <span class="p">|</span>── <span class="s1">&#39;loc&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;p2&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;nsources&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;seeds&#39;</span>
+└──<span class="s1">&#39;2&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;csm&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;loc&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;p2&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;nsources&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;seeds&#39;</span>
+└──...
+    <span class="p">|</span>   ...
+    <span class="p">|</span>
+└──<span class="s1">&#39;metadata&#39;</span>
+    <span class="p">|</span>   <span class="s1">&#39;sample_freq&#39;</span>
+    <span class="p">|</span>   ...
+</pre></div>
+</div>
+<p>Correct order is always maintained.
+This is important when multiple source cases are simulated in parallel tasks.</p>
+<p><strong>TFRecord format</strong></p>
+<p>The <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a> file format is a binary file format to store sequences of data developed by <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
+In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file.
+The exact case number can be reconstructed with the <code class="code docutils literal notranslate"><span class="pre">idx</span></code> and <code class="code docutils literal notranslate"><span class="pre">seeds</span></code> features when the file is parsed.</p>
+</section>
+</section>
+<section id="load-the-data-set">
+<h3><a class="toc-backref" href="#id14">Load the Data Set</a><a class="headerlink" href="#load-the-data-set" title="Permalink to this headline">¶</a></h3>
+<p><strong>HDF5 format</strong></p>
+<p>The AcouPipe toolbox provides the <code class="code docutils literal notranslate"><span class="pre">LoadH5Dataset</span></code> class to load the data sets stored into HDF5 format:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">acoupipe</span> <span class="kn">import</span> <span class="n">LoadH5Dataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">LoadH5Dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;&lt;data-set.h5&gt;&quot;</span><span class="p">)</span>
+
+<span class="n">s1</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">]</span> <span class="c1"># returns the first sample of the data set</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span> <span class="c1"># prints the corresponding metadata information</span>
+</pre></div>
+</div>
+<p>A Python generator can be created which can be consumed by the <a class="reference external" href="https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator">Tensorflow Dataset API</a>:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+<span class="n">data_generator</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_dataset_generator</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">,</span><span class="s1">&#39;nsources&#39;</span><span class="p">,</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span><span class="s1">&#39;csmtriu&#39;</span><span class="p">,</span><span class="s1">&#39;idx&#39;</span><span class="p">],</span> <span class="c1"># the desired features to return from the file</span>
+            <span class="p">)</span>
+
+<span class="c1"># provide the signature of the features</span>
+<span class="n">output_signature</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;loc&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="s1">&#39;nsources&#39;</span><span class="p">:</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(),</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+            <span class="s1">&#39;idx&#39;</span><span class="p">:</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(),</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+            <span class="s1">&#39;p2&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="s1">&#39;csmtriu&#39;</span><span class="p">:</span>  <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="p">}</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+            <span class="n">generator</span><span class="o">=</span><span class="n">data_generator</span><span class="p">,</span>
+            <span class="n">output_signature</span><span class="o">=</span><span class="n">output_signature</span>
+            <span class="p">)</span>
+
+<span class="n">dataset_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">dataset_sample</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">dataset_iter</span><span class="p">)</span> <span class="c1"># return samples iteratively</span>
+</pre></div>
+</div>
+<p><strong>TFRecord format</strong></p>
+<p>To parse the data from TFRecord files it is necessary to write a custom function that parses the file sequentially
+(see: <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a> documentation for details).</p>
+<p>A potential parser function for the <code class="code docutils literal notranslate"><span class="pre">'csmtriu'</span></code> feature can be similar to:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">tfrecord_parser_csmtriu</span><span class="p">(</span><span class="n">record</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; parser for tfrecord datasets with &#39;csmtriu&#39; feature &quot;&quot;&quot;</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">parse_single_example</span><span class="p">(</span>
+        <span class="n">record</span><span class="p">,</span>
+        <span class="p">{</span>
+        <span class="s1">&#39;csmtriu&#39;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">VarLenFeature</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="s1">&#39;p2&#39;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">VarLenFeature</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="s1">&#39;loc&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">VarLenFeature</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="s1">&#39;nsources&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">FixedLenFeature</span><span class="p">((),</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="c1"># get and reshape parsed data</span>
+    <span class="n">csmtriu</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">to_dense</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;csmtriu&#39;</span><span class="p">]),</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">p2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">to_dense</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;p2&#39;</span><span class="p">]),</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span><span class="mi">16</span><span class="p">))</span>
+    <span class="n">loc</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">to_dense</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]),[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">nsources</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;nsources&#39;</span><span class="p">],</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">csmtriu</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">nsources</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="documentation">
+<h2><a class="toc-backref" href="#id15">Documentation</a><a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>The AcouPipe module extends the computational
+pipeline-based concept of <a class="reference external" href="http://www.acoular.org">Acoular</a> and provides additional
+tools that can be helpful to generate realizations
+of features in a predefined random process.</p>
+<section id="dependencies">
+<h3><a class="toc-backref" href="#id16">Dependencies</a><a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h3>
+<p>This package works with Python 3.7 or 3.8 and depends on:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://www.acoular.org">Acoular</a></p></li>
+<li><p><a class="reference external" href="https://docs.ray.io/en/master/">Ray</a></p></li>
+<li><p><a class="reference external" href="https://pandas.pydata.org/docs/">Pandas</a></p></li>
+<li><p><a class="reference external" href="https://docs.h5py.org/en/stable/">h5py</a></p></li>
+<li><p><a class="reference external" href="https://github.com/tqdm/tqdm">tqdm</a></p></li>
+<li><p><a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a> (optional)</p></li>
+</ul>
+</section>
 <section id="installation">
-<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<h3><a class="toc-backref" href="#id17">Installation</a><a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h3>
+<p>Download or clone the acoupipe repository and enter the directory, e.g. change “&lt;/path/to/dir&gt;” to the desired path and execute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>DIR=&lt;/path/to/dir&gt; &amp;&amp; git clone git@github.com:adku1173/acoupipe.git $DIR  &amp;&amp; cd $DIR &amp;&amp; unset DIR
+</pre></div>
+</div>
+<p>Next, install module with pip. This will install all necessary <a class="reference internal" href="#dependencies">dependencies</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>Optionally, also install Tensorflow with (requires pip &gt;19.0):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">tensorflow</span>
+</pre></div>
+</div>
+<p>or follow the instructions in <a class="reference external" href="https://www.tensorflow.org/install">https://www.tensorflow.org/install</a>.</p>
 </section>
 <section id="module-overview">
-<h2>Module Overview<a class="headerlink" href="#module-overview" title="Permalink to this headline">¶</a></h2>
+<h3><a class="toc-backref" href="#id18">Module Overview</a><a class="headerlink" href="#module-overview" title="Permalink to this headline">¶</a></h3>
 <p>The following UML flowchart gives a rough overview of AcouPipe’s
 classes and their inheritance relationships.</p>
-<img alt="_images/acoupipe_uml.png" src="_images/acoupipe_uml.png" />
+<a class="reference internal image-reference" href="_images/acoupipe_uml.png"><img alt="_images/acoupipe_uml.png" src="_images/acoupipe_uml.png" style="width: 780px;" /></a>
 <section id="sampler-module">
-<h3>Sampler Module<a class="headerlink" href="#sampler-module" title="Permalink to this headline">¶</a></h3>
+<h4><a class="toc-backref" href="#id19">Sampler Module</a><a class="headerlink" href="#sampler-module" title="Permalink to this headline">¶</a></h4>
 <p>A manipulation of object characteristics according to a certain
 random distribution can be achieved by the use of the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes included in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
 All <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes are representing random processes that can be used to manipulate the attributes of Acoular’s objects according to a specified distribution.
@@ -92,7 +790,7 @@ New RMS values following a normal distribution are assigned to the <code class="
 </div>
 </section>
 <section id="pipeline-module">
-<h3>Pipeline Module<a class="headerlink" href="#pipeline-module" title="Permalink to this headline">¶</a></h3>
+<h4><a class="toc-backref" href="#id20">Pipeline Module</a><a class="headerlink" href="#pipeline-module" title="Permalink to this headline">¶</a></h4>
 <p>Classes defined in the <code class="code docutils literal notranslate"><span class="pre">pipeline.py</span></code> module have the ability to iteratively perform tasks on the related computational pipeline to build up a data set.
 The results of these tasks are the features (and labels) associated with a specific sample of the data set.
 Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the <code class="code docutils literal notranslate"><span class="pre">BasePipeline</span></code>’s <code class="code docutils literal notranslate"><span class="pre">get_data()</span></code> generator method.
@@ -113,7 +811,7 @@ Control about the state of the sampling process is maintained via the <code clas
 </div>
 </section>
 <section id="writer-module">
-<h3>Writer Module<a class="headerlink" href="#writer-module" title="Permalink to this headline">¶</a></h3>
+<h4><a class="toc-backref" href="#id21">Writer Module</a><a class="headerlink" href="#writer-module" title="Permalink to this headline">¶</a></h4>
 <p>Provides classes to store the data extracted by the pipeline.
 Current implementation includes a classes to save data into a
 container-like file format (.h5 file with the <code class="code docutils literal notranslate"><span class="pre">WriteH5Dataset</span></code> class) or binary format (.tfrecord file with the <code class="code docutils literal notranslate"><span class="pre">WriteTFRecord</span></code> class).
@@ -127,29 +825,28 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
 </div>
 </section>
 <section id="loader-module">
-<h3>Loader Module<a class="headerlink" href="#loader-module" title="Permalink to this headline">¶</a></h3>
+<h4><a class="toc-backref" href="#id22">Loader Module</a><a class="headerlink" href="#loader-module" title="Permalink to this headline">¶</a></h4>
 <p>The <code class="code docutils literal notranslate"><span class="pre">loader.py</span></code> module provides the <code class="code docutils literal notranslate"><span class="pre">LoadH5Dataset</span></code> class to load the data sets stored into .h5 files.</p>
 </section>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<h3><a class="toc-backref" href="#id23">Examples</a><a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h3>
 </section>
 </section>
-<section id="content">
-<h1>Content:<a class="headerlink" href="#content" title="Permalink to this headline">¶</a></h1>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="api_ref/index_apiref.html">Reference Manual</a></li>
-</ul>
-</div>
+<section id="literature">
+<h2><a class="toc-backref" href="#id24">Literature</a><a class="headerlink" href="#literature" title="Permalink to this headline">¶</a></h2>
+<dl class="citation">
+<dt class="label" id="sar12"><span class="brackets"><a class="fn-backref" href="#id4">Sar12</a></span></dt>
+<dd><p>Sarradj, Ennes: Three-dimensional acoustic source mapping with different beamforming steering vector formulations. Advances in Acoustics and Vibration, pages 1–12, 2012.</p>
+</dd>
+<dt class="label" id="cas21"><span class="brackets">Cas21</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id3">2</a>)</span></dt>
+<dd><p>Paolo Castellini, Nicola Giulietti, Nicola Falcionelli, Aldo Franco Dragoni, Paolo Chiariotti, A neural network based microphone array approach to grid-less noise source localization, Applied Acoustics, Volume 177, 2021, 107947, ISSN 0003-682X, <a class="reference external" href="https://doi.org/10.1016/j.apacoust.2021.107947">https://doi.org/10.1016/j.apacoust.2021.107947</a>.</p>
+</dd>
+<dt class="label" id="kuj19"><span class="brackets"><a class="fn-backref" href="#id2">Kuj19</a></span></dt>
+<dd><p>Adam Kujawski, Gert Herold, and Ennes Sarradj , “A deep learning method for grid-free localization and quantification of sound sources”, The Journal of the Acoustical Society of America 146, EL225-EL231 (2019) <a class="reference external" href="https://doi.org/10.1121/1.5126020">https://doi.org/10.1121/1.5126020</a></p>
+</dd>
+</dl>
 </section>
-<section id="indices-and-tables">
-<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
-<ul class="simple">
-<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
-<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
-<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
-</ul>
 </section>
 
 
@@ -161,10 +858,7 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
         <div class="sidebar">
           
           <h3>Table of Contents</h3>
-          <ul>
-<li class="toctree-l1"><a class="reference internal" href="api_ref/index_apiref.html">Reference Manual</a></li>
-</ul>
-
+          
           <div role="search">
             <h3 style="margin-top: 1.5em;">Search</h3>
             <form class="search" action="search.html" method="get">
@@ -182,8 +876,6 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
       <div class="footer">
         <div class="left">
           <div role="navigation" aria-label="related navigaton">
-            <a href="api_ref/index_apiref.html" title="Reference Manual"
-              >next</a> |
             <a href="py-modindex.html" title="Python Module Index"
               >modules</a> |
             <a href="genindex.html" title="General Index"
@@ -200,7 +892,7 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
           
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.1.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
     </div>
         </div>
         <div class="clearer"></div>
