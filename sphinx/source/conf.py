@@ -9,10 +9,11 @@
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../../'))
+sys.path.insert(0, os.path.abspath('../../../'))
 
 
 # -- Project information -----------------------------------------------------
@@ -35,7 +36,6 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary', 
     'sphinx.ext.doctest', 
-    'sphinx.ext.githubpages',
     'traits.util.trait_documenter',
     'numpydoc' #conda install -c anaconda numpydoc
 ]
@@ -46,10 +46,10 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store','links.rst']
 
 # autosummary: https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html
-autosummary_generate = True
+autosummary_generate = False
 autodoc_member_order = 'bysource'
 autosummary_generate_overwrite = True # alternatively generate stub files manually with sphinx-autogen *.rst
 numpydoc_show_class_members = False # Whether to show all members of a class in the Methods and Attributes sections automatically.
@@ -62,9 +62,19 @@ numpydoc_class_members_toctree = False #Whether to create a Sphinx table of cont
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'agogo'
+html_theme = 'classic'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+
+# -- rst_epilog --------------------------------------------------------------
+
+# rst_epilog is implicitly added to the end of each file before compiling
+rst_epilog =""
+# Add links.rst to rst_epilog, so external links can be used in any file
+with open('contents/links.rst') as f:
+     rst_epilog += f.read()
