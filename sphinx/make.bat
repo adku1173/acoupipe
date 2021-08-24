@@ -37,6 +37,7 @@ goto end
 
 :html 
 %SPHINXBUILD% -M html %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+$null>%HTMLDIR%\.nojekyll
 xcopy /s/e/y %HTMLDIR% %HTMLCOPYDIR%
 goto end
 
