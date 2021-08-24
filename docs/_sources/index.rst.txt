@@ -75,7 +75,7 @@ It is necessary to forward the corresponding TCP port with :code:`docker run -p 
 One can open the dashboard by accessing the web address http://0.0.0.0:8265 which should display the following web interface
 
 
-.. image:: ../source/_static/dashboard.png
+.. figure:: ../source/_static/dashboard.png
     :width: 780
 
 
@@ -569,7 +569,7 @@ Module Overview
 The following UML flowchart gives a rough overview of AcouPipe's 
 classes and their inheritance relationships. 
 
-.. image:: ../source/_static/acoupipe_uml.png
+.. figure:: ../source/_static/acoupipe_uml.png
     :width: 780
 
 
