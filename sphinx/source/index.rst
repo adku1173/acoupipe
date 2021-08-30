@@ -4,14 +4,14 @@
 AcouPipe
 ================================================================================
 
-**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with Acoular_ that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:
+**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization datasets with Acoular_ that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:
 
 * Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
 * Conventional Beamforming Map (e.g. in [Kuj19]_)
 
-This allows the user to create data sets of manageable size that are portable and facilitate reproducible research.
+This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.
 
-AcouPipe supports distributed computation with Ray_ and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_.
+AcouPipe supports distributed computation with Ray_ and comes with a default configuration dataset inside a pre-built Docker container that can be downloaded from DockerHub_.
 
 .. contents::
     Contents
@@ -26,15 +26,15 @@ Indices and tables
 * :ref:`search`
 
 
-Quickstart
-==========
-This section will walk you through the necessary steps to quickly generate the default data set.
-The data set comprises:
+dataset
+========
+This section will walk you through the necessary steps to quickly generate the default dataset.
+The dataset comprises:
 
 * 500,000 source cases for training 
 * 10,000 source cases for validation
 
-The data set is created by a simulation process with Acoular_. The amount of cases can be easily extended. 
+The dataset is created by a simulation process with Acoular_. The amount of cases can be easily extended. 
 The following figure illustrates the virtual measurement setup.
 
 
@@ -45,7 +45,7 @@ The following figure illustrates the virtual measurement setup.
 Simulation with Docker
 ---------------------------------
 
-The easiest way to create the data set is by using an existing
+The easiest way to create the dataset is by using an existing
 Docker image from DockerHub_. Simply pull the latest image with the command
 
 .. code-block:: 
@@ -54,17 +54,17 @@ Docker image from DockerHub_. Simply pull the latest image with the command
 
 The image contains the simulation source code and an up-to-date version of Acoular_, 
 AcouPipe and Tensorflow_.
-One can run the data set simulation given by the main.py script from inside the Docker container by typing
+One can run the dataset simulation given by the main.py script from inside the Docker container by typing
 
 .. code-block:: 
 
-    HOSTDIR="<enter the desired host directory>" # stores the data sets inside this directory
+    HOSTDIR="<enter the desired host directory>" # stores the datasets inside this directory
     NTASKS=<enter the number of parallel tasks> # should match the number of CPUs on the host
     docker run -it --user "$(id -u)":"$(id -g)" -v $HOSTDIR:/data/datasets adku1173/acoupipe python main.py --tasks=$NTASKS
 
 Note that the current user on the host is specified as the user of the docker environment with the additional argument :code:`--user "$(id -u)":"$(id -g)"`.
 It is not recommended to run the container as a root user.
-Further, a directory where the data set files are stored needs to be binded to the container (:code:`HOSTDIR=<dir>`). With the 
+Further, a directory where the dataset files are stored needs to be binded to the container (:code:`HOSTDIR=<dir>`). With the 
 :code:`HOSTDIR=$(pwd)` command, the current working directory on Linux or macOS hosts are binded. 
 The simulation can be run on multiple CPU threads in parallel to speed up computations. The exact number of threads can be specified by the 
 user with the :code:`--tasks` argument. 
@@ -109,20 +109,20 @@ The main.py script has some further command line options that can be used to inf
     optional arguments:
     -h, --help            show this help message and exit
     --datasets {training,validation} [{training,validation} ...]
-                            Whether to compute both data sets ('training
+                            Whether to compute both datasets ('training
                             validation') or only the 'training' / 'validation'
-                            data set. Defaults to compute training and validation
-                            data set
+                            dataset. Defaults to compute training and validation
+                            dataset
     --tsamples TSAMPLES   Total number of training samples to simulate
-    --tstart TSTART       Start simulation at a specific sample of the data set
+    --tstart TSTART       Start simulation at a specific sample of the dataset
     --vsamples VSAMPLES   Total number of validation samples to simulate
-    --vstart VSTART       Start simulation at a specific sample of the data set
+    --vstart VSTART       Start simulation at a specific sample of the dataset
     --tpath TPATH         Path of simulated training data. Default is current
                             working directory
     --vpath VPATH         Path of simulated validation data. Default is current
                             working directory
     --file_format {tfrecord,h5}
-                            Desired file format to store the data sets.
+                            Desired file format to store the datasets.
     --cache_dir CACHE_DIR
                             Path of cached data. Default is current working
                             directory
@@ -130,9 +130,9 @@ The main.py script has some further command line options that can be used to inf
                             Returns only the features and targets for the
                             specified frequency index, default is None (all
                             frequencies will be calculated and included in the
-                            data set)
+                            dataset)
     --features {sourcemap,csmtriu,csm} [{sourcemap,csmtriu,csm} ...]
-                            Whether to compute data set containing the csm or the
+                            Whether to compute dataset containing the csm or the
                             beamforming map as the main feature. Default is 'csm'
     --tasks TASKS         Number of asynchronous tasks. Defaults to '1' (non-
                             distributed)
@@ -191,7 +191,7 @@ be scheduled with the SLURM_ job manager and by using a Singularity_ image.
 
     singularity exec -B $DIRPATH $IMGNAME python -u $DIRPATH/main.py --head=${ip_head} --tasks=${total_cores}
 
-Data Set Characteristics
+dataset Characteristics
 -------------------------
 
 **fixed characteristics:**
@@ -376,7 +376,7 @@ with the following FFT frequency indices, frequencies and Helmholtz numbers:
 Labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The data set comprises labels for each source case:
+The dataset comprises labels for each source case:
 
 **Source strength at the reference microphone:** :code:`'p2'`
 
@@ -398,13 +398,13 @@ An integer providing the number of sources.
 
 **Sample index:** :code:`'idx'`
 
-The index referencing the sampled case in the data set (starts at 1). 
+The index referencing the sampled case in the dataset (starts at 1). 
 
 **Involved random seeds:** :code:`'seeds'`
 
-A list with random seeds for each object that performs a random sampling of data set properties.
-The combination is unique for each source case in the data set. This enables to re-simulate every 
-specific sample of the data set. 
+A list with random seeds for each object that performs a random sampling of dataset properties.
+The combination is unique for each source case in the dataset. This enables to re-simulate every 
+specific sample of the dataset. 
 
 File Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -449,12 +449,12 @@ The TFRecord_ file format is a binary file format to store sequences of data dev
 In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file. 
 The exact case number can be reconstructed with the :code:`idx` and :code:`seeds` features when the file is parsed.
 
-Load the Data Set
+Load the dataset
 ------------------
 
 **HDF5 format**
 
-The AcouPipe toolbox provides the :code:`LoadH5Dataset` class to load the data sets stored into HDF5 format:
+The AcouPipe toolbox provides the :code:`LoadH5Dataset` class to load the datasets stored into HDF5 format:
 
 .. code-block:: Python
 
@@ -462,7 +462,7 @@ The AcouPipe toolbox provides the :code:`LoadH5Dataset` class to load the data s
 
     dataset = LoadH5Dataset(name="<data-set.h5>")
 
-    s1 = dataset.dataset['1'] # returns the first sample of the data set
+    s1 = dataset.dataset['1'] # returns the first sample of the dataset
 
     print(dataset.metadata) # prints the corresponding metadata information
 
@@ -628,8 +628,8 @@ New RMS values following a normal distribution are assigned to the :code:`WNoise
 Pipeline Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~    
 
-Classes defined in the :code:`pipeline.py` module have the ability to iteratively perform tasks on the related computational pipeline to build up a data set. 
-The results of these tasks are the features (and labels) associated with a specific sample of the data set. 
+Classes defined in the :code:`pipeline.py` module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset. 
+The results of these tasks are the features (and labels) associated with a specific sample of the dataset. 
 Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the :code:`BasePipeline`'s :code:`get_data()` generator method. 
 It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file. 
 Common machine learning frameworks, such as Tensorflow_, offer the possibility to consume data from Python generators.
@@ -667,7 +667,7 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
 
 Loader Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The :code:`loader.py` module provides the :code:`LoadH5Dataset` class to load the data sets stored into .h5 files.
+The :code:`loader.py` module provides the :code:`LoadH5Dataset` class to load the datasets stored into .h5 files.
 
 Examples
 ------------------

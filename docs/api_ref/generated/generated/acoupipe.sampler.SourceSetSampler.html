@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>SourceSetSampler &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/classic.css" />
+    
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SourceSetSampler</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="sourcesetsampler">
+<h1>SourceSetSampler<a class="headerlink" href="#sourcesetsampler" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler">
+<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">SourceSetSampler</span></span><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="acoupipe.sampler.SetSampler.html#acoupipe.sampler.SetSampler" title="acoupipe.sampler.SetSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.sampler.SetSampler</span></code></a></p>
+<p>From a given set of sources (type <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.SamplesGenerator</span></code>), 
+<a class="reference internal" href="#acoupipe.sampler.SourceSetSampler" title="acoupipe.sampler.SourceSetSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SourceSetSampler</span></code></a> draws one or multiple sources from this set
+and assigns those to one or more SourceMixer instances.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler.target">
+<span class="sig-name descname"><span class="pre">target</span></span><em class="property"> <span class="pre">=</span> <span class="pre">List(Instance(SourceMixer,</span> <span class="pre">()),</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler.target" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list of <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.SourceMixer</span></code> instances</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler.numsamples">
+<span class="sig-name descname"><span class="pre">numsamples</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Int(1,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler.numsamples" title="Permalink to this definition">¶</a></dt>
+<dd><p>number of samples to be drawn from the set</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler.attribute">
+<span class="sig-name descname"><span class="pre">attribute</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Enum(&quot;sources&quot;,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler.attribute" title="Permalink to this definition">¶</a></dt>
+<dd><p>attribute where drawn sources are assigned to. Fixed to <code class="xref py py-attr docutils literal notranslate"><span class="pre">sources</span></code> attribute
+of <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.SourceMixer</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler.set_value">
+<span class="sig-name descname"><span class="pre">set_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>assigns the sampled values to the SourceMixer instances; only for internal use</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>this function utilizes <code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code> function to draw  
+values from <code class="xref py py-attr docutils literal notranslate"><span class="pre">set</span></code> list that are going to be assigned 
+to the target instance attribute.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/api_ref/generated/generated/acoupipe.sampler.SourceSetSampler.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">SourceSetSampler</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>writer &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css" />
+    
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="BaseWriteDataset" href="generated/acoupipe.writer.BaseWriteDataset.html" />
+    <link rel="prev" title="DistributedPipeline" href="generated/acoupipe.pipeline.DistributedPipeline.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/acoupipe.writer.BaseWriteDataset.html" title="BaseWriteDataset"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="generated/acoupipe.pipeline.DistributedPipeline.html" title="DistributedPipeline"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">writer</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="module-acoupipe.writer">
+<span id="writer"></span><h1>writer<a class="headerlink" href="#module-acoupipe.writer" title="Permalink to this headline">¶</a></h1>
+<p>Provides classes to store the data extracted by <a class="reference internal" href="generated/acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePipeline</span></code></a> derived classes. 
+Current implementation includes <a class="reference internal" href="generated/acoupipe.writer.WriteH5Dataset.html#acoupipe.writer.WriteH5Dataset" title="acoupipe.writer.WriteH5Dataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">WriteH5Dataset</span></code></a> to save data to .h5 files and <a class="reference internal" href="generated/acoupipe.writer.WriteTFRecord.html#acoupipe.writer.WriteTFRecord" title="acoupipe.writer.WriteTFRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">WriteTFRecord</span></code></a> to save .tfrecord files.
+The latter can be efficiently consumed by the <a class="reference external" href="https://www.tensorflow.org//">Tensorflow</a> framework for machine learning and is optional.</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/acoupipe.writer.BaseWriteDataset.html#acoupipe.writer.BaseWriteDataset" title="acoupipe.writer.BaseWriteDataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseWriteDataset</span></code></a></p></td>
+<td><p>Base class for all derived classes intended to write  data from <a class="reference internal" href="generated/acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePipeline</span></code></a> instances to a specific file format.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="generated/acoupipe.writer.WriteH5Dataset.html#acoupipe.writer.WriteH5Dataset" title="acoupipe.writer.WriteH5Dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WriteH5Dataset</span></code></a></p></td>
+<td><p>Class intended to write data to a <cite>.h5</cite> file.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="generated/acoupipe.writer.WriteTFRecord.html#acoupipe.writer.WriteTFRecord" title="acoupipe.writer.WriteTFRecord"><code class="xref py py-obj docutils literal notranslate"><span class="pre">WriteTFRecord</span></code></a></p></td>
+<td><p>Class intended to write data from <a class="reference internal" href="generated/acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePipeline</span></code></a>  instances to a .tfrecord file that can be consumed by tensorflows  tf.data API.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="generated/acoupipe.pipeline.DistributedPipeline.html"
+                        title="previous chapter">DistributedPipeline</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="generated/acoupipe.writer.BaseWriteDataset.html"
+                        title="next chapter">BaseWriteDataset</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/acoupipe.writer.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="generated/acoupipe.writer.BaseWriteDataset.html" title="BaseWriteDataset"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="generated/acoupipe.pipeline.DistributedPipeline.html" title="DistributedPipeline"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">writer</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    </div>
+  </body>
+</html>
