@@ -26,7 +26,7 @@ Indices and tables
 * :ref:`search`
 
 
-dataset
+Dataset
 ========
 This section will walk you through the necessary steps to quickly generate the default dataset.
 The dataset comprises:
