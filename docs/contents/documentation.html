@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Documentation &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Documentation</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="documentation">
+<span id="doc"></span><h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
+<p>The AcouPipe module extends the computational
+pipeline-based concept of <a class="reference external" href="http://www.acoular.org">Acoular</a> and provides additional
+tools that can be helpful to generate realizations
+of features in a predefined random process.</p>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p>This package works with Python 3.7 or 3.8 and depends on:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://www.acoular.org">Acoular</a></p></li>
+<li><p><a class="reference external" href="https://docs.ray.io/en/master/">Ray</a></p></li>
+<li><p><a class="reference external" href="https://pandas.pydata.org/docs/">Pandas</a></p></li>
+<li><p><a class="reference external" href="https://docs.h5py.org/en/stable/">h5py</a></p></li>
+<li><p><a class="reference external" href="https://github.com/tqdm/tqdm">tqdm</a></p></li>
+<li><p><a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a> (optional)</p></li>
+</ul>
+</section>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Download or clone the acoupipe repository and enter the directory, e.g. change “&lt;/path/to/dir&gt;” to the desired path and execute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>DIR=&lt;/path/to/dir&gt; &amp;&amp; git clone git@github.com:adku1173/acoupipe.git $DIR  &amp;&amp; cd $DIR &amp;&amp; unset DIR
+</pre></div>
+</div>
+<p>Next, install module with pip. This will install all necessary <a class="reference internal" href="#dependencies">dependencies</a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>Optionally, also install Tensorflow with (requires pip &gt;19.0):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">tensorflow</span>
+</pre></div>
+</div>
+<p>or follow the instructions in <a class="reference external" href="https://www.tensorflow.org/install">https://www.tensorflow.org/install</a>.</p>
+</section>
+<section id="module-overview">
+<h2>Module Overview<a class="headerlink" href="#module-overview" title="Permalink to this headline">¶</a></h2>
+<p>The following UML flowchart gives a rough overview of AcouPipe’s
+classes and their inheritance relationships.</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="source/_static/acoupipe_uml.png"><img alt="source/_static/acoupipe_uml.png" src="source/_static/acoupipe_uml.png" style="width: 780px;" /></a>
+</figure>
+<section id="sampler-module">
+<h3>Sampler Module<a class="headerlink" href="#sampler-module" title="Permalink to this headline">¶</a></h3>
+<p>A manipulation of object characteristics according to a certain
+random distribution can be achieved by the use of the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes included in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
+All <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes are representing random processes that can be used to manipulate the attributes of Acoular’s objects according to a specified distribution.
+A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes.
+AcouPipe offers a variety of different types of samplers in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
+The random variable that can be passed to class instances of the sampler module must be an derived from or be part of the <code class="code docutils literal notranslate"><span class="pre">scipy.stats</span></code> module.</p>
+<p>This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. Therefore, an instance of the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code>
+derived <code class="code docutils literal notranslate"><span class="pre">NumericAttributeSampler</span></code> class is used. The two white noise signal objects are given as targets to the sampler object.
+New RMS values following a normal distribution are assigned to the <code class="code docutils literal notranslate"><span class="pre">WNoiseGenerator</span></code> objects each time the sample method of the <code class="code docutils literal notranslate"><span class="pre">NumericAttributeSampler</span></code> object is evaluated.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">acoular</span>
+<span class="kn">import</span> <span class="nn">acoupipe</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="n">random_var</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span><span class="n">scale</span><span class="o">=</span><span class="mf">.5</span><span class="p">)</span>
+
+<span class="n">n1</span> <span class="o">=</span> <span class="n">acoular</span><span class="o">.</span><span class="n">WNoiseGenerator</span><span class="p">(</span> <span class="n">sample_freq</span><span class="o">=</span><span class="mi">24000</span><span class="p">,</span>
+                <span class="n">numsamples</span><span class="o">=</span><span class="mi">24000</span><span class="o">*</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">rms</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">seed</span><span class="o">=</span><span class="mi">1</span> <span class="p">)</span>
+
+<span class="n">n2</span> <span class="o">=</span> <span class="n">acoular</span><span class="o">.</span><span class="n">WNoiseGenerator</span><span class="p">(</span> <span class="n">sample_freq</span><span class="o">=</span><span class="mi">24000</span><span class="p">,</span>
+                <span class="n">numsamples</span><span class="o">=</span><span class="mi">24000</span><span class="o">*</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">rms</span><span class="o">=</span><span class="mf">.5</span><span class="p">,</span>
+                <span class="n">seed</span><span class="o">=</span><span class="mi">2</span> <span class="p">)</span>
+
+<span class="n">rms_sampler</span> <span class="o">=</span> <span class="n">acoupipe</span><span class="o">.</span><span class="n">NumericAttributeSampler</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="p">[</span><span class="n">n1</span><span class="p">,</span><span class="n">n2</span><span class="p">],</span>
+                <span class="n">attribute</span><span class="o">=</span><span class="s1">&#39;rms&#39;</span><span class="p">,</span>
+                <span class="n">random_var</span><span class="o">=</span><span class="n">random_var</span><span class="p">,</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">rms_sampler</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="pipeline-module">
+<h3>Pipeline Module<a class="headerlink" href="#pipeline-module" title="Permalink to this headline">¶</a></h3>
+<p>Classes defined in the <code class="code docutils literal notranslate"><span class="pre">pipeline.py</span></code> module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset.
+The results of these tasks are the features (and labels) associated with a specific sample of the dataset.
+Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the <code class="code docutils literal notranslate"><span class="pre">BasePipeline</span></code>’s <code class="code docutils literal notranslate"><span class="pre">get_data()</span></code> generator method.
+It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file.
+Common machine learning frameworks, such as <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>, offer the possibility to consume data from Python generators.
+Control about the state of the sampling process is maintained via the <code class="code docutils literal notranslate"><span class="pre">sampler</span></code> attribute holding a list of <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived instances.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calculate_csm</span><span class="p">(</span><span class="n">powerspectra</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">powerspectra</span><span class="o">.</span><span class="n">csm</span>
+
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">acoupipe</span><span class="o">.</span><span class="n">BasePipeline</span><span class="p">(</span>
+    <span class="n">sampler</span><span class="o">=</span><span class="p">[</span><span class="n">rms_sampler</span><span class="p">],</span>
+    <span class="n">numsamples</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;csm&#39;</span> <span class="p">:</span> <span class="p">(</span><span class="n">calculate_csm</span><span class="p">,</span> <span class="n">ps</span><span class="p">),}</span>
+    <span class="p">)</span>
+
+<span class="n">data_generator</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="writer-module">
+<h3>Writer Module<a class="headerlink" href="#writer-module" title="Permalink to this headline">¶</a></h3>
+<p>Provides classes to store the data extracted by the pipeline.
+Current implementation includes a classes to save data into a
+container-like file format (.h5 file with the <code class="code docutils literal notranslate"><span class="pre">WriteH5Dataset</span></code> class) or binary format (.tfrecord file with the <code class="code docutils literal notranslate"><span class="pre">WriteTFRecord</span></code> class).
+The latter can be efficiently consumed by the Tensorflow framework for machine learning.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">file_writer</span> <span class="o">=</span> <span class="n">acoupipe</span><span class="o">.</span><span class="n">WriteH5Dataset</span><span class="p">(</span>
+            <span class="n">source</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span>
+            <span class="p">)</span>
+
+<span class="n">file_writer</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="loader-module">
+<h3>Loader Module<a class="headerlink" href="#loader-module" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="code docutils literal notranslate"><span class="pre">loader.py</span></code> module provides the <code class="code docutils literal notranslate"><span class="pre">LoadH5Dataset</span></code> class to load the datasets stored into .h5 files.</p>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Documentation</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#module-overview">Module Overview</a><ul>
+<li><a class="reference internal" href="#sampler-module">Sampler Module</a></li>
+<li><a class="reference internal" href="#pipeline-module">Pipeline Module</a></li>
+<li><a class="reference internal" href="#writer-module">Writer Module</a></li>
+<li><a class="reference internal" href="#loader-module">Loader Module</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/contents/documentation.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Documentation</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,732 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Dataset &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Dataset</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="dataset">
+<span id="data"></span><h1>Dataset<a class="headerlink" href="#dataset" title="Permalink to this headline">¶</a></h1>
+<p>This section will walk you through the necessary steps to quickly generate the default dataset.
+The dataset comprises:</p>
+<ul class="simple">
+<li><p>500,000 source cases for training</p></li>
+<li><p>10,000 source cases for validation</p></li>
+</ul>
+<p>The dataset is created by a simulation process with <a href="#id4"><span class="problematic" id="id5">Acoular_</span></a>. The amount of cases can be easily extended.
+The following figure illustrates the virtual measurement setup.</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/msm_layout.png"><img alt="../_images/msm_layout.png" src="../_images/msm_layout.png" style="width: 780px;" /></a>
+</figure>
+<section id="simulation-with-docker">
+<h2>Simulation with Docker<a class="headerlink" href="#simulation-with-docker" title="Permalink to this headline">¶</a></h2>
+<p>The easiest way to create the dataset is by using an existing
+Docker image from <a href="#id6"><span class="problematic" id="id7">DockerHub_</span></a>. Simply pull the latest image with the command</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">pull</span> <span class="n">adku1173</span><span class="o">/</span><span class="n">acoupipe</span><span class="p">:</span><span class="n">latest</span>
+</pre></div>
+</div>
+<p>The image contains the simulation source code and an up-to-date version of <a href="#id8"><span class="problematic" id="id9">Acoular_</span></a>,
+AcouPipe and <a href="#id10"><span class="problematic" id="id11">Tensorflow_</span></a>.
+One can run the dataset simulation given by the main.py script from inside the Docker container by typing</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>HOSTDIR=&quot;&lt;enter the desired host directory&gt;&quot; # stores the datasets inside this directory
+NTASKS=&lt;enter the number of parallel tasks&gt; # should match the number of CPUs on the host
+docker run -it --user &quot;$(id -u)&quot;:&quot;$(id -g)&quot; -v $HOSTDIR:/data/datasets adku1173/acoupipe python main.py --tasks=$NTASKS
+</pre></div>
+</div>
+<p>Note that the current user on the host is specified as the user of the docker environment with the additional argument <code class="code docutils literal notranslate"><span class="pre">--user</span> <span class="pre">&quot;$(id</span> <span class="pre">-u)&quot;:&quot;$(id</span> <span class="pre">-g)&quot;</span></code>.
+It is not recommended to run the container as a root user.
+Further, a directory where the dataset files are stored needs to be binded to the container (<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=&lt;dir&gt;</span></code>). With the
+<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=$(pwd)</span></code> command, the current working directory on Linux or macOS hosts are binded.
+The simulation can be run on multiple CPU threads in parallel to speed up computations. The exact number of threads can be specified by the
+user with the <code class="code docutils literal notranslate"><span class="pre">--tasks</span></code> argument.</p>
+<p>After starting the main script, a progress bar should appear that logs the current simulation status:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1%|█▍                           | 83/10000 [01:04&lt;1:40:35,  1.64it/s]
+</pre></div>
+</div>
+<p>It is possible to view the CPU usage via a dashboard application served by the <a href="#id12"><span class="problematic" id="id13">Ray_</span></a> API. One should find the following output at the beginning
+of the simulation process when running the simulation on multiple CPU threads</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2021</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">14</span> <span class="mi">08</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">16</span><span class="p">,</span><span class="mi">533</span>     <span class="n">INFO</span> <span class="n">services</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">1267</span> <span class="o">--</span> <span class="n">View</span> <span class="n">the</span> <span class="n">Ray</span> <span class="n">dashboard</span> <span class="n">at</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">0.0.0.0</span><span class="p">:</span><span class="mi">8265</span>
+</pre></div>
+</div>
+<p>It is necessary to forward the corresponding TCP port with <code class="code docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">-p</span> <span class="pre">8265:8265</span> <span class="pre">...</span></code> at the start-up of the container to access the server serving the dashboard.
+One can open the dashboard by accessing the web address <a class="reference external" href="http://0.0.0.0:8265">http://0.0.0.0:8265</a> which should display the following web interface</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/dashboard.png"><img alt="../_images/dashboard.png" src="../_images/dashboard.png" style="width: 780px;" /></a>
+</figure>
+<p>The main.py script has some further command line options that can be used to influence the simulation process:</p>
+<div class="literal-block-wrapper docutils container" id="id3">
+<div class="code-block-caption"><span class="caption-text">command line arguments of the main.py script</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">datasets</span> <span class="p">{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="p">[{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="o">...</span><span class="p">]]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">tsamples</span> <span class="n">TSAMPLES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">tstart</span> <span class="n">TSTART</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vsamples</span> <span class="n">VSAMPLES</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">vstart</span> <span class="n">VSTART</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">tpath</span> <span class="n">TPATH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vpath</span> <span class="n">VPATH</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">file_format</span> <span class="p">{</span><span class="n">tfrecord</span><span class="p">,</span><span class="n">h5</span><span class="p">}]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_dir</span> <span class="n">CACHE_DIR</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">freq_index</span> <span class="n">FREQ_INDEX</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nsources</span> <span class="n">NSOURCES</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">features</span> <span class="p">{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="p">[{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="o">...</span><span class="p">]]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">tasks</span> <span class="n">TASKS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">head</span> <span class="n">HEAD</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_csm</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_bf</span><span class="p">]</span>
+            <span class="p">[</span><span class="o">--</span><span class="n">log</span><span class="p">]</span>
+
+<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
+<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
+<span class="o">--</span><span class="n">datasets</span> <span class="p">{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="p">[{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
+                        <span class="n">Whether</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">both</span> <span class="n">datasets</span> <span class="p">(</span><span class="s1">&#39;training</span>
+                        <span class="n">validation</span><span class="s1">&#39;) or only the &#39;</span><span class="n">training</span><span class="s1">&#39; / &#39;</span><span class="n">validation</span><span class="s1">&#39;</span>
+                        <span class="n">dataset</span><span class="o">.</span> <span class="n">Defaults</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">training</span> <span class="ow">and</span> <span class="n">validation</span>
+                        <span class="n">dataset</span>
+<span class="o">--</span><span class="n">tsamples</span> <span class="n">TSAMPLES</span>   <span class="n">Total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">training</span> <span class="n">samples</span> <span class="n">to</span> <span class="n">simulate</span>
+<span class="o">--</span><span class="n">tstart</span> <span class="n">TSTART</span>       <span class="n">Start</span> <span class="n">simulation</span> <span class="n">at</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">dataset</span>
+<span class="o">--</span><span class="n">vsamples</span> <span class="n">VSAMPLES</span>   <span class="n">Total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">validation</span> <span class="n">samples</span> <span class="n">to</span> <span class="n">simulate</span>
+<span class="o">--</span><span class="n">vstart</span> <span class="n">VSTART</span>       <span class="n">Start</span> <span class="n">simulation</span> <span class="n">at</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">dataset</span>
+<span class="o">--</span><span class="n">tpath</span> <span class="n">TPATH</span>         <span class="n">Path</span> <span class="n">of</span> <span class="n">simulated</span> <span class="n">training</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span>
+                        <span class="n">working</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">vpath</span> <span class="n">VPATH</span>         <span class="n">Path</span> <span class="n">of</span> <span class="n">simulated</span> <span class="n">validation</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span>
+                        <span class="n">working</span> <span class="n">directory</span>
+<span class="o">--</span><span class="n">file_format</span> <span class="p">{</span><span class="n">tfrecord</span><span class="p">,</span><span class="n">h5</span><span class="p">}</span>
+                        <span class="n">Desired</span> <span class="n">file</span> <span class="nb">format</span> <span class="n">to</span> <span class="n">store</span> <span class="n">the</span> <span class="n">datasets</span><span class="o">.</span>
+<span class="o">--</span><span class="n">cache_dir</span> <span class="n">CACHE_DIR</span>
+                        <span class="n">Path</span> <span class="n">of</span> <span class="n">cached</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span> <span class="n">working</span>
+                        <span class="n">directory</span>
+<span class="o">--</span><span class="n">freq_index</span> <span class="n">FREQ_INDEX</span>
+                        <span class="n">Returns</span> <span class="n">only</span> <span class="n">the</span> <span class="n">features</span> <span class="ow">and</span> <span class="n">targets</span> <span class="k">for</span> <span class="n">the</span>
+                        <span class="n">specified</span> <span class="n">frequency</span> <span class="n">index</span><span class="p">,</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">(</span><span class="nb">all</span>
+                        <span class="n">frequencies</span> <span class="n">will</span> <span class="n">be</span> <span class="n">calculated</span> <span class="ow">and</span> <span class="n">included</span> <span class="ow">in</span> <span class="n">the</span>
+                        <span class="n">dataset</span><span class="p">)</span>
+<span class="o">--</span><span class="n">features</span> <span class="p">{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="p">[{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
+                        <span class="n">Whether</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">dataset</span> <span class="n">containing</span> <span class="n">the</span> <span class="n">csm</span> <span class="ow">or</span> <span class="n">the</span>
+                        <span class="n">beamforming</span> <span class="nb">map</span> <span class="k">as</span> <span class="n">the</span> <span class="n">main</span> <span class="n">feature</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;csm&#39;</span>
+<span class="o">--</span><span class="n">tasks</span> <span class="n">TASKS</span>         <span class="n">Number</span> <span class="n">of</span> <span class="n">asynchronous</span> <span class="n">tasks</span><span class="o">.</span> <span class="n">Defaults</span> <span class="n">to</span> <span class="s1">&#39;1&#39;</span> <span class="p">(</span><span class="n">non</span><span class="o">-</span>
+                        <span class="n">distributed</span><span class="p">)</span>
+<span class="o">--</span><span class="n">head</span> <span class="n">HEAD</span>           <span class="n">IP</span> <span class="n">address</span> <span class="n">of</span> <span class="n">the</span> <span class="n">head</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">ray</span> <span class="n">cluster</span><span class="o">.</span> <span class="n">Only</span>
+                        <span class="n">necessary</span> <span class="n">when</span> <span class="n">running</span> <span class="ow">in</span> <span class="n">distributed</span> <span class="n">mode</span><span class="o">.</span>
+<span class="o">--</span><span class="n">cache_csm</span>           <span class="n">Whether</span> <span class="n">to</span> <span class="n">cache</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">the</span> <span class="n">CSM</span> <span class="n">calculation</span>
+<span class="o">--</span><span class="n">cache_bf</span>            <span class="n">Whether</span> <span class="n">to</span> <span class="n">cache</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">the</span> <span class="n">beamformer</span>
+                        <span class="n">calculation</span><span class="o">.</span> <span class="n">Only</span> <span class="n">relevant</span> <span class="k">if</span> <span class="s1">&#39;sourcemap&#39;</span> <span class="ow">is</span> <span class="n">included</span>
+                        <span class="ow">in</span> <span class="o">--</span><span class="n">features</span> <span class="nb">list</span><span class="o">.</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="simulation-on-a-high-performance-cluster-hpc">
+<h2>Simulation on a High-Performance Cluster (HPC)<a class="headerlink" href="#simulation-on-a-high-performance-cluster-hpc" title="Permalink to this headline">¶</a></h2>
+<p>If you plan to simulate the data by means of multiple machines (e.g. on a high-performance cluster (HPC))
+you can use the <a href="#id14"><span class="problematic" id="id15">`Ray Cluster`_</span></a> interface.</p>
+<p>The following code snippet gives an example of a job script that can
+be scheduled with the <a href="#id16"><span class="problematic" id="id17">SLURM_</span></a> job manager and by using a <a href="#id18"><span class="problematic" id="id19">Singularity_</span></a> image.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1">#SBATCH --job-name=acoupipe_dataset</span>
+<span class="c1">#SBATCH --cpus-per-task=16</span>
+<span class="c1">#SBATCH --nodes=4</span>
+<span class="c1">#SBATCH --tasks-per-node=1 # Give all resources to a single Ray task, ray can manage the resources internally</span>
+<span class="c1">#SBATCH --output=acoupipe_dataset.stdout</span>
+
+<span class="nv">DIRPATH</span><span class="o">=</span>&lt;path-to-the-acoupipe-dataset-folder&gt;
+<span class="nv">IMGNAME</span><span class="o">=</span>&lt;name-of-the-singularity-image&gt;
+
+<span class="nb">let</span> <span class="s2">&quot;worker_num=(</span><span class="si">${</span><span class="nv">SLURM_NTASKS</span><span class="si">}</span><span class="s2"> - 1)&quot;</span> <span class="c1">### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)-1</span>
+<span class="nb">echo</span> <span class="s2">&quot;Number of workers&quot;</span> <span class="nv">$worker_num</span>
+
+<span class="c1"># Define the total number of CPU cores available to ray</span>
+<span class="nb">let</span> <span class="s2">&quot;total_cores=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span><span class="s2"> * </span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="nv">suffix</span><span class="o">=</span><span class="s1">&#39;6379&#39;</span>
+<span class="nv">ip_head</span><span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span>:<span class="nv">$suffix</span>
+<span class="nb">export</span> ip_head <span class="c1"># Exporting for latter access by trainer.py</span>
+<span class="nb">echo</span> <span class="nv">$ip_head</span>
+
+<span class="c1"># Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`</span>
+<span class="c1"># We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all</span>
+<span class="c1"># network interfaces. This allows to access the dashboard through port-forwarding:</span>
+<span class="c1"># z. B.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144</span>
+srun --nodes<span class="o">=</span><span class="m">1</span> --ntasks<span class="o">=</span><span class="m">1</span> --cpus-per-task<span class="o">=</span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> --nodelist<span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span> singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <span class="nv">$IMGNAME</span> ray start --head --block --dashboard-host <span class="m">0</span>.0.0.0 --port<span class="o">=</span><span class="m">6379</span> --num-cpus <span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> <span class="p">&amp;</span>
+sleep <span class="m">10</span>
+
+<span class="c1"># Now we execute worker_num worker nodes on all nodes in the allocation except hostname by</span>
+<span class="c1"># specifying --nodes=${worker_num} and --exclude=`hostname`. Use 1 task per node, so worker_num tasks in total</span>
+<span class="c1"># (--ntasks=${worker_num}) and 5 CPUs per task (--cps-per-task=${SLURM_CPUS_PER_TASK}).</span>
+srun --nodes<span class="o">=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span> --ntasks<span class="o">=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span> --cpus-per-task<span class="o">=</span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> --exclude<span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span> singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <span class="nv">$IMGNAME</span> ray start --address <span class="nv">$ip_head</span> --block --num-cpus <span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> <span class="p">&amp;</span>
+sleep <span class="m">10</span>
+
+singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <span class="nv">$IMGNAME</span> python -u <span class="nv">$DIRPATH</span>/main.py --head<span class="o">=</span><span class="si">${</span><span class="nv">ip_head</span><span class="si">}</span> --tasks<span class="o">=</span><span class="si">${</span><span class="nv">total_cores</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+<section id="dataset-characteristics">
+<h2>dataset Characteristics<a class="headerlink" href="#dataset-characteristics" title="Permalink to this headline">¶</a></h2>
+<p><strong>fixed characteristics:</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 66%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Environment</p></td>
+<td><p>Unechoic, Resting, Homogeneous Fluid</p></td>
+</tr>
+<tr class="row-even"><td><p>Microphone Array</p></td>
+<td><p>Vogel’s spiral, M=64, Aperture Size 1m</p></td>
+</tr>
+<tr class="row-odd"><td><p>Observation Area</p></td>
+<td><p>x,y in [-0.5,0.5], z=0.5</p></td>
+</tr>
+<tr class="row-even"><td><p>Source Type</p></td>
+<td><p>Monopole</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source Signals</p></td>
+<td><p>Uncorrelated White Noise (T=5s)</p></td>
+</tr>
+<tr class="row-even"><td><p>Sampling Rate</p></td>
+<td><p>He = 40, Fs=13720 Hz</p></td>
+</tr>
+<tr class="row-odd"><td><p>No. of Time Samples</p></td>
+<td><p>68.600</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>sampled characteristics:</strong></p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 56%" />
+<col style="width: 44%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Sensor Position Deviation [m]</p></td>
+<td><p>Normal distributed (sigma = 0.001)</p></td>
+</tr>
+<tr class="row-even"><td><p>No. of Sources</p></td>
+<td><p>Poisson distributed (lambda=3)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source Positions</p></td>
+<td><p>Normal distributed (sigma = 0.1688)</p></td>
+</tr>
+<tr class="row-even"><td><p>Source Strength (Pa^2 at reference microphone)</p></td>
+<td><p>Rayleigh distributed (sigma_R=5)</p></td>
+</tr>
+</tbody>
+</table>
+<section id="input-features">
+<h3>Input Features<a class="headerlink" href="#input-features" title="Permalink to this headline">¶</a></h3>
+<p>One can save one of the three different input features to file:</p>
+<ul class="simple">
+<li><p><strong>Cross-Spectral Matrix (CSM):</strong> <code class="code docutils literal notranslate"><span class="pre">'csm'</span></code> of shape: (65,64,64,2)</p></li>
+<li><p><strong>non-redundant Cross-Spectral Matrix:</strong> <code class="code docutils literal notranslate"><span class="pre">'csmtriu'</span></code> of shape: (65,64,64)</p></li>
+<li><p><strong>Conventional Beamforming Map:</strong> <code class="code docutils literal notranslate"><span class="pre">'sourcemap'</span></code> of shape: (65,64,64)</p></li>
+</ul>
+<p>The first axis of each feature corresponds to the FFT coefficient. The non-redundant CSM follows the
+approach stated in <a class="reference internal" href="literature.html#cas21" id="id1"><span>[Cas21]</span></a> (the conjugate complex of the normal CSM is neglected).
+The underlying processing parameters used to calculate the CSM and/or the source map are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 66%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Block size</p></td>
+<td><p>128 samples</p></td>
+</tr>
+<tr class="row-even"><td><p>Block overlap</p></td>
+<td><p>50 %</p></td>
+</tr>
+<tr class="row-odd"><td><p>Windowing</p></td>
+<td><p>von Hann / Hanning</p></td>
+</tr>
+<tr class="row-even"><td><p>Steering vector</p></td>
+<td><p>fromulation 3, see <a class="reference internal" href="literature.html#sar12" id="id2"><span>[Sar12]</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>Evaluation basis</p></td>
+<td><p>single frequency coefficient</p></td>
+</tr>
+</tbody>
+</table>
+<p>with the following FFT frequency indices, frequencies and Helmholtz numbers:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 17%" />
+<col style="width: 39%" />
+<col style="width: 44%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>Index</p></td>
+<td><p>Frequency [Hz]</p></td>
+<td><p>Helmholtz Number</p></td>
+</tr>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>0.0</p></td>
+<td><p>0.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>107.1875</p></td>
+<td><p>0.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>214.375</p></td>
+<td><p>0.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>321.5625</p></td>
+<td><p>0.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>428.75</p></td>
+<td><p>1.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>535.9375</p></td>
+<td><p>1.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>643.125</p></td>
+<td><p>1.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>750.3125</p></td>
+<td><p>2.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>857.5</p></td>
+<td><p>2.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>964.6875</p></td>
+<td><p>2.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>1071.875</p></td>
+<td><p>3.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>11</p></td>
+<td><p>1179.0625</p></td>
+<td><p>3.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>12</p></td>
+<td><p>1286.25</p></td>
+<td><p>3.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>13</p></td>
+<td><p>1393.4375</p></td>
+<td><p>4.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>14</p></td>
+<td><p>1500.625</p></td>
+<td><p>4.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>15</p></td>
+<td><p>1607.8125</p></td>
+<td><p>4.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>16</p></td>
+<td><p>1715.0</p></td>
+<td><p>5.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>17</p></td>
+<td><p>1822.1875</p></td>
+<td><p>5.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>18</p></td>
+<td><p>1929.375</p></td>
+<td><p>5.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>19</p></td>
+<td><p>2036.5625</p></td>
+<td><p>5.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>20</p></td>
+<td><p>2143.75</p></td>
+<td><p>6.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>21</p></td>
+<td><p>2250.9375</p></td>
+<td><p>6.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>22</p></td>
+<td><p>2358.125</p></td>
+<td><p>6.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>23</p></td>
+<td><p>2465.3125</p></td>
+<td><p>7.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>24</p></td>
+<td><p>2572.5</p></td>
+<td><p>7.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>25</p></td>
+<td><p>2679.6875</p></td>
+<td><p>7.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>26</p></td>
+<td><p>2786.875</p></td>
+<td><p>8.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>27</p></td>
+<td><p>2894.0625</p></td>
+<td><p>8.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>28</p></td>
+<td><p>3001.25</p></td>
+<td><p>8.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>29</p></td>
+<td><p>3108.4375</p></td>
+<td><p>9.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>30</p></td>
+<td><p>3215.625</p></td>
+<td><p>9.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>31</p></td>
+<td><p>3322.8125</p></td>
+<td><p>9.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>32</p></td>
+<td><p>3430.0</p></td>
+<td><p>10.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>33</p></td>
+<td><p>3537.1875</p></td>
+<td><p>10.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>34</p></td>
+<td><p>3644.375</p></td>
+<td><p>10.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>35</p></td>
+<td><p>3751.5625</p></td>
+<td><p>10.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>36</p></td>
+<td><p>3858.75</p></td>
+<td><p>11.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>37</p></td>
+<td><p>3965.9375</p></td>
+<td><p>11.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>38</p></td>
+<td><p>4073.125</p></td>
+<td><p>11.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>39</p></td>
+<td><p>4180.3125</p></td>
+<td><p>12.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>40</p></td>
+<td><p>4287.5</p></td>
+<td><p>12.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>41</p></td>
+<td><p>4394.6875</p></td>
+<td><p>12.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>42</p></td>
+<td><p>4501.875</p></td>
+<td><p>13.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>43</p></td>
+<td><p>4609.0625</p></td>
+<td><p>13.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>44</p></td>
+<td><p>4716.25</p></td>
+<td><p>13.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>45</p></td>
+<td><p>4823.4375</p></td>
+<td><p>14.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>46</p></td>
+<td><p>4930.625</p></td>
+<td><p>14.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>47</p></td>
+<td><p>5037.8125</p></td>
+<td><p>14.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>48</p></td>
+<td><p>5145.0</p></td>
+<td><p>15.0</p></td>
+</tr>
+<tr class="row-odd"><td><p>49</p></td>
+<td><p>5252.1875</p></td>
+<td><p>15.3125</p></td>
+</tr>
+<tr class="row-even"><td><p>50</p></td>
+<td><p>5359.375</p></td>
+<td><p>15.625</p></td>
+</tr>
+<tr class="row-odd"><td><p>51</p></td>
+<td><p>5466.5625</p></td>
+<td><p>15.9375</p></td>
+</tr>
+<tr class="row-even"><td><p>52</p></td>
+<td><p>5573.75</p></td>
+<td><p>16.25</p></td>
+</tr>
+<tr class="row-odd"><td><p>53</p></td>
+<td><p>5680.9375</p></td>
+<td><p>16.5625</p></td>
+</tr>
+<tr class="row-even"><td><p>54</p></td>
+<td><p>5788.125</p></td>
+<td><p>16.875</p></td>
+</tr>
+<tr class="row-odd"><td><p>55</p></td>
+<td><p>5895.3125</p></td>
+<td><p>17.1875</p></td>
+</tr>
+<tr class="row-even"><td><p>56</p></td>
+<td><p>6002.5</p></td>
+<td><p>17.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>57</p></td>
+<td><p>6109.6875</p></td>
+<td><p>17.8125</p></td>
+</tr>
+<tr class="row-even"><td><p>58</p></td>
+<td><p>6216.875</p></td>
+<td><p>18.125</p></td>
+</tr>
+<tr class="row-odd"><td><p>59</p></td>
+<td><p>6324.0625</p></td>
+<td><p>18.4375</p></td>
+</tr>
+<tr class="row-even"><td><p>60</p></td>
+<td><p>6431.25</p></td>
+<td><p>18.75</p></td>
+</tr>
+<tr class="row-odd"><td><p>61</p></td>
+<td><p>6538.4375</p></td>
+<td><p>19.0625</p></td>
+</tr>
+<tr class="row-even"><td><p>62</p></td>
+<td><p>6645.625</p></td>
+<td><p>19.375</p></td>
+</tr>
+<tr class="row-odd"><td><p>63</p></td>
+<td><p>6752.8125</p></td>
+<td><p>19.6875</p></td>
+</tr>
+<tr class="row-even"><td><p>64</p></td>
+<td><p>6860.0</p></td>
+<td><p>20.0</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="labels">
+<h3>Labels<a class="headerlink" href="#labels" title="Permalink to this headline">¶</a></h3>
+<p>The dataset comprises labels for each source case:</p>
+<p><strong>Source strength at the reference microphone:</strong> <code class="code docutils literal notranslate"><span class="pre">'p2'</span></code></p>
+<p>The averaged squared sound pressure value at the reference microphone position (red dot) is
+stored as an estimate of the source strength for each individual source and 65 FFT coefficients.
+A value of zero is stored for non-existing sources. With a maximum number of 16 possible sources, this results
+in an array of shape (65,16) per case.
+It should be noted that the entries are sorted in descending order according to the overall RMS value of the source signal.
+The descending order is not strictly maintained when only a single frequency coefficient is considered.</p>
+<p><strong>Source location:</strong> <code class="code docutils literal notranslate"><span class="pre">'loc'</span></code></p>
+<p>The location in the x,y plane of each source is stored. Non-existing source locations are set to zero (center of the plane).
+The source location array is of shape (16,2). The source ordering is the same as for the source strength estimate <code class="code docutils literal notranslate"><span class="pre">p2</span></code>.</p>
+<p><strong>Number of sources:</strong> <code class="code docutils literal notranslate"><span class="pre">'nsources'</span></code></p>
+<p>An integer providing the number of sources.</p>
+<p><strong>Sample index:</strong> <code class="code docutils literal notranslate"><span class="pre">'idx'</span></code></p>
+<p>The index referencing the sampled case in the dataset (starts at 1).</p>
+<p><strong>Involved random seeds:</strong> <code class="code docutils literal notranslate"><span class="pre">'seeds'</span></code></p>
+<p>A list with random seeds for each object that performs a random sampling of dataset properties.
+The combination is unique for each source case in the dataset. This enables to re-simulate every
+specific sample of the dataset.</p>
+</section>
+<section id="file-formats">
+<h3>File Formats<a class="headerlink" href="#file-formats" title="Permalink to this headline">¶</a></h3>
+<p>The user can save the data to two different file formats (<a href="#id20"><span class="problematic" id="id21">HDF5_</span></a> or <a href="#id22"><span class="problematic" id="id23">TFRecord_</span></a>).
+It is recommended to use the .h5 file format.</p>
+<p><strong>HDF5 format</strong></p>
+<p><a href="#id24"><span class="problematic" id="id25">HDF5_</span></a> is a container-like format storing data in hierarchical order.
+Each case and the corresponding data is stored into a separate group of the file.
+The sample index acts as the group header.
+An additional <code class="code docutils literal notranslate"><span class="pre">metadata</span></code> group includes important metadata (e.g. sampling frequency, FFT block size, …).</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>└──<span class="s1">&#39;1&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;csm&#39;</span> <span class="o">(</span>or <span class="s1">&#39;sourcemap&#39;</span>, or <span class="s1">&#39;csmtriu&#39;</span><span class="o">)</span>
+    <span class="p">|</span>── <span class="s1">&#39;loc&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;p2&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;nsources&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;seeds&#39;</span>
+└──<span class="s1">&#39;2&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;csm&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;loc&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;p2&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;nsources&#39;</span>
+    <span class="p">|</span>── <span class="s1">&#39;seeds&#39;</span>
+└──...
+    <span class="p">|</span>   ...
+    <span class="p">|</span>
+└──<span class="s1">&#39;metadata&#39;</span>
+    <span class="p">|</span>   <span class="s1">&#39;sample_freq&#39;</span>
+    <span class="p">|</span>   ...
+</pre></div>
+</div>
+<p>Correct order is always maintained.
+This is important when multiple source cases are simulated in parallel tasks.</p>
+<p><strong>TFRecord format</strong></p>
+<p>The <a href="#id26"><span class="problematic" id="id27">TFRecord_</span></a> file format is a binary file format to store sequences of data developed by <a href="#id28"><span class="problematic" id="id29">Tensorflow_</span></a>.
+In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file.
+The exact case number can be reconstructed with the <code class="code docutils literal notranslate"><span class="pre">idx</span></code> and <code class="code docutils literal notranslate"><span class="pre">seeds</span></code> features when the file is parsed.</p>
+</section>
+</section>
+<section id="load-the-dataset">
+<h2>Load the dataset<a class="headerlink" href="#load-the-dataset" title="Permalink to this headline">¶</a></h2>
+<p><strong>HDF5 format</strong></p>
+<p>The AcouPipe toolbox provides the <code class="code docutils literal notranslate"><span class="pre">LoadH5Dataset</span></code> class to load the datasets stored into HDF5 format:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">acoupipe</span> <span class="kn">import</span> <span class="n">LoadH5Dataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">LoadH5Dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;&lt;data-set.h5&gt;&quot;</span><span class="p">)</span>
+
+<span class="n">s1</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">]</span> <span class="c1"># returns the first sample of the dataset</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span> <span class="c1"># prints the corresponding metadata information</span>
+</pre></div>
+</div>
+<p>A Python generator can be created which can be consumed by the <a href="#id30"><span class="problematic" id="id31">`Tensorflow Dataset API`_</span></a>:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+<span class="n">data_generator</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_dataset_generator</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">,</span><span class="s1">&#39;nsources&#39;</span><span class="p">,</span><span class="s1">&#39;p2&#39;</span><span class="p">,</span><span class="s1">&#39;csmtriu&#39;</span><span class="p">,</span><span class="s1">&#39;idx&#39;</span><span class="p">],</span> <span class="c1"># the desired features to return from the file</span>
+            <span class="p">)</span>
+
+<span class="c1"># provide the signature of the features</span>
+<span class="n">output_signature</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;loc&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="s1">&#39;nsources&#39;</span><span class="p">:</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(),</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+            <span class="s1">&#39;idx&#39;</span><span class="p">:</span><span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(),</span><span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+            <span class="s1">&#39;p2&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="s1">&#39;csmtriu&#39;</span><span class="p">:</span>  <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="p">}</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+            <span class="n">generator</span><span class="o">=</span><span class="n">data_generator</span><span class="p">,</span>
+            <span class="n">output_signature</span><span class="o">=</span><span class="n">output_signature</span>
+            <span class="p">)</span>
+
+<span class="n">dataset_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">dataset_sample</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">dataset_iter</span><span class="p">)</span> <span class="c1"># return samples iteratively</span>
+</pre></div>
+</div>
+<p><strong>TFRecord format</strong></p>
+<p>To parse the data from TFRecord files it is necessary to write a custom function that parses the file sequentially
+(see: <a href="#id32"><span class="problematic" id="id33">TFRecord_</span></a> documentation for details).</p>
+<p>A potential parser function for the <code class="code docutils literal notranslate"><span class="pre">'csmtriu'</span></code> feature can be similar to:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">tfrecord_parser_csmtriu</span><span class="p">(</span><span class="n">record</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; parser for tfrecord datasets with &#39;csmtriu&#39; feature &quot;&quot;&quot;</span>
+    <span class="n">parsed</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">parse_single_example</span><span class="p">(</span>
+        <span class="n">record</span><span class="p">,</span>
+        <span class="p">{</span>
+        <span class="s1">&#39;csmtriu&#39;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">VarLenFeature</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="s1">&#39;p2&#39;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">VarLenFeature</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="s1">&#39;loc&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">VarLenFeature</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+        <span class="s1">&#39;nsources&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">FixedLenFeature</span><span class="p">((),</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span>
+        <span class="p">}</span>
+    <span class="p">)</span>
+    <span class="c1"># get and reshape parsed data</span>
+    <span class="n">csmtriu</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">to_dense</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;csmtriu&#39;</span><span class="p">]),</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">p2</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">to_dense</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;p2&#39;</span><span class="p">]),</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">65</span><span class="p">,</span><span class="mi">16</span><span class="p">))</span>
+    <span class="n">loc</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">sparse</span><span class="o">.</span><span class="n">to_dense</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]),[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">nsources</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">parsed</span><span class="p">[</span><span class="s1">&#39;nsources&#39;</span><span class="p">],</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">csmtriu</span><span class="p">,</span> <span class="n">p2</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">nsources</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Dataset</a><ul>
+<li><a class="reference internal" href="#simulation-with-docker">Simulation with Docker</a></li>
+<li><a class="reference internal" href="#simulation-on-a-high-performance-cluster-hpc">Simulation on a High-Performance Cluster (HPC)</a></li>
+<li><a class="reference internal" href="#dataset-characteristics">dataset Characteristics</a><ul>
+<li><a class="reference internal" href="#input-features">Input Features</a></li>
+<li><a class="reference internal" href="#labels">Labels</a></li>
+<li><a class="reference internal" href="#file-formats">File Formats</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#load-the-dataset">Load the dataset</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/contents/dataset.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Dataset</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    </div>
+  </body>
+</html>
