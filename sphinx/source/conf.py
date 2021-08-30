@@ -48,7 +48,7 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 # autosummary: https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html
-autosummary_generate = True
+autosummary_generate = False
 autodoc_member_order = 'bysource'
 autosummary_generate_overwrite = True # alternatively generate stub files manually with sphinx-autogen *.rst
 numpydoc_show_class_members = False # Whether to show all members of a class in the Methods and Attributes sections automatically.
