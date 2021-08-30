@@ -1,5 +1,7 @@
 from acoular import config
-from numpy import zeros, array, float32, concatenate, real, imag, triu_indices
+from acoular.spectra import PowerSpectra
+from acoupipe import float_list_feature, PlanarSourceMapEvaluator
+from numpy import zeros, array, float32, concatenate, real, imag, triu_indices, newaxis
 import numba
 import warnings
 warnings.filterwarnings("ignore") # suppress pickling warnings
@@ -252,6 +254,7 @@ def get_source_loc(source_mixer,nsources=16,dim=2):
     loc = array([array(s.loc) for s in source_mixer.sources],dtype=float32)[:,:dim] # ignore third dimension
     return concatenate((loc,loc_zeros),axis=0)
 
+
 def get_ref_mic_pow(source_mixer,power_spectra,fidx=None):
     p2 = []
     for src in source_mixer.sources:
@@ -261,3 +264,235 @@ def get_ref_mic_pow(source_mixer,power_spectra,fidx=None):
         return array(p2)[:,fidx]
     else:
         return array(p2)
+
+
+def _get_sourcemap_evaluator(beamformer,sourcemixer,powerspectra,f,r):
+    if not f:
+        sourcemap = array([beamformer.synthetic(f,num=0) for f in beamformer.freq_data.fftfreq()])
+        target_p2 = get_ref_mic_pow(sourcemixer, powerspectra, None).T
+        target_loc = array([array(s.loc) for s in sourcemixer.sources],dtype=float32)
+    else:
+        sourcemap = beamformer.synthetic(f,num=0)[newaxis,:,:]
+        fidx = list(powerspectra.fftfreq()[:]).index(f)
+        target_p2 = get_ref_mic_pow(sourcemixer, powerspectra, fidx)[newaxis,:]
+        target_loc = array([array(s.loc) for s in sourcemixer.sources],dtype=float32)    
+    return PlanarSourceMapEvaluator(sourcemap=sourcemap, grid=beamformer.steer.grid, target_loc=target_loc, target_p2=target_p2, r=r)
+
+
+def get_overall_level_error(beamformer, powerspectra, sourcemixer, r=0.05, f=None, cache_dir=None, num_threads=1):
+    """Calculates the sourcemap with a specified beamformer instance
+    of class (or derived class) of type acoular.BeamformerBase and evaluates the overall level error.
+
+    Parameters
+    ----------
+    beamformer : instance of class acoular.BeamformerBase
+        beamformer to calculate the source map feature
+    source_mixer : instance of acoular.SourceMixer
+        SourceMixer object holding PointSource objects
+    power_spectra : instance of acoular.PowerSpectra
+        object to calculate the Pa^2 value
+    f : float
+        frequency to evaluate
+    cache_dir : str, optional
+        directory to store the cache files (only necessary if PowerSpectra.cached=True), 
+        by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
+
+    Returns
+    -------
+    numpy.array
+        sourcemap feature of either shape (nxsteps,nysteps) or (B/2+1,nxsteps,nysteps). 
+        B: Blocksize of the FFT.
+    """
+    numba.set_num_threads(num_threads)
+    if cache_dir:
+        config.cache_dir = cache_dir
+    se = _get_sourcemap_evaluator(beamformer,sourcemixer,powerspectra,f,r)
+    return se.get_overall_level_error()
+
+
+def get_specific_level_error(beamformer, powerspectra, sourcemixer, r=0.05, f=None, cache_dir=None, num_threads=1):
+    """Calculates the sourcemap with a specified beamformer instance
+    of class (or derived class) of type acoular.BeamformerBase and evaluates the specific level error.
+
+    Parameters
+    ----------
+    beamformer : instance of class acoular.BeamformerBase
+        beamformer to calculate the source map feature
+    source_mixer : instance of acoular.SourceMixer
+        SourceMixer object holding PointSource objects
+    power_spectra : instance of acoular.PowerSpectra
+        object to calculate the Pa^2 value
+    f : float
+        frequency to evaluate
+    cache_dir : str, optional
+        directory to store the cache files (only necessary if PowerSpectra.cached=True), 
+        by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
+
+    Returns
+    -------
+    numpy.array
+        sourcemap feature of either shape (nxsteps,nysteps) or (B/2+1,nxsteps,nysteps). 
+        B: Blocksize of the FFT.
+    """
+    numba.set_num_threads(num_threads)
+    if cache_dir:
+        config.cache_dir = cache_dir
+    se = _get_sourcemap_evaluator(beamformer,sourcemixer,powerspectra,f,r)
+    return se.get_specific_level_error()
+
+
+def get_inverse_level_error(beamformer, powerspectra, sourcemixer, r=0.05, f=None, cache_dir=None, num_threads=1):
+    """Calculates the sourcemap with a specified beamformer instance
+    of class (or derived class) of type acoular.BeamformerBase and evaluates the inverse level error.
+
+    Parameters
+    ----------
+    beamformer : instance of class acoular.BeamformerBase
+        beamformer to calculate the source map feature
+    source_mixer : instance of acoular.SourceMixer
+        SourceMixer object holding PointSource objects
+    power_spectra : instance of acoular.PowerSpectra
+        object to calculate the Pa^2 value
+    f : float
+        frequency to evaluate
+    cache_dir : str, optional
+        directory to store the cache files (only necessary if PowerSpectra.cached=True), 
+        by default None
+    num_threads : int, optional
+        the number of threads used by numba during parallel execution
+
+    Returns
+    -------
+    numpy.array
+        sourcemap feature of either shape (nxsteps,nysteps) or (B/2+1,nxsteps,nysteps). 
+        B: Blocksize of the FFT.
+    """
+    numba.set_num_threads(num_threads)
+    if cache_dir:
+        config.cache_dir = cache_dir
+    se = _get_sourcemap_evaluator(beamformer,sourcemixer,powerspectra,f,r)
+    return se.get_inverse_level_error()
+
+
+# Abstract Base class
+class BaseFeature:
+
+    def __init__(self):
+        pass
+
+    def add_metadata(self,metadata):
+        return metadata
+                
+    def add_feature_funcs(self,feature_funcs):
+        return feature_funcs
+
+    def add_encoder_funcs(self,encoder_funcs):
+        return encoder_funcs
+
+    def add_feature_names(self,feature_names):
+        return feature_names
+
+
+class SourceMapFeature(BaseFeature):
+
+    def __init__(self,feature_name,beamformer,f,num,cache_dir):
+        self.feature_name = feature_name
+        self.beamformer = beamformer
+        self.f = f
+        self.num = num
+        self.cache_dir = cache_dir
+
+    def add_metadata(self,metadata):
+        metadata['r_diag'] = self.beamformer.r_diag
+        metadata['steer_type'] = self.beamformer.steer.steer_type
+        metadata['ref'] = self.beamformer.steer.ref    
+        return metadata
+
+    def add_feature_funcs(self,feature_funcs):
+        feature_funcs[self.feature_name] = (
+            get_sourcemap, self.beamformer, self.f, self.num, self.cache_dir)
+        return feature_funcs
+
+    def add_encoder_funcs(self, encoder_funcs):
+        encoder_funcs[self.feature_name] = float_list_feature
+        return encoder_funcs
+
+    def add_feature_names(self,feature_names):
+        return feature_names + [self.feature_name]
+
+
+class RefSourceMapFeature(SourceMapFeature):
+
+    def __init__(self,feature_name,beamformer,sourcemixer,powerspectra,r,f,num,cache_dir):
+        self.feature_name = feature_name
+        self.beamformer = beamformer
+        self.sourcemixer = sourcemixer
+        self.powerspectra = powerspectra
+        self.r = r
+        self.f = f
+        self.num = num
+        self.cache_dir = cache_dir
+
+    def add_metadata(self,metadata):
+        metadata['r_diag'] = self.beamformer.r_diag
+        metadata['steer_type'] = self.beamformer.steer.steer_type
+        metadata['ref'] = self.beamformer.steer.ref   
+        metadata['reference_integration_radius'] = self.r 
+        return metadata
+
+    def add_feature_funcs(self,feature_funcs):
+        feature_funcs[self.feature_name] = (
+            get_sourcemap, self.beamformer, self.f, self.num, self.cache_dir)
+        feature_funcs['overall_level_error'] = (
+            get_overall_level_error, self.beamformer, self.powerspectra, self.sourcemixer, self.r, self.f, self.cache_dir)
+        feature_funcs['specific_level_error'] = (
+            get_specific_level_error, self.beamformer, self.powerspectra, self.sourcemixer, self.r, self.f, self.cache_dir)
+        feature_funcs['inverse_level_error'] = (
+            get_inverse_level_error, self.beamformer, self.powerspectra, self.sourcemixer, self.r, self.f, self.cache_dir)   
+        return feature_funcs
+
+    def add_encoder_funcs(self, encoder_funcs):
+        encoder_funcs[self.feature_name] = float_list_feature
+        encoder_funcs['overall_level_error'] = float_list_feature
+        encoder_funcs['specific_level_error'] = float_list_feature
+        encoder_funcs['inverse_level_error'] = float_list_feature
+        return encoder_funcs
+
+    def add_feature_names(self,feature_names):
+        new_names =  [
+            self.feature_name,'overall_level_error','specific_level_error','inverse_level_error'
+            ]
+        return feature_names + new_names
+
+
+class CSMFeature(BaseFeature):
+
+    def __init__(self,feature_name,power_spectra,fidx,cache_dir):
+        self.feature_name = feature_name
+        self.power_spectra = power_spectra
+        self.fidx = fidx
+        self.cache_dir = cache_dir
+
+    def add_feature_funcs(self,feature_funcs):
+        feature_funcs[self.feature_name] = (
+            get_csm, self.power_spectra, self.fidx, self.cache_dir)
+        return feature_funcs
+
+    def add_encoder_funcs(self, encoder_funcs):
+        encoder_funcs[self.feature_name] = float_list_feature
+        return encoder_funcs
+
+    def add_feature_names(self,feature_names):
+        return feature_names + [self.feature_name]
+
+
+class NonRedundantCSMFeature(CSMFeature):
+    
+    def add_feature_funcs(self,feature_funcs):
+        feature_funcs[self.feature_name] = (
+            get_csmtriu, self.power_spectra, self.fidx, self.cache_dir)
+        return feature_funcs

@@ -11,7 +11,8 @@ from acoupipe import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
     NumericAttributeSampler, ContainerSampler, DistributedPipeline, BasePipeline,\
         WriteTFRecord, WriteH5Dataset, float_list_feature, int_list_feature,\
             int64_feature
-from features import get_source_loc, get_source_p2, get_csm, get_csmtriu, get_sourcemap
+from features import RefSourceMapFeature, get_source_loc, get_source_p2, CSMFeature, SourceMapFeature,\
+    NonRedundantCSMFeature
 from helper import set_pipeline_seeds, set_filename
 import numba
 
@@ -38,7 +39,7 @@ parser.add_argument('--freq_index', type=int, default=None,
                     help="Returns only the features and targets for the specified frequency index. Default is 'None' (all frequencies will be calculated and included in the data set)")
 parser.add_argument('--nsources', type=int, default=None,
                     help="Calculates the data set with a fixed number of sources. Default is 'None', meaning that the number of sources present will be sampled randomly.")
-parser.add_argument('--features', nargs="+", default=["csm"], choices=["sourcemap", "csmtriu", "csm"],
+parser.add_argument('--features', nargs="+", default=["csm"], choices=["sourcemap", "csmtriu", "csm", "ref_cleansc"],
                     help="Whether to compute data set containing the csm or the beamforming map as the main feature. Default is 'csm'")
 parser.add_argument('--tasks', type=int, default=1,
                     help="Number of asynchronous tasks. Defaults to '1' (non-distributed)")
@@ -52,7 +53,6 @@ parser.add_argument('--log', action="store_true",
                     help="Whether to log timing statistics to file. Only for internal use.")                          
 args = parser.parse_args()
 #args = parser.parse_args(["--datasets=training","--tsamples=1","--file_format=h5","--freq_index=10"])
-
 
 # logging for debugging and timing statistic purpose
 if args.log:
@@ -117,7 +117,7 @@ ps_ref = PowerSpectra(**ps_args,cached=False) # caching takes more time than cal
 ps_ref.time_data = MaskedTimeInOut(source=sources_mix,invalid_channels=[_ for _ in range(64) if not _  == REF_MIC]) # masking other channels than the reference channel
 
 # Set up Beamformer object to calculate sourcemap feature
-if "sourcemap" in args.features:
+if ("sourcemap" in args.features) or ("ref_cleansc" in args.features):
     bb_args = {'r_diag':True,}
     sv_args = {'steer_type':'true level', 'ref':mg_fixed.mpos[:,REF_MIC]}
     rg = acoular.RectGrid(
@@ -125,6 +125,8 @@ if "sourcemap" in args.features:
     st = acoular.SteeringVector(
                     grid=rg, mics=mg_fixed, env=env, **sv_args)
     bb = acoular.BeamformerBase(
+                    freq_data=ps_csm, steer=st, cached=args.cache_bf, precision='float32',**bb_args)
+    bfcleansc = acoular.BeamformerCleansc(
                     freq_data=ps_csm, steer=st, cached=args.cache_bf, precision='float32',**bb_args)
 
 # Computational Pipeline AcouPipe 
@@ -200,28 +202,60 @@ else:
     ps_csm.ind_high = -1
     freq_str=f"fullfreq"
 
-# set up feature dict
-feature_dict = {
+# set up the feature dict with methods to get the labels
+feature_methods = {
     "loc": (get_source_loc, sources_mix, MAXSRCS), # (callable, arg1, arg2, ...)
     "nsources": (lambda smix: len(smix.sources), sources_mix),
     "p2": (get_source_p2, sources_mix, ps_ref, fidx, MAXSRCS, config.cache_dir),
 }
 
+feature_objects = []
 if "csm" in args.features:
-    feature_dict.update(
-        csm=(get_csm, ps_csm, fidx, config.cache_dir),
-    )
+    feature = CSMFeature(feature_name="csm",
+                     power_spectra=ps_csm,
+                     fidx=fidx,
+                     cache_dir=config.cache_dir   
+                    )
+    feature_methods = feature.add_feature_funcs(feature_methods)
+    feature_objects.append(feature)
 
 if "csmtriu" in args.features:
-    feature_dict.update(
-        csmtriu=(get_csmtriu, ps_csm, fidx, config.cache_dir),
-    )
+    feature = NonRedundantCSMFeature(feature_name="csmtriu",
+                     power_spectra=ps_csm,
+                     fidx=fidx,
+                     cache_dir=config.cache_dir   
+                    )
+    feature_methods = feature.add_feature_funcs(feature_methods)
+    feature_objects.append(feature)
 
 if "sourcemap" in args.features:
-    feature_dict.update(
-        sourcemap=(get_sourcemap, bb, freq, 0, config.cache_dir),
-    )    
+    feature = SourceMapFeature(feature_name="sourcemap",
+                     beamformer=bb,
+                     f=freq,
+                     num=0,
+                     cache_dir=config.cache_dir   
+                    )
+    feature_methods = feature.add_feature_funcs(feature_methods)
+    feature_objects.append(feature)    
 
+if "ref_cleansc" in args.features:
+    feature = RefSourceMapFeature(feature_name="ref_cleansc",
+                     beamformer=bfcleansc,
+                     sourcemixer=sources_mix,
+                     powerspectra=ps_ref,
+                     r=0.05,
+                     f=freq,
+                     num=0,
+                     cache_dir=config.cache_dir   
+                    )
+    feature_methods = feature.add_feature_funcs(feature_methods)
+    feature_objects.append(feature)    
+
+# add features to the pipeline
+print(feature_methods)
+pipeline.features = feature_methods
+
+# for metadata
 if not args.freq_index:
     freq = ps_csm.fftfreq()
 
@@ -234,11 +268,8 @@ metadata = {
     'reference_mic_index' : REF_MIC,
     'c' : C,
     'sample_freq': SFREQ,
+    **ps_args # add power spectra arguments to metadata
 }
-metadata.update(ps_args) # add power spectra arguments to metadata
-
-# add features to the pipeline
-pipeline.features = feature_dict
 
 # compute the data sets
 for dataset in args.datasets:
@@ -255,11 +286,7 @@ for dataset in args.datasets:
     # Create chain of writer objects to write data sets to file
     # Individual files will be written for all features 
     source=pipeline
-    for input_feature in args.features:
-        if input_feature == 'sourcemap':
-            metadata.update(bb_args)
-            metadata.update(sv_args)
-
+    for feature in feature_objects:
         if args.file_format == "tfrecord":
             # set up encoder functions to write to .tfrecord
             encoder_dict = {
@@ -268,20 +295,18 @@ for dataset in args.datasets:
                             "nsources": int64_feature,
                             "idx": int64_feature,
                             "seeds": int_list_feature,
-                            input_feature : float_list_feature
                             }
             # create TFRecordWriter to save pipeline output to TFRecord File
             writer = WriteTFRecord(source=source,
-                                    encoder_funcs=encoder_dict)
+                                    encoder_funcs=feature.add_encoder_funcs(encoder_dict))
         elif args.file_format == "h5":
-            features=["loc","p2","nsources","idx","seeds"]
-            features.append(input_feature)
+            feature_names=["loc","p2","nsources","idx","seeds"]
             writer = WriteH5Dataset(source=source,
-                                    features=features,
-                                    metadata=metadata)    
-        set_filename(writer,path,*[dataset,f"{start_sample}-{start_sample+samples-1}"]+[input_feature]+[f"{MAXSRCS}src",freq_str,VERSION])
+                                    features=feature.add_feature_names(feature_names),
+                                    metadata=feature.add_metadata(metadata.copy()),
+                                    )    
+        set_filename(writer,path,*[dataset,f"{start_sample}-{start_sample+samples-1}"]+[feature.feature_name]+[f"{MAXSRCS}src",freq_str,VERSION])
         source=writer
-
     # for debugging and timing statistics
     if args.log:
         pipeline_log = logging.FileHandler(".".join(writer.name.split('.')[:-1]) + ".log",mode="w") # log everything to file

@@ -1,13 +1,9 @@
 from acoular.grids import RectGrid
-from traits.api import Instance, HasPrivateTraits, CArray, cached_property, Enum, Float
-from acoular import BeamformerBase, CircSector, RectGrid, L_p, integrate
-from acoular.tools import barspectrum
+from traits.api import Instance, HasPrivateTraits, CArray, Float
+from acoular import CircSector, RectGrid, L_p, integrate
 from warnings import warn
-from numpy import isnan, zeros, array, searchsorted
+from numpy import searchsorted
 import numpy as np
-from matplotlib.pyplot import imshow, plot, colorbar, show, figure, show, gca, Circle
-from matplotlib import cm
-COLORS = cm.Set1.colors
 
 def get_frequency_index_range(freq,f,num):
     """get the summation index"""
@@ -105,7 +101,7 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
         if not self.sourcemap.ndim == 3:
             raise ValueError("attribute sourcemap is not of shape (number of frequencies, nxsteps, nysteps)!")
         if not self.sourcemap.shape[0] == self.target_p2.shape[0]:
-            raise ValueError("Number of p2 target values does not match the number of sourcemaps. Provide as many target values as sourcemaps!")
+            raise ValueError(f"Number of p2 target values per source (shape {self.target_p2.shape}) does not match the number of sourcemaps (shape {self.sourcemap.shape}). Provide as many target values as sourcemaps!")
 
     def get_overall_level_error(self):
         self._validate_shapes()
