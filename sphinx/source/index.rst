@@ -13,13 +13,13 @@ This allows the user to create datasets of manageable size that are portable and
 
 AcouPipe supports distributed computation with Ray_ and comes with a default configuration dataset inside a pre-built Docker container that can be downloaded from DockerHub_.
 
-Contents:
+Contents
+========
 
-:doc:`contents/dataset.rst`
-:doc:`contents/documentation.rst`
-:doc:`contents/literature.rst`
-:doc:`api_ref/index_apiref.rst`
-
+* :ref:`data`
+* :ref:`doc`
+* :ref:`lit`
+* :ref:`manual`
 
 Indices and tables
 ==================
