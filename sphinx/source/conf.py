@@ -45,7 +45,7 @@ templates_path = ['_templates']
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store','links.rst']
 
 # autosummary: https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html
 autosummary_generate = False
@@ -67,3 +67,13 @@ html_theme = 'classic'
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+
+
+# -- rst_epilog --------------------------------------------------------------
+
+# rst_epilog is implicitly added to the end of each file before compiling
+rst_epilog =""
+# Add links.rst to rst_epilog, so external links can be used in any file
+with open('contents/links.rst') as f:
+     rst_epilog += f.read()
