@@ -45,7 +45,7 @@ The dataset comprises:</p>
 <li><p>500,000 source cases for training</p></li>
 <li><p>10,000 source cases for validation</p></li>
 </ul>
-<p>The dataset is created by a simulation process with <a href="#id4"><span class="problematic" id="id5">Acoular_</span></a>. The amount of cases can be easily extended.
+<p>The dataset is created by a simulation process with <a class="reference external" href="http://www.acoular.org">Acoular</a>. The amount of cases can be easily extended.
 The following figure illustrates the virtual measurement setup.</p>
 <figure class="align-default">
 <a class="reference internal image-reference" href="../_images/msm_layout.png"><img alt="../_images/msm_layout.png" src="../_images/msm_layout.png" style="width: 780px;" /></a>
@@ -53,12 +53,12 @@ The following figure illustrates the virtual measurement setup.</p>
 <section id="simulation-with-docker">
 <h2>Simulation with Docker<a class="headerlink" href="#simulation-with-docker" title="Permalink to this headline">¶</a></h2>
 <p>The easiest way to create the dataset is by using an existing
-Docker image from <a href="#id6"><span class="problematic" id="id7">DockerHub_</span></a>. Simply pull the latest image with the command</p>
+Docker image from <a class="reference external" href="https://hub.docker.com/r/adku1173/acoupipe/tags?page=1&amp;ordering=last_updated">DockerHub</a>. Simply pull the latest image with the command</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">docker</span> <span class="n">pull</span> <span class="n">adku1173</span><span class="o">/</span><span class="n">acoupipe</span><span class="p">:</span><span class="n">latest</span>
 </pre></div>
 </div>
-<p>The image contains the simulation source code and an up-to-date version of <a href="#id8"><span class="problematic" id="id9">Acoular_</span></a>,
-AcouPipe and <a href="#id10"><span class="problematic" id="id11">Tensorflow_</span></a>.
+<p>The image contains the simulation source code and an up-to-date version of <a class="reference external" href="http://www.acoular.org">Acoular</a>,
+AcouPipe and <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
 One can run the dataset simulation given by the main.py script from inside the Docker container by typing</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>HOSTDIR=&quot;&lt;enter the desired host directory&gt;&quot; # stores the datasets inside this directory
 NTASKS=&lt;enter the number of parallel tasks&gt; # should match the number of CPUs on the host
@@ -75,7 +75,7 @@ user with the <code class="code docutils literal notranslate"><span class="pre">
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1%|█▍                           | 83/10000 [01:04&lt;1:40:35,  1.64it/s]
 </pre></div>
 </div>
-<p>It is possible to view the CPU usage via a dashboard application served by the <a href="#id12"><span class="problematic" id="id13">Ray_</span></a> API. One should find the following output at the beginning
+<p>It is possible to view the CPU usage via a dashboard application served by the <a class="reference external" href="https://docs.ray.io/en/master/">Ray</a> API. One should find the following output at the beginning
 of the simulation process when running the simulation on multiple CPU threads</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2021</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">14</span> <span class="mi">08</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">16</span><span class="p">,</span><span class="mi">533</span>     <span class="n">INFO</span> <span class="n">services</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">1267</span> <span class="o">--</span> <span class="n">View</span> <span class="n">the</span> <span class="n">Ray</span> <span class="n">dashboard</span> <span class="n">at</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">0.0.0.0</span><span class="p">:</span><span class="mi">8265</span>
 </pre></div>
@@ -141,9 +141,9 @@ One can open the dashboard by accessing the web address <a class="reference exte
 <section id="simulation-on-a-high-performance-cluster-hpc">
 <h2>Simulation on a High-Performance Cluster (HPC)<a class="headerlink" href="#simulation-on-a-high-performance-cluster-hpc" title="Permalink to this headline">¶</a></h2>
 <p>If you plan to simulate the data by means of multiple machines (e.g. on a high-performance cluster (HPC))
-you can use the <a href="#id14"><span class="problematic" id="id15">`Ray Cluster`_</span></a> interface.</p>
+you can use the <a class="reference external" href="https://docs.ray.io/en/master/cluster/index.html">Ray Cluster</a> interface.</p>
 <p>The following code snippet gives an example of a job script that can
-be scheduled with the <a href="#id16"><span class="problematic" id="id17">SLURM_</span></a> job manager and by using a <a href="#id18"><span class="problematic" id="id19">Singularity_</span></a> image.</p>
+be scheduled with the <a class="reference external" href="https://slurm.schedmd.com/quickstart.html">SLURM</a> job manager and by using a <a class="reference external" href="https://sylabs.io/guides/3.0/user-guide/quick_start.html">Singularity</a> image.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 <span class="c1">#SBATCH --job-name=acoupipe_dataset</span>
 <span class="c1">#SBATCH --cpus-per-task=16</span>
@@ -568,10 +568,10 @@ specific sample of the dataset.</p>
 </section>
 <section id="file-formats">
 <h3>File Formats<a class="headerlink" href="#file-formats" title="Permalink to this headline">¶</a></h3>
-<p>The user can save the data to two different file formats (<a href="#id20"><span class="problematic" id="id21">HDF5_</span></a> or <a href="#id22"><span class="problematic" id="id23">TFRecord_</span></a>).
+<p>The user can save the data to two different file formats (<a class="reference external" href="https://portal.hdfgroup.org/display/HDF5/HDF5">HDF5</a> or <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a>).
 It is recommended to use the .h5 file format.</p>
 <p><strong>HDF5 format</strong></p>
-<p><a href="#id24"><span class="problematic" id="id25">HDF5_</span></a> is a container-like format storing data in hierarchical order.
+<p><a class="reference external" href="https://portal.hdfgroup.org/display/HDF5/HDF5">HDF5</a> is a container-like format storing data in hierarchical order.
 Each case and the corresponding data is stored into a separate group of the file.
 The sample index acts as the group header.
 An additional <code class="code docutils literal notranslate"><span class="pre">metadata</span></code> group includes important metadata (e.g. sampling frequency, FFT block size, …).</p>
@@ -598,7 +598,7 @@ An additional <code class="code docutils literal notranslate"><span class="pre">
 <p>Correct order is always maintained.
 This is important when multiple source cases are simulated in parallel tasks.</p>
 <p><strong>TFRecord format</strong></p>
-<p>The <a href="#id26"><span class="problematic" id="id27">TFRecord_</span></a> file format is a binary file format to store sequences of data developed by <a href="#id28"><span class="problematic" id="id29">Tensorflow_</span></a>.
+<p>The <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a> file format is a binary file format to store sequences of data developed by <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
 In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file.
 The exact case number can be reconstructed with the <code class="code docutils literal notranslate"><span class="pre">idx</span></code> and <code class="code docutils literal notranslate"><span class="pre">seeds</span></code> features when the file is parsed.</p>
 </section>
@@ -616,7 +616,7 @@ The exact case number can be reconstructed with the <code class="code docutils l
 <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span> <span class="c1"># prints the corresponding metadata information</span>
 </pre></div>
 </div>
-<p>A Python generator can be created which can be consumed by the <a href="#id30"><span class="problematic" id="id31">`Tensorflow Dataset API`_</span></a>:</p>
+<p>A Python generator can be created which can be consumed by the <a class="reference external" href="https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator">Tensorflow Dataset API</a>:</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 
 <span class="n">data_generator</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_dataset_generator</span><span class="p">(</span>
@@ -643,7 +643,7 @@ The exact case number can be reconstructed with the <code class="code docutils l
 </div>
 <p><strong>TFRecord format</strong></p>
 <p>To parse the data from TFRecord files it is necessary to write a custom function that parses the file sequentially
-(see: <a href="#id32"><span class="problematic" id="id33">TFRecord_</span></a> documentation for details).</p>
+(see: <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a> documentation for details).</p>
 <p>A potential parser function for the <code class="code docutils literal notranslate"><span class="pre">'csmtriu'</span></code> feature can be similar to:</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">tfrecord_parser_csmtriu</span><span class="p">(</span><span class="n">record</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; parser for tfrecord datasets with &#39;csmtriu&#39; feature &quot;&quot;&quot;</span>
