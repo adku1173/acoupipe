@@ -56,7 +56,7 @@ Module Overview
 The following UML flowchart gives a rough overview of AcouPipe's 
 classes and their inheritance relationships. 
 
-.. figure:: ../source/_static/acoupipe_uml.png
+.. figure:: ../_static/acoupipe_uml.png
     :width: 780
 
 
