@@ -369,15 +369,15 @@ The data set comprises labels for each source case:
 
 The averaged squared sound pressure value at the reference microphone position (red dot) is
 stored as an estimate of the source strength for each individual source and 65 FFT coefficients.
-A value of zero is stored for non-existing sources. With a maximum number of 16 possible sources, this results 
-in an array of shape (65,16) per case. 
+A value of zero is stored for non-existing sources. With a maximum number of ten possible sources, this results 
+in an array of shape (65,10) per case. 
 It should be noted that the entries are sorted in descending order according to the overall RMS value of the source signal. 
 The descending order is not strictly maintained when only a single frequency coefficient is considered.
 
 **Source location:** :code:`'loc'`
 
 The location in the x,y plane of each source is stored. Non-existing source locations are set to zero (center of the plane).
-The source location array is of shape (16,2). The source ordering is the same as for the source strength estimate :code:`p2`.
+The source location array is of shape (10,2). The source ordering is the same as for the source strength estimate :code:`p2`.
 
 **Number of sources:** :code:`'nsources'`
 
@@ -466,10 +466,10 @@ A Python generator can be created which can be consumed by the `Tensorflow Datas
 
     # provide the signature of the features
     output_signature = {
-                'loc' : tf.TensorSpec(shape=(16,2), dtype=tf.float32),
+                'loc' : tf.TensorSpec(shape=(10,2), dtype=tf.float32),
                 'nsources':tf.TensorSpec(shape=(),dtype=tf.int64),
                 'idx':tf.TensorSpec(shape=(),dtype=tf.int64),
-                'p2' : tf.TensorSpec(shape=(16,), dtype=tf.float32),
+                'p2' : tf.TensorSpec(shape=(10,), dtype=tf.float32),
                 'csmtriu':  tf.TensorSpec(shape=(64,64), dtype=tf.float32),
                 }
 
@@ -505,7 +505,7 @@ A potential parser function for the :code:`'csmtriu'` feature can be similar to:
         )
         # get and reshape parsed data
         csmtriu = tf.reshape(tf.sparse.to_dense(parsed['csmtriu']),shape=(65,64,64,1))
-        p2 = tf.reshape(tf.sparse.to_dense(parsed['p2']),shape=(65,16))
+        p2 = tf.reshape(tf.sparse.to_dense(parsed['p2']),shape=(65,10))
         loc = tf.reshape(tf.sparse.to_dense(parsed['loc']),[-1,2])  
         nsources = tf.cast(parsed['nsources'],tf.int32)
         return (csmtriu, p2, loc, nsources)
