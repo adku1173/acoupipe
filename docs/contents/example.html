@@ -1,0 +1,212 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Example &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css" />
+    
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Example</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="example">
+<span id="id1"></span><h1>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h1>
+<p>This example page will guide you through a brief introductory step-by-step example script and is intended to show some of the basic functionality of <strong>AcouPipe</strong>.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline">¶</a></h2>
+<p>It is assumed that <strong>AcouPipe</strong> along with all its dependencies, as well as <a class="reference external" href="https://numpy.org/">NumPy</a>, <a class="reference external" href="https://www.scipy.org/">SciPy</a> and <a class="reference external" href="https://matplotlib.org/">matplotlib</a> are installed. Other than that, only a basic understanding of <strong>Python</strong> syntax is required.</p>
+</section>
+<section id="sampling-microphone-array-geometries">
+<h2>Sampling Microphone Array Geometries<a class="headerlink" href="#sampling-microphone-array-geometries" title="Permalink to this headline">¶</a></h2>
+<p>One use case of <strong>AcouPipe</strong> is the sampling of a microphone array geometry.
+Sampling means that, for a given array geometry, a number of samples with slight perturbations in the microphone positions is generated.
+The purpose of <strong>AcouPipe</strong> is to generate large amounts of samples as quickly as possible, but for the sake of quick presentation, only a small number of samples is generated here.</p>
+<p>First the necessary Python modules and objects are imported.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">scipy</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <span class="n">RandomState</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">acoular</span> <span class="kn">import</span> <span class="n">MicGeom</span>
+<span class="kn">from</span> <span class="nn">acoupipe</span> <span class="kn">import</span> <span class="n">MicGeomSampler</span>
+</pre></div>
+</div>
+<p>Then the number of samples to be generated is set,</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">nsamples</span> <span class="o">=</span> <span class="mi">10</span>
+</pre></div>
+</div>
+<p>the <a class="reference external" href="http://www.acoular.org">Acoular</a> microphone array geometry object is initialised</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mics</span> <span class="o">=</span> <span class="n">MicGeom</span><span class="p">(</span><span class="n">from_file</span><span class="o">=</span><span class="s2">&quot;array64_d0o686.xml&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>and a <a class="reference external" href="https://www.scipy.org/">SciPy</a> random distribution object is generated using a preset random seed in order to guarantee reproducibility.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">rng</span> <span class="o">=</span> <span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">normal_distribution</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span> <span class="mf">0.004</span><span class="p">)</span> <span class="c1">#scale=0.04/3.)</span>
+</pre></div>
+</div>
+<p>Using the above definitions, the <strong>AcouPipe</strong> sampler object is instantiated.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mgs</span> <span class="o">=</span> <span class="n">MicGeomSampler</span><span class="p">(</span><span class="n">random_var</span><span class="o">=</span><span class="n">normal_distribution</span><span class="p">,</span>
+                    <span class="n">random_state</span><span class="o">=</span><span class="n">rng</span><span class="p">,</span>
+                    <span class="n">target</span><span class="o">=</span><span class="n">mics</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This is then used to manipulate microphone positions according to various patterns:
+Individual microphones are shifted along the x- and y-axis and the entire array is rotated, as well as shifted.
+In the sequel, these deviatations are calculated, as well as displayed using <a class="reference external" href="https://matplotlib.org/">matplotlib</a>.</p>
+<p>To make individual microphone positions deviate along the x-axis only, the following code is used.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mgs</span><span class="o">.</span><span class="n">ddir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.</span><span class="p">],[</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">]])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;individual deviation on x-axis&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsamples</span><span class="p">):</span>
+    <span class="n">mgs</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;true positions&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/example_1.png"><img alt="../_images/example_1.png" src="../_images/example_1.png" style="width: 780px;" /></a>
+</figure>
+<p>Note that, once the <strong>AcouPipe</strong> Sampler object is instantiated, it suffices to set some of its attributes, notably the <em>direction of deviation</em> <code class="code docutils literal notranslate"><span class="pre">mgs.ddir</span></code> and then simply call <code class="code docutils literal notranslate"><span class="pre">mgs.sample()</span></code>.
+It is also possible to make individual microphone positions deviate along the x-axis, as well as the y-axis, as follows.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mgs</span><span class="o">.</span><span class="n">ddir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">1.</span><span class="p">],[</span><span class="mf">0.5</span><span class="p">],[</span><span class="mi">0</span><span class="p">]])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;individual deviation on x- and y- axis&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsamples</span><span class="p">):</span>
+    <span class="n">mgs</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;true positions&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/example_2.png"><img alt="../_images/example_2.png" src="../_images/example_2.png" style="width: 780px;" /></a>
+</figure>
+<p>Rotating the entire array around the z-axis is done using the <em>rotation vector</em> attribute <code class="code docutils literal notranslate"><span class="pre">mgs.rvec</span></code>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mgs</span><span class="o">.</span><span class="n">ddir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mf">0.0</span><span class="p">],[</span><span class="mf">0.0</span><span class="p">],[</span><span class="mf">0.0</span><span class="p">]])</span> <span class="c1"># no individual deviation</span>
+
+<span class="c1"># for additional rotation around z-axis</span>
+<span class="n">mgs</span><span class="o">.</span><span class="n">rvec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;rotation around z-axis&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsamples</span><span class="p">):</span>
+    <span class="n">mgs</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;true positions&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/example_3.png"><img alt="../_images/example_3.png" src="../_images/example_3.png" style="width: 780px;" /></a>
+</figure>
+<p>Finally, the <em>direction of translation</em> attribute <code class="code docutils literal notranslate"><span class="pre">mgs.tdir</span></code> can be set in order to translate the entire array. Here, it is shifted alonge the y-axis.
+Note that the <em>rotation vector</em> attribute <code class="code docutils literal notranslate"><span class="pre">mgs.rvec</span></code> needs to be set to zero again.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">mgs</span><span class="o">.</span><span class="n">rvec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+<span class="n">mgs</span><span class="o">.</span><span class="n">tdir</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">&quot;translation of full geometry along y-axis&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsamples</span><span class="p">):</span>
+    <span class="n">mgs</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mics</span><span class="o">.</span><span class="n">mpos</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s2">&quot;o&quot;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">mgs</span><span class="o">.</span><span class="n">mpos_init</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;x&#39;</span><span class="p">,</span><span class="n">s</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;true positions&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../_images/example_4.png"><img alt="../_images/example_4.png" src="../_images/example_4.png" style="width: 780px;" /></a>
+</figure>
+<p>Generating samples with <strong>AcouPipe</strong> can be as simple as that. The etire script can be found at <a class="reference download internal" download="" href="../_downloads/43ad4dbd64d54c527e41337467083e6b/micgeom_sampling_example.py"><code class="xref download docutils literal notranslate"><span class="pre">micgeom_sampling_example.py</span></code></a>.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Example</a><ul>
+<li><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li><a class="reference internal" href="#sampling-microphone-array-geometries">Sampling Microphone Array Geometries</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/contents/example.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Example</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+    </div>
+  </body>
+</html>

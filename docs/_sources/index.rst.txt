@@ -18,6 +18,7 @@ Contents
 
 * :ref:`data`
 * :ref:`doc`
+* :ref:`example`
 * :ref:`lit`
 * :ref:`manual`
 

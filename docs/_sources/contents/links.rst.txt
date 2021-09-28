@@ -12,6 +12,10 @@
 .. _Pandas: https://pandas.pydata.org/docs/
 .. _h5py: https://docs.h5py.org/en/stable/
 .. _tqdm: https://github.com/tqdm/tqdm
+.. _NumPy: https://numpy.org/
+.. _SciPy: https://www.scipy.org/
+.. _matplotlib: https://matplotlib.org/
+
 
 .. Badges:
 .. |python-version| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8-blue
