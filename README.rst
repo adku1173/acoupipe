@@ -1,4 +1,4 @@
-|python-version|
+|python-version||DOI|
 
 ================================================================================
 AcouPipe
@@ -34,6 +34,8 @@ Documentation can be found `here <https://adku1173.github.io/acoupipe/>`_.
 .. Badges:
 .. |python-version| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8-blue
    :target: https://www.python.org/
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5176234.svg
+   :target: https://doi.org/10.5281/zenodo.5176234
 	    
 Literature
 ==========================
