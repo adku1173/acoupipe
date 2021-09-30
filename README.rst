@@ -15,6 +15,9 @@ AcouPipe supports distributed computation with Ray_ and comes with a default con
 
 Documentation can be found `here <https://adku1173.github.io/acoupipe/>`_.
 
+.. figure:: sphinx/source/_static/msm_layout.png
+    :width: 780
+
 
 .. Links:
 .. _SLURM: https://slurm.schedmd.com/quickstart.html
@@ -36,7 +39,7 @@ Documentation can be found `here <https://adku1173.github.io/acoupipe/>`_.
    :target: https://www.python.org/
 .. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5176234.svg
    :target: https://doi.org/10.5281/zenodo.5176234
-	    
+    
 Literature
 ==========================
 
