@@ -18,6 +18,8 @@ Documentation can be found `here <https://adku1173.github.io/acoupipe/>`_.
 .. figure:: _static/msm_layout.png
     :width: 780
 
+    Virtual Measurement Setup of Example Dataset
+
 
 .. Links:
 .. _SLURM: https://slurm.schedmd.com/quickstart.html
