@@ -1,5 +1,5 @@
 from acoular.grids import RectGrid
-from traits.api import Instance, HasPrivateTraits, CArray, Float
+from traits.api import Instance, HasPrivateTraits, CArray, Float, Property, Int
 from acoular import CircSector, RectGrid, L_p, integrate
 from warnings import warn
 from numpy import searchsorted
@@ -44,11 +44,27 @@ class BaseEvaluator(HasPrivateTraits):
 
     target_loc = CArray()  # (num_sources, 3)
 
-    target_p2 = CArray()  # (num_sources,num_freq)    
+    target_p2 = CArray()  # (num_freq, num_sources)    
 
     r = Float(0.05,
         desc="radius of integration around true source position") 
 
+    sector_radii = Property()
+
+    def _get_sector_radii(self):
+        if self.target_p2.shape[1] > 1: # only if multiple sources are present
+            radii = [] 
+            for i in range(self.target_p2.shape[1]):
+                intersourcedists = np.linalg.norm(self.target_loc - self.target_loc[i,:],axis=1)
+                intersourcedists = intersourcedists[intersourcedists != 0] 
+                if intersourcedists.min()/2 < self.r:
+                    radii.append(intersourcedists.min()/2)
+                else: 
+                    radii.append(self.r)
+        else:
+            radii = [self.r] 
+        return radii
+    
     def get_specific_level_error(self):
         pass
 
@@ -65,20 +81,6 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
 
     grid = Instance(RectGrid)
 
-    def _get_sector_radii(self):
-        if self.target_p2.shape[1] > 1: # only if multiple sources are present
-            radii = [] 
-            for i in range(self.target_p2.shape[1]):
-                intersourcedists = np.linalg.norm(self.target_loc - self.target_loc[i,:],axis=1)
-                intersourcedists = intersourcedists[intersourcedists != 0] 
-                if intersourcedists.min()/2 < self.r:
-                    radii.append(intersourcedists.min()/2)
-                else: 
-                    radii.append(self.r)
-        else:
-            radii = [self.r] 
-        return radii
-
     def _integrate_targets(self):
         """integrates over target sectors.
 
@@ -88,9 +90,8 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
             returns the integrated p^2 values for each region
         """
         results = np.empty(shape=self.target_p2.shape)
-        radii = self._get_sector_radii()
         for i in range(self.target_p2.shape[1]):
-            sector = CircSector(r=radii[i],
+            sector = CircSector(r=self.sector_radii[i],
                                 x=self.target_loc[i, 0],
                                 y=self.target_loc[i, 1])
             for f in range(self.target_p2.shape[0]):
@@ -117,3 +118,57 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
         integration_result = self._integrate_targets()
         return L_p(integration_result.sum(axis=1)) - L_p(self.sourcemap.sum(axis=(1,2)))
 
+
+class GridlessEvaluator(BaseEvaluator):
+
+    target_loc = CArray()  # (num_sources, 2, num_freq)
+
+    estimated_loc = CArray()  # (num_sources, 2, num_freq)
+
+    estimated_p2 = CArray()  # (num_freq, num_sources)    
+
+    def _validate_shapes(self):
+        if not self.estimated_loc.ndim == 3:
+            raise ValueError("attribute estimated_loc is not of shape (number of frequencies, number of sources, number of coordinates)!")
+        if not self.estimated_p2.shape == self.target_p2.shape:
+            raise ValueError(f"Shape of p^2 target (shape {self.target_p2.shape}) does not match estimated p^2 (shape {self.estimated_p2.shape})!")
+        
+    def _integrate_targets(self):
+        """integrates over target sectors.
+
+        Returns
+        -------
+        array (num_freqs,num_sources)
+            returns the integrated p^2 values for each region
+        """
+        results = np.empty(shape=self.target_p2.shape)
+        for i in range(self.target_p2.shape[1]):
+            r = self.sector_radii[i]
+            for f in range(self.target_p2.shape[0]):
+                tloc = self.target_loc[i, :, f]
+                eloc = self.estimated_loc[:, :, f]
+                dists = np.sqrt(((tloc-eloc)**2).sum(1))
+                integration_mask = dists < self.sector_radii[i]
+                results[f,i] = self.estimated_p2[f,integration_mask].sum()
+        return results
+
+    def get_overall_level_error(self):
+        self._validate_shapes()
+        return L_p(self.estimated_p2.sum(axis=1)) - L_p(self.target_p2.sum(axis=1))
+
+    def get_specific_level_error(self):
+        self._validate_shapes()
+        integration_result = self._integrate_targets()
+        return L_p(integration_result) - L_p(self.target_p2)
+
+    def get_inverse_level_error(self):
+        self._validate_shapes()
+        integration_result = self._integrate_targets()
+        return L_p(integration_result.sum(axis=1)) - L_p(self.estimated_p2.sum(axis=1))
+
+    def get_localization_error(self):
+        self._validate_shapes()
+        return np.linalg.norm(self.estimated_loc-self.target_loc,axis=1)
+
+    def get_level_error(self):
+        return 10*np.log10(self.estimated_p2) - 10*np.log10(self.target_p2)

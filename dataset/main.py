@@ -59,6 +59,7 @@ if args.log:
     logging.basicConfig(level=logging.INFO) # root logger
     logger = logging.getLogger()
 
+dirpath = path.dirname(path.abspath(__file__))
 # Fixed Parameters
 VERSION="ds1-v001" # data set version
 C = 343. # speed of sound
@@ -66,7 +67,7 @@ HE = 40 # Helmholtz number (defines the sampling frequency)
 SFREQ = HE*C # /ap with ap=1.0
 BLOCKSIZE = 128 # block size used for FFT 
 SIGLENGTH=5 # length of the simulated signal
-MFILE = "tub_vogel64_ap1.xml" # Microphone Geometry
+MFILE = path.join(dirpath,"tub_vogel64_ap1.xml") # Microphone Geometry
 REF_MIC = 63 # index of the reference microphone 
 
 if args.nsources:
@@ -88,7 +89,7 @@ print("cache file directory at: ",config.cache_dir)
 
 # Ray Config
 if args.tasks > 1:
-    ray.init(address=args.head,dashboard_host="0.0.0.0")
+    ray.init(address=args.head)
     num_threads=1
 
 # Computational Pipeline Acoular
