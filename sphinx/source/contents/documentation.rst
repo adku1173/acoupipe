@@ -64,14 +64,14 @@ Sampler Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 A manipulation of object characteristics according to a certain 
-random distribution can be achieved by the use of the :code:`BaseSampler` derived classes included in the :code:`sampler.py` module. 
-All :code:`BaseSampler` derived classes are representing random processes that can be used to manipulate the attributes of Acoular's objects according to a specified distribution. 
+random distribution can be achieved by using the :code:`BaseSampler` derived classes included in the :code:`sampler.py` module. 
+All :code:`BaseSampler` derived classes represent random processes that can be used to manipulate the attributes of Acoular's objects according to a specified distribution. 
 A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all :code:`BaseSampler` derived classes. 
 AcouPipe offers a variety of different types of samplers in the :code:`sampler.py` module.
-The random variable that can be passed to class instances of the sampler module must be an derived from or be part of the :code:`scipy.stats` module. 
+The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the :code:`scipy.stats` module. 
 
-This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. Therefore, an instance of the :code:`BaseSampler` 
-derived :code:`NumericAttributeSampler` class is used. The two white noise signal objects are given as targets to the sampler object. 
+This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the :code:`BaseSampler` 
+derived :code:`NumericAttributeSampler` class is used. The two :code:`WNoiseGenerator` objects are given as targets to the sampler object. 
 New RMS values following a normal distribution are assigned to the :code:`WNoiseGenerator` objects each time the sample method of the :code:`NumericAttributeSampler` object is evaluated.    
 
 .. code-block:: python
@@ -107,9 +107,8 @@ Pipeline Module
 Classes defined in the :code:`pipeline.py` module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset. 
 The results of these tasks are the features (and labels) associated with a specific sample of the dataset. 
 Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the :code:`BasePipeline`'s :code:`get_data()` generator method. 
-It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file. 
-Common machine learning frameworks, such as Tensorflow_, offer the possibility to consume data from Python generators.
-Control about the state of the sampling process is maintained via the :code:`sampler` attribute holding a list of :code:`BaseSampler` derived instances. 
+It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file, as common machine learning frameworks, such as Tensorflow_, offer the possibility to consume data from Python generators.
+Control of the state of the sampling process is maintained via the :code:`sampler` attribute holding a list of :code:`BaseSampler` derived instances. 
 
 .. code-block:: python
 
@@ -127,9 +126,8 @@ Control about the state of the sampling process is maintained via the :code:`sam
 
 Writer Module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Provides classes to store the data extracted by the pipeline. 
-Current implementation includes a classes to save data into a 
-container-like file format (.h5 file with the :code:`WriteH5Dataset` class) or binary format (.tfrecord file with the :code:`WriteTFRecord` class). 
+The :code:`writer.py` model provides classes to store the data extracted by the pipeline. 
+The current implementation includes classes to save data in a container-like file format (.h5 file with the :code:`WriteH5Dataset` class) or binary format (.tfrecord file with the :code:`WriteTFRecord` class). 
 The latter can be efficiently consumed by the Tensorflow framework for machine learning.
 
 .. code-block:: python
