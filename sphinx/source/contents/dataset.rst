@@ -29,7 +29,7 @@ Docker image from DockerHub_. Simply pull the latest image with the command
     docker pull adku1173/acoupipe:latest
 
 The image contains the simulation source code and an up-to-date version of Acoular_, 
-AcouPipe and Tensorflow_.
+**AcouPipe** and Tensorflow_.
 One can run the dataset simulation given by the main.py script from inside the Docker container by typing
 
 .. code-block:: 
@@ -40,9 +40,9 @@ One can run the dataset simulation given by the main.py script from inside the D
 
 Note that the current user on the host is specified as the user of the docker environment with the additional argument :code:`--user "$(id -u)":"$(id -g)"`.
 It is not recommended to run the container as a root user.
-Further, a directory where the dataset files are stored needs to be binded to the container (:code:`HOSTDIR=<dir>`). With the 
-:code:`HOSTDIR=$(pwd)` command, the current working directory on Linux or macOS hosts are binded. 
-The simulation can be run on multiple CPU threads in parallel to speed up computations. The exact number of threads can be specified by the 
+Further, a directory where the dataset files are stored needs to be bound to the container (:code:`HOSTDIR=<dir>`). With the 
+:code:`HOSTDIR=$(pwd)` command, the current working directory on Linux or macOS hosts is bound. 
+The simulation can be run on multiple CPU threads in parallel to speed up computations and the exact number of threads can be specified by the 
 user with the :code:`--tasks` argument. 
 
 After starting the main script, a progress bar should appear that logs the current simulation status:
@@ -51,7 +51,7 @@ After starting the main script, a progress bar should appear that logs the curre
 
     1%|█▍                           | 83/10000 [01:04<1:40:35,  1.64it/s]
 
-It is possible to view the CPU usage via a dashboard application served by the Ray_ API. One should find the following output at the beginning 
+It is possible to view the CPU usage in a dashboard application served by the Ray_ API. One should find the following output at the beginning 
 of the simulation process when running the simulation on multiple CPU threads
 
 .. code-block:: 
@@ -69,7 +69,7 @@ One can open the dashboard by accessing the web address http://0.0.0.0:8265 whic
 The main.py script has some further command line options that can be used to influence the simulation process:
 
 
-.. code-block::
+.. code-block:: bash
     :caption: command line arguments of the main.py script
 
     usage: main.py [-h]
@@ -155,7 +155,7 @@ be scheduled with the SLURM_ job manager and by using a Singularity_ image.
     # Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`
     # We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all
     # network interfaces. This allows to access the dashboard through port-forwarding:
-    # z. B.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144 
+    # e.g.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144 
     srun --nodes=1 --ntasks=1 --cpus-per-task=${SLURM_CPUS_PER_TASK} --nodelist=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --head --block --dashboard-host 0.0.0.0 --port=6379 --num-cpus ${SLURM_CPUS_PER_TASK} &
     sleep 10
 
@@ -167,7 +167,7 @@ be scheduled with the SLURM_ job manager and by using a Singularity_ image.
 
     singularity exec -B $DIRPATH $IMGNAME python -u $DIRPATH/main.py --head=${ip_head} --tasks=${total_cores}
 
-dataset Characteristics
+Dataset Characteristics
 -------------------------
 
 **fixed characteristics:**
@@ -178,17 +178,17 @@ Microphone Array      Vogel's spiral, M=64, Aperture Size 1m
 Observation Area      x,y in [-0.5,0.5], z=0.5
 Source Type           Monopole 
 Source Signals        Uncorrelated White Noise (T=5s)
-Sampling Rate         He = 40, Fs=13720 Hz 
+Sampling Rate         He = 40, f=13720 Hz 
 No. of Time Samples   68.600 
 ===================== ========================================
 
 **sampled characteristics:**
 
 ==================================================================   ===================================================  
-Sensor Position Deviation [m]                                        Normal distributed (sigma = 0.001)
-No. of Sources                                                       Poisson distributed (lambda=3)
-Source Positions                                                     Normal distributed (sigma = 0.1688) 
-Source Strength (Pa^2 at reference microphone)                       Rayleigh distributed (sigma_R=5)
+Sensor Position Deviation [m]                                        Normal Distributed (sigma = 0.001)
+No. of Sources                                                       Poisson Distributed (lambda=3)
+Source Positions                                                     Normal Distributed (sigma = 0.1688) 
+Source Strength (:math:`{Pa}^2` at reference microphone)             Rayleigh Distributed (sigma_R=5)
 ==================================================================   ===================================================
 
 Input Features
@@ -205,11 +205,11 @@ approach stated in [Cas21]_ (the conjugate complex of the normal CSM is neglecte
 The underlying processing parameters used to calculate the CSM and/or the source map are:
 
 ===================== ========================================  
-Block size            128 samples
+Block size            128 Samples
 Block overlap         50 %
 Windowing             von Hann / Hanning
-Steering vector       fromulation 3, see [Sar12]_
-Evaluation basis      single frequency coefficient
+Steering vector       Formulation 3, see [Sar12]_
+Evaluation basis      Single Frequency Coefficient
 ===================== ========================================
 
 with the following FFT frequency indices, frequencies and Helmholtz numbers:
@@ -366,7 +366,7 @@ The descending order is not strictly maintained when only a single frequency coe
 **Source location:** :code:`'loc'`
 
 The location in the x,y plane of each source is stored. Non-existing source locations are set to zero (center of the plane).
-The source location array is of shape (10,2). The source ordering is the same as for the source strength estimate :code:`p2`.
+The source location array is of shape (10,2). The source order is the same as for the source strength estimate :code:`p2`.
 
 **Number of sources:** :code:`'nsources'`
 
@@ -379,8 +379,8 @@ The index referencing the sampled case in the dataset (starts at 1).
 **Involved random seeds:** :code:`'seeds'`
 
 A list with random seeds for each object that performs a random sampling of dataset properties.
-The combination is unique for each source case in the dataset. This enables to re-simulate every 
-specific sample of the dataset. 
+The combination is unique for each source case in the dataset. This makes it possible to re-simulate any 
+specific sample of the dataset.
 
 File Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -416,8 +416,7 @@ An additional :code:`metadata` group includes important metadata (e.g. sampling 
         |   'sample_freq'
         |   ...
 
-Correct order is always maintained.  
-This is important when multiple source cases are simulated in parallel tasks.
+The orrect order is always maintained, which is important when multiple source cases are simulated in parallel tasks.
 
 **TFRecord format**
 
@@ -443,7 +442,7 @@ The AcouPipe toolbox provides the :code:`LoadH5Dataset` class to load the datase
     print(dataset.metadata) # prints the corresponding metadata information
 
 
-A Python generator can be created which can be consumed by the `Tensorflow Dataset API`_:
+With these definitions, a Python generator can be created which can be consumed by the `Tensorflow Dataset API`_:
 
 .. code-block:: Python
 
