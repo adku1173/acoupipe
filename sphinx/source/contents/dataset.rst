@@ -34,7 +34,7 @@ One can run the dataset simulation given by the main.py script from inside the D
 
 .. code-block:: 
 
-    HOSTDIR="<enter the desired host directory>" # stores the datasets inside this directory
+    HOSTDIR="<enter the desired (existing!) host directory>" # stores the datasets inside this directory
     NTASKS=<enter the number of parallel tasks> # should match the number of CPUs on the host
     docker run -it --user "$(id -u)":"$(id -g)" -v $HOSTDIR:/data/datasets adku1173/acoupipe python main.py --tasks=$NTASKS
 
@@ -154,8 +154,7 @@ be scheduled with the SLURM_ job manager and by using a Singularity_ image.
 
     # Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`
     # We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all
-    # network interfaces. This allows to access the dashboard through port-forwarding:
-    # e.g.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144 
+    # network interfaces. This allows to access the dashboard via port-forwarding.
     srun --nodes=1 --ntasks=1 --cpus-per-task=${SLURM_CPUS_PER_TASK} --nodelist=`hostname` singularity exec -B $DIRPATH $IMGNAME ray start --head --block --dashboard-host 0.0.0.0 --port=6379 --num-cpus ${SLURM_CPUS_PER_TASK} &
     sleep 10
 
@@ -416,7 +415,7 @@ An additional :code:`metadata` group includes important metadata (e.g. sampling 
         |   'sample_freq'
         |   ...
 
-The orrect order is always maintained, which is important when multiple source cases are simulated in parallel tasks.
+The correct order is always maintained, which is important when multiple source cases are simulated in parallel tasks.
 
 **TFRecord format**
 
@@ -437,8 +436,11 @@ The AcouPipe toolbox provides the :code:`LoadH5Dataset` class to load the datase
 
     dataset = LoadH5Dataset(name="<data-set.h5>")
 
-    s1 = dataset.dataset['1'] # returns the first sample of the dataset
+    # One can access each individual sample by the h5f attribute of the class.
+    # To extract the first input feature ('csmtriu' in this case) of the dataset:
+    s1 = dataset.h5f['1']['csmtriu'][:] # we use [:] to copy the data from file into the variable s1
 
+    # important metadata can be accessed by the metadata attribute of the class
     print(dataset.metadata) # prints the corresponding metadata information
 
 
