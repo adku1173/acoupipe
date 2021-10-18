@@ -1,4 +1,0 @@
-﻿loader
-===============
-
-.. automodule:: acoupipe.loader

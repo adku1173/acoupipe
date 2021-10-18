@@ -1,4 +1,0 @@
-﻿sampler
-================
-
-.. automodule:: acoupipe.sampler
