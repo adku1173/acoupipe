@@ -1,4 +1,3 @@
-#%%
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
@@ -28,29 +27,14 @@ mgs = MicGeomSampler(random_var=normal_distribution,
                      random_state=rng, 
                      target=mics)
 
-#%%
+
 # =============================================================================
 # # first deviate individual microphone positions along x-axis
 # =============================================================================
 mgs.ddir = np.array([[1.],[0],[0]])
 
 plt.figure()
-plt.title("Individual Deviation on x-Axis")
-for _ in range(nsamples):
-    mgs.sample()
-    plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
-plt.legend()   
-plt.show()
-
-#%%
-# =============================================================================
-# # second: deviate individual microphone positions along x- and y-axis
-# =============================================================================
-mgs.ddir = np.array([[1.],[0.5],[0]])
-
-plt.figure()
-plt.title("Individual Deviation on x- and y- Axis")
+plt.title("individual deviation on x-axis")
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
@@ -58,7 +42,22 @@ plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true posit
 plt.legend()    
 plt.show()
 
-#%%
+
+# =============================================================================
+# # second: deviate individual microphone positions along x- and y-axis
+# =============================================================================
+mgs.ddir = np.array([[1.],[0.5],[0]])
+
+plt.figure()
+plt.title("individual deviation on x- and y- axis")
+for _ in range(nsamples):
+    mgs.sample()
+    plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+plt.legend()    
+plt.show()
+
+
 # =============================================================================
 # third: rotate around axis
 # =============================================================================
@@ -69,7 +68,7 @@ mgs.ddir = np.array([[0.0],[0.0],[0.0]]) # no individual deviation
 mgs.rvec = np.array([[0], [0], [1]])
 
 plt.figure()
-plt.title("Rotation Around z-Axis")
+plt.title("rotation around z-axis")
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
@@ -77,7 +76,7 @@ plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true posit
 plt.legend()    
 plt.show()
 
-#%%
+
 # =============================================================================
 # fourth: translate full array along y-axis
 # =============================================================================
@@ -86,13 +85,10 @@ mgs.rvec = np.array([[0], [0], [0]])
 mgs.tdir = np.array([[0], [2.], [0]])
 
 plt.figure()
-plt.title("Translation of Full Geometry Along y-Axis")
+plt.title("translation of full geometry along y-axis")
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
 plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
 plt.legend()    
-plt.savefig("output.png",dpi=1200) 
 plt.show()
-
-# %%

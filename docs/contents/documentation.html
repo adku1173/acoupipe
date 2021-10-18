@@ -81,13 +81,13 @@ classes and their inheritance relationships.</p>
 <section id="sampler-module">
 <h3>Sampler Module<a class="headerlink" href="#sampler-module" title="Permalink to this headline">¶</a></h3>
 <p>A manipulation of object characteristics according to a certain
-random distribution can be achieved by the use of the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes included in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
-All <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes are representing random processes that can be used to manipulate the attributes of Acoular’s objects according to a specified distribution.
+random distribution can be achieved by using the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes included in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
+All <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes represent random processes that can be used to manipulate the attributes of Acoular’s objects according to a specified distribution.
 A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes.
 AcouPipe offers a variety of different types of samplers in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
-The random variable that can be passed to class instances of the sampler module must be an derived from or be part of the <code class="code docutils literal notranslate"><span class="pre">scipy.stats</span></code> module.</p>
-<p>This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. Therefore, an instance of the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code>
-derived <code class="code docutils literal notranslate"><span class="pre">NumericAttributeSampler</span></code> class is used. The two white noise signal objects are given as targets to the sampler object.
+The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the <code class="code docutils literal notranslate"><span class="pre">scipy.stats</span></code> module.</p>
+<p>This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code>
+derived <code class="code docutils literal notranslate"><span class="pre">NumericAttributeSampler</span></code> class is used. The two <code class="code docutils literal notranslate"><span class="pre">WNoiseGenerator</span></code> objects are given as targets to the sampler object.
 New RMS values following a normal distribution are assigned to the <code class="code docutils literal notranslate"><span class="pre">WNoiseGenerator</span></code> objects each time the sample method of the <code class="code docutils literal notranslate"><span class="pre">NumericAttributeSampler</span></code> object is evaluated.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">acoular</span>
 <span class="kn">import</span> <span class="nn">acoupipe</span>
@@ -120,9 +120,8 @@ New RMS values following a normal distribution are assigned to the <code class="
 <p>Classes defined in the <code class="code docutils literal notranslate"><span class="pre">pipeline.py</span></code> module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset.
 The results of these tasks are the features (and labels) associated with a specific sample of the dataset.
 Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the <code class="code docutils literal notranslate"><span class="pre">BasePipeline</span></code>’s <code class="code docutils literal notranslate"><span class="pre">get_data()</span></code> generator method.
-It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file.
-Common machine learning frameworks, such as <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>, offer the possibility to consume data from Python generators.
-Control about the state of the sampling process is maintained via the <code class="code docutils literal notranslate"><span class="pre">sampler</span></code> attribute holding a list of <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived instances.</p>
+It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file, as common machine learning frameworks, such as <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>, offer the possibility to consume data from Python generators.
+Control of the state of the sampling process is maintained via the <code class="code docutils literal notranslate"><span class="pre">sampler</span></code> attribute holding a list of <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived instances.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">calculate_csm</span><span class="p">(</span><span class="n">powerspectra</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">powerspectra</span><span class="o">.</span><span class="n">csm</span>
 
@@ -138,9 +137,8 @@ Control about the state of the sampling process is maintained via the <code clas
 </section>
 <section id="writer-module">
 <h3>Writer Module<a class="headerlink" href="#writer-module" title="Permalink to this headline">¶</a></h3>
-<p>Provides classes to store the data extracted by the pipeline.
-Current implementation includes a classes to save data into a
-container-like file format (.h5 file with the <code class="code docutils literal notranslate"><span class="pre">WriteH5Dataset</span></code> class) or binary format (.tfrecord file with the <code class="code docutils literal notranslate"><span class="pre">WriteTFRecord</span></code> class).
+<p>The <code class="code docutils literal notranslate"><span class="pre">writer.py</span></code> model provides classes to store the data extracted by the pipeline.
+The current implementation includes classes to save data in a container-like file format (.h5 file with the <code class="code docutils literal notranslate"><span class="pre">WriteH5Dataset</span></code> class) or binary format (.tfrecord file with the <code class="code docutils literal notranslate"><span class="pre">WriteTFRecord</span></code> class).
 The latter can be efficiently consumed by the Tensorflow framework for machine learning.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">file_writer</span> <span class="o">=</span> <span class="n">acoupipe</span><span class="o">.</span><span class="n">WriteH5Dataset</span><span class="p">(</span>
             <span class="n">source</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span>
@@ -195,7 +193,7 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -220,7 +218,7 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
     </div>
   </body>
 </html>

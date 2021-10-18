@@ -120,7 +120,7 @@ Rotating the entire array around the z-axis is done using the *rotation vector* 
 .. figure:: ../_static/example_3.png
     :width: 780
 
-Finally, the *direction of translation* attribute :code:`mgs.tdir` can be set in order to translate the entire array. Here, it is shifted alonge the y-axis.
+Finally, the *direction of translation* attribute :code:`mgs.tdir` can be set in order to translate the entire array. Here, it is shifted along the y-axis.
 Note that the *rotation vector* attribute :code:`mgs.rvec` needs to be set to zero again.
 
 .. code-block:: Python

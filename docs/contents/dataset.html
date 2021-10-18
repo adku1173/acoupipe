@@ -14,6 +14,7 @@
     <script src="../_static/jquery.js"></script>
     <script src="../_static/underscore.js"></script>
     <script src="../_static/doctools.js"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
@@ -58,24 +59,24 @@ Docker image from <a class="reference external" href="https://hub.docker.com/r/a
 </pre></div>
 </div>
 <p>The image contains the simulation source code and an up-to-date version of <a class="reference external" href="http://www.acoular.org">Acoular</a>,
-AcouPipe and <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
+<strong>AcouPipe</strong> and <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
 One can run the dataset simulation given by the main.py script from inside the Docker container by typing</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>HOSTDIR=&quot;&lt;enter the desired host directory&gt;&quot; # stores the datasets inside this directory
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>HOSTDIR=&quot;&lt;enter the desired (existing!) host directory&gt;&quot; # stores the datasets inside this directory
 NTASKS=&lt;enter the number of parallel tasks&gt; # should match the number of CPUs on the host
 docker run -it --user &quot;$(id -u)&quot;:&quot;$(id -g)&quot; -v $HOSTDIR:/data/datasets adku1173/acoupipe python main.py --tasks=$NTASKS
 </pre></div>
 </div>
 <p>Note that the current user on the host is specified as the user of the docker environment with the additional argument <code class="code docutils literal notranslate"><span class="pre">--user</span> <span class="pre">&quot;$(id</span> <span class="pre">-u)&quot;:&quot;$(id</span> <span class="pre">-g)&quot;</span></code>.
 It is not recommended to run the container as a root user.
-Further, a directory where the dataset files are stored needs to be binded to the container (<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=&lt;dir&gt;</span></code>). With the
-<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=$(pwd)</span></code> command, the current working directory on Linux or macOS hosts are binded.
-The simulation can be run on multiple CPU threads in parallel to speed up computations. The exact number of threads can be specified by the
+Further, a directory where the dataset files are stored needs to be bound to the container (<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=&lt;dir&gt;</span></code>). With the
+<code class="code docutils literal notranslate"><span class="pre">HOSTDIR=$(pwd)</span></code> command, the current working directory on Linux or macOS hosts is bound.
+The simulation can be run on multiple CPU threads in parallel to speed up computations and the exact number of threads can be specified by the
 user with the <code class="code docutils literal notranslate"><span class="pre">--tasks</span></code> argument.</p>
 <p>After starting the main script, a progress bar should appear that logs the current simulation status:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>1%|█▍                           | 83/10000 [01:04&lt;1:40:35,  1.64it/s]
 </pre></div>
 </div>
-<p>It is possible to view the CPU usage via a dashboard application served by the <a class="reference external" href="https://docs.ray.io/en/master/">Ray</a> API. One should find the following output at the beginning
+<p>It is possible to view the CPU usage in a dashboard application served by the <a class="reference external" href="https://docs.ray.io/en/master/">Ray</a> API. One should find the following output at the beginning
 of the simulation process when running the simulation on multiple CPU threads</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2021</span><span class="o">-</span><span class="mi">05</span><span class="o">-</span><span class="mi">14</span> <span class="mi">08</span><span class="p">:</span><span class="mi">50</span><span class="p">:</span><span class="mi">16</span><span class="p">,</span><span class="mi">533</span>     <span class="n">INFO</span> <span class="n">services</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">1267</span> <span class="o">--</span> <span class="n">View</span> <span class="n">the</span> <span class="n">Ray</span> <span class="n">dashboard</span> <span class="n">at</span> <span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="mf">0.0.0.0</span><span class="p">:</span><span class="mi">8265</span>
 </pre></div>
@@ -88,52 +89,52 @@ One can open the dashboard by accessing the web address <a class="reference exte
 <p>The main.py script has some further command line options that can be used to influence the simulation process:</p>
 <div class="literal-block-wrapper docutils container" id="id3">
 <div class="code-block-caption"><span class="caption-text">command line arguments of the main.py script</span><a class="headerlink" href="#id3" title="Permalink to this code">¶</a></div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">usage</span><span class="p">:</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="p">[</span><span class="o">-</span><span class="n">h</span><span class="p">]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">datasets</span> <span class="p">{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="p">[{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="o">...</span><span class="p">]]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">tsamples</span> <span class="n">TSAMPLES</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">tstart</span> <span class="n">TSTART</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vsamples</span> <span class="n">VSAMPLES</span><span class="p">]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">vstart</span> <span class="n">VSTART</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">tpath</span> <span class="n">TPATH</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">vpath</span> <span class="n">VPATH</span><span class="p">]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">file_format</span> <span class="p">{</span><span class="n">tfrecord</span><span class="p">,</span><span class="n">h5</span><span class="p">}]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_dir</span> <span class="n">CACHE_DIR</span><span class="p">]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">freq_index</span> <span class="n">FREQ_INDEX</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">nsources</span> <span class="n">NSOURCES</span><span class="p">]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">features</span> <span class="p">{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="p">[{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="o">...</span><span class="p">]]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">tasks</span> <span class="n">TASKS</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">head</span> <span class="n">HEAD</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_csm</span><span class="p">]</span> <span class="p">[</span><span class="o">--</span><span class="n">cache_bf</span><span class="p">]</span>
-            <span class="p">[</span><span class="o">--</span><span class="n">log</span><span class="p">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>usage: main.py <span class="o">[</span>-h<span class="o">]</span>
+            <span class="o">[</span>--datasets <span class="o">{</span>training,validation<span class="o">}</span> <span class="o">[{</span>training,validation<span class="o">}</span> ...<span class="o">]]</span>
+            <span class="o">[</span>--tsamples TSAMPLES<span class="o">]</span> <span class="o">[</span>--tstart TSTART<span class="o">]</span> <span class="o">[</span>--vsamples VSAMPLES<span class="o">]</span>
+            <span class="o">[</span>--vstart VSTART<span class="o">]</span> <span class="o">[</span>--tpath TPATH<span class="o">]</span> <span class="o">[</span>--vpath VPATH<span class="o">]</span>
+            <span class="o">[</span>--file_format <span class="o">{</span>tfrecord,h5<span class="o">}]</span> <span class="o">[</span>--cache_dir CACHE_DIR<span class="o">]</span>
+            <span class="o">[</span>--freq_index FREQ_INDEX<span class="o">]</span> <span class="o">[</span>--nsources NSOURCES<span class="o">]</span>
+            <span class="o">[</span>--features <span class="o">{</span>sourcemap,csmtriu,csm<span class="o">}</span> <span class="o">[{</span>sourcemap,csmtriu,csm<span class="o">}</span> ...<span class="o">]]</span>
+            <span class="o">[</span>--tasks TASKS<span class="o">]</span> <span class="o">[</span>--head HEAD<span class="o">]</span> <span class="o">[</span>--cache_csm<span class="o">]</span> <span class="o">[</span>--cache_bf<span class="o">]</span>
+            <span class="o">[</span>--log<span class="o">]</span>
 
-<span class="n">optional</span> <span class="n">arguments</span><span class="p">:</span>
-<span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="ow">and</span> <span class="n">exit</span>
-<span class="o">--</span><span class="n">datasets</span> <span class="p">{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="p">[{</span><span class="n">training</span><span class="p">,</span><span class="n">validation</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
-                        <span class="n">Whether</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">both</span> <span class="n">datasets</span> <span class="p">(</span><span class="s1">&#39;training</span>
-                        <span class="n">validation</span><span class="s1">&#39;) or only the &#39;</span><span class="n">training</span><span class="s1">&#39; / &#39;</span><span class="n">validation</span><span class="s1">&#39;</span>
-                        <span class="n">dataset</span><span class="o">.</span> <span class="n">Defaults</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">training</span> <span class="ow">and</span> <span class="n">validation</span>
-                        <span class="n">dataset</span>
-<span class="o">--</span><span class="n">tsamples</span> <span class="n">TSAMPLES</span>   <span class="n">Total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">training</span> <span class="n">samples</span> <span class="n">to</span> <span class="n">simulate</span>
-<span class="o">--</span><span class="n">tstart</span> <span class="n">TSTART</span>       <span class="n">Start</span> <span class="n">simulation</span> <span class="n">at</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">dataset</span>
-<span class="o">--</span><span class="n">vsamples</span> <span class="n">VSAMPLES</span>   <span class="n">Total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">validation</span> <span class="n">samples</span> <span class="n">to</span> <span class="n">simulate</span>
-<span class="o">--</span><span class="n">vstart</span> <span class="n">VSTART</span>       <span class="n">Start</span> <span class="n">simulation</span> <span class="n">at</span> <span class="n">a</span> <span class="n">specific</span> <span class="n">sample</span> <span class="n">of</span> <span class="n">the</span> <span class="n">dataset</span>
-<span class="o">--</span><span class="n">tpath</span> <span class="n">TPATH</span>         <span class="n">Path</span> <span class="n">of</span> <span class="n">simulated</span> <span class="n">training</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span>
-                        <span class="n">working</span> <span class="n">directory</span>
-<span class="o">--</span><span class="n">vpath</span> <span class="n">VPATH</span>         <span class="n">Path</span> <span class="n">of</span> <span class="n">simulated</span> <span class="n">validation</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span>
-                        <span class="n">working</span> <span class="n">directory</span>
-<span class="o">--</span><span class="n">file_format</span> <span class="p">{</span><span class="n">tfrecord</span><span class="p">,</span><span class="n">h5</span><span class="p">}</span>
-                        <span class="n">Desired</span> <span class="n">file</span> <span class="nb">format</span> <span class="n">to</span> <span class="n">store</span> <span class="n">the</span> <span class="n">datasets</span><span class="o">.</span>
-<span class="o">--</span><span class="n">cache_dir</span> <span class="n">CACHE_DIR</span>
-                        <span class="n">Path</span> <span class="n">of</span> <span class="n">cached</span> <span class="n">data</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="n">current</span> <span class="n">working</span>
-                        <span class="n">directory</span>
-<span class="o">--</span><span class="n">freq_index</span> <span class="n">FREQ_INDEX</span>
-                        <span class="n">Returns</span> <span class="n">only</span> <span class="n">the</span> <span class="n">features</span> <span class="ow">and</span> <span class="n">targets</span> <span class="k">for</span> <span class="n">the</span>
-                        <span class="n">specified</span> <span class="n">frequency</span> <span class="n">index</span><span class="p">,</span> <span class="n">default</span> <span class="ow">is</span> <span class="kc">None</span> <span class="p">(</span><span class="nb">all</span>
-                        <span class="n">frequencies</span> <span class="n">will</span> <span class="n">be</span> <span class="n">calculated</span> <span class="ow">and</span> <span class="n">included</span> <span class="ow">in</span> <span class="n">the</span>
-                        <span class="n">dataset</span><span class="p">)</span>
-<span class="o">--</span><span class="n">features</span> <span class="p">{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="p">[{</span><span class="n">sourcemap</span><span class="p">,</span><span class="n">csmtriu</span><span class="p">,</span><span class="n">csm</span><span class="p">}</span> <span class="o">...</span><span class="p">]</span>
-                        <span class="n">Whether</span> <span class="n">to</span> <span class="n">compute</span> <span class="n">dataset</span> <span class="n">containing</span> <span class="n">the</span> <span class="n">csm</span> <span class="ow">or</span> <span class="n">the</span>
-                        <span class="n">beamforming</span> <span class="nb">map</span> <span class="k">as</span> <span class="n">the</span> <span class="n">main</span> <span class="n">feature</span><span class="o">.</span> <span class="n">Default</span> <span class="ow">is</span> <span class="s1">&#39;csm&#39;</span>
-<span class="o">--</span><span class="n">tasks</span> <span class="n">TASKS</span>         <span class="n">Number</span> <span class="n">of</span> <span class="n">asynchronous</span> <span class="n">tasks</span><span class="o">.</span> <span class="n">Defaults</span> <span class="n">to</span> <span class="s1">&#39;1&#39;</span> <span class="p">(</span><span class="n">non</span><span class="o">-</span>
-                        <span class="n">distributed</span><span class="p">)</span>
-<span class="o">--</span><span class="n">head</span> <span class="n">HEAD</span>           <span class="n">IP</span> <span class="n">address</span> <span class="n">of</span> <span class="n">the</span> <span class="n">head</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">ray</span> <span class="n">cluster</span><span class="o">.</span> <span class="n">Only</span>
-                        <span class="n">necessary</span> <span class="n">when</span> <span class="n">running</span> <span class="ow">in</span> <span class="n">distributed</span> <span class="n">mode</span><span class="o">.</span>
-<span class="o">--</span><span class="n">cache_csm</span>           <span class="n">Whether</span> <span class="n">to</span> <span class="n">cache</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">the</span> <span class="n">CSM</span> <span class="n">calculation</span>
-<span class="o">--</span><span class="n">cache_bf</span>            <span class="n">Whether</span> <span class="n">to</span> <span class="n">cache</span> <span class="n">the</span> <span class="n">results</span> <span class="n">of</span> <span class="n">the</span> <span class="n">beamformer</span>
-                        <span class="n">calculation</span><span class="o">.</span> <span class="n">Only</span> <span class="n">relevant</span> <span class="k">if</span> <span class="s1">&#39;sourcemap&#39;</span> <span class="ow">is</span> <span class="n">included</span>
-                        <span class="ow">in</span> <span class="o">--</span><span class="n">features</span> <span class="nb">list</span><span class="o">.</span>
+optional arguments:
+-h, --help            show this <span class="nb">help</span> message and <span class="nb">exit</span>
+--datasets <span class="o">{</span>training,validation<span class="o">}</span> <span class="o">[{</span>training,validation<span class="o">}</span> ...<span class="o">]</span>
+                        Whether to compute both datasets <span class="o">(</span><span class="s1">&#39;training</span>
+<span class="s1">                        validation&#39;</span><span class="o">)</span> or only the <span class="s1">&#39;training&#39;</span> / <span class="s1">&#39;validation&#39;</span>
+                        dataset. Defaults to compute training and validation
+                        dataset
+--tsamples TSAMPLES   Total number of training samples to simulate
+--tstart TSTART       Start simulation at a specific sample of the dataset
+--vsamples VSAMPLES   Total number of validation samples to simulate
+--vstart VSTART       Start simulation at a specific sample of the dataset
+--tpath TPATH         Path of simulated training data. Default is current
+                        working directory
+--vpath VPATH         Path of simulated validation data. Default is current
+                        working directory
+--file_format <span class="o">{</span>tfrecord,h5<span class="o">}</span>
+                        Desired file format to store the datasets.
+--cache_dir CACHE_DIR
+                        Path of cached data. Default is current working
+                        directory
+--freq_index FREQ_INDEX
+                        Returns only the features and targets <span class="k">for</span> the
+                        specified frequency index, default is None <span class="o">(</span>all
+                        frequencies will be calculated and included <span class="k">in</span> the
+                        dataset<span class="o">)</span>
+--features <span class="o">{</span>sourcemap,csmtriu,csm<span class="o">}</span> <span class="o">[{</span>sourcemap,csmtriu,csm<span class="o">}</span> ...<span class="o">]</span>
+                        Whether to compute dataset containing the csm or the
+                        beamforming map as the main feature. Default is <span class="s1">&#39;csm&#39;</span>
+--tasks TASKS         Number of asynchronous tasks. Defaults to <span class="s1">&#39;1&#39;</span> <span class="o">(</span>non-
+                        distributed<span class="o">)</span>
+--head HEAD           IP address of the head node <span class="k">in</span> the ray cluster. Only
+                        necessary when running <span class="k">in</span> distributed mode.
+--cache_csm           Whether to cache the results of the CSM calculation
+--cache_bf            Whether to cache the results of the beamformer
+                        calculation. Only relevant <span class="k">if</span> <span class="s1">&#39;sourcemap&#39;</span> is included
+                        <span class="k">in</span> --features list.
 </pre></div>
 </div>
 </div>
@@ -167,8 +168,7 @@ be scheduled with the <a class="reference external" href="https://slurm.schedmd.
 
 <span class="c1"># Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`</span>
 <span class="c1"># We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all</span>
-<span class="c1"># network interfaces. This allows to access the dashboard through port-forwarding:</span>
-<span class="c1"># z. B.: ssh -N -f -L 8265:10.254.1.100:8265 kujawski@130.149.110.144</span>
+<span class="c1"># network interfaces. This allows to access the dashboard via port-forwarding.</span>
 srun --nodes<span class="o">=</span><span class="m">1</span> --ntasks<span class="o">=</span><span class="m">1</span> --cpus-per-task<span class="o">=</span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> --nodelist<span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span> singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <span class="nv">$IMGNAME</span> ray start --head --block --dashboard-host <span class="m">0</span>.0.0.0 --port<span class="o">=</span><span class="m">6379</span> --num-cpus <span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span> <span class="p">&amp;</span>
 sleep <span class="m">10</span>
 
@@ -183,7 +183,7 @@ singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <sp
 </div>
 </section>
 <section id="dataset-characteristics">
-<h2>dataset Characteristics<a class="headerlink" href="#dataset-characteristics" title="Permalink to this headline">¶</a></h2>
+<h2>Dataset Characteristics<a class="headerlink" href="#dataset-characteristics" title="Permalink to this headline">¶</a></h2>
 <p><strong>fixed characteristics:</strong></p>
 <table class="docutils align-default">
 <colgroup>
@@ -207,7 +207,7 @@ singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <sp
 <td><p>Uncorrelated White Noise (T=5s)</p></td>
 </tr>
 <tr class="row-even"><td><p>Sampling Rate</p></td>
-<td><p>He = 40, Fs=13720 Hz</p></td>
+<td><p>He = 40, f=13720 Hz</p></td>
 </tr>
 <tr class="row-odd"><td><p>No. of Time Samples</p></td>
 <td><p>68.600</p></td>
@@ -222,16 +222,16 @@ singularity <span class="nb">exec</span> -B <span class="nv">$DIRPATH</span> <sp
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Sensor Position Deviation [m]</p></td>
-<td><p>Normal distributed (sigma = 0.001)</p></td>
+<td><p>Normal Distributed (sigma = 0.001)</p></td>
 </tr>
 <tr class="row-even"><td><p>No. of Sources</p></td>
-<td><p>Poisson distributed (lambda=3)</p></td>
+<td><p>Poisson Distributed (lambda=3)</p></td>
 </tr>
 <tr class="row-odd"><td><p>Source Positions</p></td>
-<td><p>Normal distributed (sigma = 0.1688)</p></td>
+<td><p>Normal Distributed (sigma = 0.1688)</p></td>
 </tr>
-<tr class="row-even"><td><p>Source Strength (Pa^2 at reference microphone)</p></td>
-<td><p>Rayleigh distributed (sigma_R=5)</p></td>
+<tr class="row-even"><td><p>Source Strength (<span class="math notranslate nohighlight">\({Pa}^2\)</span> at reference microphone)</p></td>
+<td><p>Rayleigh Distributed (sigma_R=5)</p></td>
 </tr>
 </tbody>
 </table>
@@ -253,7 +253,7 @@ The underlying processing parameters used to calculate the CSM and/or the source
 </colgroup>
 <tbody>
 <tr class="row-odd"><td><p>Block size</p></td>
-<td><p>128 samples</p></td>
+<td><p>128 Samples</p></td>
 </tr>
 <tr class="row-even"><td><p>Block overlap</p></td>
 <td><p>50 %</p></td>
@@ -262,10 +262,10 @@ The underlying processing parameters used to calculate the CSM and/or the source
 <td><p>von Hann / Hanning</p></td>
 </tr>
 <tr class="row-even"><td><p>Steering vector</p></td>
-<td><p>fromulation 3, see <a class="reference internal" href="literature.html#sar12" id="id2"><span>[Sar12]</span></a></p></td>
+<td><p>Formulation 3, see <a class="reference internal" href="literature.html#sar12" id="id2"><span>[Sar12]</span></a></p></td>
 </tr>
 <tr class="row-odd"><td><p>Evaluation basis</p></td>
-<td><p>single frequency coefficient</p></td>
+<td><p>Single Frequency Coefficient</p></td>
 </tr>
 </tbody>
 </table>
@@ -556,14 +556,14 @@ It should be noted that the entries are sorted in descending order according to 
 The descending order is not strictly maintained when only a single frequency coefficient is considered.</p>
 <p><strong>Source location:</strong> <code class="code docutils literal notranslate"><span class="pre">'loc'</span></code></p>
 <p>The location in the x,y plane of each source is stored. Non-existing source locations are set to zero (center of the plane).
-The source location array is of shape (10,2). The source ordering is the same as for the source strength estimate <code class="code docutils literal notranslate"><span class="pre">p2</span></code>.</p>
+The source location array is of shape (10,2). The source order is the same as for the source strength estimate <code class="code docutils literal notranslate"><span class="pre">p2</span></code>.</p>
 <p><strong>Number of sources:</strong> <code class="code docutils literal notranslate"><span class="pre">'nsources'</span></code></p>
 <p>An integer providing the number of sources.</p>
 <p><strong>Sample index:</strong> <code class="code docutils literal notranslate"><span class="pre">'idx'</span></code></p>
 <p>The index referencing the sampled case in the dataset (starts at 1).</p>
 <p><strong>Involved random seeds:</strong> <code class="code docutils literal notranslate"><span class="pre">'seeds'</span></code></p>
 <p>A list with random seeds for each object that performs a random sampling of dataset properties.
-The combination is unique for each source case in the dataset. This enables to re-simulate every
+The combination is unique for each source case in the dataset. This makes it possible to re-simulate any
 specific sample of the dataset.</p>
 </section>
 <section id="file-formats">
@@ -595,8 +595,7 @@ An additional <code class="code docutils literal notranslate"><span class="pre">
     <span class="p">|</span>   ...
 </pre></div>
 </div>
-<p>Correct order is always maintained.
-This is important when multiple source cases are simulated in parallel tasks.</p>
+<p>The correct order is always maintained, which is important when multiple source cases are simulated in parallel tasks.</p>
 <p><strong>TFRecord format</strong></p>
 <p>The <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a> file format is a binary file format to store sequences of data developed by <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
 In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file.
@@ -611,12 +610,15 @@ The exact case number can be reconstructed with the <code class="code docutils l
 
 <span class="n">dataset</span> <span class="o">=</span> <span class="n">LoadH5Dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;&lt;data-set.h5&gt;&quot;</span><span class="p">)</span>
 
-<span class="n">s1</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">dataset</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">]</span> <span class="c1"># returns the first sample of the dataset</span>
+<span class="c1"># One can access each individual sample by the h5f attribute of the class.</span>
+<span class="c1"># To extract the first input feature (&#39;csmtriu&#39; in this case) of the dataset:</span>
+<span class="n">s1</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">h5f</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">][</span><span class="s1">&#39;csmtriu&#39;</span><span class="p">][:]</span> <span class="c1"># we use [:] to copy the data from file into the variable s1</span>
 
+<span class="c1"># important metadata can be accessed by the metadata attribute of the class</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">metadata</span><span class="p">)</span> <span class="c1"># prints the corresponding metadata information</span>
 </pre></div>
 </div>
-<p>A Python generator can be created which can be consumed by the <a class="reference external" href="https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator">Tensorflow Dataset API</a>:</p>
+<p>With these definitions, a Python generator can be created which can be consumed by the <a class="reference external" href="https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator">Tensorflow Dataset API</a>:</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
 
 <span class="n">data_generator</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">get_dataset_generator</span><span class="p">(</span>
@@ -679,7 +681,7 @@ The exact case number can be reconstructed with the <code class="code docutils l
 <li><a class="reference internal" href="#">Dataset</a><ul>
 <li><a class="reference internal" href="#simulation-with-docker">Simulation with Docker</a></li>
 <li><a class="reference internal" href="#simulation-on-a-high-performance-cluster-hpc">Simulation on a High-Performance Cluster (HPC)</a></li>
-<li><a class="reference internal" href="#dataset-characteristics">dataset Characteristics</a><ul>
+<li><a class="reference internal" href="#dataset-characteristics">Dataset Characteristics</a><ul>
 <li><a class="reference internal" href="#input-features">Input Features</a></li>
 <li><a class="reference internal" href="#labels">Labels</a></li>
 <li><a class="reference internal" href="#file-formats">File Formats</a></li>
@@ -701,7 +703,7 @@ The exact case number can be reconstructed with the <code class="code docutils l
   <h3 id="searchlabel">Quick search</h3>
     <div class="searchformwrapper">
     <form class="search" action="../search.html" method="get">
-      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="text" name="q" aria-labelledby="searchlabel" />
       <input type="submit" value="Go" />
     </form>
     </div>
@@ -726,7 +728,7 @@ The exact case number can be reconstructed with the <code class="code docutils l
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.0.2.
     </div>
   </body>
 </html>
