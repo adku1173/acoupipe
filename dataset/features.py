@@ -276,7 +276,7 @@ def _get_sourcemap_evaluator(beamformer,sourcemixer,powerspectra,f,r):
         fidx = list(powerspectra.fftfreq()[:]).index(f)
         target_p2 = get_ref_mic_pow(sourcemixer, powerspectra, fidx)[newaxis,:]
         target_loc = array([array(s.loc) for s in sourcemixer.sources],dtype=float32)    
-    return PlanarSourceMapEvaluator(sourcemap=sourcemap, grid=beamformer.steer.grid, target_loc=target_loc, target_p2=target_p2, r=r)
+    return PlanarSourceMapEvaluator(sourcemap=sourcemap, grid=beamformer.steer.grid, target_loc=target_loc, target_pow=target_p2, r=r)
 
 
 def get_overall_level_error(beamformer, powerspectra, sourcemixer, r=0.05, f=None, cache_dir=None, num_threads=1):
