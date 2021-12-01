@@ -1,5 +1,5 @@
 from acoular.grids import RectGrid
-from traits.api import Instance, HasPrivateTraits, CArray, Float, Property, Int
+from traits.api import Instance, HasPrivateTraits, CArray, Float, Property, Int, Bool
 from acoular import CircSector, RectGrid, L_p, integrate
 from warnings import warn
 from numpy import searchsorted
@@ -51,16 +51,22 @@ class BaseEvaluator(HasPrivateTraits):
 
     sector_radii = Property()
 
+    variable_sector_radii = Bool(True)
+
     def _get_sector_radii(self):
-        if self.target_p2.shape[1] > 1: # only if multiple sources are present
-            radii = [] 
-            for i in range(self.target_p2.shape[1]):
-                intersourcedists = np.linalg.norm(self.target_loc - self.target_loc[i,:],axis=1)
-                intersourcedists = intersourcedists[intersourcedists != 0] 
-                if intersourcedists.min()/2 < self.r:
-                    radii.append(intersourcedists.min()/2)
-                else: 
-                    radii.append(self.r)
+        ns = self.target_p2.shape[1]
+        if ns > 1: # only if multiple sources are present
+            if self.variable_sector_radii:
+                radii = [] 
+                for i in range(ns):
+                    intersourcedists = np.linalg.norm(self.target_loc - self.target_loc[i,:],axis=1)
+                    intersourcedists = intersourcedists[intersourcedists != 0] 
+                    if intersourcedists.min()/2 < self.r:
+                        radii.append(intersourcedists.min()/2)
+                    else: 
+                        radii.append(self.r)
+            else:
+                radii = [self.r]*ns
         else:
             radii = [self.r] 
         return radii
@@ -119,6 +125,8 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
         return L_p(integration_result.sum(axis=1)) - L_p(self.sourcemap.sum(axis=(1,2)))
 
 
+    
+
 class GridlessEvaluator(BaseEvaluator):
 
     target_loc = CArray()  # (num_sources, 2, num_freq)
@@ -130,8 +138,6 @@ class GridlessEvaluator(BaseEvaluator):
     def _validate_shapes(self):
         if not self.estimated_loc.ndim == 3:
             raise ValueError("attribute estimated_loc is not of shape (number of frequencies, number of sources, number of coordinates)!")
-        if not self.estimated_p2.shape == self.target_p2.shape:
-            raise ValueError(f"Shape of p^2 target (shape {self.target_p2.shape}) does not match estimated p^2 (shape {self.estimated_p2.shape})!")
         
     def _integrate_targets(self):
         """integrates over target sectors.
@@ -143,7 +149,6 @@ class GridlessEvaluator(BaseEvaluator):
         """
         results = np.empty(shape=self.target_p2.shape)
         for i in range(self.target_p2.shape[1]):
-            r = self.sector_radii[i]
             for f in range(self.target_p2.shape[0]):
                 tloc = self.target_loc[i, :, f]
                 eloc = self.estimated_loc[:, :, f]
