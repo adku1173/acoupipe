@@ -10,5 +10,6 @@ from .sampler import *
 from .pipeline import *
 from .writer import *
 from .loader import *
+from .evaluate import *
 
 
