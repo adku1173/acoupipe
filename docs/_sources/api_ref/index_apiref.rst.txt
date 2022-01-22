@@ -14,5 +14,5 @@ The following modules are part of AcouPipe:
     pipeline
     writer
     loader
-
+   evaluate
 
