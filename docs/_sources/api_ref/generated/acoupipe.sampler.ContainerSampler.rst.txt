@@ -1,4 +1,4 @@
-﻿ContainerSampler
+ContainerSampler
 =================================
 
 .. currentmodule:: acoupipe.sampler

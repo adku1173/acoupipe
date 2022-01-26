@@ -5,7 +5,7 @@
 #------------------------------------------------------------------------------
 """
 All classes in this module can be used to calculate and provide data (via feature extraction) 
-and to control the random sampling (via :class:`BaseSampler` derived classes). 
+and to control the random sampling (via :class:`acoupipe.sampler.BaseSampler` derived classes). 
 
 .. autosummary::
     :toctree: generated/

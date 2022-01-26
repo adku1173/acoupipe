@@ -1,4 +1,4 @@
-﻿MicGeomSampler
+MicGeomSampler
 ===============================
 
 .. currentmodule:: acoupipe.sampler

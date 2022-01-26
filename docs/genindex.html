@@ -57,6 +57,7 @@
  | <a href="#R"><strong>R</strong></a>
  | <a href="#S"><strong>S</strong></a>
  | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
  | <a href="#W"><strong>W</strong></a>
  | <a href="#X"><strong>X</strong></a>
  | <a href="#Y"><strong>Y</strong></a>
@@ -119,6 +120,8 @@
 <h2 id="B">B</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator">BaseEvaluator (class in acoupipe.evaluate)</a>
+</li>
       <li><a href="api_ref/generated/acoupipe.loader.BaseLoadDataset.html#acoupipe.loader.BaseLoadDataset">BaseLoadDataset (class in acoupipe.loader)</a>
 </li>
       <li><a href="api_ref/generated/acoupipe.loader.LoadH5Dataset.html#acoupipe.loader.LoadH5Dataset.basename">basename (acoupipe.loader.LoadH5Dataset attribute)</a>
@@ -166,6 +169,12 @@
       <li><a href="api_ref/generated/acoupipe.writer.WriteTFRecord.html#acoupipe.writer.WriteTFRecord.encoder_funcs">encoder_funcs (acoupipe.writer.WriteTFRecord attribute)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator.estimated_loc">estimated_loc (acoupipe.evaluate.GridlessEvaluator attribute)</a>
+</li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator.estimated_pow">estimated_pow (acoupipe.evaluate.GridlessEvaluator attribute)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="F">F</h2>
@@ -205,11 +214,43 @@
         <li><a href="api_ref/generated/acoupipe.writer.WriteTFRecord.html#acoupipe.writer.WriteTFRecord.get_data">(acoupipe.writer.WriteTFRecord method)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_ref/generated/acoupipe.loader.LoadH5Dataset.html#acoupipe.loader.LoadH5Dataset.get_dataset_generator">get_dataset_generator() (acoupipe.loader.LoadH5Dataset method)</a>
 </li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.get_inverse_level_error">get_inverse_level_error() (acoupipe.evaluate.BaseEvaluator method)</a>
+
+      <ul>
+        <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator.get_inverse_level_error">(acoupipe.evaluate.GridlessEvaluator method)</a>
+</li>
+        <li><a href="api_ref/generated/acoupipe.evaluate.PlanarSourceMapEvaluator.html#acoupipe.evaluate.PlanarSourceMapEvaluator.get_inverse_level_error">(acoupipe.evaluate.PlanarSourceMapEvaluator method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator.get_level_error">get_level_error() (acoupipe.evaluate.GridlessEvaluator method)</a>
+</li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator.get_localization_error">get_localization_error() (acoupipe.evaluate.GridlessEvaluator method)</a>
+</li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.get_overall_level_error">get_overall_level_error() (acoupipe.evaluate.BaseEvaluator method)</a>
+
+      <ul>
+        <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator.get_overall_level_error">(acoupipe.evaluate.GridlessEvaluator method)</a>
+</li>
+        <li><a href="api_ref/generated/acoupipe.evaluate.PlanarSourceMapEvaluator.html#acoupipe.evaluate.PlanarSourceMapEvaluator.get_overall_level_error">(acoupipe.evaluate.PlanarSourceMapEvaluator method)</a>
+</li>
+      </ul></li>
       <li><a href="api_ref/generated/acoupipe.sampler.SetSampler.html#acoupipe.sampler.SetSampler.get_sample_propabilities">get_sample_propabilities() (acoupipe.sampler.SetSampler method)</a>
+</li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.get_specific_level_error">get_specific_level_error() (acoupipe.evaluate.BaseEvaluator method)</a>
+
+      <ul>
+        <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator.get_specific_level_error">(acoupipe.evaluate.GridlessEvaluator method)</a>
+</li>
+        <li><a href="api_ref/generated/acoupipe.evaluate.PlanarSourceMapEvaluator.html#acoupipe.evaluate.PlanarSourceMapEvaluator.get_specific_level_error">(acoupipe.evaluate.PlanarSourceMapEvaluator method)</a>
+</li>
+      </ul></li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.PlanarSourceMapEvaluator.html#acoupipe.evaluate.PlanarSourceMapEvaluator.grid">grid (acoupipe.evaluate.PlanarSourceMapEvaluator attribute)</a>
+</li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.GridlessEvaluator.html#acoupipe.evaluate.GridlessEvaluator">GridlessEvaluator (class in acoupipe.evaluate)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -336,10 +377,12 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api_ref/generated/acoupipe.sampler.PointSourceSampler.html#acoupipe.sampler.PointSourceSampler">PointSourceSampler (class in acoupipe.sampler)</a>
+      <li><a href="api_ref/generated/acoupipe.evaluate.PlanarSourceMapEvaluator.html#acoupipe.evaluate.PlanarSourceMapEvaluator">PlanarSourceMapEvaluator (class in acoupipe.evaluate)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.sampler.PointSourceSampler.html#acoupipe.sampler.PointSourceSampler">PointSourceSampler (class in acoupipe.sampler)</a>
+</li>
       <li><a href="api_ref/generated/acoupipe.sampler.SetSampler.html#acoupipe.sampler.SetSampler.prob_list">prob_list (acoupipe.sampler.SetSampler attribute)</a>
 </li>
   </ul></td>
@@ -348,6 +391,8 @@
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.r">r (acoupipe.evaluate.BaseEvaluator attribute)</a>
+</li>
       <li><a href="api_ref/generated/acoupipe.sampler.ContainerSampler.html#acoupipe.sampler.ContainerSampler.random_func">random_func (acoupipe.sampler.ContainerSampler attribute)</a>
 </li>
       <li><a href="api_ref/generated/acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline.random_seeds">random_seeds (acoupipe.pipeline.BasePipeline attribute)</a>
@@ -410,8 +455,6 @@
 </li>
       <li><a href="api_ref/generated/acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline.sampler">sampler (acoupipe.pipeline.BasePipeline attribute)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api_ref/generated/acoupipe.writer.BaseWriteDataset.html#acoupipe.writer.BaseWriteDataset.save">save() (acoupipe.writer.BaseWriteDataset method)</a>
 
       <ul>
@@ -420,6 +463,10 @@
         <li><a href="api_ref/generated/acoupipe.writer.WriteTFRecord.html#acoupipe.writer.WriteTFRecord.save">(acoupipe.writer.WriteTFRecord method)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.sector_radii">sector_radii (acoupipe.evaluate.BaseEvaluator attribute)</a>
+</li>
       <li><a href="api_ref/generated/acoupipe.sampler.SourceSetSampler.html#acoupipe.sampler.SourceSetSampler.set_value">set_value() (acoupipe.sampler.SourceSetSampler method)</a>
 </li>
       <li><a href="api_ref/generated/acoupipe.sampler.SetSampler.html#acoupipe.sampler.SetSampler">SetSampler (class in acoupipe.sampler)</a>
@@ -433,6 +480,8 @@
 </li>
       </ul></li>
       <li><a href="api_ref/generated/acoupipe.writer.BaseWriteDataset.html#acoupipe.writer.BaseWriteDataset.source">source (acoupipe.writer.BaseWriteDataset attribute)</a>
+</li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.PlanarSourceMapEvaluator.html#acoupipe.evaluate.PlanarSourceMapEvaluator.sourcemap">sourcemap (acoupipe.evaluate.PlanarSourceMapEvaluator attribute)</a>
 </li>
       <li><a href="api_ref/generated/acoupipe.sampler.SourceSetSampler.html#acoupipe.sampler.SourceSetSampler">SourceSetSampler (class in acoupipe.sampler)</a>
 </li>
@@ -454,9 +503,21 @@
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.target_loc">target_loc (acoupipe.evaluate.BaseEvaluator attribute)</a>
+</li>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.target_pow">target_pow (acoupipe.evaluate.BaseEvaluator attribute)</a>
+</li>
       <li><a href="api_ref/generated/acoupipe.sampler.MicGeomSampler.html#acoupipe.sampler.MicGeomSampler.tdir">tdir (acoupipe.sampler.MicGeomSampler attribute)</a>
 </li>
       <li><a href="api_ref/generated/acoupipe.sampler.MicGeomSampler.html#acoupipe.sampler.MicGeomSampler.translate">translate() (acoupipe.sampler.MicGeomSampler method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api_ref/generated/acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator.variable_sector_radii">variable_sector_radii (acoupipe.evaluate.BaseEvaluator attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -538,7 +599,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

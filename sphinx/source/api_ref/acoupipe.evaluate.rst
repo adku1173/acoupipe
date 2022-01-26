@@ -1,4 +1,4 @@
 ﻿evaluate
-===============
+=================
 
 .. automodule:: acoupipe.evaluate

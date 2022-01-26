@@ -1,4 +1,4 @@
-﻿DistributedPipeline
+DistributedPipeline
 =====================================
 
 .. currentmodule:: acoupipe.pipeline

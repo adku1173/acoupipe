@@ -1,4 +1,4 @@
-﻿BasePipeline
+BasePipeline
 ==============================
 
 .. currentmodule:: acoupipe.pipeline

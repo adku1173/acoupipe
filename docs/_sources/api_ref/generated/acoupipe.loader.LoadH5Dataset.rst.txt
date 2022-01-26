@@ -1,4 +1,4 @@
-﻿LoadH5Dataset
+LoadH5Dataset
 =============================
 
 .. currentmodule:: acoupipe.loader

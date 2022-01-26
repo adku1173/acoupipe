@@ -1,4 +1,4 @@
-﻿PointSourceSampler
+PointSourceSampler
 ===================================
 
 .. currentmodule:: acoupipe.sampler

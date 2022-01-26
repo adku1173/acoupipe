@@ -1,4 +1,4 @@
-﻿WriteTFRecord
+WriteTFRecord
 =============================
 
 .. currentmodule:: acoupipe.writer

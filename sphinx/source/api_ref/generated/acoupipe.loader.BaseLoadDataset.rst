@@ -1,4 +1,4 @@
-﻿BaseLoadDataset
+BaseLoadDataset
 ===============================
 
 .. currentmodule:: acoupipe.loader

@@ -1,4 +1,4 @@
-﻿BaseWriteDataset
+BaseWriteDataset
 ================================
 
 .. currentmodule:: acoupipe.writer

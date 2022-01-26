@@ -1,4 +1,4 @@
-﻿SetSampler
+SetSampler
 ===========================
 
 .. currentmodule:: acoupipe.sampler

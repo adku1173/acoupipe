@@ -1,4 +1,4 @@
-﻿NumericAttributeSampler
+NumericAttributeSampler
 ========================================
 
 .. currentmodule:: acoupipe.sampler

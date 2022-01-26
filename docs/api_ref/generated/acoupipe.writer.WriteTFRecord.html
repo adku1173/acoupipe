@@ -41,20 +41,20 @@
 <h1>WriteTFRecord<a class="headerlink" href="#writetfrecord" title="Permalink to this headline">¶</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord">
-<em class="property"><span class="pre">class</span> </em><span class="sig-prename descclassname"><span class="pre">acoupipe.writer.</span></span><span class="sig-name descname"><span class="pre">WriteTFRecord</span></span><a class="headerlink" href="#acoupipe.writer.WriteTFRecord" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.writer.</span></span><span class="sig-name descname"><span class="pre">WriteTFRecord</span></span><a class="headerlink" href="#acoupipe.writer.WriteTFRecord" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="acoupipe.writer.BaseWriteDataset.html#acoupipe.writer.BaseWriteDataset" title="acoupipe.writer.BaseWriteDataset"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.writer.BaseWriteDataset</span></code></a></p>
 <p>Class intended to write data from <a class="reference internal" href="acoupipe.pipeline.BasePipeline.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePipeline</span></code></a> 
 instances to a .tfrecord file that can be consumed by tensorflows 
 tf.data API. Stores data in binary format.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.name">
-<span class="sig-name descname"><span class="pre">name</span></span><em class="property"> <span class="pre">=</span> <span class="pre">File(filter=['*.tfrecords'],</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.name" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">File(filter=['*.tfrecords'],</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.name" title="Permalink to this definition">¶</a></dt>
 <dd><p>Name of the file to be saved.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.encoder_funcs">
-<span class="sig-name descname"><span class="pre">encoder_funcs</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Dict(key_trait=Str(),</span> <span class="pre">value_trait=Function(),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.encoder_funcs" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">encoder_funcs</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">Dict(key_trait=Str(),</span> <span class="pre">value_trait=Function(),</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.encoder_funcs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dictionary with encoding functions (dict values) to convert data yielded by the pipeline to binary format of .tfrecord file.
 The key values of this dictionary are the feature names specified in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">features</span></code> attribute
 of the <code class="xref py py-attr docutils literal notranslate"><span class="pre">source</span></code> object.</p>
@@ -62,14 +62,14 @@ of the <code class="xref py py-attr docutils literal notranslate"><span class="p
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.write_infofile">
-<span class="sig-name descname"><span class="pre">write_infofile</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Bool(True,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.write_infofile" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">write_infofile</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">Bool(True,</span>&#160; <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.write_infofile" title="Permalink to this definition">¶</a></dt>
 <dd><p>if True, writes an additional .txt file containing the names, types and shapes of the features stored in the
 tfrecord data set.</p>
 </dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="acoupipe.writer.WriteTFRecord.options">
-<span class="sig-name descname"><span class="pre">options</span></span><em class="property"> <span class="pre">=</span> <span class="pre">Trait(None,tf.io.TFRecordOptions)</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.options" title="Permalink to this definition">¶</a></dt>
+<span class="sig-name descname"><span class="pre">options</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">Trait(None,tf.io.TFRecordOptions)</span></em><a class="headerlink" href="#acoupipe.writer.WriteTFRecord.options" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trait to set specific options to the .tfrecord file.</p>
 </dd></dl>
 
@@ -142,7 +142,7 @@ yields the data to the next object.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
-      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.1.2.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
     </div>
   </body>
 </html>

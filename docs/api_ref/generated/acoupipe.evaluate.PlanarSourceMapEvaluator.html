@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>PlanarSourceMapEvaluator &#8212; AcouPipe 01.06.2021 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/classic.css" />
+    
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PlanarSourceMapEvaluator</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="planarsourcemapevaluator">
+<h1>PlanarSourceMapEvaluator<a class="headerlink" href="#planarsourcemapevaluator" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.evaluate.PlanarSourceMapEvaluator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.evaluate.</span></span><span class="sig-name descname"><span class="pre">PlanarSourceMapEvaluator</span></span><a class="headerlink" href="#acoupipe.evaluate.PlanarSourceMapEvaluator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="acoupipe.evaluate.BaseEvaluator.html#acoupipe.evaluate.BaseEvaluator" title="acoupipe.evaluate.BaseEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.evaluate.BaseEvaluator</span></code></a></p>
+<p>Class to evaluate the performance of microphone array methods on planar grid-based source maps.</p>
+<p>This class can be used to calculate different performance metrics
+to assess the performance of a source mapping method, including:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>specific level error (Herold and Sarradj, 2017)</p></li>
+<li><p>overall level error (Herold and Sarradj, 2017)</p></li>
+<li><p>inverse level error (Herold and Sarradj, 2017)</p></li>
+</ul>
+</div></blockquote>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.evaluate.PlanarSourceMapEvaluator.sourcemap">
+<span class="sig-name descname"><span class="pre">sourcemap</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">CArray(</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.evaluate.PlanarSourceMapEvaluator.sourcemap" title="Permalink to this definition">¶</a></dt>
+<dd><p>an array of shape=(nf,nx,ny) containing sourcemaps to evaluate. nf is the number of frequencies,
+nx is the number of spatial samples in x-direction, ny is the number of spatial samples in y-direction.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.evaluate.PlanarSourceMapEvaluator.grid">
+<span class="sig-name descname"><span class="pre">grid</span></span><em class="property"><span class="w"> </span><span class="pre">=</span> <span class="pre">Instance(RectGrid,</span> <span class="pre">…</span></em><a class="headerlink" href="#acoupipe.evaluate.PlanarSourceMapEvaluator.grid" title="Permalink to this definition">¶</a></dt>
+<dd><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Grid</span></code>-derived object that provides the grid locations.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.evaluate.PlanarSourceMapEvaluator.get_overall_level_error">
+<span class="sig-name descname"><span class="pre">get_overall_level_error</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.evaluate.PlanarSourceMapEvaluator.get_overall_level_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the overall level error (Herold and Sarradj, 2017)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>numpy.array</dt><dd><p>overall level error of shape=(nf,1)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.evaluate.PlanarSourceMapEvaluator.get_specific_level_error">
+<span class="sig-name descname"><span class="pre">get_specific_level_error</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.evaluate.PlanarSourceMapEvaluator.get_specific_level_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the specific level error (Herold and Sarradj, 2017)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>numpy.array</dt><dd><p>specific level error of shape=(nf,ns). nf: number of frequencies, ns: number of sources</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.evaluate.PlanarSourceMapEvaluator.get_inverse_level_error">
+<span class="sig-name descname"><span class="pre">get_inverse_level_error</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.evaluate.PlanarSourceMapEvaluator.get_inverse_level_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the inverse level error (Herold and Sarradj, 2017)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><dl class="simple">
+<dt>numpy.array</dt><dd><p>inverse level error of shape=(nf,1)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/api_ref/generated/acoupipe.evaluate.PlanarSourceMapEvaluator.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">AcouPipe 01.06.2021 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">PlanarSourceMapEvaluator</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2021, Adam Kujawski, Art Pelling, Simon Jekosch.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 4.4.0.
+    </div>
+  </body>
+</html>

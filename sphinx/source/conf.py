@@ -12,6 +12,8 @@
 
 import os
 import sys
+sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../../'))
 sys.path.insert(0, os.path.abspath('../../../'))
 
@@ -49,12 +51,13 @@ templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store','links.rst']
 
 # autosummary: https://www.sphinx-doc.org/en/master/usage/extensions/autosummary.html
-autosummary_generate = False
+autosummary_generate = True
 autodoc_member_order = 'bysource'
 autosummary_generate_overwrite = True # alternatively generate stub files manually with sphinx-autogen *.rst
 numpydoc_show_class_members = False # Whether to show all members of a class in the Methods and Attributes sections automatically.
 numpydoc_show_inherited_class_members = False #Whether to show all inherited members of a class in the Methods and Attributes sections automatically.
 numpydoc_class_members_toctree = False #Whether to create a Sphinx table of contents for the lists of class methods and attributes. If a table of contents is made, Sphinx expects each entry to have a separate page.
+#autodoc_mock_imports = ["acoupipe"]
 
 
 # -- Options for HTML output -------------------------------------------------

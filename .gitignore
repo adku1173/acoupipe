@@ -20,3 +20,4 @@ __pycache__/
 *.pyd
 .vscode/
 */__pycache__/*
+venv
