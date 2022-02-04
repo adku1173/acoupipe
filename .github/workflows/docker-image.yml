@@ -18,12 +18,11 @@ jobs:
     - uses: actions/checkout@v2
     - name: Login to docker 
       env:
-        DOCKER_USER: ${{secrets.DOCKER_USER}}
         DOCKER_PWD: ${{secrets.DOCKER_PASSWORD}}
       run: 
-        docker login -u $DOCKER_USER -p $DOCKER_PWD 
+        docker login -u adku1173 -p $DOCKER_PWD 
     - name: Build image
-      run: docker build . --file Dockerfile --tag acoupipe:latest
+      run: docker build . --file Dockerfile --tag adku1173/acoupipe:latest
     
     - name: Push to DockerHub
-      run: docker push ${{secrets.DOCKER_USER}}/acoupipe:latest
+      run: docker push adku1173/acoupipe:latest
