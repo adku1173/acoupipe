@@ -22,3 +22,6 @@ jobs:
         docker login -u $DOCKER_USER -p $DOCKER_PWD 
     - name: Build image
       run: docker build . --file Dockerfile --tag acoupipe:latest
+    
+    - name: Push to DockerHub
+      run: docker push ${{secrets.DOCKER_USER}}/acoupipe:latest
