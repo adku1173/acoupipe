@@ -2,9 +2,7 @@ name: DockerHub Continous Integration
 
 on:
   push:
-    branches: 
-      - master 
-      - docker_CI
+    branches: [ master] 
   pull_request:
     branches: [ master ]
 
