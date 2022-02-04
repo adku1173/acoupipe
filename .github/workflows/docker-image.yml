@@ -1,0 +1,24 @@
+name: DockerHub Continous Integration
+
+on:
+  push:
+    branches: [ master] 
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Login to docker 
+      env:
+        DOCKER_PWD: ${{secrets.DOCKER_PASSWORD}}
+      run: 
+        docker login -u adku1173 -p $DOCKER_PWD 
+    - name: Build image
+      run: docker build . --file Dockerfile --tag adku1173/acoupipe:latest
+    
+    - name: Push to DockerHub
+      run: docker push adku1173/acoupipe:latest
