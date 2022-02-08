@@ -12,15 +12,12 @@ __pycache__/
 dist/
 cache/
 td/
-docs/build/
 **/cache/
 **/td/
 __pycache__/
 *.nbc
 *.nbi
 *.pyd
-docs/source/api_ref/generated/
-.vscode/
 
 docs/.vscode/
 */__pycache__/*
