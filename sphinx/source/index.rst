@@ -16,11 +16,15 @@ AcouPipe supports distributed computation with Ray_ and comes with a default con
 Contents
 ========
 
-* :ref:`data`
-* :ref:`doc`
-* :ref:`example`
-* :ref:`lit`
-* :ref:`manual`
+.. toctree::
+   :maxdepth: 1
+
+   contents/dataset.rst
+   contents/documentation.rst
+   contents/example.rst
+   contents/literature.rst
+   api_ref/index_apiref.rst
+
 
 Indices and tables
 ==================

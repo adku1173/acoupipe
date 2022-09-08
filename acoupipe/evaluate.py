@@ -140,9 +140,9 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
 
     This class can be used to calculate different performance metrics
     to assess the performance of a source mapping method, including:
-        * specific level error (Herold and Sarradj, 2017)
-        * overall level error (Herold and Sarradj, 2017)
-        * inverse level error (Herold and Sarradj, 2017)
+    * specific level error (Herold and Sarradj, 2017)
+    * overall level error (Herold and Sarradj, 2017)
+    * inverse level error (Herold and Sarradj, 2017)
     """
 
     #: an array of shape=(nf,nx,ny) containing sourcemaps to evaluate. nf is the number of frequencies,
@@ -221,11 +221,11 @@ class GridlessEvaluator(BaseEvaluator):
 
     This class can be used to calculate different performance metrics
     to assess the performance of a source mapping method, including:
-        * specific level error (Herold and Sarradj, 2017)
-        * overall level error (Herold and Sarradj, 2017)
-        * inverse level error (Herold and Sarradj, 2017)
-        * one-to-one localization error
-        * one-to-one level error
+    * specific level error (Herold and Sarradj, 2017)
+    * overall level error (Herold and Sarradj, 2017)
+    * inverse level error (Herold and Sarradj, 2017)
+    * one-to-one localization error
+    * one-to-one level error
     """
 
     #: the estimated locations with shape=(ns,ndim). ns is the number of sources,

@@ -46,12 +46,11 @@ class BaseLoadDataset(DataGenerator):
 
 
 class LoadH5Dataset(BaseLoadDataset):
-    
     """
     Loads data sets stored into `*.h5` file format.
     
-    This class loads data from .h5 files and
-    and provides information like the number of 
+    This class loads data from `*.h5` files and
+    provides information like the number of 
     samples (:attr:`numsamples`).
     """
 
@@ -142,7 +141,8 @@ class LoadH5Dataset(BaseLoadDataset):
         """Creates a callable that returns a generator object. 
         
         This object can be used in conjunction with the Tensorflow `tf.data.Dataset` API to create
-        a data generator with the `from_generator`method to feed machine learning models.
+        a data generator with the :meth:`from_generator` method of the `Tensorflow Dataset API`_ 
+        to feed machine learning models.
 
         Example to create a repeatable data set with the Tensorflow  `tf.data.Dataset` API:
 
