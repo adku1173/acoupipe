@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 #pylint: disable-msg=E0611, E1103, C0103, R0901, R0902, R0903, R0904, W0232
 #------------------------------------------------------------------------------
-# Copyright (c) 2020-2023, Adam Kujawski, Simon Jekosch, Art Pelling, Ennes Sarradj.
+# Copyright (c) Adam Kujawski, Simon Jekosch, Art Pelling, Ennes Sarradj.
 #------------------------------------------------------------------------------
 """
 All classes in this module can be used to calculate and provide data (via feature extraction) 
-and to control the random sampling (via :class:`BaseSampler` derived classes). 
+and to control the random sampling (via :class:`acoupipe.sampler.BaseSampler` derived classes). 
 
 .. autosummary::
     :toctree: generated/
