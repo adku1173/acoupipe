@@ -1,3 +1,23 @@
+# -*- coding: utf-8 -*-
+#pylint: disable-msg=E0611, E1103, C0103, R0901, R0902, R0903, R0904, W0232
+#------------------------------------------------------------------------------
+# Copyright (c) Adam Kujawski, Simon Jekosch, Art Pelling, Ennes Sarradj.
+#------------------------------------------------------------------------------
+
+"""
+Provides evaluatation of source mapping methods using classes derived from :class:`~acoupipe.evaluate.BaseEvaluator`.
+
+
+.. autosummary::
+    :toctree: generated/
+
+    BaseEvaluator
+    PlanarSourceMapEvaluator
+    GridlessEvaluator
+
+"""
+
+
 from acoular.grids import RectGrid
 from traits.api import Instance, HasPrivateTraits, CArray, Float, Property, Int, Bool
 from acoular import CircSector, RectGrid, L_p, integrate

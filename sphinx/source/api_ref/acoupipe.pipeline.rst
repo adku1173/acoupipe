@@ -1,0 +1,4 @@
+﻿pipeline
+=================
+
+.. automodule:: acoupipe.pipeline
