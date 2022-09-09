@@ -42,3 +42,4 @@ def set_filename(writer,path='.',*args):
     elif isinstance(writer,WriteH5Dataset):
         name += ".h5"
     writer.name=join(path,name)
+
