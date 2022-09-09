@@ -63,8 +63,8 @@ if args.cache_bf or args.cache_csm:
     config.cache_dir = path.join(args.cache_dir,'cache') # set up cache file dir
     print("cache file directory at: ",config.cache_dir)
     cache_dir = config.cache_dir
-else:
-    cache_dir = args.cache_dir
+else: # nothing is cached
+    cache_dir = None
 
 # Acoular Config
 num_threads = numba.get_num_threads()
