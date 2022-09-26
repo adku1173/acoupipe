@@ -154,7 +154,7 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
     grid = Instance(RectGrid,
         desc="beamforming grid instance that belongs to the sourcemap")
 
-    def _integrate_targets(self):
+    def _integrate_targets(self,multi_assignment=True):
         """integrates over target sectors.
 
         Returns
@@ -163,12 +163,16 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
             returns the integrated p^2 values for each region
         """
         results = np.empty(shape=self.target_pow.shape)
-        for i in range(self.target_pow.shape[1]):
-            sector = CircSector(r=self.sector_radii[i],
-                                x=self.target_loc[i, 0],
-                                y=self.target_loc[i, 1])
-            for f in range(self.target_pow.shape[0]):
-                results[f,i] = integrate(self.sourcemap[f],self.grid,sector)
+        for f in range(self.target_pow.shape[0]):
+            pm = self.sourcemap[f].copy()
+            for i in range(self.target_pow.shape[1]):
+                sector = CircSector(r=self.sector_radii[i],
+                                    x=self.target_loc[i, 0],
+                                    y=self.target_loc[i, 1])
+                results[f,i] = integrate(pm,self.grid,sector)
+                if not multi_assignment:
+                    indices = self.grid.indices(sector.x,sector.y,sector.r)
+                    pm[indices] = 0 # set values to zero (can not be assigned again)
         return results
 
     def _validate_shapes(self):
@@ -209,7 +213,7 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
             inverse level error of shape=(nf,1)
         """
         self._validate_shapes()
-        integration_result = self._integrate_targets()
+        integration_result = self._integrate_targets(multi_assignment=False) # do not allow to assign the same grid point to multiple sources (otherwise it may result in a positive inverse level error)
         return L_p(integration_result.sum(axis=1)) - L_p(self.sourcemap.sum(axis=(1,2)))
 
 
