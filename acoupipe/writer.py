@@ -221,34 +221,6 @@ if TF_FLAG:
         #: Trait to set specific options to the .tfrecord file.
         options = Trait(None,tf.io.TFRecordOptions)
 
-        def _write_infofile(self, features):
-            """internal function to write info file with additional data set information
-
-            Parameters
-            ----------
-            features : dict
-                features stored in the .tfrecord file
-            """
-            info_filename = ".".join(self.name.split(".")[:-1])
-            with open(info_filename+".txt", 'w') as file:
-                file.write("stored features \n")
-                for featurename, feature in features.items():
-                    encoder_func = self.encoder_funcs.get(featurename)
-                    if encoder_func: # if it exists, the feature is stored
-                        base_str = featurename + 2*"\t" + encoder_func.__name__ + 2*"\t" + f"type: {type(feature)}" + 2*"\t"
-                        if encoder_func in (int_list_feature, float_list_feature):
-                            if type(feature) is list:
-                                file.write(
-                                    base_str + 2*"\t" + f"length: {len(feature)}")
-                            elif type(feature) is ndarray:
-                                file.write(
-                                    base_str + 2*"\t" + f"shape: {feature.shape}")        
-                            else:
-                                file.write(base_str)                       
-                        else:
-                            file.write(base_str)
-                        file.write('\n')
-
         def save(self):
             """
             saves the output of the :meth:`get_data()` method of a :class:`~acoupipe.pipeline.BasePipeline` 
@@ -260,8 +232,7 @@ if TF_FLAG:
                     example = tf.train.Example(features=tf.train.Features(feature=encoded_features))
                     # Serialize to string and write on the file
                     writer.write(example.SerializeToString())
-                if self.write_infofile:
-                    self._write_infofile(features)
+                    writer.flush()
                 writer.close()
                 
             
@@ -282,6 +253,5 @@ if TF_FLAG:
                     # Serialize to string and write on the file
                     writer.write(example.SerializeToString())
                     yield features
-                if self.write_infofile:
-                    self._write_infofile(features)
+                    writer.flush()
                 writer.close()            

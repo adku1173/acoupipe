@@ -21,60 +21,7 @@ Provides evaluatation of source mapping methods using classes derived from :clas
 from acoular.grids import RectGrid
 from traits.api import Instance, HasPrivateTraits, CArray, Float, Property, Int, Bool
 from acoular import CircSector, RectGrid, L_p, integrate
-from warnings import warn
-from numpy import searchsorted
 import numpy as np
-
-def get_frequency_index_range(freq,f,num):
-    """Returns the left and right indices that define the frequency range 
-    to integrate over.
-
-    Parameters
-    ----------
-    freq : numpy.array
-        frequency vector (can be determined by evaluating `freqdata()` method at a `acoular.PowerSpectra` instance)
-    f : float
-        the frequency (or center frequency) of interest
-    num : int
-        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
-
-    Returns
-    -------
-    tuple
-        left and right index that belongs to the frequency of interest
-    """
-    if num == 0:
-        # single frequency line
-        ind = searchsorted(freq, f)
-        if ind >= len(freq):
-            warn('Queried frequency (%g Hz) not in resolved '
-                            'frequency range. Returning zeros.' % f, 
-                            Warning, stacklevel = 2)
-            ind = None
-        else:
-            if freq[ind] != f:
-                warn('Queried frequency (%g Hz) not in set of '
-                        'discrete FFT sample frequencies. '
-                        'Using frequency %g Hz instead.' % (f,freq[ind]), 
-                        Warning, stacklevel = 2)
-        return (ind,ind+1)
-    else:
-        # fractional octave band
-        if isinstance(num,list):
-            f1=num[0]
-            f2=num[-1]
-        else:
-            f1 = f*2.**(-0.5/num)
-            f2 = f*2.**(+0.5/num)
-        ind1 = searchsorted(freq, f1)
-        ind2 = searchsorted(freq, f2)
-        if ind1 == ind2:
-            warn('Queried frequency band (%g to %g Hz) does not '
-                    'include any discrete FFT sample frequencies. '
-                    'Returning zeros.' % (f1,f2), 
-                    Warning, stacklevel = 2)
-        return (ind1,ind2) 
-
 
 
 class BaseEvaluator(HasPrivateTraits):

@@ -1,259 +1,328 @@
-
 import ray
-import acoular
 import numpy as np
+from datetime import datetime
 from os import path
-from scipy.stats import poisson, norm 
+from scipy.stats import poisson, norm
 from acoular import config, MicGeom, WNoiseGenerator, PointSource, SourceMixer,\
-    PowerSpectra, MaskedTimeInOut, Environment
+    PowerSpectra, MaskedTimeInOut, Environment, RectGrid, BeamformerBase, BeamformerCleansc,\
+    SteeringVector
 from acoupipe import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
-    NumericAttributeSampler, ContainerSampler, DistributedPipeline, BasePipeline,get_frequency_index_range
-from acoupipe import RefSourceMapFeature, get_source_loc, get_source_p2, CSMFeature, SourceMapFeature,\
-    NonRedundantCSMFeature, SpectrogramFeature, RefSBL
-from acoupipe import set_pipeline_seeds
-from spectacoular import SpectraInOut
-from acoupipe import Options # sbl module
-R = 0.05
+    NumericAttributeSampler, ContainerSampler, DistributedPipeline, BasePipeline,\
+    WriteH5Dataset, WriteTFRecord
+from .features import RefSourceMapFeature, get_source_p2, CSMFeature, SourceMapFeature,\
+    NonRedundantCSMFeature
+from .helper import set_pipeline_seeds, get_frequency_index_range, _handle_cache, _handle_log
 
-def simulate(
-    dataset,
-    numsamples,
-    features,
-    nsources=None,
-    freq=None,
-    freq_index=None,
-    num=0,
-    tasks=1,
-    startsample=1,
-    cache_dir = "./datasets",
-    cache_bf = False,
-    cache_csm = False
-    ):
+TF_FLAG = True
+try:
+    from acoupipe import float_list_feature, int64_feature, int_list_feature
+except:
+    TF_FLAG = False
 
-    if freq and freq_index:
-        raise ValueError("It is only allowed to set either 'freq' or 'freq_index', not both at the same time!")
+dirpath = path.dirname(path.abspath(__file__))
+mg = MicGeom(from_file=path.join(dirpath, "tub_vogel64_ap1.xml"))
 
-    dirpath = path.dirname(path.abspath(__file__))
-    # Fixed Parameters
-    C = 343. # speed of sound
-    HE = 40 # Helmholtz number (defines the sampling frequency) 
-    SFREQ = HE*C # /ap with ap=1.0
-    BLOCKSIZE = 128 # block size used for FFT 
-    SIGLENGTH=5 # length of the simulated signal
-    MFILE = path.join(dirpath,"tub_vogel64_ap1.xml") # Microphone Geometry
-    REF_MIC = 63 # index of the reference microphone 
-
-    if nsources:
-        MAXSRCS = nsources # maximum number of sources
-    else:    
-        MAXSRCS = 10 # maximum number of sources
-    # Random Variables
-    mic_rvar = norm(loc=0, scale=0.001) # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
-    pos_rvar = norm(loc=0,scale=0.1688) # source positions
-    nsrc_rvar = poisson(mu=3,loc=1) # number of sources
-
-    # Acoular Config
-    config.h5library = 'h5py'
-    if cache_bf or cache_csm:
-        config.cache_dir = path.join(cache_dir,'cache') # set up cache file dir
-    print("cache file directory at: ",config.cache_dir)
+constants = {
+    'MAX_NSOURCES': 10,
+    'MIN_NSOURCES': 1,
+    'AP': 1.,
+    'VERSION': "ds1-v001",  # data set version
+    'C': 343.,  # speed of sound
+    'HE': 40,  # Helmholtz number (defines the sampling frequency)
+    'SFREQ': 40*343./1.,  # /ap with ap:1.0
+    'BLOCKSIZE': 128,  # block size used for FFT
+    'OVERLAP': '50%',
+    'WINDOW': 'Hanning',
+    'SIGLENGTH': 5,  # length of the simulated signal
+    'MGEOM': mg.mpos_tot.copy(),  # microphone positions
+    'REF_MIC': 63,  # index of the reference microphone
+    'R': 0.05,  # integration radius for sector integration
+    'CACHE_CSM': False,
+    'CACHE_BF': False,
+    'CACHE_DIR': "./datasets",
+}
 
 
-    # Computational Pipeline Acoular
-    # Microphone Geometry
-    mg_manipulated = MicGeom(from_file=MFILE) 
-    mg_fixed = MicGeom(from_file=MFILE)
-    # Environment
-    env = Environment(c=C)
-    # Signals
-    white_noise_signals = [
-        WNoiseGenerator(sample_freq=SFREQ,seed=i+1,numsamples=SIGLENGTH*SFREQ) for i in range(MAXSRCS)
-        ] 
-    # Monopole sources emitting the white noise signals
-    point_sources = [
-        PointSource(signal=signal,mics=mg_manipulated,env=env, loc=(0,0,.5)) for signal in white_noise_signals
-        ]
-    # Source Mixer mixing the signals of all sources (number will be sampled)
-    sources_mix = SourceMixer(sources=point_sources)
+class Dataset:
 
-    # Set up PowerSpectra objects to calculate CSM feature and reference p2 value
-    # first object is used to calculate the full CSM 
-    # second object will be used to calculate the p2 value at the reference microphone (for each present source)
-    ps_args = {'block_size':BLOCKSIZE, 'overlap':'50%', 'window':"Hanning", 'precision':'complex64'}
-    ps_csm = PowerSpectra(time_data=sources_mix,cached=cache_csm,**ps_args)
-    ps_ref = PowerSpectra(**ps_args,cached=False) # caching takes more time than calculation for a single channel
-    spectra_inout = SpectraInOut(source=sources_mix,block_size=BLOCKSIZE, window="Hanning",overlap="50%" )
+    def __init__(self, split, numsamples, features, f=None, num=0, startsample=1, constants=constants, tasks=1, head=None):
+        self.split = split
+        self.numsamples = numsamples
+        self.startsample = startsample
+        self.features = features
+        self.f = f
+        self.num = num
+        self.constants = constants
+        self.tasks = tasks
+        self.head = head
 
-    ps_ref.time_data = MaskedTimeInOut(source=sources_mix,invalid_channels=[_ for _ in range(64) if not _  == REF_MIC]) # masking other channels than the reference channel
+    def build_pipeline(self):
+        c = self.constants
+        if c['MAX_NSOURCES'] == c['MIN_NSOURCES']:
+            nsources_constant = True
+        else:
+            nsources_constant = False
 
-    # Set up Beamformer object to calculate sourcemap feature
-    if ("sourcemap" in features) or ("ref_cleansc" in features) or ("SBL" in features):
-        bb_args = {'r_diag':False,}
-        sv_args = {'steer_type':'true level', 'ref':mg_fixed.mpos[:,REF_MIC]}
-        rg = acoular.RectGrid(
-                        x_min=-0.5, x_max=0.5, y_min=-0.5, y_max=0.5, z=.5,increment=1/63) # 64 x 64 grid           
-        st = acoular.SteeringVector(
-                        grid=rg, mics=mg_fixed, env=env, **sv_args)
-        bb = acoular.BeamformerBase(
-                        freq_data=ps_csm, steer=st, cached=cache_bf, precision='float32',**bb_args)
-        bfcleansc = acoular.BeamformerCleansc(
-                        freq_data=ps_csm, steer=st, cached=cache_bf, precision='float32',**bb_args)
+        # handle cache
+        cache_dir = _handle_cache(
+            c['CACHE_BF'], c['CACHE_CSM'], c['CACHE_DIR'])
 
-    # Computational Pipeline AcouPipe 
+        # Random Variables
+        # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
+        mic_rvar = norm(loc=0, scale=0.001*c['AP'])
+        pos_rvar = norm(loc=0, scale=0.1688*c['AP'])  # source positions
+        nsrc_rvar = poisson(mu=3, loc=1)  # number of sources
 
-    # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
-    def sample_rms(rng):
-        "draw source pressures square, Rayleigh distribution, sort them, calc rms"
-        nsrc = len(sources_mix.sources)
-        p_rms = np.sqrt(np.sort(rng.rayleigh(5,nsrc))[::-1]) # draw source pressures square, Rayleigh distribution, sort them, calc rms
-        p_rms /= p_rms.max() #norm it
-        for i, rms in enumerate(p_rms):
-            sources_mix.sources[i].signal.rms = rms # set rms value
+        # Computational Pipeline Acoular
+        # Microphone geometry with positional noise
+        mg_manipulated = MicGeom(mpos_tot=c['MGEOM'].copy())
+        # Assumed microphone geometry without positional noise
+        mg_fixed = MicGeom(mpos_tot=c['MGEOM'].copy())
+        env = Environment(c=c['C'], roi=np.array([]))  # Environment
+        white_noise_signals = [
+            WNoiseGenerator(sample_freq=c['SFREQ'], seed=i+1, numsamples=c['SIGLENGTH']*c['SFREQ']) for i in range(c['MAX_NSOURCES'])
+        ]  # Signals
+        point_sources = [
+            PointSource(signal=signal, mics=mg_manipulated, env=env, loc=(0, 0, .5*c['AP'])) for signal in white_noise_signals
+        ]  # Monopole sources emitting the white noise signals
+        # Source Mixer mixing the signals of all sources (number will be sampled)
+        sources_mix = SourceMixer(sources=point_sources)
 
-    mic_sampling = MicGeomSampler(
-                        random_var=mic_rvar,
-                        target=mg_manipulated,
-                        ddir=np.array([[1.0],[1.0],[0]])
-                        ) # ddir along two dimensions -> bivariate sampling
+        # Set up PowerSpectra objects to calculate CSM feature and reference p2 value
+        # first object is used to calculate the full CSM
+        # second object will be used to calculate the p2 value at the reference microphone (for each present source)
+        ps_args = {'block_size': c['BLOCKSIZE'], 'overlap': c['OVERLAP'],
+                   'window': c['WINDOW'], 'precision': 'complex64'}
+        ps_csm = PowerSpectra(time_data=sources_mix,
+                              cached=c['CACHE_CSM'], **ps_args)
+        # caching takes more time than calculation for a single channel
+        ref_channel = MaskedTimeInOut(source=sources_mix, invalid_channels=[_ for _ in range(
+            mg_fixed.num_mics) if not _ == c['REF_MIC']])  # masking other channels than the reference channel
+        ps_ref = PowerSpectra(time_data=ref_channel, cached=False, **ps_args)
+    #    spectra_inout = SpectraInOut(source=sources_mix,block_size=BLOCKSIZE, window="Hanning",overlap="50%" )
 
-    pos_sampling = PointSourceSampler(
-                        random_var=pos_rvar,
-                        target=sources_mix.sources,
-                        ldir=np.array([[1.0],[1.0],[0.0]]), # ldir: 1.0 along first two dimensions -> bivariate sampling
-                        x_bounds=(-.5,.5), # only allow values between -.5 and .5
-                        y_bounds=(-.5,.5),
-                        )
+        # Set up Beamformer object to calculate sourcemap feature
+        if ("sourcemap" in self.features) or ("ref_cleansc" in self.features):
+            bb_args = {'r_diag': False, }
+            sv_args = {'steer_type': 'true level',
+                       'ref': mg_fixed.mpos[:, c['REF_MIC']]}
+            rg = RectGrid(
+                x_min=-0.5*c['AP'], x_max=0.5*c['AP'],
+                y_min=-0.5*c['AP'], y_max=0.5*c['AP'],
+                z=.5*c['AP'], increment=1/63)  # 64 x 64 grid
+            st = SteeringVector(
+                grid=rg, mics=mg_fixed, env=env, **sv_args)
+            bb = BeamformerBase(
+                freq_data=ps_csm, steer=st, cached=c['CACHE_BF'], precision='float32', **bb_args)
+            bfcleansc = BeamformerCleansc(
+                freq_data=ps_csm, steer=st, cached=c['CACHE_BF'], precision='float32', **bb_args)
 
-    src_sampling = SourceSetSampler(    
-                        target=[sources_mix],
-                        set=point_sources,
-                        replace=False,
-                        numsamples=3,
-                        ) # draw point sources from point_sources set (number of sources is sampled by nrcs_sampling object)
-    if nsources: src_sampling.numsamples = nsources
+        # Computational Pipeline AcouPipe
+        # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
+        def sample_rms(rng):
+            "draw source pressures square, Rayleigh distribution, sort them, calc rms"
+            nsrc = len(sources_mix.sources)
+            # draw source pressures square, Rayleigh distribution, sort them, calc rms
+            p_rms = np.sqrt(np.sort(rng.rayleigh(5, nsrc))[::-1])
+            p_rms /= p_rms.max()  # norm it
+            for i, rms in enumerate(p_rms):
+                sources_mix.sources[i].signal.rms = rms  # set rms value
 
-    rms_sampling = ContainerSampler(
-                        random_func=sample_rms)
+        mic_sampling = MicGeomSampler(
+            random_var=mic_rvar,
+            target=mg_manipulated,
+            ddir=np.array([[1.0], [1.0], [0]])
+        )  # ddir along two dimensions -> bivariate sampling
 
-    if not nsources: # if no number of sources is specified, the number of sources will be samples randomly
-        nsrc_sampling =  NumericAttributeSampler(
-                            random_var=nsrc_rvar, 
-                            target=[src_sampling], 
-                            attribute='numsamples',
-                            filter=lambda x: x<=MAXSRCS,
-                            )
-
-        sampler_list = [mic_sampling, nsrc_sampling, src_sampling, rms_sampling, pos_sampling]
-    else:
-        sampler_list = [mic_sampling, src_sampling, rms_sampling, pos_sampling]
-    
-    if tasks > 1:
-        ray.init()
-        pipeline = DistributedPipeline(
-                        sampler=sampler_list,
-                        numworkers=tasks,
-                        )    
-    else:
-        pipeline = BasePipeline(
-                        sampler=sampler_list,
-                        )
-
-    # desired frequency/helmholtz number
-    if freq != None:
-        fidx = [get_frequency_index_range(ps_csm.fftfreq(),f,num) for f in freq]
-        ps_csm.ind_low = min([f[0] for f in fidx])
-        ps_csm.ind_high = max([f[1] for f in fidx])
-    elif freq_index:
-        fftfreq=ps_csm.fftfreq()
-        freq = np.array([fftfreq[i] for i in freq_index])
-        fidx = [get_frequency_index_range(fftfreq,f,num) for f in freq]
-        ps_csm.ind_low = min([f[0] for f in fidx])
-        ps_csm.ind_high = max([f[1] for f in fidx])
-    else:
-        fidx = None
-        freq = None
-        ps_csm.ind_low = 1
-        ps_csm.ind_high = -1
-        print(freq,freq_index)
-    print(fidx)
-    # set up the feature dict with methods to get the labels
-    feature_methods = {
-        "loc": (get_source_loc, sources_mix, MAXSRCS), # (callable, arg1, arg2, ...)
-        "nsources": (lambda smix: len(smix.sources), sources_mix),
-        "p2": (get_source_p2, sources_mix, ps_ref, fidx, MAXSRCS, config.cache_dir),
-    }
-
-    feature_objects = []
-    if "csm" in features:
-        feature = CSMFeature(feature_name="csm",
-                        power_spectra=ps_csm,
-                        fidx=fidx,
-                        cache_dir=config.cache_dir   
-                        )
-        feature_methods = feature.add_feature_funcs(feature_methods)
-        feature_objects.append(feature)
-
-    if "csmtriu" in features:
-        feature = NonRedundantCSMFeature(feature_name="csmtriu",
-                        power_spectra=ps_csm,
-                        fidx=fidx,
-                        cache_dir=config.cache_dir   
-                        )
-        feature_methods = feature.add_feature_funcs(feature_methods)
-        feature_objects.append(feature)
-
-    if "sourcemap" in features:
-        feature = SourceMapFeature(feature_name="sourcemap",
-                        beamformer=bb,
-                        f=freq,
-                        num=num,
-                        cache_dir=config.cache_dir   
-                        )
-        feature_methods = feature.add_feature_funcs(feature_methods)
-        feature_objects.append(feature)    
-
-    if "ref_cleansc" in features:
-        feature = RefSourceMapFeature(feature_name="ref_cleansc",
-                        beamformer=bfcleansc,
-                        sourcemixer=sources_mix,
-                        powerspectra=ps_ref,
-                        r=0.05,
-                        f=freq,
-                        num=num,
-                        cache_dir=config.cache_dir   
-                        )
-        feature_methods = feature.add_feature_funcs(feature_methods)
-        feature_objects.append(feature)    
-
-    if "spectrogram" in features:
-        feature = SpectrogramFeature(feature_name="spectrogram",
-                        spectra_inout=spectra_inout,
-                        fidx=fidx,
-                        cache_dir=config.cache_dir   
-                        )
-        feature_methods = feature.add_feature_funcs(feature_methods)
-        feature_objects.append(feature)
-
-    if "SBL" in features:
-        feature = RefSBL(
-            feature_name = "SBL",
-            spectra_inout = spectra_inout,
-            steer = st,
-            #options = Options(convergence_error=10 ** (-8), gamma_range=10 ** (-4), convergence_maxiter=5000, convergence_min_iteration=1, status_report=1, fixedpoint=1, Nsource=1, flag=0),
-            fidx = fidx, 
+        pos_sampling = PointSourceSampler(
+            random_var=pos_rvar,
+            target=sources_mix.sources,
+            # ldir: 1.0 along first two dimensions -> bivariate sampling
+            ldir=np.array([[1.0], [1.0], [0.0]]),
+            # only allow values between -.5 and .5
+            x_bounds=(-.5*c['AP'], .5*c['AP']),
+            y_bounds=(-.5*c['AP'], .5*c['AP']),
         )
-        feature_methods = feature.add_feature_funcs(feature_methods)
-        feature_objects.append(feature)
 
-    # add features to the pipeline
-    #print(feature_methods)
-    pipeline.features = feature_methods
-    set_pipeline_seeds(pipeline, startsample, numsamples, dataset)
+        src_sampling = SourceSetSampler(
+            target=[sources_mix],
+            set=point_sources,
+            replace=False,
+            numsamples=3,
+        )  # draw point sources from point_sources set (number of sources is sampled by nrcs_sampling object)
+        if nsources_constant:
+            src_sampling.numsamples = c['MAX_NSOURCES']
 
-    # yield the data    
-    for data in pipeline.get_data():
-        yield data
-        
-if __name__ == "__main__":
-    validation_generator = simulate(dataset="validation",numsamples=1,features="SBL",num=3,freq=[1000,2000])
-    data = next(validation_generator)
+        rms_sampling = ContainerSampler(
+            random_func=sample_rms)
+
+        if not nsources_constant:  # if no number of sources is specified, the number of sources will be samples randomly
+            nsrc_sampling = NumericAttributeSampler(
+                random_var=nsrc_rvar,
+                target=[src_sampling],
+                attribute='numsamples',
+                filter=lambda x: (x <= c['MAX_NSOURCES']) and (
+                    x >= c['MIN_NSOURCES']),
+            )
+
+            sampler_list = [mic_sampling, nsrc_sampling,
+                            src_sampling,
+                            rms_sampling, pos_sampling]
+        else:
+            sampler_list = [mic_sampling,
+                            src_sampling,
+                            rms_sampling, pos_sampling]
+
+        if self.tasks > 1:
+            pipeline = DistributedPipeline(
+                sampler=sampler_list,
+                numworkers=self.tasks,
+            )
+        else:
+            pipeline = BasePipeline(
+                sampler=sampler_list,
+            )
+
+        # desired frequency
+        if self.f != None:
+            if type(self.f) == float or type(self.f) == int:
+                f = [f]
+            fidx = [get_frequency_index_range(
+                ps_csm.fftfreq(), f_, self.num) for f_ in self.f]
+            ps_csm.ind_low = min([f[0] for f in fidx])
+            ps_csm.ind_high = max([f[1] for f in fidx])
+        else:
+            fidx = None
+            f = None
+        # set up the feature dict with methods to get the labels
+        feature_methods = {  # (callable, arg1, arg2, ...)
+            "loc": (lambda smix: np.array([s.loc for s in smix.sources], dtype=np.float32).T, sources_mix),
+            "nsources": (lambda smix: len(smix.sources), sources_mix),
+            "p2": (get_source_p2, sources_mix, ps_ref, fidx, cache_dir),
+        }
+
+        feature_objects = []
+        if "csm" in self.features:
+            feature = CSMFeature(feature_name="csm",
+                                 power_spectra=ps_csm,
+                                 fidx=fidx,
+                                 cache_dir=cache_dir
+                                 )
+            feature_methods = feature.add_feature_funcs(feature_methods)
+            feature_objects.append(feature)
+
+        if "csmtriu" in self.features:
+            feature = NonRedundantCSMFeature(feature_name="csmtriu",
+                                             power_spectra=ps_csm,
+                                             fidx=fidx,
+                                             cache_dir=cache_dir
+                                             )
+            feature_methods = feature.add_feature_funcs(feature_methods)
+            feature_objects.append(feature)
+
+        if "sourcemap" in self.features:
+            feature = SourceMapFeature(feature_name="sourcemap",
+                                       beamformer=bb,
+                                       f=self.f,
+                                       num=self.num,
+                                       cache_dir=cache_dir
+                                       )
+            feature_methods = feature.add_feature_funcs(feature_methods)
+            feature_objects.append(feature)
+
+        if "ref_cleansc" in self.features:
+            feature = RefSourceMapFeature(feature_name="ref_cleansc",
+                                          beamformer=bfcleansc,
+                                          sourcemixer=sources_mix,
+                                          powerspectra=ps_ref,
+                                          r=c['R'],
+                                          f=self.f,
+                                          num=self.num,
+                                          cache_dir=cache_dir
+                                          )
+            feature_methods = feature.add_feature_funcs(feature_methods)
+            feature_objects.append(feature)
+
+        # add features to the pipeline
+        pipeline.features = feature_methods
+        self._feature_objects = feature_objects
+        return pipeline
+
+    def simulate(self, log=False):
+        # Ray Config
+        if self.tasks > 1:
+            ray.shutdown()
+            ray.init(address=self.head)
+
+        # Logging for debugging and timing statistic purpose
+        if log:
+            _handle_log(
+                fname=f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log")
+
+        # get dataset pipeline that yields the data
+        pipeline = self.build_pipeline()
+        # set seeds
+        set_pipeline_seeds(pipeline, self.startsample,
+                           self.numsamples, self.split)
+
+        # yield the data
+        for data in pipeline.get_data():
+            yield data
+
+    def save_tfrecord(self, name, log=False):
+        if not TF_FLAG:
+            raise ImportError("save data to .tfrecord format requires TensorFlow!")
+
+        # Ray Config
+        if self.tasks > 1:
+            ray.shutdown()
+            ray.init(address=self.head)
+
+        # Logging for debugging and timing statistic purpose
+        if log:
+            _handle_log(".".join(name.split('.')[:-1]) + ".log")
+
+        # get dataset pipeline that yields the data
+        pipeline = self.build_pipeline()
+        # set seeds
+        set_pipeline_seeds(pipeline, self.startsample,
+                           self.numsamples, self.split)
+        # create Writer pipeline
+        encoder_dict = {
+            "loc": float_list_feature,
+            "p2": float_list_feature,
+            "nsources": int64_feature,
+            "idx": int64_feature,
+            "seeds": int_list_feature,
+        }
+        for feature in self._feature_objects:
+            feature.add_encoder_funcs(encoder_dict)
+        # create TFRecordWriter to save pipeline output to TFRecord File
+        WriteTFRecord(name=name, source=pipeline,
+                      encoder_funcs=encoder_dict).save()
+
+    def save_h5(self, name, log=False):
+        if self.tasks > 1:
+            ray.shutdown()
+            ray.init(address=self.head)
+
+        # Logging for debugging and timing statistic purpose
+        if log:
+            _handle_log(".".join(name.split('.')[:-1]) + ".log")
+
+        # get dataset pipeline that yields the data
+        pipeline = self.build_pipeline()
+        # set seeds
+        set_pipeline_seeds(pipeline, self.startsample,
+                           self.numsamples, self.split)
+
+        # create Writer pipeline
+        metadata = self.constants.copy()
+        for feature in self._feature_objects:
+            metadata = feature.add_metadata(metadata.copy())
+
+        WriteH5Dataset(name=name,
+                       source=pipeline,
+                       features=list(pipeline.features.keys()),
+                       metadata=metadata.copy(),
+                       ).save()  # start the calculation

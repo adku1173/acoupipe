@@ -231,11 +231,6 @@ class SourceSetSampler(SetSampler):
     attribute = Enum("sources", 
         desc="class instance samples the sources attribute of a SourceMixer instance")    
 
-    def set_value(self, target, value):
-        """assigns the sampled values to the SourceMixer instances; only for internal use"""
-        #target.sources=[s for s in value] # convert numpy array holding objects into list
-        [target.sources.append(s) for s in value]
-
     def sample(self):
         """this function utilizes :meth:`rvs` function to draw  
         values from :attr:`set` list that are going to be assigned 
@@ -245,13 +240,11 @@ class SourceSetSampler(SetSampler):
         if self.single_value:
             samples = self.rvs(self.numsamples)
             for target in self.target:      
-                target.sources.clear() # remove sources 
-                self.set_value(target, samples)
+                target.sources = list(samples) 
         else:
             for target in self.target:
-                target.sources.clear() # remove sources 
                 samples = self.rvs(self.numsamples)
-                self.set_value(target, samples)
+                target.sources = list(samples) 
 
 
 class ContainerSampler(BaseSampler):
