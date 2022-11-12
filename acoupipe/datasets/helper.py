@@ -98,6 +98,8 @@ def set_pipeline_seeds(pipeline,startsample,numsamples,dataset="training"):
         off = 0
     elif dataset=="validation":
         off = int(1e9) # a general offset to ensure that validation and training seeds never match (max seed is 2*32) 
+    elif dataset == "test":
+        off = int(2e9)
     soff = int(1e7) # offset to ensure that seeds of sampler object doesn't match
     pipeline.random_seeds = [range(off+(i*soff)+startindex, off+(i*soff)+numsamples+startindex) for i in range(len(pipeline.sampler))]
 

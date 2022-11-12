@@ -20,70 +20,75 @@ except:
     TF_FLAG = False
 
 dirpath = path.dirname(path.abspath(__file__))
-mg = MicGeom(from_file=path.join(dirpath, "tub_vogel64_ap1.xml"))
+ap = 1.
 
-constants = {
-    'MAX_NSOURCES': 10,
-    'MIN_NSOURCES': 1,
-    'AP': 1.,
-    'VERSION': "ds1-v001",  # data set version
-    'C': 343.,  # speed of sound
-    'HE': 40,  # Helmholtz number (defines the sampling frequency)
-    'SFREQ': 40*343./1.,  # /ap with ap:1.0
-    'BLOCKSIZE': 128,  # block size used for FFT
-    'OVERLAP': '50%',
-    'WINDOW': 'Hanning',
-    'SIGLENGTH': 5,  # length of the simulated signal
-    'MGEOM': mg.mpos_tot.copy(),  # microphone positions
-    'REF_MIC': 63,  # index of the reference microphone
-    'R': 0.05,  # integration radius for sector integration
-    'CACHE_CSM': False,
-    'CACHE_BF': False,
-    'CACHE_DIR': "./datasets",
+config = {
+    'max_nsources': 10,
+    'min_nsources': 1,
+    'ap': ap,
+    'version': "ds1-v01",  # data set version
+    'c': 343.,  # speed of sound
+    'fs': 40*343./ap,  # /ap with ap:1.0
+    'blocksize': 128,  # block size used for FFT
+    'overlap': '50%',
+    'window': 'Hanning',
+    'T': 5,  # length of the simulated signal
+    'micgeom': path.join(dirpath, "tub_vogel64_ap1.xml"),  # microphone positions
+    'z' : 0.5,
+    'y_max' : .5,
+    'y_min' : -.5,
+    'x_max' : .5,
+    'x_min' : -.5,
+    'increment' : 1/63,
+    'ref_mic': 63,  # index of the reference microphone
+    'r': 0.05,  # integration radius for sector integration
+    'cache_csm': False,
+    'cache_bf': False,
+    'cache_dir': "./datasets",
 }
 
 
 class Dataset:
 
-    def __init__(self, split, numsamples, features, f=None, num=0, startsample=1, constants=constants, tasks=1, head=None):
+    def __init__(self, split, size, features, f=None, num=0, startsample=1, config=config, tasks=1, head=None):
         self.split = split
-        self.numsamples = numsamples
+        self.size = size
         self.startsample = startsample
         self.features = features
         self.f = f
         self.num = num
-        self.constants = constants
+        self.config = config
         self.tasks = tasks
         self.head = head
 
     def build_pipeline(self):
-        c = self.constants
-        if c['MAX_NSOURCES'] == c['MIN_NSOURCES']:
+        c = self.config
+        if c['max_nsources'] == c['min_nsources']:
             nsources_constant = True
         else:
             nsources_constant = False
 
         # handle cache
         cache_dir = _handle_cache(
-            c['CACHE_BF'], c['CACHE_CSM'], c['CACHE_DIR'])
+            c['cache_bf'], c['cache_csm'], c['cache_dir'])
 
         # Random Variables
         # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
-        mic_rvar = norm(loc=0, scale=0.001*c['AP'])
-        pos_rvar = norm(loc=0, scale=0.1688*c['AP'])  # source positions
+        mic_rvar = norm(loc=0, scale=0.001*c['ap'])
+        pos_rvar = norm(loc=0, scale=0.1688*c['ap'])  # source positions
         nsrc_rvar = poisson(mu=3, loc=1)  # number of sources
 
         # Computational Pipeline Acoular
         # Microphone geometry with positional noise
-        mg_manipulated = MicGeom(mpos_tot=c['MGEOM'].copy())
+        mg_manipulated = MicGeom(from_file=c['micgeom'])
         # Assumed microphone geometry without positional noise
-        mg_fixed = MicGeom(mpos_tot=c['MGEOM'].copy())
-        env = Environment(c=c['C'], roi=np.array([]))  # Environment
+        mg_fixed = MicGeom(from_file=c['micgeom'])
+        env = Environment(c=c['c'], roi=np.array([]))  # Environment
         white_noise_signals = [
-            WNoiseGenerator(sample_freq=c['SFREQ'], seed=i+1, numsamples=c['SIGLENGTH']*c['SFREQ']) for i in range(c['MAX_NSOURCES'])
+            WNoiseGenerator(sample_freq=c['fs'], seed=i+1, numsamples=c['T']*c['fs']) for i in range(c['max_nsources'])
         ]  # Signals
         point_sources = [
-            PointSource(signal=signal, mics=mg_manipulated, env=env, loc=(0, 0, .5*c['AP'])) for signal in white_noise_signals
+            PointSource(signal=signal, mics=mg_manipulated, env=env, loc=(0, 0, c['z'])) for signal in white_noise_signals
         ]  # Monopole sources emitting the white noise signals
         # Source Mixer mixing the signals of all sources (number will be sampled)
         sources_mix = SourceMixer(sources=point_sources)
@@ -91,31 +96,31 @@ class Dataset:
         # Set up PowerSpectra objects to calculate CSM feature and reference p2 value
         # first object is used to calculate the full CSM
         # second object will be used to calculate the p2 value at the reference microphone (for each present source)
-        ps_args = {'block_size': c['BLOCKSIZE'], 'overlap': c['OVERLAP'],
-                   'window': c['WINDOW'], 'precision': 'complex64'}
+        ps_args = {'block_size': c['blocksize'], 'overlap': c['overlap'],
+                   'window': c['window'], 'precision': 'complex64'}
         ps_csm = PowerSpectra(time_data=sources_mix,
-                              cached=c['CACHE_CSM'], **ps_args)
+                              cached=c['cache_csm'], **ps_args)
         # caching takes more time than calculation for a single channel
         ref_channel = MaskedTimeInOut(source=sources_mix, invalid_channels=[_ for _ in range(
-            mg_fixed.num_mics) if not _ == c['REF_MIC']])  # masking other channels than the reference channel
+            mg_fixed.num_mics) if not _ == c['ref_mic']])  # masking other channels than the reference channel
         ps_ref = PowerSpectra(time_data=ref_channel, cached=False, **ps_args)
-    #    spectra_inout = SpectraInOut(source=sources_mix,block_size=BLOCKSIZE, window="Hanning",overlap="50%" )
+    #    spectra_inout = SpectraInOut(source=sources_mix,block_size=blocksize, window="Hanning",overlap="50%" )
 
         # Set up Beamformer object to calculate sourcemap feature
         if ("sourcemap" in self.features) or ("ref_cleansc" in self.features):
             bb_args = {'r_diag': False, }
             sv_args = {'steer_type': 'true level',
-                       'ref': mg_fixed.mpos[:, c['REF_MIC']]}
+                       'ref': mg_fixed.mpos[:, c['ref_mic']]}
             rg = RectGrid(
-                x_min=-0.5*c['AP'], x_max=0.5*c['AP'],
-                y_min=-0.5*c['AP'], y_max=0.5*c['AP'],
-                z=.5*c['AP'], increment=1/63)  # 64 x 64 grid
+                x_min=c['x_min'], x_max=c['x_max'],
+                y_min=c['y_min'], y_max=c['y_max'],
+                z=c['z'], increment=c['increment'])  # 64 x 64 grid
             st = SteeringVector(
                 grid=rg, mics=mg_fixed, env=env, **sv_args)
             bb = BeamformerBase(
-                freq_data=ps_csm, steer=st, cached=c['CACHE_BF'], precision='float32', **bb_args)
+                freq_data=ps_csm, steer=st, cached=c['cache_bf'], precision='float32', **bb_args)
             bfcleansc = BeamformerCleansc(
-                freq_data=ps_csm, steer=st, cached=c['CACHE_BF'], precision='float32', **bb_args)
+                freq_data=ps_csm, steer=st, cached=c['cache_bf'], precision='float32', **bb_args)
 
         # Computational Pipeline AcouPipe
         # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
@@ -139,9 +144,9 @@ class Dataset:
             target=sources_mix.sources,
             # ldir: 1.0 along first two dimensions -> bivariate sampling
             ldir=np.array([[1.0], [1.0], [0.0]]),
-            # only allow values between -.5 and .5
-            x_bounds=(-.5*c['AP'], .5*c['AP']),
-            y_bounds=(-.5*c['AP'], .5*c['AP']),
+            # only allow values in the observation area
+            x_bounds=(c['x_min'], c['x_max']),
+            y_bounds=(c['y_min'], c['y_max']),
         )
 
         src_sampling = SourceSetSampler(
@@ -151,7 +156,7 @@ class Dataset:
             numsamples=3,
         )  # draw point sources from point_sources set (number of sources is sampled by nrcs_sampling object)
         if nsources_constant:
-            src_sampling.numsamples = c['MAX_NSOURCES']
+            src_sampling.numsamples = c['max_nsources']
 
         rms_sampling = ContainerSampler(
             random_func=sample_rms)
@@ -161,8 +166,8 @@ class Dataset:
                 random_var=nsrc_rvar,
                 target=[src_sampling],
                 attribute='numsamples',
-                filter=lambda x: (x <= c['MAX_NSOURCES']) and (
-                    x >= c['MIN_NSOURCES']),
+                filter=lambda x: (x <= c['max_nsources']) and (
+                    x >= c['min_nsources']),
             )
 
             sampler_list = [mic_sampling, nsrc_sampling,
@@ -186,7 +191,7 @@ class Dataset:
         # desired frequency
         if self.f != None:
             if type(self.f) == float or type(self.f) == int:
-                f = [f]
+                self.f = [self.f]
             fidx = [get_frequency_index_range(
                 ps_csm.fftfreq(), f_, self.num) for f_ in self.f]
             ps_csm.ind_low = min([f[0] for f in fidx])
@@ -235,7 +240,7 @@ class Dataset:
                                           beamformer=bfcleansc,
                                           sourcemixer=sources_mix,
                                           powerspectra=ps_ref,
-                                          r=c['R'],
+                                          r=c['r'],
                                           f=self.f,
                                           num=self.num,
                                           cache_dir=cache_dir
@@ -248,7 +253,7 @@ class Dataset:
         self._feature_objects = feature_objects
         return pipeline
 
-    def simulate(self, log=False):
+    def generate(self, log=False):
         # Ray Config
         if self.tasks > 1:
             ray.shutdown()
@@ -263,7 +268,7 @@ class Dataset:
         pipeline = self.build_pipeline()
         # set seeds
         set_pipeline_seeds(pipeline, self.startsample,
-                           self.numsamples, self.split)
+                           self.size, self.split)
 
         # yield the data
         for data in pipeline.get_data():
@@ -286,7 +291,7 @@ class Dataset:
         pipeline = self.build_pipeline()
         # set seeds
         set_pipeline_seeds(pipeline, self.startsample,
-                           self.numsamples, self.split)
+                           self.size, self.split)
         # create Writer pipeline
         encoder_dict = {
             "loc": float_list_feature,
@@ -314,10 +319,10 @@ class Dataset:
         pipeline = self.build_pipeline()
         # set seeds
         set_pipeline_seeds(pipeline, self.startsample,
-                           self.numsamples, self.split)
+                           self.size, self.split)
 
         # create Writer pipeline
-        metadata = self.constants.copy()
+        metadata = self.config.copy()
         for feature in self._feature_objects:
             metadata = feature.add_metadata(metadata.copy())
 

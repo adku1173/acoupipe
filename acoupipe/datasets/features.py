@@ -153,10 +153,10 @@ def get_csm(power_spectra, fidx=None, cache_dir=None, num_threads=1):
     numba.set_num_threads(num_threads)
     if cache_dir:
         config.cache_dir = cache_dir
-    csm = power_spectra.csm[:,:,:]
+    csm = power_spectra.csm[:]
     if fidx:
-        csm = array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=float32)
-    return concatenate([real(csm)[...,newaxis], imag(csm)[...,newaxis]],axis=3)
+        csm = array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=complex)
+    return concatenate([real(csm)[...,newaxis], imag(csm)[...,newaxis]],axis=3, dtype=float32)
 
 
 def _transform_csm(csm):
