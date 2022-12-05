@@ -24,7 +24,7 @@ from traits.api import HasPrivateTraits, Instance, CArray, Float, Property,\
     Str, cached_property, Any, Tuple, List, Bool, Enum, Trait, Int, Either, Type,Callable,\
     on_trait_change
 from acoular import MicGeom, PointSource, SourceMixer, SamplesGenerator
-from numpy import array, pi, sin, cos, sum, eye, sort
+from numpy import array, pi, sin, cos, sum, eye, sort, diag, empty, repeat
 from numpy.random import default_rng, RandomState, Generator
 from scipy.stats import _distn_infrastructure
 from inspect import signature
@@ -292,21 +292,18 @@ class ContainerSampler(BaseSampler):
         """this function utilizes :meth:`rvs` function to evaluate the :attr:`random_func`"""
         self.rvs()
 
-        
 
-class PointSourceSampler(BaseSampler):
-    """Random process that samples the locations of one or more 
-    instances of type :class:`PointSource`. 
-    """
-    
-    #: a list of :class:`acoular.PointSource` instances 
-    target = Trait(list,
-        desc="a list of PointSource instances to manipulate")
-    
-    #:manages if a single value is chosen for all targets 
-    #: is fixed to False (one value for each object in :attr:`target` list is drawn)
-    single_value = Enum(False,
-        desc="manages if the same sampled value is assigned to all targets; (only False is valid)")
+class LocationSampler(BaseSampler):
+
+    #: locations
+    target = CArray(
+        desc="a array with source locations")
+
+    nsources = Int
+
+    #: the random variable specifying the random distribution
+    random_var = Tuple(
+        desc="instance of a random variable from scipy.stats module")
 
     #: limits of the allowed locations of a source along the x-axis (lower,upper)
     x_bounds = Tuple(None, None,
@@ -319,29 +316,71 @@ class PointSourceSampler(BaseSampler):
     #: limits of the allowed locations of a source along the z-axis (lower,upper)
     z_bounds = Tuple(None, None,
         desc="limits of the allowed drawn locations along the x-axis (lower,upper)") 
-    
-    #: (x,y,z)-directions of location sampling
-    ldir = CArray( dtype=float, shape=(3, (1, 3)), 
-        desc="(x,y,z)-directions of location sampling")
-    
+       
     def _bounds_violated(self,loc):
         """validation of drawn source locations. 
         Returns False if location exceeds bounds
         """
         if self.x_bounds[0]: 
-            if (self.x_bounds[0] >= loc[0]): return True
+            if (self.x_bounds[0] > loc[0]): return True
         if self.x_bounds[1]: 
-            if (loc[0] >= self.x_bounds[1]): return True
+            if (loc[0] > self.x_bounds[1]): return True
         if self.y_bounds[0]: 
-            if (self.y_bounds[0] >= loc[1]): return True
+            if (self.y_bounds[0] > loc[1]): return True
         if self.y_bounds[1]: 
-            if (loc[1] >= self.y_bounds[1]): return True
+            if (loc[1] > self.y_bounds[1]): return True
         if self.z_bounds[0]: 
-            if (self.z_bounds[0] >= loc[2]): return True
+            if (self.z_bounds[0] > loc[2]): return True
         if self.z_bounds[1]: 
-            if (loc[2] >= self.z_bounds[1]): return True
+            if (loc[2] > self.z_bounds[1]): return True
         else:
             return False
+
+    def rvs(self):
+        """random variable sampling (for internal use)"""
+        return array([
+            self.random_var[0].rvs(size=1, random_state=self.random_state),
+            self.random_var[1].rvs(size=1, random_state=self.random_state),
+            self.random_var[2].rvs(size=1, random_state=self.random_state),
+        ]).squeeze()
+
+    def sample(self):
+        """this function utilizes :meth:`rvs` function to draw random 
+        values from :attr:`random_var` that are going to be assigned 
+        to the :attr:`loc` attribute of a :class:`PointSource` instance.
+        """
+        loc_array = empty((3,self.nsources))
+        for i in range(self.nsources):
+            new_loc = self.rvs()
+            while self._bounds_violated(new_loc):
+                new_loc = self.rvs()
+            else:
+                loc_array[:,i] = new_loc
+        self.target = loc_array
+
+
+
+class PointSourceSampler(LocationSampler):
+    """Random process that samples the locations of one or more 
+    instances of type :class:`PointSource`. 
+    """
+    
+    #: a list of :class:`acoular.PointSource` instances 
+    target = Trait(list,
+        desc="a list of PointSource instances to manipulate")
+
+    #: the random variable specifying the random distribution
+    random_var = Instance(_distn_infrastructure.rv_frozen,
+        desc="instance of a random variable from scipy.stats module")
+
+    #:manages if a single value is chosen for all targets 
+    #: is fixed to False (one value for each object in :attr:`target` list is drawn)
+    single_value = Enum(False,
+        desc="manages if the same sampled value is assigned to all targets; (only False is valid)")
+
+    #: (x,y,z)-directions of location sampling
+    ldir = CArray( dtype=float, shape=(3, (1, 3)), 
+        desc="(x,y,z)-directions of location sampling")
 
     @on_trait_change("target")        
     def validate_target(self):
@@ -355,7 +394,11 @@ class PointSourceSampler(BaseSampler):
         loc = array(target.loc)
         loc[loc_axs] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
         return loc
-        
+
+    def rvs(self, size=1):
+        """random variable sampling (for internal use)"""
+        return self.random_var.rvs(size=size, random_state=self.random_state)
+
     def sample(self):
         """this function utilizes :meth:`rvs` function to draw random 
         values from :attr:`random_var` that are going to be assigned 
@@ -455,4 +498,27 @@ class MicGeomSampler(BaseSampler):
             self.deviate()
 
 
+class CovSampler(BaseSampler):
+    """Sampler to sample covariance matrices for a specific number of sources.  
     
+    The current implementation only allows uncorrelated sources, meaning that the
+    sampled covariances matrices at :attr:`target` are diagonal matrices. 
+    The strength (variance) of the sources follows the given random distribution at 'attr':`random_var`.
+    """
+
+    target = CArray(
+        desc="the sampled complex covariance matrices")
+
+    nsources = Int(
+        desc="the number of sources to be sampled")
+    
+    nfft = Int(1,
+        desc="number of fft bins at which the power is distributed")
+
+    def sample(self):
+        """this function utilizes :meth:`rvs` function to draw random values
+        from :attr:`random_var`. 
+        """
+        full_strengths = self.rvs(size=self.nsources).astype(complex)
+        self.target = repeat(diag(full_strengths/self.nfft),self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
+        
