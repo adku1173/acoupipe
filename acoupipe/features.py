@@ -1,5 +1,8 @@
 from acoular import config
-from acoupipe import float_list_feature, PlanarSourceMapEvaluator 
+from .evaluate import PlanarSourceMapEvaluator 
+from .config import TF_FLAG
+if TF_FLAG:
+    from .writer import float_list_feature
 from .helper import get_frequency_index_range
 from numpy import zeros, array, float32, concatenate, real, imag, triu_indices, newaxis, transpose,\
     conj, concatenate
@@ -208,44 +211,44 @@ def get_csmtriu(power_spectra, fidx=None, cache_dir=None, num_threads=1):
         csm = _transform_csm(power_spectra.csm)  
         return array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=float32)
 
-def get_spectrogram(spectra_inout, fidx=None, cache_dir=None, num_threads=1):
-    """Calculates the cross-spectral matrix (CSM). 
+# def get_spectrogram(spectra_inout, fidx=None, cache_dir=None, num_threads=1):
+#     """Calculates the cross-spectral matrix (CSM). 
 
-    Parameters
-    ----------
-    spectra_inout : instance of spectacoular.SpectraInOut
-        object to calculate the CSM
-    fidx : int, optional
-        frequency index at which the CSM is returned, by default None, meaning that the
-        CSM for all frequency coefficients will be returned
-    cache_dir : str, optional
-        directory to store the cache files (only necessary if PowerSpectra.cached=True), 
-        by default None
-    num_threads : int, optional
-        the number of threads used by numba during parallel execution
+#     Parameters
+#     ----------
+#     spectra_inout : instance of spectacoular.SpectraInOut
+#         object to calculate the CSM
+#     fidx : int, optional
+#         frequency index at which the CSM is returned, by default None, meaning that the
+#         CSM for all frequency coefficients will be returned
+#     cache_dir : str, optional
+#         directory to store the cache files (only necessary if PowerSpectra.cached=True), 
+#         by default None
+#     num_threads : int, optional
+#         the number of threads used by numba during parallel execution
 
-    Returns
-    -------
-    numpy.array
-        The complex spectrogram matrix with shape (2,B/2+1,T,M) if fidx=None. 
-        B: Blocksize of the FFT. M: Number of microphones.Real values will 
-        be stored at the first entry of the first dimension. 
-        Imaginary values will be stored at the second entry of the first dimension.
-    """
-    numba.set_num_threads(num_threads)
-    if cache_dir:
-        config.cache_dir = cache_dir
-    res = array(list(spectra_inout.result())).swapaxes(0,1)        
-    if fidx: # list with freq index tuples [(1,10),(15,17),...]
-        # we need a structured numpy array in this case
-        # this gets sketchy here....
-        # TODO: raise an error if the tuples are of differen range 
-        raise NotImplementedError()
-        # return array(
-        #     [array([real(res[indices[0]:indices[1],...]), imag(res[indices[0]:indices[1],...])],dtype=float32) for indices in fidx ],
-        #     dtype=float32)
-    else:
-        return array([real(res), imag(res)],dtype=float32)
+#     Returns
+#     -------
+#     numpy.array
+#         The complex spectrogram matrix with shape (2,B/2+1,T,M) if fidx=None. 
+#         B: Blocksize of the FFT. M: Number of microphones.Real values will 
+#         be stored at the first entry of the first dimension. 
+#         Imaginary values will be stored at the second entry of the first dimension.
+#     """
+#     numba.set_num_threads(num_threads)
+#     if cache_dir:
+#         config.cache_dir = cache_dir
+#     res = array(list(spectra_inout.result())).swapaxes(0,1)        
+#     if fidx: # list with freq index tuples [(1,10),(15,17),...]
+#         # we need a structured numpy array in this case
+#         # this gets sketchy here....
+#         # TODO: raise an error if the tuples are of differen range 
+#         raise NotImplementedError()
+#         # return array(
+#         #     [array([real(res[indices[0]:indices[1],...]), imag(res[indices[0]:indices[1],...])],dtype=float32) for indices in fidx ],
+#         #     dtype=float32)
+#     else:
+#         return array([real(res), imag(res)],dtype=float32)
 
 
 def get_source_p2(source_mixer, power_spectra, fidx=None, cache_dir=None, num_threads=1):
@@ -290,17 +293,13 @@ def _get_ref_mic_pow(source_mixer,power_spectra,fidx=None):
 
 def _get_sourcemap_evaluator(beamformer,sourcemixer,powerspectra,f,num,r):
     if not f:
-        if num > 0:
-            raise NotImplementedError("calculating over all frequency bands is currently not supported!")
-        else:
-            sourcemap = array([beamformer.synthetic(f,num=num) for f in beamformer.freq_data.fftfreq()])
-        target_p2 = _get_ref_mic_pow(sourcemixer, powerspectra, None).T
+        target_p2 = _get_ref_mic_pow(sourcemixer, powerspectra, None)
         target_loc = array([array(s.loc) for s in sourcemixer.sources],dtype=float32)
     else:
-        sourcemap = array([beamformer.synthetic(freq,num=num) for freq in f])
         fidx = [get_frequency_index_range(powerspectra.fftfreq(),freq,num) for freq in f]
-        target_p2 = _get_ref_mic_pow(sourcemixer, powerspectra, fidx).T
+        target_p2 = _get_ref_mic_pow(sourcemixer, powerspectra, fidx)
         target_loc = array([array(s.loc) for s in sourcemixer.sources],dtype=float32)    
+    sourcemap = get_sourcemap(beamformer, f=f, num=num)
     return PlanarSourceMapEvaluator(sourcemap=sourcemap, grid=beamformer.steer.grid, target_loc=target_loc, target_pow=target_p2, r=r)
 
 
@@ -442,12 +441,14 @@ class SourceMapFeature(BaseFeature):
             get_sourcemap, self.beamformer, self.f, self.num, self.cache_dir)
         return feature_funcs
 
+    def add_feature_names(self,feature_names):
+        return feature_names + [self.feature_name]
+
+if TF_FLAG:
     def add_encoder_funcs(self, encoder_funcs):
         encoder_funcs[self.feature_name] = float_list_feature
         return encoder_funcs
-
-    def add_feature_names(self,feature_names):
-        return feature_names + [self.feature_name]
+    setattr(SourceMapFeature, "add_encoder_funcs", add_encoder_funcs)
 
 
 class RefSourceMapFeature(SourceMapFeature):
@@ -480,18 +481,21 @@ class RefSourceMapFeature(SourceMapFeature):
             get_inverse_level_error, self.beamformer, self.powerspectra, self.sourcemixer, self.r, self.f, self.num, self.cache_dir)   
         return feature_funcs
 
+    def add_feature_names(self,feature_names):
+        new_names =  [
+            self.feature_name,'overall_level_error','specific_level_error','inverse_level_error'
+            ]
+        return feature_names + new_names
+
+if TF_FLAG:
     def add_encoder_funcs(self, encoder_funcs):
         encoder_funcs[self.feature_name] = float_list_feature
         encoder_funcs['overall_level_error'] = float_list_feature
         encoder_funcs['specific_level_error'] = float_list_feature
         encoder_funcs['inverse_level_error'] = float_list_feature
         return encoder_funcs
+    setattr(RefSourceMapFeature, "add_encoder_funcs", add_encoder_funcs)
 
-    def add_feature_names(self,feature_names):
-        new_names =  [
-            self.feature_name,'overall_level_error','specific_level_error','inverse_level_error'
-            ]
-        return feature_names + new_names
 
 # class RefSBL(SourceMapFeature):
 #     def __init__(self,feature_name,spectra_inout,steer,fidx):
@@ -529,12 +533,15 @@ class CSMFeature(BaseFeature):
             get_csm, self.power_spectra, self.fidx, self.cache_dir)
         return feature_funcs
 
+    def add_feature_names(self,feature_names):
+        return feature_names + [self.feature_name]
+
+if TF_FLAG:
     def add_encoder_funcs(self, encoder_funcs):
         encoder_funcs[self.feature_name] = float_list_feature
         return encoder_funcs
+    setattr(CSMFeature, "add_encoder_funcs", add_encoder_funcs)
 
-    def add_feature_names(self,feature_names):
-        return feature_names + [self.feature_name]
 
 
 # class SpectrogramFeature(BaseFeature):

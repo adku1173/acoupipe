@@ -1,4 +1,7 @@
-from acoupipe import WriteH5Dataset, WriteTFRecord
+from .writer import WriteH5Dataset
+from .config import TF_FLAG
+if TF_FLAG:
+    from .writer import WriteTFRecord
 from datetime import datetime
 from warnings import warn
 from numpy import searchsorted
@@ -113,9 +116,10 @@ def set_filename(writer,path='.',*args):
     name = f"{args[0]}"
     for arg in args[1:]:
         name += f"_{arg}"
-    name += f"_{datetime.now().strftime('%d-%b-%Y')}"
-    if isinstance(writer,WriteTFRecord):
-        name += ".tfrecord"
-    elif isinstance(writer,WriteH5Dataset):
+    name += f"_{datetime.now().strftime('%d-%b-%Y')}"   
+    if isinstance(writer,WriteH5Dataset):
         name += ".h5"
+    if TF_FLAG:
+        if isinstance(writer,WriteTFRecord):
+            name += ".tfrecord"
     writer.name=join(path,name)

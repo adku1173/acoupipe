@@ -21,7 +21,9 @@ The latter can be efficiently consumed by the `Tensorflow <https://www.tensorflo
 
 from traits.api import Instance, Dict, Str, File,\
     Function, Trait, Bool, List
-from .pipeline import DataGenerator
+
+from acoupipe.pipeline import DataGenerator
+from acoupipe.config import TF_FLAG
 
 from acoular.h5files import  _get_h5file_class
 from acoular import config
@@ -29,13 +31,6 @@ from acoular import config
 from datetime import datetime
 from os import path
 from numpy import ndarray
-
-TF_FLAG = True
-try:
-    import tensorflow as tf
-except:
-    TF_FLAG = False
-    print('No tensorflow package installed!')
     
     
 class BaseWriteDataset(DataGenerator):

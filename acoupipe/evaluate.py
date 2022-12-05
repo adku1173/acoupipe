@@ -123,8 +123,8 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
         return results
 
     def _validate_shapes(self):
-        if not self.sourcemap.ndim == 3:
-            raise ValueError("attribute sourcemap is not of shape (number of frequencies, nxsteps, nysteps)!")
+        if not self.sourcemap.ndim == 4:
+            raise ValueError("attribute sourcemap is not of shape (number of frequencies, nxsteps, nysteps, nzsteps)!")
         if not self.sourcemap.shape[0] == self.target_pow.shape[0]:
             raise ValueError(f"Number of p2 target values per source (shape {self.target_pow.shape}) does not match the number of sourcemaps (shape {self.sourcemap.shape}). Provide as many target values as sourcemaps!")
 

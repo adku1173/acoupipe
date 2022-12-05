@@ -5,25 +5,23 @@ from datetime import datetime
 from os import path
 from traits.api import HasPrivateTraits
 from scipy.stats import poisson, norm
-from acoular import config, MicGeom, WNoiseGenerator, PointSource, SourceMixer,\
+from acoular import MicGeom, WNoiseGenerator, PointSource, SourceMixer,\
     PowerSpectra, MaskedTimeInOut, Environment, RectGrid3D, BeamformerBase, BeamformerCleansc,\
     SteeringVector
-from acoupipe import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
-    NumericAttributeSampler, ContainerSampler, DistributedPipeline, BasePipeline,\
-    WriteH5Dataset, WriteTFRecord
+from .sampler import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
+    NumericAttributeSampler, ContainerSampler
+from .pipeline import DistributedPipeline, BasePipeline
+from .writer import WriteH5Dataset
 from .features import RefSourceMapFeature, get_source_p2, CSMFeature, SourceMapFeature,\
     NonRedundantCSMFeature
 from .helper import set_pipeline_seeds, get_frequency_index_range, _handle_cache, _handle_log
-
-TF_FLAG = True
-try:
-    from acoupipe import float_list_feature, int64_feature, int_list_feature
-except:
-    TF_FLAG = False
+from .config import TF_FLAG
+if TF_FLAG:
+    from .writer import float_list_feature, int64_feature, int_list_feature, WriteTFRecord
 
 dirpath = path.dirname(path.abspath(__file__))
 
-config = {
+config1 = {
     'version': "ds1-v01",  # data set version
     'max_nsources': 10,
     'min_nsources': 1,
@@ -34,7 +32,7 @@ config = {
     'window': 'Hanning',
     'r_diag' : False,
     'T': 5,  # length of the simulated signal
-    'micgeom': path.join(dirpath, "tub_vogel64_ap1.xml"),  # microphone positions
+    'micgeom': path.join(dirpath, "xml", "tub_vogel64_ap1.xml"),  # microphone positions
     'z_min' : 0.5,
     'z_max' : 0.5,
     'y_max' : .5,
@@ -52,9 +50,9 @@ config = {
 }
 
 
-class Dataset:
+class Dataset1:
 
-    def __init__(self, split, size, features, f=None, num=0, startsample=1, config=config):       
+    def __init__(self, split, size, features, f=None, num=0, startsample=1, config=config1):       
         self.split = split
         self.size = size
         self.startsample = startsample
@@ -71,6 +69,12 @@ class Dataset:
                 y_min=config['y_min'], y_max=config['y_max'],
                 z_min=config['z_min'], z_max=config['z_max'], increment=config['increment'])  # 64 x 64 grid
         self.env = Environment(c=config['c'])
+        # random variables
+        self.random_var = {
+            "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
+            "pos_rvar" : norm(loc=0, scale=0.1688*self.ap),  # source positions
+            "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
+        }
 
     def _get_aperture(self):
         max_ = 0
@@ -93,12 +97,6 @@ class Dataset:
         # handle cache
         cache_dir = _handle_cache(
             c['cache_bf'], c['cache_csm'], c['cache_dir'])
-
-        # Random Variables
-        # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
-        mic_rvar = norm(loc=0, scale=0.001)
-        pos_rvar = norm(loc=0, scale=0.1688*self.ap)  # source positions
-        nsrc_rvar = poisson(mu=3, loc=1)  # number of sources
 
         # Assumed microphone geometry without positional noise
         white_noise_signals = [
@@ -143,13 +141,13 @@ class Dataset:
                 sources_mix.sources[i].signal.rms = rms  # set rms value
 
         mic_sampling = MicGeomSampler(
-            random_var=mic_rvar,
+            random_var=self.random_var["mic_rvar"],
             target=self.noisy_mics,
             ddir=np.array([[1.0], [1.0], [0]])
         )  # ddir along two dimensions -> bivariate sampling
 
         pos_sampling = PointSourceSampler(
-            random_var=pos_rvar,
+            random_var=self.random_var["pos_rvar"],
             target=sources_mix.sources,
             # ldir: 1.0 along first two dimensions -> bivariate sampling
             ldir=np.array([[1.0], [1.0], [0.0]]),
@@ -172,7 +170,7 @@ class Dataset:
 
         if not nsources_constant:  # if no number of sources is specified, the number of sources will be samples randomly
             nsrc_sampling = NumericAttributeSampler(
-                random_var=nsrc_rvar,
+                random_var=self.random_var["nsrc_rvar"],
                 target=[src_sampling],
                 attribute='numsamples',
                 filter=lambda x: (x <= c['max_nsources']) and (

@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 31 17:43:26 2020
 
-@author: kujawski
-"""
-
+from .config import TF_FLAG
+from .version import __version__, __author__, __date__
 from .sampler import *
 from .pipeline import *
 from .writer import *
 from .loader import *
 from .evaluate import *
+from .dataset1 import Dataset1, config1
 
 
