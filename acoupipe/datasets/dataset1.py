@@ -1,10 +1,12 @@
 import ray
 import numpy as np
+from copy import deepcopy
 from datetime import datetime
 from os import path
+from traits.api import HasPrivateTraits
 from scipy.stats import poisson, norm
 from acoular import config, MicGeom, WNoiseGenerator, PointSource, SourceMixer,\
-    PowerSpectra, MaskedTimeInOut, Environment, RectGrid, BeamformerBase, BeamformerCleansc,\
+    PowerSpectra, MaskedTimeInOut, Environment, RectGrid3D, BeamformerBase, BeamformerCleansc,\
     SteeringVector
 from acoupipe import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
     NumericAttributeSampler, ContainerSampler, DistributedPipeline, BasePipeline,\
@@ -20,28 +22,30 @@ except:
     TF_FLAG = False
 
 dirpath = path.dirname(path.abspath(__file__))
-ap = 1.
 
 config = {
+    'version': "ds1-v01",  # data set version
     'max_nsources': 10,
     'min_nsources': 1,
-    'ap': ap,
-    'version': "ds1-v01",  # data set version
     'c': 343.,  # speed of sound
-    'fs': 40*343./ap,  # /ap with ap:1.0
+    'fs': 40*343.,  # /ap with ap:1.0
     'blocksize': 128,  # block size used for FFT
     'overlap': '50%',
     'window': 'Hanning',
+    'r_diag' : False,
     'T': 5,  # length of the simulated signal
     'micgeom': path.join(dirpath, "tub_vogel64_ap1.xml"),  # microphone positions
-    'z' : 0.5,
+    'z_min' : 0.5,
+    'z_max' : 0.5,
     'y_max' : .5,
     'y_min' : -.5,
     'x_max' : .5,
     'x_min' : -.5,
     'increment' : 1/63,
-    'ref_mic': 63,  # index of the reference microphone
+    'z' : 0.5,
+    'ref_mic': 63,  # index of the reference microphone #TODO: function that sets the reference index
     'r': 0.05,  # integration radius for sector integration
+    'steer_type': 'true level',
     'cache_csm': False,
     'cache_bf': False,
     'cache_dir': "./datasets",
@@ -50,7 +54,7 @@ config = {
 
 class Dataset:
 
-    def __init__(self, split, size, features, f=None, num=0, startsample=1, config=config, tasks=1, head=None):
+    def __init__(self, split, size, features, f=None, num=0, startsample=1, config=config):       
         self.split = split
         self.size = size
         self.startsample = startsample
@@ -58,10 +62,28 @@ class Dataset:
         self.f = f
         self.num = num
         self.config = config
-        self.tasks = tasks
-        self.head = head
+        # private attributes(instances)
+        self.mics = MicGeom(from_file=config['micgeom'])
+        self.ap = self._get_aperture()
+        self.noisy_mics = deepcopy(self.mics) # Microphone geometry with positional noise
+        self.grid = RectGrid3D(
+                x_min=config['x_min'], x_max=config['x_max'],
+                y_min=config['y_min'], y_max=config['y_max'],
+                z_min=config['z_min'], z_max=config['z_max'], increment=config['increment'])  # 64 x 64 grid
+        self.env = Environment(c=config['c'])
 
-    def build_pipeline(self):
+    def _get_aperture(self):
+        max_ = 0
+        for i in range(self.mics.num_mics):
+            new_max = np.linalg.norm(self.mics.mpos_tot - self.mics.mpos_tot[:,i][:,np.newaxis],axis=0).max()
+            max_ = max(max_,new_max)
+        return max_
+
+    def _fftfreq ( self ):
+        return abs(np.fft.fftfreq(self.config['blocksize'], 1./self.config['fs'])\
+                    [:int(self.config['blocksize']/2+1)])
+
+    def build_pipeline(self, parallel=False):
         c = self.config
         if c['max_nsources'] == c['min_nsources']:
             nsources_constant = True
@@ -74,21 +96,16 @@ class Dataset:
 
         # Random Variables
         # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
-        mic_rvar = norm(loc=0, scale=0.001*c['ap'])
-        pos_rvar = norm(loc=0, scale=0.1688*c['ap'])  # source positions
+        mic_rvar = norm(loc=0, scale=0.001)
+        pos_rvar = norm(loc=0, scale=0.1688*self.ap)  # source positions
         nsrc_rvar = poisson(mu=3, loc=1)  # number of sources
 
-        # Computational Pipeline Acoular
-        # Microphone geometry with positional noise
-        mg_manipulated = MicGeom(from_file=c['micgeom'])
         # Assumed microphone geometry without positional noise
-        mg_fixed = MicGeom(from_file=c['micgeom'])
-        env = Environment(c=c['c'], roi=np.array([]))  # Environment
         white_noise_signals = [
             WNoiseGenerator(sample_freq=c['fs'], seed=i+1, numsamples=c['T']*c['fs']) for i in range(c['max_nsources'])
         ]  # Signals
         point_sources = [
-            PointSource(signal=signal, mics=mg_manipulated, env=env, loc=(0, 0, c['z'])) for signal in white_noise_signals
+            PointSource(signal=signal, mics=self.noisy_mics, env=self.env, loc=(0, 0, c['z'])) for signal in white_noise_signals
         ]  # Monopole sources emitting the white noise signals
         # Source Mixer mixing the signals of all sources (number will be sampled)
         sources_mix = SourceMixer(sources=point_sources)
@@ -102,25 +119,17 @@ class Dataset:
                               cached=c['cache_csm'], **ps_args)
         # caching takes more time than calculation for a single channel
         ref_channel = MaskedTimeInOut(source=sources_mix, invalid_channels=[_ for _ in range(
-            mg_fixed.num_mics) if not _ == c['ref_mic']])  # masking other channels than the reference channel
+            self.mics.num_mics) if not _ == c['ref_mic']])  # masking other channels than the reference channel
         ps_ref = PowerSpectra(time_data=ref_channel, cached=False, **ps_args)
     #    spectra_inout = SpectraInOut(source=sources_mix,block_size=blocksize, window="Hanning",overlap="50%" )
 
         # Set up Beamformer object to calculate sourcemap feature
         if ("sourcemap" in self.features) or ("ref_cleansc" in self.features):
-            bb_args = {'r_diag': False, }
-            sv_args = {'steer_type': 'true level',
-                       'ref': mg_fixed.mpos[:, c['ref_mic']]}
-            rg = RectGrid(
-                x_min=c['x_min'], x_max=c['x_max'],
-                y_min=c['y_min'], y_max=c['y_max'],
-                z=c['z'], increment=c['increment'])  # 64 x 64 grid
-            st = SteeringVector(
-                grid=rg, mics=mg_fixed, env=env, **sv_args)
-            bb = BeamformerBase(
-                freq_data=ps_csm, steer=st, cached=c['cache_bf'], precision='float32', **bb_args)
-            bfcleansc = BeamformerCleansc(
-                freq_data=ps_csm, steer=st, cached=c['cache_bf'], precision='float32', **bb_args)
+            sv_args = {'steer_type': c['steer_type'], 'ref': self.mics.mpos[:, c['ref_mic']]}
+            st = SteeringVector(grid=self.grid, mics=self.mics, env=self.env, **sv_args)
+            bb_args = {'r_diag': c['r_diag'], 'cached': c['cache_bf'], 'precision': 'float32'}
+            bb = BeamformerBase(freq_data=ps_csm, steer=st, **bb_args)
+            bfcleansc = BeamformerCleansc(freq_data=ps_csm, steer=st, **bb_args)
 
         # Computational Pipeline AcouPipe
         # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
@@ -135,7 +144,7 @@ class Dataset:
 
         mic_sampling = MicGeomSampler(
             random_var=mic_rvar,
-            target=mg_manipulated,
+            target=self.noisy_mics,
             ddir=np.array([[1.0], [1.0], [0]])
         )  # ddir along two dimensions -> bivariate sampling
 
@@ -178,10 +187,9 @@ class Dataset:
                             src_sampling,
                             rms_sampling, pos_sampling]
 
-        if self.tasks > 1:
+        if parallel:
             pipeline = DistributedPipeline(
                 sampler=sampler_list,
-                numworkers=self.tasks,
             )
         else:
             pipeline = BasePipeline(
@@ -189,6 +197,8 @@ class Dataset:
             )
 
         # desired frequency
+        fftfreq = self._fftfreq()[1:] # no zero bin
+
         if self.f != None:
             if type(self.f) == float or type(self.f) == int:
                 self.f = [self.f]
@@ -253,20 +263,22 @@ class Dataset:
         self._feature_objects = feature_objects
         return pipeline
 
-    def generate(self, log=False):
+    def generate(self, tasks=1, head=None, log=False):
         # Ray Config
-        if self.tasks > 1:
+        if tasks > 1:
+            parallel=True
             ray.shutdown()
-            ray.init(address=self.head)
-
+            ray.init(address=head)
+        else:
+            parallel = False
         # Logging for debugging and timing statistic purpose
         if log:
             _handle_log(
                 fname=f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log")
 
         # get dataset pipeline that yields the data
-        pipeline = self.build_pipeline()
-        # set seeds
+        pipeline = self.build_pipeline(parallel)
+        if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, self.startsample,
                            self.size, self.split)
 
@@ -274,24 +286,27 @@ class Dataset:
         for data in pipeline.get_data():
             yield data
 
-    def save_tfrecord(self, name, log=False):
+    def save_tfrecord(self, name, tasks=1, head=None, log=False):
         if not TF_FLAG:
             raise ImportError("save data to .tfrecord format requires TensorFlow!")
 
         # Ray Config
-        if self.tasks > 1:
+        if tasks > 1:
+            parallel=True
             ray.shutdown()
-            ray.init(address=self.head)
-
+            ray.init(address=head)
+        else:
+            parallel = False
         # Logging for debugging and timing statistic purpose
         if log:
             _handle_log(".".join(name.split('.')[:-1]) + ".log")
 
         # get dataset pipeline that yields the data
-        pipeline = self.build_pipeline()
-        # set seeds
+        pipeline = self.build_pipeline(parallel)
+        if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, self.startsample,
                            self.size, self.split)
+        
         # create Writer pipeline
         encoder_dict = {
             "loc": float_list_feature,
@@ -306,18 +321,21 @@ class Dataset:
         WriteTFRecord(name=name, source=pipeline,
                       encoder_funcs=encoder_dict).save()
 
-    def save_h5(self, name, log=False):
-        if self.tasks > 1:
+    def save_h5(self, name, tasks=1, head=None, log=False):
+        if tasks > 1:
+            parallel=True
             ray.shutdown()
-            ray.init(address=self.head)
+            ray.init(address=head)
+        else:
+            parallel = False
 
         # Logging for debugging and timing statistic purpose
         if log:
             _handle_log(".".join(name.split('.')[:-1]) + ".log")
 
         # get dataset pipeline that yields the data
-        pipeline = self.build_pipeline()
-        # set seeds
+        pipeline = self.build_pipeline(parallel)
+        if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, self.startsample,
                            self.size, self.split)
 
@@ -331,3 +349,6 @@ class Dataset:
                        features=list(pipeline.features.keys()),
                        metadata=metadata.copy(),
                        ).save()  # start the calculation
+
+
+    
