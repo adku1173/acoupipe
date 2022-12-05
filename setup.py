@@ -7,7 +7,7 @@ from os.path import join, abspath, dirname
 import os
 
 
-bf_version = "21.05"
+bf_version = "22.12"
 bf_author = "Adam Kujawski"
 
 # Get the long description from the relevant file
@@ -55,11 +55,9 @@ setup(name="acoupipe",
       ],
       keywords='acoustic beamforming microphone array ',
       packages = ['acoupipe'],
-
       install_requires = install_requires,
-
       setup_requires = setup_requires,
-      
+      package_data={'acoupipe': ['xml/*.xml']},      
       include_package_data = True,
       #to solve numba compiler 
       zip_safe=False
