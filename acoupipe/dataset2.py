@@ -1,156 +1,137 @@
+from os import path
 from copy import deepcopy
 from functools import partial
 import numpy as np
 from scipy.stats import rayleigh, poisson, norm
 from acoular import ImportGrid, SteeringVector, PowerSpectraImport, MicGeom, RectGrid, \
     Environment, RectGrid3D, BeamformerBase, BeamformerCleansc
-from .sampler import QSampler, NumericAttributeSampler, LocationSampler, MicGeomSampler
+from .sampler import CovSampler, NumericAttributeSampler, LocationSampler, MicGeomSampler
 from .pipeline import BasePipeline, DistributedPipeline
-from .features import get_sourcemap
+from .features import get_sourcemap, AnalyticCSMFeature
 from .helper import get_frequency_index_range
-from .dataset1 import Dataset as Dataset1
+from .dataset1 import Dataset1
 
-def calc_csm(fidx,fftfreq,steer,Q,loc):
-    steer.grid = ImportGrid(gpos_file=loc.target.copy())    
+dirpath = path.dirname(path.abspath(__file__))
+ap = 1.4648587220804408 # default aperture size
+
+def calc_p2(p2,fidx):
     if fidx:
-        csm = np.empty((len(fidx),steer.mics.num_mics,steer.mics.num_mics))
-        for k, indices in enumerate(fidx):
-            nfreqs = indices[1] - indices[0]
-            Q = Q.target[indices[0]:indices[1]]
-            H = np.empty((nfreqs,steer.mics.num_mics,loc.target.shape[1]),dtype=complex)
-            for i,f in enumerate(fftfreq):
-                H[i] = steer.transfer(f).T # transfer functions
-            H_h = H.swapaxes(2,1).conjugate() # Hermetian
-            csm[k] = (H@Q@H_h).sum(-1)
-#            freqs = fftfreq[fidx[0]:fidx[1]]
-        return csm
-    else: # return the full csm
-        Q = Q.target.copy()
-#        freqs = fftfreq
-        H = np.empty((Q.shape[0],steer.mics.num_mics,loc.target.shape[1]),dtype=complex)
-        for i,f in enumerate(fftfreq):
-            H[i] = steer.transfer(f).T # transfer functions
-        H_h = H.swapaxes(2,1).conjugate() # Hermetian
-        return H@Q@H_h
-
-def calc_sourcemap(f,num,b,ps,steer,Q,loc):
-    ps.csm = calc_csm(f,steer,Q,loc)
-    ps.frequencies = f
-    #return b.synthetic(f,num)
-    return get_sourcemap(b,[f],num,cache_dir=None,num_threads=1)
-
-def calc_Q(Q,fidx):
-    if fidx:
-        return Q.target[fidx[0]:fidx[1]]
+        return np.array([p2.target[indices[0]:indices[1]].sum(0) for indices in fidx])
     else:
-        return Q.target.copy()
+        return p2.target.copy()
+
+config2 = {
+    'version': "ds2-v01",  # data set version
+    'max_nsources': 10,
+    'min_nsources': 1,
+    'c': 343.,  # speed of sound
+    'fs': 51200,  
+    'blocksize': 512,  # block size used for FFT
+    'overlap': '50%',
+    'window': 'Hanning',
+    'r_diag' : False,
+    'T': 10,  # length of the simulated signal
+    'micgeom': path.join(dirpath, "xml", "tub_vogel64.xml"),  # microphone positions
+    'z_min' : 0.5*ap,
+    'z_max' : 0.5*ap,
+    'y_max' : .5*ap,
+    'y_min' : -.5*ap,
+    'x_max' : .5*ap,
+    'x_min' : -.5*ap,
+    'increment' : 1/63*ap,
+    'z' : 0.5*ap,
+    'ref_mic': 63,  # most center microphone
+    'r': 0.05*ap,  # integration radius for sector integration
+    'steer_type': 'true level',
+    'cache_csm': False,
+    'cache_bf': False,
+    'cache_dir': "./datasets",
+}
 
 
-class Dataset(Dataset1):
+class Dataset2(Dataset1):
+
+    def __init__(self, split, size, features, f=None, num=0, startsample=1, config=config2):
+        super().__init__(split, size, features, f, num, startsample, config=config)
+        self.steer_src = SteeringVector(
+            mics=self.noisy_mics, env=self.env, steer_type = config['steer_type'], ref=self.noisy_mics.mpos[:, config['ref_mic']])            
+        self.random_var = {
+        "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
+        "p2_rvar" : rayleigh(5),
+        "loc_rvar" : (
+                    norm((config['x_min'] + config['x_max'])/2,0.1688*(np.sqrt((config['x_max']-config['x_min'])**2))), #x
+                    norm((config['y_min'] + config['y_max'])/2,0.1688*(np.sqrt((config['y_max']-config['y_min'])**2))), #y
+                    norm((config['z_min'] + config['z_max'])/2,0*(np.sqrt((config['z_max']-config['z_min'])**2)))), #z
+        "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
+        }
+
+    def _fftfreq ( self ):
+        return abs(np.fft.fftfreq(self.config['blocksize'], 1./self.config['fs'])\
+                    [:int(self.config['blocksize']/2+1)])[1:]
+
+    def _prepare(self, power_spectra, steer, loc_sampler, strength_sampler):
+        steer.grid = ImportGrid(gpos_file=loc_sampler.target)
+        H = np.empty((self.strength_sampler.target.shape[0],steer.mics.num_mics,self.strength_sampler.target.shape[1]),dtype=complex)
+        for i,f in enumerate(self._fftfreq()):
+            H[i] = steer.transfer(f).T # transfer functions
+        H_h = H.swapaxes(2,1).conjugate() # Hermitian
+        power_spectra.csm = H@strength_sampler.target@H_h
 
     def build_pipeline(self, parallel=False):
 
-        # get config
-        c = self.config
-        fftfreq = self._fftfreq()[1:] # no zero bin
-        if self.f != None:
-            if type(self.f) == float or type(self.f) == int:
-                self.f = [self.f]
-            fidx = [get_frequency_index_range(fftfreq, f_, self.num) for f_ in self.f]
-        else:
-            fidx = None
+        # setup power spectra Import
+        self.ps_csm = PowerSpectraImport(
+            csm=np.zeros((self._fftfreq().shape[0],64,64)),
+            frequencies=self._fftfreq())
 
-        if c["max_nsources"] == c["min_nsources"]:
-            nsources_constant = True
-        else:
-            nsources_constant = False
-
-        sv_args = {'steer_type': c['steer_type'],'env': self.env }                    
-        st = SteeringVector(
-            grid=self.grid, mics=self.mics, ref=self.mics.mpos[:, c['ref_mic']], **sv_args)        
-        st_src = SteeringVector(
-            mics=self.noisy_mics, ref=self.noisy_mics.mpos[:, c['ref_mic']], **sv_args)        
-        # Set up Beamformer object to calculate sourcemap feature
-        if ("sourcemap" in self.features) or ("ref_cleansc" in self.features):
-            ps = PowerSpectraImport(csm=np.zeros((1,64,64)),frequencies=0)
-            bb_args = {'r_diag': c['r_diag'], 'cached': c['cache_bf'], 'precision': 'float32'}
-            bb = BeamformerBase(freq_data=ps, steer=st, **bb_args)
-            bfcleansc = BeamformerCleansc(freq_data=ps, steer=st, **bb_args)
-                
-        ####### sampler #################################
-        sampler_list = []
-
-        mic_sampling = MicGeomSampler(
-            random_var= norm(loc=0, scale=0.001),
-            target=self.noisy_mics,
-            ddir=np.array([[1.0], [1.0], [1.0]])
-        )  # ddir along two dimensions -> bivariate sampling
-        sampler_list.append(mic_sampling)
-
-        strength_sampling = QSampler(
-            random_var = rayleigh(5),
-            nsources = c["max_nsources"],
-            nfft = fftfreq.shape[0]
-            )
-        sampler_list.append(strength_sampling)
-
-        pos_sampling = LocationSampler(
-            random_var=(
-                norm((c['x_min'] + c['x_max'])/2,0.1688*(np.sqrt((c['x_max']-c['x_min'])**2))),
-                norm((c['y_min'] + c['y_max'])/2,0.1688*(np.sqrt((c['y_max']-c['y_min'])**2))),
-                norm((c['z_min'] + c['z_max'])/2,0*(np.sqrt((c['z_max']-c['z_min'])**2)))),
-            x_bounds=(c['x_min'], c['x_max']),
-            y_bounds=(c['y_min'], c['y_max']),
-            z_bounds=(c['z_min'], c['z_max']),
-        )
-        sampler_list.append(pos_sampling)
-      
-        if not nsources_constant:  # if no number of sources is specified, the number of sources will be samples randomly
-            nsrc_sampling = NumericAttributeSampler(
-                random_var=poisson(mu=3, loc=1),
-                target=[strength_sampling,pos_sampling],
-                attribute='nsources',
-                single_value = True,
-                filter=lambda x: (x <= c['max_nsources']) and (
-                    x >= c['min_nsources']),
-            )
-            sampler_list = [nsrc_sampling] + sampler_list
+        # set up sampler
+        sampler = self.setup_sampler()
 
         # set up feature methods
+        fidx = self._get_freq_indices()
         features={
-            "loc" : lambda: pos_sampling.target.copy(),
-            "Q" : (calc_Q, strength_sampling, fidx),
+            "loc" : lambda: self.loc_sampler.target.copy(),
+            "p2" : (calc_p2, self.strength_sampler, fidx),
             }                
 
-        if "csm" in self.features:
-            features["csm"] = (calc_csm,fidx,fftfreq,st_src,strength_sampling,pos_sampling)
-        if "sourcemap" in self.features:
-            features["sourcemap"] = (calc_sourcemap,self.f,self.num,bb,ps,st_src,strength_sampling,pos_sampling)
-        elif "ref_cleansc" in self.features:
-            features["ref_cleansc"] = (calc_sourcemap,self.f,self.num,bfcleansc,ps,st_src,strength_sampling,pos_sampling)
-
+        # add input features (csm, sourcemap, cleansc, ...)
+        features.update(self.setup_features())
 
         # set up pipeline
         if parallel:
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        return Pipeline(sampler=sampler_list,features=features)
+        return Pipeline(sampler=sampler,features=features, prepare=partial(self._prepare, self.ps_csm, self.steer_src, self.loc_sampler, self.strength_sampler))
 
+    def setup_sampler(self):
+        sampler = []
+        mic_sampling = MicGeomSampler(
+            random_var= self.random_var["mic_rvar"],
+            target=self.noisy_mics,
+            ddir=np.array([[1.0], [1.0], [1.0]]))  
+        sampler.append(mic_sampling)
 
-if __name__ == "__main__":
+        self.strength_sampler = CovSampler(
+            random_var = self.random_var["p2_rvar"],
+            nsources = self.config["max_nsources"],
+            nfft = self._fftfreq().shape[0])
+        sampler.append(self.strength_sampler)
 
-    import matplotlib.pyplot as plt
-
-    d = Dataset(size=1,f=1000,num=3,features=["csm"],split="test")
-    gen = d.generate()
-    for d in gen:
-        pass
-
-
-
-
-    # d = Dataset1(size=1,f=1000,features=["sourcemap"],split="training")
-    # gen = d.generate()
-    # for d in gen:
-    #     print(d["sourcemap"].shape)
+        self.loc_sampler = LocationSampler(
+            random_var=self.random_var["loc_rvar"],
+            x_bounds=(self.config['x_min'], self.config['x_max']),
+            y_bounds=(self.config['y_min'], self.config['y_max']),
+            z_bounds=(self.config['z_min'], self.config['z_max']))
+        sampler.append(self.loc_sampler)
+      
+        if not (self.config['max_nsources'] == self.config['min_nsources']):  # if no number of sources is specified, the number of sources will be samples randomly
+            nsrc_sampling = NumericAttributeSampler(
+                random_var=self.random_var["nsrc_rvar"],
+                target=[self.strength_sampler,self.loc_sampler],
+                attribute='nsources',
+                single_value = True,
+                filter=lambda x: (x <= self.config['max_nsources']) and (
+                    x >= self.config['min_nsources']))
+            sampler = [nsrc_sampling] + sampler
+        return sampler

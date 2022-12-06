@@ -91,6 +91,9 @@ class BasePipeline(DataGenerator):
         value_trait=Either(Callable, Tuple ),
         desc="dictionary consisting of feature names (key) and their extraction functions as callable (value)")
 
+    #: an optional callable function that is executed after feature sampling and before feature extraction
+    prepare = Callable(desc="optional callable function used to prepare the feature extraction process")
+    
     #: a list of `range(seeds)` associated with sampler objects in :attr:`sampler`. 
     #: A new seed will be collected from each range object during an evaluation of the :meth:`get_data()` generator.
     #: This seed is used to initialize an instance of :class:`numpy.random._generator.Generator` which is passed to 
@@ -189,6 +192,8 @@ class BasePipeline(DataGenerator):
         for _ in tqdm(range(nsamples)):
             self._update_meta_features(seed_iter)
             self._sample()
+            if self.prepare:
+                self.prepare()
             yield self._extract_features()
 
 
@@ -243,6 +248,8 @@ class DistributedPipeline(BasePipeline):
         self._update_meta_features(seed_iter)
         self._sample()
         self.logger.info('id %i: start task.' %self._idx)
+        if self.prepare:
+            self.prepare()
         self._schedule(task_dict)
 
     def get_data(self):

@@ -15,8 +15,10 @@ i.e. their attribute values according to a specified random distribution (random
     SetSampler
     SourceSetSampler
     ContainerSampler
+    LocationSampler
     PointSourceSampler
     MicGeomSampler
+    CovSampler
 
 """
 
@@ -514,6 +516,10 @@ class CovSampler(BaseSampler):
     
     nfft = Int(1,
         desc="number of fft bins at which the power is distributed")
+
+    #: True: same covariance matrix for all frequencies
+    single_value = Enum(True, 
+        desc="manages if a single value is chosen for all targets")
 
     def sample(self):
         """this function utilizes :meth:`rvs` function to draw random values

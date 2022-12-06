@@ -8,5 +8,5 @@ from .writer import *
 from .loader import *
 from .evaluate import *
 from .dataset1 import Dataset1, config1
-
+from .dataset2 import Dataset2, config2
 

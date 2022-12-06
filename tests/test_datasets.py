@@ -2,6 +2,7 @@ import unittest
 from os import path
 from parameterized import parameterized
 from acoupipe.dataset1 import Dataset1, config1
+from acoupipe.dataset2 import Dataset2, config2
 import numpy as np
 import h5py
 import tempfile
@@ -13,12 +14,17 @@ class TestDataset1(unittest.TestCase):
    
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
-        config1['increment'] = 1/5 # small grid for fast testing
+        config1['increment'] = 1/5*1.5
+        config1['ref_mic'] = 0
+        config1['blocksize'] = 128
         self.dataset = Dataset1(split="training",
                             size=1,
                             startsample=20,
                             features=["csm"],
                             config=config1)        
+        self.dataset.mics.invalid_channels = [i for i in range(60)]
+        self.dataset.noisy_mics.invalid_channels = [i for i in range(60)]
+        self.cls_name = type(self.dataset).__name__
 
     def tearDown(self):
         shutil.rmtree(self.test_dir)
@@ -31,9 +37,9 @@ class TestDataset1(unittest.TestCase):
     def test_generate(self, feature):
         self.dataset.features=[feature]
         data = next(self.dataset.generate())
-        test_loc = np.load(path.join(dirpath,"validation_data","test_loc.npy"))
-        test_p2 =  np.load(path.join(dirpath,"validation_data","test_p2.npy"))
-        test_feature = np.load(path.join(dirpath,"validation_data",f"test_{feature}.npy"))
+        test_loc = np.load(path.join(dirpath,"validation_data",f"{self.cls_name}_loc.npy"))
+        test_p2 =  np.load(path.join(dirpath,"validation_data",f"{self.cls_name}_p2.npy"))
+        test_feature = np.load(path.join(dirpath,"validation_data",f"{self.cls_name}_{feature}.npy"))
         np.testing.assert_allclose(test_loc,data['loc'])
         np.testing.assert_allclose(test_p2,data['p2'])
         np.testing.assert_allclose(test_feature,data[feature])
@@ -49,7 +55,7 @@ class TestDataset1(unittest.TestCase):
         self.dataset.save_h5(path.join(self.test_dir,"test.h5"))
         with h5py.File(path.join(self.test_dir,"test.h5"),"r") as file:
             data = file[f"1/{feature}"][:]
-            test_feature = np.load(path.join(dirpath,"validation_data",f"test_{feature}.npy"))
+            test_feature = np.load(path.join(dirpath,"validation_data",f"{self.cls_name}_{feature}.npy"))
             np.testing.assert_allclose(test_feature,data)
 
     @parameterized.expand([
@@ -79,6 +85,23 @@ class TestDataset1(unittest.TestCase):
         self.dataset.num = num
         self.dataset.f = f
         data = next(self.dataset.generate())
+
+
+class TestDataset2(TestDataset1):
+
+    def setUp(self):
+        self.test_dir = tempfile.mkdtemp()
+        config2['increment'] = 1/5*1.5
+        config2['ref_mic'] = 0
+        config2['blocksize'] = 128
+        self.dataset = Dataset2(split="training",
+                            size=1,
+                            startsample=20,
+                            features=["csm"],
+                            config=config2)        
+        self.dataset.mics.invalid_channels = [i for i in range(60)]
+        self.dataset.noisy_mics.invalid_channels = [i for i in range(60)]
+        self.cls_name = type(self.dataset).__name__
 
 
 if __name__ == "__main__":

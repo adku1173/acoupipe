@@ -41,7 +41,7 @@ config1 = {
     'x_min' : -.5,
     'increment' : 1/63,
     'z' : 0.5,
-    'ref_mic': 63,  # index of the reference microphone #TODO: function that sets the reference index
+    'ref_mic': 63,  # most center microphone
     'r': 0.05,  # integration radius for sector integration
     'steer_type': 'true level',
     'cache_csm': False,
@@ -69,10 +69,12 @@ class Dataset1:
                 y_min=config['y_min'], y_max=config['y_max'],
                 z_min=config['z_min'], z_max=config['z_max'], increment=config['increment'])  # 64 x 64 grid
         self.env = Environment(c=config['c'])
+        self.steer = SteeringVector(grid=self.grid, mics=self.mics, env=self.env, steer_type = config['steer_type'], 
+                                    ref = self.mics.mpos[:, config['ref_mic']])
         # random variables
         self.random_var = {
             "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
-            "pos_rvar" : norm(loc=0, scale=0.1688*self.ap),  # source positions
+            "loc_rvar" : norm(loc=0, scale=0.1688*self.ap),  # source positions
             "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
         }
 
@@ -87,58 +89,69 @@ class Dataset1:
         return abs(np.fft.fftfreq(self.config['blocksize'], 1./self.config['fs'])\
                     [:int(self.config['blocksize']/2+1)])
 
+    def _get_freq_indices(self):
+        if self.f != None:
+            if type(self.f) == float or type(self.f) == int:
+                self.f = [self.f]
+            fidx = [get_frequency_index_range(
+                self._fftfreq(), f_, self.num) for f_ in self.f]
+        else:
+            fidx = None
+        return fidx
+
     def build_pipeline(self, parallel=False):
         c = self.config
-        if c['max_nsources'] == c['min_nsources']:
-            nsources_constant = True
-        else:
-            nsources_constant = False
-
-        # handle cache
-        cache_dir = _handle_cache(
-            c['cache_bf'], c['cache_csm'], c['cache_dir'])
-
         # Assumed microphone geometry without positional noise
         white_noise_signals = [
             WNoiseGenerator(sample_freq=c['fs'], seed=i+1, numsamples=c['T']*c['fs']) for i in range(c['max_nsources'])
         ]  # Signals
-        point_sources = [
+        self.point_sources = [
             PointSource(signal=signal, mics=self.noisy_mics, env=self.env, loc=(0, 0, c['z'])) for signal in white_noise_signals
         ]  # Monopole sources emitting the white noise signals
         # Source Mixer mixing the signals of all sources (number will be sampled)
-        sources_mix = SourceMixer(sources=point_sources)
+        self.sources_mix = SourceMixer(sources=self.point_sources)
 
         # Set up PowerSpectra objects to calculate CSM feature and reference p2 value
         # first object is used to calculate the full CSM
         # second object will be used to calculate the p2 value at the reference microphone (for each present source)
         ps_args = {'block_size': c['blocksize'], 'overlap': c['overlap'],
                    'window': c['window'], 'precision': 'complex64'}
-        ps_csm = PowerSpectra(time_data=sources_mix,
+        self.ps_csm = PowerSpectra(time_data=self.sources_mix,
                               cached=c['cache_csm'], **ps_args)
         # caching takes more time than calculation for a single channel
-        ref_channel = MaskedTimeInOut(source=sources_mix, invalid_channels=[_ for _ in range(
+        ref_channel = MaskedTimeInOut(source=self.sources_mix, invalid_channels=[_ for _ in range(
             self.mics.num_mics) if not _ == c['ref_mic']])  # masking other channels than the reference channel
         ps_ref = PowerSpectra(time_data=ref_channel, cached=False, **ps_args)
-    #    spectra_inout = SpectraInOut(source=sources_mix,block_size=blocksize, window="Hanning",overlap="50%" )
+    #    spectra_inout = SpectraInOut(source=self.sources_mix,block_size=blocksize, window="Hanning",overlap="50%" )
+        
+        # set up the feature dict with methods to get the labels
+        fidx = self._get_freq_indices()
+        features = {  # (callable, arg1, arg2, ...)
+            "loc": (lambda smix: np.array([s.loc for s in smix.sources], dtype=np.float32).T, self.sources_mix),
+            "p2": (get_source_p2, self.sources_mix, ps_ref, fidx, None),
+        }
 
-        # Set up Beamformer object to calculate sourcemap feature
-        if ("sourcemap" in self.features) or ("ref_cleansc" in self.features):
-            sv_args = {'steer_type': c['steer_type'], 'ref': self.mics.mpos[:, c['ref_mic']]}
-            st = SteeringVector(grid=self.grid, mics=self.mics, env=self.env, **sv_args)
-            bb_args = {'r_diag': c['r_diag'], 'cached': c['cache_bf'], 'precision': 'float32'}
-            bb = BeamformerBase(freq_data=ps_csm, steer=st, **bb_args)
-            bfcleansc = BeamformerCleansc(freq_data=ps_csm, steer=st, **bb_args)
+        # add input features (csm, sourcemap, cleansc, ...)
+        features.update(self.setup_features())
 
-        # Computational Pipeline AcouPipe
+        # set up pipeline
+        if parallel:
+            Pipeline = DistributedPipeline
+        else:
+            Pipeline = BasePipeline
+        return Pipeline(sampler=self.setup_sampler(),features=features)
+
+    def setup_sampler(self):
+
         # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
         def sample_rms(rng):
             "draw source pressures square, Rayleigh distribution, sort them, calc rms"
-            nsrc = len(sources_mix.sources)
+            nsrc = len(self.sources_mix.sources)
             # draw source pressures square, Rayleigh distribution, sort them, calc rms
             p_rms = np.sqrt(np.sort(rng.rayleigh(5, nsrc))[::-1])
             p_rms /= p_rms.max()  # norm it
             for i, rms in enumerate(p_rms):
-                sources_mix.sources[i].signal.rms = rms  # set rms value
+                self.sources_mix.sources[i].signal.rms = rms  # set rms value
 
         mic_sampling = MicGeomSampler(
             random_var=self.random_var["mic_rvar"],
@@ -147,119 +160,108 @@ class Dataset1:
         )  # ddir along two dimensions -> bivariate sampling
 
         pos_sampling = PointSourceSampler(
-            random_var=self.random_var["pos_rvar"],
-            target=sources_mix.sources,
+            random_var=self.random_var["loc_rvar"],
+            target=self.sources_mix.sources,
             # ldir: 1.0 along first two dimensions -> bivariate sampling
             ldir=np.array([[1.0], [1.0], [0.0]]),
             # only allow values in the observation area
-            x_bounds=(c['x_min'], c['x_max']),
-            y_bounds=(c['y_min'], c['y_max']),
+            x_bounds=(self.config['x_min'], self.config['x_max']),
+            y_bounds=(self.config['y_min'], self.config['y_max']),
         )
 
         src_sampling = SourceSetSampler(
-            target=[sources_mix],
-            set=point_sources,
+            target=[self.sources_mix],
+            set=self.point_sources,
             replace=False,
             numsamples=3,
         )  # draw point sources from point_sources set (number of sources is sampled by nrcs_sampling object)
-        if nsources_constant:
-            src_sampling.numsamples = c['max_nsources']
+        if (self.config['max_nsources'] == self.config['min_nsources']):
+            src_sampling.numsamples = self.config['max_nsources']
 
         rms_sampling = ContainerSampler(
             random_func=sample_rms)
 
-        if not nsources_constant:  # if no number of sources is specified, the number of sources will be samples randomly
+        if not (self.config['max_nsources'] == self.config['min_nsources']):  
             nsrc_sampling = NumericAttributeSampler(
                 random_var=self.random_var["nsrc_rvar"],
                 target=[src_sampling],
                 attribute='numsamples',
-                filter=lambda x: (x <= c['max_nsources']) and (
-                    x >= c['min_nsources']),
+                filter=lambda x: (x <= self.config['max_nsources']) and (
+                    x >= self.config['min_nsources']),
             )
-
-            sampler_list = [mic_sampling, nsrc_sampling,
-                            src_sampling,
-                            rms_sampling, pos_sampling]
+            return [mic_sampling, nsrc_sampling,src_sampling,rms_sampling, pos_sampling]
         else:
-            sampler_list = [mic_sampling,
-                            src_sampling,
-                            rms_sampling, pos_sampling]
+            return [mic_sampling, src_sampling,rms_sampling, pos_sampling]
+                            
 
-        if parallel:
-            pipeline = DistributedPipeline(
-                sampler=sampler_list,
-            )
-        else:
-            pipeline = BasePipeline(
-                sampler=sampler_list,
-            )
 
-        # desired frequency
-        fftfreq = self._fftfreq()[1:] # no zero bin
 
-        if self.f != None:
-            if type(self.f) == float or type(self.f) == int:
-                self.f = [self.f]
-            fidx = [get_frequency_index_range(
-                ps_csm.fftfreq(), f_, self.num) for f_ in self.f]
-            ps_csm.ind_low = min([f[0] for f in fidx])
-            ps_csm.ind_high = max([f[1] for f in fidx])
-        else:
-            fidx = None
-            f = None
-        # set up the feature dict with methods to get the labels
-        feature_methods = {  # (callable, arg1, arg2, ...)
-            "loc": (lambda smix: np.array([s.loc for s in smix.sources], dtype=np.float32).T, sources_mix),
-            "nsources": (lambda smix: len(smix.sources), sources_mix),
-            "p2": (get_source_p2, sources_mix, ps_ref, fidx, cache_dir),
-        }
+    def setup_features(self):
+        features = {} # dict with feature functions for pipeline object
+        self._feature_objects = []
+        
+        fidx = self._get_freq_indices()
+        if not fidx is None:
+            # bound calculated frequencies for efficiency reasons
+            self.ps_csm.ind_low = min([f[0] for f in fidx])
+            self.ps_csm.ind_high = max([f[1] for f in fidx])    
 
-        feature_objects = []
+        # handle cache
+        cache_dir = _handle_cache(
+            self.config['cache_bf'], self.config['cache_csm'], self.config['cache_dir'])
+        bb_args = {'r_diag': self.config['r_diag'], 'cached': self.config['cache_bf'], 'precision': 'float32'}                   
+
         if "csm" in self.features:
             feature = CSMFeature(feature_name="csm",
-                                 power_spectra=ps_csm,
+                                 power_spectra=self.ps_csm,
                                  fidx=fidx,
                                  cache_dir=cache_dir
                                  )
-            feature_methods = feature.add_feature_funcs(feature_methods)
-            feature_objects.append(feature)
+            features = feature.add_feature_funcs(features)
+            self._feature_objects.append(feature)
 
         if "csmtriu" in self.features:
             feature = NonRedundantCSMFeature(feature_name="csmtriu",
-                                             power_spectra=ps_csm,
+                                             power_spectra=self.ps_csm,
                                              fidx=fidx,
                                              cache_dir=cache_dir
                                              )
-            feature_methods = feature.add_feature_funcs(feature_methods)
-            feature_objects.append(feature)
+            features = feature.add_feature_funcs(features)
+            self._feature_objects.append(feature)
 
         if "sourcemap" in self.features:
             feature = SourceMapFeature(feature_name="sourcemap",
-                                       beamformer=bb,
+                                       beamformer=BeamformerBase(freq_data=self.ps_csm, steer=self.steer, **bb_args),
                                        f=self.f,
                                        num=self.num,
                                        cache_dir=cache_dir
                                        )
-            feature_methods = feature.add_feature_funcs(feature_methods)
-            feature_objects.append(feature)
+            features = feature.add_feature_funcs(features)
+            self._feature_objects.append(feature)
 
-        if "ref_cleansc" in self.features:
-            feature = RefSourceMapFeature(feature_name="ref_cleansc",
-                                          beamformer=bfcleansc,
-                                          sourcemixer=sources_mix,
-                                          powerspectra=ps_ref,
-                                          r=c['r'],
-                                          f=self.f,
-                                          num=self.num,
-                                          cache_dir=cache_dir
-                                          )
-            feature_methods = feature.add_feature_funcs(feature_methods)
-            feature_objects.append(feature)
+        if "cleansc" in self.features:
+            feature = SourceMapFeature(feature_name="cleansc",
+                                       beamformer=BeamformerCleansc(freq_data=self.ps_csm, steer=self.steer, **bb_args),
+                                       f=self.f,
+                                       num=self.num,
+                                       cache_dir=cache_dir
+                                       )
+            features = feature.add_feature_funcs(features)
+            self._feature_objects.append(feature)
 
-        # add features to the pipeline
-        pipeline.features = feature_methods
-        self._feature_objects = feature_objects
-        return pipeline
+        # if "ref_cleansc" in self.features:
+        #     feature = RefSourceMapFeature(feature_name="ref_cleansc",
+        #                                   beamformer=BeamformerCleansc(freq_data=self.ps_csm, steer=self.steer, **bb_args),
+        #                                   sourcemixer=self.sources_mix,
+        #                                   powerspectra=ps_ref,
+        #                                   r=config['r'],
+        #                                   f=self.f,
+        #                                   num=self.num,
+        #                                   cache_dir=cache_dir
+        #                                   )
+        #     features = feature.add_feature_funcs(features)
+        #     self._feature_objects.append(feature)
+        return features
 
     def generate(self, tasks=1, head=None, log=False):
         # Ray Config
