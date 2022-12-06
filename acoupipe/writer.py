@@ -167,7 +167,7 @@ class WriteH5Dataset(BaseWriteDataset):
 
 
 if TF_FLAG:
-
+    import tensorflow as tf
 
     def bytes_feature(value):
         """Returns a bytes_list from a string / byte."""

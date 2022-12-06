@@ -1,8 +1,8 @@
 .. _doc:
 
 
-Documentation
-=================
+Module Documentation
+====================
 
 The AcouPipe module extends the computational 
 pipeline-based concept of Acoular_ and provides additional 

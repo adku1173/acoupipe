@@ -11,6 +11,8 @@ AcouPipe
 
 This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.
 
+Acoupipe has beed used in the following publications: [Kuj19]_, [Kuj22]_, [Fen22]_.
+
 AcouPipe supports distributed computation with Ray_ and comes with a default configuration dataset inside a pre-built Docker container that can be downloaded from DockerHub_.
 
 Contents
@@ -25,10 +27,10 @@ Contents
    contents/literature.rst
    api_ref/index_apiref.rst
 
-
 Indices and tables
 ==================
 
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
