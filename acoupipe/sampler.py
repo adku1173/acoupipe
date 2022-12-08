@@ -301,7 +301,9 @@ class LocationSampler(BaseSampler):
     target = CArray(
         desc="a array with source locations")
 
-    nsources = Int
+    #: the number of source for which the location is sampled
+    nsources = Int(
+        desc="number of sources")
 
     #: the random variable specifying the random distribution
     random_var = Tuple(

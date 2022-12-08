@@ -3,7 +3,7 @@ from .evaluate import PlanarSourceMapEvaluator
 from .config import TF_FLAG
 if TF_FLAG:
     from .writer import float_list_feature
-from .helper import get_frequency_index_range
+from .helper import get_frequency_index_range, complex_to_real
 from numpy import zeros, array, float32, concatenate, real, imag, triu_indices, newaxis, transpose,\
     conj, concatenate, empty
 import numba
@@ -105,8 +105,6 @@ def get_sourcemap(beamformer, f=None, num=0, cache_dir=None, num_threads=1):
         sm = array([beamformer.synthetic(f,num=num) for f in beamformer.freq_data.fftfreq()])
     else:
         sm = array([beamformer.synthetic(freq,num=num) for freq in f]) 
-    if sm.ndim == 3:
-        sm = sm[...,newaxis]
     return sm
 
 # def get_SBLmap(spectra_inout, steer, fidx=None):
@@ -494,6 +492,7 @@ class CSMFeature(BaseFeature):
     def add_feature_names(self,feature_names):
         return feature_names + [self.feature_name]
 
+    @complex_to_real
     def get_feature(self):
         """Calculates the cross-spectral matrix (CSM) from time data. 
 
@@ -511,7 +510,7 @@ class CSMFeature(BaseFeature):
         csm = self.power_spectra.csm[:]
         if self.fidx:
             csm = array([csm[indices[0]:indices[1]].sum(0) for indices in self.fidx],dtype=complex)
-        return concatenate([real(csm)[...,newaxis], imag(csm)[...,newaxis]],axis=3, dtype=float32)
+        return csm
 
 if TF_FLAG:
     def add_encoder_funcs(self, encoder_funcs):

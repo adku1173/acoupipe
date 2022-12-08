@@ -4,7 +4,7 @@ if TF_FLAG:
     from .writer import WriteTFRecord
 from datetime import datetime
 from warnings import warn
-from numpy import searchsorted
+from numpy import searchsorted, imag, real, newaxis, concatenate
 from os.path import join
 import logging
 from acoular import config
@@ -123,3 +123,12 @@ def set_filename(writer,path='.',*args):
         if isinstance(writer,WriteTFRecord):
             name += ".tfrecord"
     writer.name=join(path,name)
+
+
+def complex_to_real(func):
+    def complex_to_real_wrapper(*args,**kwargs):
+        a = func(*args,**kwargs)
+        return concatenate(
+            [real(a)[...,newaxis],
+            imag(a)[...,newaxis]],axis=-1)
+    return complex_to_real_wrapper
