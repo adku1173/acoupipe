@@ -17,7 +17,7 @@ ap = 1.4648587220804408 # default aperture size
 
 @complex_to_real
 def calc_p2(cov_sampler,fidx):
-    """_summary_
+    """function to obtain the auto- and cross-power (Pa^2) of each source.
 
     Parameters
     ----------
@@ -53,7 +53,6 @@ class Dataset2(Dataset1):
             env = Environment(c=343.),
             mics = MicGeom(from_file=path.join(dirpath, "xml", "tub_vogel64.xml")),
             grid = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap),
-            cache_csm = False,
             cache_bf = False,
             cache_dir = "./datasets",            
             config=None):  
@@ -70,7 +69,7 @@ class Dataset2(Dataset1):
                 env = env,
                 mics = mics,
                 grid = grid,
-                cache_csm=cache_csm,
+                cache_csm=False,
                 cache_bf=cache_bf,
                 cache_dir=cache_dir, 
                 config=config)
@@ -101,7 +100,6 @@ class Dataset2(Dataset1):
         steer_src = deepcopy(self.steer)
         steer_src.mics = self.noisy_mics
         steer_src.ref = self.noisy_mics.mpos[:, self.ref_mic]
-
         # set up sampler
         sampler = self.setup_sampler()
         # set up feature methods

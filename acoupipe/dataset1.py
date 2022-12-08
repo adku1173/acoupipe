@@ -72,8 +72,8 @@ class Dataset1:
         }
 
     def _get_freq_indices(self):
-        if self.f != None:
-            if type(self.f) == float or type(self.f) == int:
+        if self.f is not None:
+            if isinstance(self.f, (float, int)):
                 self.f = [self.f]
             fidx = [get_frequency_index_range(
                 self.freq_data.fftfreq(), f_, self.num) for f_ in self.f]
@@ -112,7 +112,6 @@ class Dataset1:
         return Pipeline(sampler=self.setup_sampler(),features=features)
 
     def setup_sampler(self):
-
         # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
         def sample_rms(rng):
             "draw source pressures square, Rayleigh distribution, sort them, calc rms"
@@ -243,7 +242,6 @@ class Dataset1:
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, self.startsample,
                            self.size, self.split)
-
         # yield the data
         for data in pipeline.get_data():
             yield data
@@ -312,4 +310,46 @@ class Dataset1:
                        ).save()  # start the calculation
 
 
-    
+    def get_feature_shapes(self):
+        # number of frequencies
+        fidx = self._get_freq_indices()
+        if fidx is None:
+            fdim = self.freq_data.fftfreq().shape[0]
+        else: 
+            fdim = len(fidx)
+        # number of sources
+        if self.max_nsources == self.min_nsources:
+            ndim = self.max_nsources
+        else:
+            ndim = None
+        # number of microphones
+        mdim = self.mics.num_mics
+        features_shapes = {
+            "idx" : (),
+            "seeds" : (len(self.build_pipeline().sampler),),# TODO: this is not good...
+            "loc" : (3,ndim),    
+        }
+        gdim = self.grid.shape
+        if type(self).__name__ == 'Dataset1':
+            features_shapes.update({"p2" : (fdim,ndim)})
+        elif type(self).__name__ == 'Dataset2':
+            features_shapes.update({"p2" : (fdim,ndim,ndim,2)})
+        #for feature in self.features:
+            #TODO: feature objects should know their own shape here!
+        if "csm" in self.features:
+            features_shapes.update({"csm" : (fdim,mdim,mdim,2)})
+        if "csmtriu" in self.features:
+            features_shapes.update({"csmtriu" : (fdim,mdim,mdim,1)})
+        if "sourcemap" in self.features:
+            features_shapes.update({"sourcemap" : (fdim,) + self.grid.shape })
+        if "cleansc" in self.features:
+            features_shapes.update({"cleansc" : (fdim,) + self.grid.shape })
+        return features_shapes
+
+from acoupipe import TF_FLAG
+if TF_FLAG:
+    import tensorflow as tf
+    def get_tf_dataset(self):
+        signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
+        return tf.data.Dataset.from_generator(self.generate,output_signature=signature)                                   
+    setattr(Dataset1,'get_tf_dataset',get_tf_dataset)

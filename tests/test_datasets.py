@@ -16,6 +16,29 @@ mpos_tot = np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
        [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
        [ 0.32909911,  0.56201909, -0.24697204, -0.68677001]])
 
+feature_test_params = [
+        ["sourcemap", 1000, 0],
+        ["sourcemap", 1000, 3],
+        ["sourcemap", [1000, 2000], 3],
+        ["sourcemap", [1000, 2000], 0],
+        ["sourcemap", None, 0],
+        ["sourcemap", None, 3],
+        # csmtriu
+        ["csmtriu", 1000, 0],
+        ["csmtriu", 1000, 3],
+        ["csmtriu", [1000, 2000], 3],
+        ["csmtriu", [1000, 2000], 0],
+        ["csmtriu", None, 0],
+        ["csmtriu", None, 3],        
+        # csm
+        ["csm", 1000, 0],
+        ["csm", 1000, 3],
+        ["csm", [1000, 2000], 3],
+        ["csm", [1000, 2000], 0],
+        ["csm", None, 0],
+        ["csm", None, 3],               
+    ]
+
 class TestDataset1(unittest.TestCase):
    
     dataset_cls = Dataset1
@@ -63,28 +86,7 @@ class TestDataset1(unittest.TestCase):
             test_feature = np.load(path.join(dirpath,"validation_data",f"{self.cls_name}_{feature}.npy"))
             np.testing.assert_allclose(test_feature,data)
 
-    @parameterized.expand([
-        ["sourcemap", 1000, 0],
-        ["sourcemap", 1000, 3],
-        ["sourcemap", [1000, 2000], 3],
-        ["sourcemap", [1000, 2000], 0],
-        ["sourcemap", None, 0],
-        ["sourcemap", None, 3],
-        # csmtriu
-        ["csmtriu", 1000, 0],
-        ["csmtriu", 1000, 3],
-        ["csmtriu", [1000, 2000], 3],
-        ["csmtriu", [1000, 2000], 0],
-        ["csmtriu", None, 0],
-        ["csmtriu", None, 3],        
-        # csm
-        ["csm", 1000, 0],
-        ["csm", 1000, 3],
-        ["csm", [1000, 2000], 3],
-        ["csm", [1000, 2000], 0],
-        ["csm", None, 0],
-        ["csm", None, 3],               
-    ])  
+    @parameterized.expand(feature_test_params)  
     def test_shapes(self, feature, f, num):
         self.dataset.features=[feature]
         self.dataset.num = num
@@ -109,6 +111,33 @@ class TestDataset1(unittest.TestCase):
         else:
             self.assertTupleEqual(data[feature].shape,(fdim,) + self.dataset.grid.shape)       
 
+
+    @parameterized.expand(feature_test_params)  
+    def test_tf_dataset_shapes(self, feature, f, num):
+        self.dataset.features=[feature]
+        self.dataset.num = num
+        self.dataset.f = f
+        dataset = iter(self.dataset.get_tf_dataset())
+        data = next(dataset)
+        ndim = 4 # number of sources at this sample
+        if f == None:
+            fdim = self.dataset.freq_data.fftfreq().shape[0]
+        elif type(f) == list:
+            fdim = len(f)
+        else:
+            fdim = 1
+        if self.dataset_cls.__name__ == "Dataset1":
+            self.assertTupleEqual(tuple(data['p2'].shape), (fdim,ndim))
+        elif self.dataset_cls.__name__ == "Dataset2":
+            self.assertTupleEqual(tuple(data['p2'].shape), (fdim,ndim,ndim,2)) # diagonal matrix
+        self.assertTupleEqual(tuple(data['loc'].shape), (3,ndim))
+        if feature == 'csm':
+            self.assertTupleEqual(tuple(data[feature].shape), (fdim,4,4,2))
+        elif feature == 'csmtriu':
+            self.assertTupleEqual(tuple(data[feature].shape), (fdim,4,4,1))
+        else:
+            self.assertTupleEqual(tuple(data[feature].shape),(fdim,) + self.dataset.grid.shape)      
+
     def test_nsources(self):
         dataset = self.dataset_cls(split="training",
                                     max_nsources=1,
@@ -130,6 +159,7 @@ class TestDataset1(unittest.TestCase):
         self.dataset.size=5
         for d in self.dataset.generate(tasks=2):
             pass
+
 
 class TestDataset2(TestDataset1):
 
