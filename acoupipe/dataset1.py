@@ -109,7 +109,6 @@ class Dataset1:
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        print(features)
         return Pipeline(sampler=self.setup_sampler(),features=features)
 
     def setup_sampler(self):
