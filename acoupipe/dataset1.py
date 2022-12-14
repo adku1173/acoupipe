@@ -41,6 +41,7 @@ class Dataset1:
             cache_csm = False,
             cache_bf = False,
             cache_dir = "./datasets",
+            progress_bar = False,
             config=None):       
         self.split = split
         self.size = size
@@ -57,6 +58,7 @@ class Dataset1:
         self.cache_csm = cache_csm
         self.cache_bf = cache_bf
         self.cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
+        self.progress_bar = progress_bar
         self.config = config
        # dependent attributes / objects
         self.ref_mic = np.argmin(np.linalg.norm((mics.mpos - mics.center[:,np.newaxis]),axis=0))
@@ -109,7 +111,7 @@ class Dataset1:
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        return Pipeline(sampler=self.setup_sampler(),features=features)
+        return Pipeline(sampler=self.setup_sampler(),features=features, progress_bar=self.progress_bar)
 
     def setup_sampler(self):
         # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object

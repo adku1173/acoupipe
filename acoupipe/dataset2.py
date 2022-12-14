@@ -54,7 +54,8 @@ class Dataset2(Dataset1):
             mics = MicGeom(from_file=path.join(dirpath, "xml", "tub_vogel64.xml")),
             grid = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap),
             cache_bf = False,
-            cache_dir = "./datasets",            
+            cache_dir = "./datasets",         
+            progress_bar= False,   
             config=None):  
         super().__init__(
                 split=split, 
@@ -72,6 +73,7 @@ class Dataset2(Dataset1):
                 cache_csm=False,
                 cache_bf=cache_bf,
                 cache_dir=cache_dir, 
+                progress_bar=progress_bar,
                 config=config)
         # overwrite freq_data
         fftfreq = abs(np.fft.fftfreq(512, 1./self.fs)[:int(512/2+1)])[1:]          
@@ -115,7 +117,7 @@ class Dataset2(Dataset1):
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        return Pipeline(sampler=sampler,features=features, prepare=partial(self._prepare, steer_src))
+        return Pipeline(sampler=sampler,features=features, prepare=partial(self._prepare, steer_src), progress_bar=self.progress_bar)
 
     def setup_sampler(self):
         sampler = []

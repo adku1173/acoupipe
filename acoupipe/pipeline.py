@@ -116,6 +116,10 @@ class BasePipeline(DataGenerator):
     logger = Trait(logging.getLogger(__name__),
         desc="Logger instance to log timing statistics")
 
+    #: whether a progress bar should be displayed in the terminal
+    progress_bar = Bool(True,
+        desc="whether a progress bar should be displayed in the terminal")
+
     def _setup_default_logger(self):
         """standard logging to stdout, stderr"""
         #print(f"setup default logger is called by {self}")
@@ -189,7 +193,7 @@ class BasePipeline(DataGenerator):
             seed_iter = None
             nsamples = self.numsamples
         self._set_meta_features()
-        for _ in tqdm(range(nsamples)):
+        for _ in tqdm(range(nsamples),colour="#1f77b4", disable=(not self.progress_bar)):
             self._update_meta_features(seed_iter)
             self._sample()
             if self.prepare:
@@ -273,7 +277,7 @@ class DistributedPipeline(BasePipeline):
         else:
             seed_iter = None
             nsamples = self.numsamples
-        progress_bar = tqdm(range(nsamples))
+        progress_bar = tqdm(range(nsamples),colour="#1f77b4",disable=(not self.progress_bar))
         self._set_meta_features()
         task_dict = {}
         finished_tasks = 0
