@@ -1,11 +1,10 @@
-from acoular import config, ImportGrid
+from acoular import config
 from .evaluate import PlanarSourceMapEvaluator 
 from .config import TF_FLAG
 if TF_FLAG:
     from .writer import float_list_feature
 from .helper import get_frequency_index_range, complex_to_real
-from numpy import zeros, array, float32, concatenate, real, imag, triu_indices, newaxis, transpose,\
-    conj, concatenate, empty
+from numpy import zeros, array, float32, real, imag, triu_indices, newaxis
 import numba
 import warnings
 #from .sbl import SBL, Options
@@ -126,39 +125,6 @@ def get_sourcemap(beamformer, f=None, num=0, cache_dir=None, num_threads=1):
 #             gamma *= nfreq
 #             source_maps.append(gamma)
 #         return array(source_maps) 
-
-def get_analytic_csm(steer, fftfreq, p2, fidx=None):
-    """ Calculates the cross-spectral matrix (CSM) analytically. 
-
-    Parameters
-    ----------
-    steer : instance of acoular.SteeringVector
-        object for obtaining steering vector
-    fftfreq : list 
-        fft frequency values (one-sided)
-    p2 : numpy.array
-        covariance matrix including the squared sound pressure value
-        of each source with shape (NFFT,J,J).
-    fidx : int, optional
-        frequency index at which the CSM is returned, by default None, meaning that the
-        CSM for all frequency coefficients will be returned
-    """
-    if fidx:
-        csm = empty((len(fidx),steer.mics.num_mics,steer.mics.num_mics))
-        for k, indices in enumerate(fidx):
-            nfreqs = indices[1] - indices[0]
-            H = empty((nfreqs,steer.mics.num_mics,p2.shape[1]),dtype=complex)
-            for i,f in enumerate(fftfreq[indices[0]:indices[1]]):
-                H[i] = steer.transfer(f).T # transfer functions
-            H_h = H.swapaxes(2,1).conjugate() # Hermetian
-            csm[k] = (H@p2[indices[0]:indices[1]]@H_h).sum(0)
-        return csm
-    else: # return the full csm
-        H = empty((p2.shape[0],steer.mics.num_mics,p2.shape[1]),dtype=complex)
-        for i,f in enumerate(fftfreq):
-            H[i] = steer.transfer(f).T # transfer functions
-        H_h = H.swapaxes(2,1).conjugate() # Hermitian
-        return H@p2@H_h
 
 
 def _transform_csm(csm):
@@ -550,30 +516,6 @@ if TF_FLAG:
         encoder_funcs[self.feature_name] = float_list_feature
         return encoder_funcs
     setattr(NonRedundantCSMFeature, "add_encoder_funcs", add_encoder_funcs)
-
-
-class AnalyticCSMFeature(BaseFeature):
-
-    def __init__(self,feature_name,fftfreq,steer,cov_sampler,loc_sampler=None,fidx=None):
-        self.feature_name = feature_name
-        self.fftfreq = fftfreq
-        self.steer = steer
-        self.loc_sampler = loc_sampler
-        self.cov_sampler = cov_sampler
-        self.fidx = fidx      
-
-    def add_feature_funcs(self,feature_funcs):
-        feature_funcs[self.feature_name] = self.get_csm
-        return feature_funcs
-
-    def add_feature_names(self,feature_names):
-        return feature_names + [self.feature_name]
-
-    def get_csm(self):
-        if self.loc_sampler: # apply loc
-            self.steer.grid = ImportGrid(gpos_file=self.loc_sampler.target.copy())
-        return get_analytic_csm(self.steer, self.fftfreq, self.cov_sampler.target.copy(),self.fidx)
-
 
 
 # class RefSBL(SourceMapFeature):
