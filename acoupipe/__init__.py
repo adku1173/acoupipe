@@ -9,4 +9,4 @@ from .loader import *
 from .evaluate import *
 from .dataset1 import Dataset1
 from .dataset2 import Dataset2
-
+from .spectra_analytic import PowerSpectraAnalytic

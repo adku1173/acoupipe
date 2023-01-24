@@ -1,29 +1,27 @@
 from os import path
 from copy import deepcopy
-from functools import partial
 import numpy as np
 from scipy.stats import rayleigh, poisson, norm
-from acoular import ImportGrid, SteeringVector, PowerSpectraImport, MicGeom, RectGrid, \
-    Environment, RectGrid3D, BeamformerBase, BeamformerCleansc
+from acoular import ImportGrid, MicGeom, \
+    Environment, RectGrid3D
 from .sampler import CovSampler, NumericAttributeSampler, LocationSampler, MicGeomSampler
 from .pipeline import BasePipeline, DistributedPipeline
-from .features import get_sourcemap, AnalyticCSMFeature
-from .helper import get_frequency_index_range, complex_to_real
+from .helper import complex_to_real
 from .dataset1 import Dataset1
+from acoupipe.spectra_analytic import PowerSpectraAnalytic
 
 VERSION = "ds2-v01"
 dirpath = path.dirname(path.abspath(__file__))
 ap = 1.4648587220804408 # default aperture size
 
 @complex_to_real
-def calc_p2(cov_sampler,fidx):
+def calc_p2(Q,fidx):
     """function to obtain the auto- and cross-power (Pa^2) of each source.
 
     Parameters
     ----------
-    cov_sampler : acoupipe.sampler.CovSampler
-        the sampler holding the covariance matrix representing the auto- and cross-power
-        of the sources
+    Q : numpy.array
+        the source strength covariance matrix
     fidx : None, list
         frequency indices to be included
 
@@ -33,9 +31,9 @@ def calc_p2(cov_sampler,fidx):
         covariance matrix containing the squared sound pressure of each source
     """
     if fidx:
-        return np.array([cov_sampler.target[indices[0]:indices[1]].sum(0) for indices in fidx])
+        return np.array([Q[indices[0]:indices[1]].sum(0) for indices in fidx])
     else:
-        return cov_sampler.target.copy()
+        return Q.copy()
 
 class Dataset2(Dataset1):
 
@@ -77,7 +75,7 @@ class Dataset2(Dataset1):
                 config=config)
         # overwrite freq_data
         fftfreq = abs(np.fft.fftfreq(512, 1./self.fs)[:int(512/2+1)])[1:]          
-        self.freq_data = PowerSpectraImport(csm=np.zeros((fftfreq.shape[0],self.mics.num_mics,self.mics.num_mics)),frequencies=fftfreq)   
+        self.freq_data = PowerSpectraAnalytic(frequencies=fftfreq)   
         self.random_var = {
         "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
         "p2_rvar" : rayleigh(5),
@@ -88,13 +86,9 @@ class Dataset2(Dataset1):
         "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
         }
 
-    def _prepare(self, steer):
-        steer.grid = ImportGrid(gpos_file=self.loc_sampler.target)
-        H = np.empty((self.strength_sampler.target.shape[0],self.mics.num_mics,self.strength_sampler.target.shape[1]),dtype=complex)
-        for i,f in enumerate(self.freq_data.fftfreq()):
-            H[i] = steer.transfer(f).T # transfer functions
-        H_h = H.swapaxes(2,1).conjugate() # Hermitian
-        self.freq_data.csm = H@self.strength_sampler.target@H_h
+    def _prepare(self):
+        self.freq_data.steer.grid = ImportGrid(gpos_file=self.loc_sampler.target)
+        self.freq_data.Q = self.strength_sampler.target
 
     def build_pipeline(self, parallel=False):
         # create copy for noisy positions
@@ -102,13 +96,14 @@ class Dataset2(Dataset1):
         steer_src = deepcopy(self.steer)
         steer_src.mics = self.noisy_mics
         steer_src.ref = self.noisy_mics.mpos[:, self.ref_mic]
+        self.freq_data.steer = steer_src
         # set up sampler
         sampler = self.setup_sampler()
         # set up feature methods
         fidx = self._get_freq_indices()
         features={
             "loc" : lambda: self.loc_sampler.target.copy(),
-            "p2" : (calc_p2, self.strength_sampler, fidx),
+            "p2" : (calc_p2, self.freq_data.Q, fidx),
             }                
         # add input features (csm, sourcemap, cleansc, ...)
         features.update(self.setup_features())
@@ -117,7 +112,7 @@ class Dataset2(Dataset1):
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        return Pipeline(sampler=sampler,features=features, prepare=partial(self._prepare, steer_src), progress_bar=self.progress_bar)
+        return Pipeline(sampler=sampler,features=features, prepare=self._prepare, progress_bar=self.progress_bar)
 
     def setup_sampler(self):
         sampler = []
