@@ -1,9 +1,57 @@
 [project]
 name = "acoupipe"
 version = "23.1"
-description = ""
+description = "Library for sampling large-scale microphone array data with Acoular for machine learning"
 readme = "README.rst"
 requires-python = ">=3.7,<11"
+authors = [
+    {name = "Acoular Development Team", email = "info@acoular.org"},
+]
+license = {file = "LICENSE"}
+keywords = [
+    "deep learning",
+    "beamforming",
+    "microphone array"
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+]
+dependencies = [
+	'acoular>=21.05',
+	'setuptools',
+	'ray>=1.2.0',
+	'pandas',
+	'h5py',
+	#      'parameterized',	
+	'tqdm',
+]
+maintainers = [
+    {name = "Adam Kujawski", email = "adam.kujawski@tu-berlin.de"},
+    {name = "Art Pelling", email = "a.pelling@tu-berlin.de"},
+    {name = "Ennes Sarradj", email = "ennes.sarradj@tu-berlin.de"},
+    {name = "Simon Jekosch", email = "s.jekosch@tu-berlin.de"},
+]
+
+[project.optional-dependencies]
+full = [
+    "tensorflow",
+]
+
+[project.urls]
+documentation = "https://adku1173.github.io/acoupipe/"
+repository = "https://github.com/adku1173/acoupipe"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 
 [tool.ruff]
 src = ["src"]
@@ -13,7 +61,7 @@ ignore = [
     "B905",
     "N806", "N803",
     "E741"]
-line-length = 120
+line-length = 130
 select = ["B", "D", "E", "F", "I", "N", "Q", "W"]
 
 
