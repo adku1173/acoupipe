@@ -1,26 +1,30 @@
-from os import path
 from copy import deepcopy
+from os import path
+
 import numpy as np
-from scipy.stats import rayleigh, poisson, norm
-from acoular import ImportGrid, MicGeom, \
-    Environment, RectGrid3D
-from .sampler import CovSampler, NumericAttributeSampler, LocationSampler, MicGeomSampler, SpectraSampler
-from .pipeline import BasePipeline, DistributedPipeline
-from .helper import complex_to_real
-from .dataset1 import Dataset1
+from acoular import Environment, ImportGrid, MicGeom, RectGrid3D
+from scipy.stats import norm, poisson, rayleigh
+
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
 
+from .dataset1 import Dataset1
+from .helper import complex_to_real
+from .pipeline import BasePipeline, DistributedPipeline
+from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttributeSampler, SpectraSampler
+
 VERSION = "ds2-v01"
-dirpath = path.dirname(path.abspath(__file__))
 ap = 1.4648587220804408 # default aperture size
+DEFAULT_ENV = Environment(c=343.)
+DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64.xml"))
+DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
 
 @complex_to_real
 def calc_p2(freq_data,fidx):
-    """function to obtain the auto- and cross-power (Pa^2) of each source.
+    """Calculates the auto- and cross-power (Pa^2) of each source.
 
     Parameters
     ----------
-    Q : numpy.array
+    freq_data : AnalyticPowerSpectra
         the source strength covariance matrix
     fidx : None, list
         frequency indices to be included
@@ -48,13 +52,13 @@ class Dataset2(Dataset1):
             startsample=1, 
             max_nsources = 10,
             min_nsources = 1,
-            env = Environment(c=343.),
-            mics = MicGeom(from_file=path.join(dirpath, "xml", "tub_vogel64.xml")),
-            grid = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap),
+            env = DEFAULT_ENV,
+            mics = DEFAULT_MICS,
+            grid = DEFAULT_GRID,
             cache_bf = False,
             cache_dir = "./datasets",         
             progress_bar= False,   
-            sameple_spectra=True,
+            sameple_spectra=False,
             config=None):  
         super().__init__(
                 split=split, 
@@ -145,11 +149,11 @@ class Dataset2(Dataset1):
             z_bounds=(self.grid.z_min, self.grid.z_max))
         sampler.append(self.loc_sampler)
       
-        if not (self.max_nsources == self.min_nsources):  # if no number of sources is specified, the number of sources will be samples randomly
+        if not (self.max_nsources == self.min_nsources):  
             nsrc_sampling = NumericAttributeSampler(
                 random_var=self.random_var["nsrc_rvar"],
                 target=[self.strength_sampler,self.loc_sampler],
-                attribute='nsources',
+                attribute="nsources",
                 single_value = True,
                 filter=lambda x: (x <= self.max_nsources) and (
                     x >= self.min_nsources))
