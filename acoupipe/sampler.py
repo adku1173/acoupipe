@@ -1,11 +1,4 @@
-# -*- coding: utf-8 -*-
-#pylint: disable-msg=E0611, E1103, C0103, R0901, R0902, R0903, R0904, W0232
-#------------------------------------------------------------------------------
-# Copyright (c) 2020-2023, Adam Kujawski, Simon Jekosch, Art Pelling, Ennes Sarradj.
-#------------------------------------------------------------------------------
-"""
-All classes in this module are random processes that meant to be used to manipulate instances
-i.e. their attribute values according to a specified random distribution (random variable). 
+"""All classes in this module are random processes that meant to be used to manipulate instances i.e. their attribute values according to a specified random distribution (random variable). 
 
 .. autosummary::
     :toctree: generated/
@@ -19,22 +12,22 @@ i.e. their attribute values according to a specified random distribution (random
     PointSourceSampler
     MicGeomSampler
     CovSampler
+    SpectraSampler
 
 """
 
 from traits.api import HasPrivateTraits, Instance, CArray, Float, Property,\
-    Str, cached_property, Any, Tuple, List, Bool, Enum, Trait, Int, Either, Type,Callable,\
+    Str, cached_property, Tuple, List, Bool, Enum, Trait, Int, Either, Callable,\
     on_trait_change
 from acoular import MicGeom, PointSource, SourceMixer, SamplesGenerator
-from numpy import array, pi, sin, cos, sum, eye, sort, diag, empty, repeat
-from numpy.random import default_rng, RandomState, Generator
+from numpy import array, pi, sin, cos, sum, eye, sort, diag, empty, repeat, newaxis, zeros
+from numpy.random import RandomState, Generator
 from scipy.stats import _distn_infrastructure
 from inspect import signature
-
+from .filter import generate_uniform_parametric_eq
 
 class BaseSampler(HasPrivateTraits):
-    """Base class that represents a random process manipulating attributes of an instance or a list of
-    instances according to a specified random distribution.
+    """Base class that represents a random process manipulating attributes of an instance or a list of instances according to a specified random distribution.
 
     This class has no functionality and should not be used in practice.
     """
@@ -57,13 +50,11 @@ class BaseSampler(HasPrivateTraits):
         desc="manages if a single value is chosen for all targets")
 
     def rvs(self, size=1):
-        """random variable sampling (for internal use)"""
+        """random variable sampling (for internal use)."""
         return self.random_var.rvs(size=size, random_state=self.random_state)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random values
-        from :attr:`random_var` (no functionality in this class). 
-        """
+        """utilizes :meth:`rvs` function to draw random values from :attr:`random_var` (no functionality in this class)."""
         self.rvs()
 
   
@@ -529,4 +520,30 @@ class CovSampler(BaseSampler):
         """
         full_strengths = self.rvs(size=self.nsources).astype(complex)
         self.target = repeat(diag(full_strengths/self.nfft),self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
+        
+
+class SpectraSampler(CovSampler):
+
+    target = CArray(dtype=complex,
+        desc="the sampled auto and cross-power spectra")
+    
+    single_value = Enum(False,
+        desc="individual spectra for each row in target")
+
+    max_order = Int(16,
+        desc="maximum order of the power spectra filter")
+
+    def rvs(self):
+        """Samples spectra."""
+        sigma2 = self.random_var.rvs(size=self.nsources, random_state=self.random_state).astype(complex)
+        Q = zeros((self.nfft,self.nsources,self.nsources),dtype=complex)
+        for i in range(self.nsources):
+            Hw = generate_uniform_parametric_eq(self.nfft, self.max_order, self.random_state)
+            Q[:,i,i] = Hw*Hw.conj()
+            Q[:,i,i] /= Q[:,i,i].sum()*sigma2[i]
+        return Q
+
+    def sample(self):
+        """Utilizes :meth:`rvs` function to evaluate the :attr:`random_func`."""
+        self.target = self.rvs()
         

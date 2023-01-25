@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import rayleigh, poisson, norm
 from acoular import ImportGrid, MicGeom, \
     Environment, RectGrid3D
-from .sampler import CovSampler, NumericAttributeSampler, LocationSampler, MicGeomSampler
+from .sampler import CovSampler, NumericAttributeSampler, LocationSampler, MicGeomSampler, SpectraSampler
 from .pipeline import BasePipeline, DistributedPipeline
 from .helper import complex_to_real
 from .dataset1 import Dataset1
@@ -15,7 +15,7 @@ dirpath = path.dirname(path.abspath(__file__))
 ap = 1.4648587220804408 # default aperture size
 
 @complex_to_real
-def calc_p2(Q,fidx):
+def calc_p2(freq_data,fidx):
     """function to obtain the auto- and cross-power (Pa^2) of each source.
 
     Parameters
@@ -31,9 +31,9 @@ def calc_p2(Q,fidx):
         covariance matrix containing the squared sound pressure of each source
     """
     if fidx:
-        return np.array([Q[indices[0]:indices[1]].sum(0) for indices in fidx])
+        return np.array([freq_data.Q[indices[0]:indices[1]].sum(0) for indices in fidx])
     else:
-        return Q.copy()
+        return freq_data.Q.copy()
 
 class Dataset2(Dataset1):
 
@@ -54,6 +54,7 @@ class Dataset2(Dataset1):
             cache_bf = False,
             cache_dir = "./datasets",         
             progress_bar= False,   
+            sameple_spectra=True,
             config=None):  
         super().__init__(
                 split=split, 
@@ -74,6 +75,7 @@ class Dataset2(Dataset1):
                 progress_bar=progress_bar,
                 config=config)
         # overwrite freq_data
+        self.sample_spectra = sameple_spectra
         fftfreq = abs(np.fft.fftfreq(512, 1./self.fs)[:int(512/2+1)])[1:]          
         self.freq_data = PowerSpectraAnalytic(frequencies=fftfreq)   
         self.random_var = {
@@ -88,7 +90,7 @@ class Dataset2(Dataset1):
 
     def _prepare(self):
         self.freq_data.steer.grid = ImportGrid(gpos_file=self.loc_sampler.target)
-        self.freq_data.Q = self.strength_sampler.target
+        self.freq_data.Q = self.strength_sampler.target.copy()
 
     def build_pipeline(self, parallel=False):
         # create copy for noisy positions
@@ -103,7 +105,7 @@ class Dataset2(Dataset1):
         fidx = self._get_freq_indices()
         features={
             "loc" : lambda: self.loc_sampler.target.copy(),
-            "p2" : (calc_p2, self.freq_data.Q, fidx),
+            "p2" : (calc_p2, self.freq_data, fidx),
             }                
         # add input features (csm, sourcemap, cleansc, ...)
         features.update(self.setup_features())
@@ -122,10 +124,17 @@ class Dataset2(Dataset1):
             ddir=np.array([[1.0], [1.0], [1.0]]))  
         sampler.append(mic_sampling)
 
-        self.strength_sampler = CovSampler(
-            random_var = self.random_var["p2_rvar"],
-            nsources = self.max_nsources,
-            nfft = self.freq_data.fftfreq().shape[0])
+        if not self.sample_spectra:
+            self.strength_sampler = CovSampler(
+                random_var = self.random_var["p2_rvar"],
+                nsources = self.max_nsources,
+                nfft = self.freq_data.fftfreq().shape[0])
+        else:
+            self.strength_sampler = SpectraSampler(
+                random_var = self.random_var["p2_rvar"],
+                nsources = self.max_nsources,
+                nfft = self.freq_data.fftfreq().shape[0])
+
         sampler.append(self.strength_sampler)
 
         self.loc_sampler = LocationSampler(
