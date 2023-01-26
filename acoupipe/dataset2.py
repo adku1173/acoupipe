@@ -58,7 +58,7 @@ class Dataset2(Dataset1):
             cache_bf = False,
             cache_dir = "./datasets",         
             progress_bar= False,   
-            sameple_spectra=False,
+            sample_spectra=False,
             config=None):  
         super().__init__(
                 split=split, 
@@ -79,7 +79,7 @@ class Dataset2(Dataset1):
                 progress_bar=progress_bar,
                 config=config)
         # overwrite freq_data
-        self.sample_spectra = sameple_spectra
+        self.sample_spectra = sample_spectra
         fftfreq = abs(np.fft.fftfreq(512, 1./self.fs)[:int(512/2+1)])[1:]          
         self.freq_data = PowerSpectraAnalytic(frequencies=fftfreq)   
         self.random_var = {

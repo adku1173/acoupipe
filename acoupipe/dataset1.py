@@ -1,26 +1,39 @@
-import ray
-import numpy as np
 from copy import deepcopy
 from datetime import datetime
 from os import path
-from traits.api import HasPrivateTraits
-from scipy.stats import poisson, norm
-from acoular import MicGeom, WNoiseGenerator, PointSource, SourceMixer,\
-    PowerSpectra, MaskedTimeInOut, Environment, RectGrid, BeamformerBase, BeamformerCleansc,\
-    SteeringVector
-from .sampler import MicGeomSampler, PointSourceSampler, SourceSetSampler, \
-    NumericAttributeSampler, ContainerSampler
-from .pipeline import DistributedPipeline, BasePipeline
-from .writer import WriteH5Dataset
-from .features import RefSourceMapFeature, get_source_p2, CSMFeature, SourceMapFeature,\
-    NonRedundantCSMFeature
-from .helper import set_pipeline_seeds, get_frequency_index_range, _handle_cache, _handle_log
+
+import numpy as np
+import ray
+from acoular import (
+    BeamformerBase,
+    BeamformerCleansc,
+    Environment,
+    MaskedTimeInOut,
+    MicGeom,
+    PointSource,
+    PowerSpectra,
+    RectGrid,
+    SourceMixer,
+    SteeringVector,
+    WNoiseGenerator,
+)
+from scipy.stats import norm, poisson
+
 from .config import TF_FLAG
+from .features import CSMFeature, NonRedundantCSMFeature, SourceMapFeature, get_source_p2
+from .helper import _handle_cache, _handle_log, get_frequency_index_range, set_pipeline_seeds
+from .pipeline import BasePipeline, DistributedPipeline
+from .sampler import ContainerSampler, MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
+from .writer import WriteH5Dataset
+
 if TF_FLAG:
-    from .writer import float_list_feature, int64_feature, int_list_feature, WriteTFRecord
+    from .writer import WriteTFRecord, float_list_feature, int64_feature, int_list_feature
 
 VERSION = "ds1-v01"
-dirpath = path.dirname(path.abspath(__file__))
+DEFAULT_ENV = Environment(c=343.)
+DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64_ap1.xml"))
+DEFAULT_GRID = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63)
+
 
 class Dataset1:
 
@@ -35,9 +48,9 @@ class Dataset1:
             startsample=1, 
             max_nsources = 10,
             min_nsources = 1,
-            env = Environment(c=343.),
-            mics = MicGeom(from_file=path.join(dirpath, "xml", "tub_vogel64_ap1.xml")),
-            grid = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63),
+            env = DEFAULT_ENV,
+            mics = DEFAULT_MICS,
+            grid = DEFAULT_GRID,
             cache_csm = False,
             cache_bf = False,
             cache_dir = "./datasets",
@@ -63,9 +76,9 @@ class Dataset1:
        # dependent attributes / objects
         self.ref_mic = np.argmin(np.linalg.norm((mics.mpos - mics.center[:,np.newaxis]),axis=0))
         self.steer = SteeringVector(
-            grid=self.grid, mics=self.mics, env=self.env, steer_type ='true level', ref = self.mics.mpos[:,self.ref_mic])
+            grid=self.grid, mics=self.mics, env=self.env, steer_type ="true level", ref = self.mics.mpos[:,self.ref_mic])
         self.freq_data = PowerSpectra(time_data=PointSource(signal=WNoiseGenerator(sample_freq=self.fs)),
-            block_size=128, overlap="50%", window='Hanning', precision='complex64', cached=self.cache_csm)
+            block_size=128, overlap="50%", window="Hanning", precision="complex64", cached=self.cache_csm)
         # random variables
         self.random_var = {
             "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
@@ -90,11 +103,12 @@ class Dataset1:
             WNoiseGenerator(sample_freq=self.fs, seed=i+1, numsamples=5*self.fs) for i in range(self.max_nsources)
         ]  # Signals
         self.point_sources = [
-            PointSource(signal=signal, mics=self.noisy_mics, env=self.env, loc=(0, 0, self.grid.z)) for signal in white_noise_signals
+            PointSource(
+                signal=signal, mics=self.noisy_mics, env=self.env, loc=(0, 0, self.grid.z)) for signal in white_noise_signals
         ]  # Monopole sources emitting the white noise signals
-        self.sources_mix = SourceMixer(sources=self.point_sources) # Source Mixer mixing the signals of all sources (number will be sampled)
+        self.sources_mix = SourceMixer(sources=self.point_sources) # Source Mixer mixing the signals of all sources
         self.freq_data.time_data = self.sources_mix
-        self.source_freq_data = deepcopy(self.freq_data) # will be used to calculate the p2 value at the reference microphone (for each present source)
+        self.source_freq_data = deepcopy(self.freq_data) # will be used to calculate the p2 value at the reference microphone 
         self.source_freq_data.cached = False
         self.source_freq_data.time_data = MaskedTimeInOut(source=self.sources_mix, invalid_channels=[_ for _ in range(
             self.mics.num_mics) if not _ == self.ref_mic]) # mask all channels except ref mic       
@@ -116,7 +130,7 @@ class Dataset1:
     def setup_sampler(self):
         # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
         def sample_rms(rng):
-            "draw source pressures square, Rayleigh distribution, sort them, calc rms"
+            """Draw source pressures square, Rayleigh distribution, sort them, calc rms."""
             nsrc = len(self.sources_mix.sources)
             # draw source pressures square, Rayleigh distribution, sort them, calc rms
             p_rms = np.sqrt(np.sort(rng.rayleigh(5, nsrc))[::-1])
@@ -156,7 +170,7 @@ class Dataset1:
             nsrc_sampling = NumericAttributeSampler(
                 random_var=self.random_var["nsrc_rvar"],
                 target=[src_sampling],
-                attribute='numsamples',
+                attribute="numsamples",
                 filter=lambda x: (x <= self.max_nsources) and (
                     x >= self.min_nsources),
             )
@@ -168,7 +182,7 @@ class Dataset1:
         features = {} # dict with feature functions for pipeline object
         self._feature_objects = []
         fidx = self._get_freq_indices()
-        if not fidx is None:
+        if fidx is not None:
             # bound calculated frequencies for efficiency reasons
             self.freq_data.ind_low = min([f[0] for f in fidx])
             self.freq_data.ind_high = max([f[1] for f in fidx])    
@@ -191,7 +205,7 @@ class Dataset1:
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
 
-        bb_args = {'r_diag': False, 'cached': self.cache_bf, 'precision': 'float32'}                   
+        bb_args = {"r_diag": False, "cached": self.cache_bf, "precision": "float32"}                   
         if "sourcemap" in self.features:
             feature = SourceMapFeature(feature_name="sourcemap",
                                        beamformer=BeamformerBase(freq_data=self.freq_data, steer=self.steer, **bb_args),
@@ -261,7 +275,7 @@ class Dataset1:
             parallel = False
         # Logging for debugging and timing statistic purpose
         if log:
-            _handle_log(".".join(name.split('.')[:-1]) + ".log")
+            _handle_log(".".join(name.split(".")[:-1]) + ".log")
 
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
@@ -292,7 +306,7 @@ class Dataset1:
 
         # Logging for debugging and timing statistic purpose
         if log:
-            _handle_log(".".join(name.split('.')[:-1]) + ".log")
+            _handle_log(".".join(name.split(".")[:-1]) + ".log")
 
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
@@ -331,10 +345,10 @@ class Dataset1:
             "seeds" : (len(self.build_pipeline().sampler),),# TODO: this is not good...
             "loc" : (3,ndim),    
         }
-        gdim = self.grid.shape
-        if type(self).__name__ == 'Dataset1':
+        #gdim = self.grid.shape
+        if type(self).__name__ == "Dataset1":
             features_shapes.update({"p2" : (fdim,ndim)})
-        elif type(self).__name__ == 'Dataset2':
+        elif type(self).__name__ == "Dataset2":
             features_shapes.update({"p2" : (fdim,ndim,ndim,2)})
         #for feature in self.features:
             #TODO: feature objects should know their own shape here!
@@ -348,10 +362,10 @@ class Dataset1:
             features_shapes.update({"cleansc" : (fdim,) + self.grid.shape })
         return features_shapes
 
-from acoupipe import TF_FLAG
+
 if TF_FLAG:
     import tensorflow as tf
     def get_tf_dataset(self):
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
         return tf.data.Dataset.from_generator(self.generate,output_signature=signature)                                   
-    setattr(Dataset1,'get_tf_dataset',get_tf_dataset)
+    Dataset1.get_tf_dataset = get_tf_dataset

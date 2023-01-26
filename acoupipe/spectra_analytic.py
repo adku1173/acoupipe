@@ -1,7 +1,8 @@
 
 from acoular import PowerSpectraImport, SteeringVector
-from traits.api import  CArray, Instance, Property, property_depends_on
 from numpy import empty
+from traits.api import CArray, Instance, Property, property_depends_on
+
 
 class PowerSpectraAnalytic(PowerSpectraImport):
 
@@ -24,11 +25,12 @@ class PowerSpectraAnalytic(PowerSpectraImport):
                 raise ValueError(
                     "The number of frequencies must match the number of rows in the source strengths matrix!")
 
-    @property_depends_on('Q,steer.digest')
+    @property_depends_on("Q,steer.digest,ind_low,ind_high")
     def _get_csm ( self ):
         self._validate_freq_data()
         fftfreq = self.fftfreq()
         H = empty((fftfreq.shape[0],self.steer.mics.num_mics,self.Q.shape[1]),dtype=complex)
-        for i,f in enumerate(fftfreq):
-            H[i] = self.steer.transfer(f).T # transfer functions
+        for i in self.indices: # calculate only the indices that are needed
+            H[i] = self.steer.transfer(fftfreq[i]).T # transfer functions
         return H@self.Q@H.swapaxes(2,1).conjugate()
+
