@@ -7,8 +7,12 @@ from traits.api import CArray, Instance, Property, property_depends_on
 class PowerSpectraAnalytic(PowerSpectraImport):
 
     Q = CArray(shape=(None,None,None), dtype=complex, desc="source strengths matrix")
+
+    noise = CArray(shape=(None,None,None), dtype=complex, desc="noise covariance matrix")
     
     steer = Instance(SteeringVector)
+
+    #mode = # wishart, analytic
 
     #: The cross spectral matrix, 
     #: (number of frequencies, numchannels, numchannels) array of complex;
@@ -32,5 +36,8 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         H = empty((fftfreq.shape[0],self.steer.mics.num_mics,self.Q.shape[1]),dtype=complex)
         for i in self.indices: # calculate only the indices that are needed
             H[i] = self.steer.transfer(fftfreq[i]).T # transfer functions
-        return H@self.Q@H.swapaxes(2,1).conjugate()
+        csm = H@self.Q@H.swapaxes(2,1).conjugate()
+        if self.noise is not None:
+            csm += self.noise
+        return csm
 

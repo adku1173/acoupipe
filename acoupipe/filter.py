@@ -1,11 +1,16 @@
 import numpy as np
 import scipy.signal
 
-def generate_uniform_parametric_eq(num_points, max_order, rng):
-    """Generate a random parametric EQ cascase according to the method specified in
-    [Nercessian 2020](https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf).
 
-    Returns:
+def generate_uniform_parametric_eq(num_points, max_order, rng):
+    """Generate a random parametric EQ cascase.
+    
+    Method according to [Nercessian 2020](https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf).
+    This method is part of the `IIRNet project <https://github.com/csteinmetz1/IIRNet>`_.
+    License: Apache License 2.0
+
+    Returns
+    -------
         coef
         mag
         phs
@@ -59,7 +64,7 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     poles.append(den_poly)
 
     ##Peaking Filters
-    for jj in range(num_peaks):
+    for _jj in range(num_peaks):
         omega = rng.uniform(low=0.0, high=np.pi)
         g = rng.uniform(low=-10, high=10)
         q = rng.uniform(low=0.1, high=3.0)

@@ -1,13 +1,7 @@
-# -*- coding: utf-8 -*-
-#pylint: disable-msg=E0611, E1103, C0103, R0901, R0902, R0903, R0904, W0232
-#------------------------------------------------------------------------------
-# Copyright (c) 2020-2023, Adam Kujawski, Simon Jekosch, Art Pelling, Ennes Sarradj.
-#------------------------------------------------------------------------------
+"""Provides classes to store the data extracted by :class:`~acoupipe.pipeline.BasePipeline` derived classes.
 
-"""
-Provides classes to store the data extracted by :class:`~acoupipe.pipeline.BasePipeline` derived classes. 
-Current implementation includes :class:`WriteH5Dataset` to save data to .h5 files and :class:`WriteTFRecord` to save .tfrecord files.
-The latter can be efficiently consumed by the `Tensorflow <https://www.tensorflow.org//>`_ framework for machine learning and is optional. 
+Current implementation includes :class:`WriteH5Dataset` to save data to .h5 files and :class:`WriteTFRecord` to save to .tfrecord.
+The latter can be efficiently consumed by the `Tensorflow <https://www.tensorflow.org//>`_ framework. 
 
 .. autosummary::
     :toctree: generated/
@@ -19,42 +13,34 @@ The latter can be efficiently consumed by the `Tensorflow <https://www.tensorflo
 """
 
 
-from traits.api import Instance, Dict, Str, File,\
-    Function, Trait, Bool, List
-
-from acoupipe.pipeline import DataGenerator
-from acoupipe.config import TF_FLAG
-
-from acoular.h5files import  _get_h5file_class
-from acoular import config
-
 from datetime import datetime
 from os import path
-from numpy import ndarray
-    
-    
+
+from acoular import config
+from acoular.h5files import _get_h5file_class
+from traits.api import Bool, Dict, File, Function, Instance, List, Str, Trait
+
+from acoupipe.config import TF_FLAG
+from acoupipe.pipeline import DataGenerator
+
+
 class BaseWriteDataset(DataGenerator):
-    """Base class for all derived classes intended to write 
-    data from :class:`~acoupipe.pipeline.BasePipeline` instances
-    to a specific file format. This class has no functionality 
-    and should not be used.
+    """Base class intended to write data from :class:`~acoupipe.pipeline.BasePipeline` instances to a specific file format.
+    
+    This class has no functionality and should not be used.
     """
     
     #: source instance that has to be of type :class:`~acoupipe.pipeline.DataGenerator`
     source = Instance(DataGenerator)
 
     def save(self):
-        """saves data from a :class:`~acoupipe.pipeline.BasePipeline` 
-        derived class instance specified at :attr:`source` to file.
-        """
+        """Saves data from a :class:`~acoupipe.pipeline.BasePipeline` instance specified at :attr:`source` to file."""
         # write to File...
         pass
 
     def get_data(self):
-        """ 
-        Python generator that saves source output data to file and
-        passes the data to the next object.
-      
+        """Python generator that saves source output data to file and passes the data to the next object.
+
         Returns
         -------
         Dictionary containing a sample of the data set 
@@ -66,12 +52,10 @@ class BaseWriteDataset(DataGenerator):
 
 
 class WriteH5Dataset(BaseWriteDataset):
-    """
-    Class intended to write data to a `.h5` file.
-    """
+    """Class intended to write data to a `.h5` file."""
        
     #: Name of the file to be saved. 
-    name = File(filter=['*.h5'], 
+    name = File(filter=["*.h5"], 
                  desc="name of data file")   
            
     # #: Number of samples to write to file by :meth:`result` method. 
@@ -91,34 +75,31 @@ class WriteH5Dataset(BaseWriteDataset):
         desc="metadata to be stored in .h5 file")
 
     def create_filename(self):
-        if self.name == '':
-            name = datetime.now().isoformat('_').replace(':','-').replace('.','_')
-            self.name = path.join(config.td_dir,name+'.h5')
+        if self.name == "":
+            name = datetime.now().isoformat("_").replace(":","-").replace(".","_")
+            self.name = path.join(config.td_dir,name+".h5")
 
     def get_initialized_file(self):
         file = _get_h5file_class()
         self.create_filename()
-        f5h = file(self.name, mode = 'w')
+        f5h = file(self.name, mode = "w")
         return f5h
 
     def get_filtered_features(self):
         if self.features:
-            if not 'idx' in self.features:
-                subf = self.features.copy() + ['idx']
+            if "idx" not in self.features:
+                subf = self.features.copy() + ["idx"]
             else:
                 subf = self.features
             return subf
         
     def save(self):
-        """ 
-        saves the output of the :meth:`get_data()` method of a :class:`~acoupipe.pipeline.BasePipeline` 
-        derived class instance specified at :attr:`source` to .h5 file format.  
-        """
+        """Saves the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format."""
         f5h = self.get_initialized_file()
         subf = self.get_filtered_features() 
         for data in self.source.get_data():
             #create a group for each Sample
-            ac = f5h.create_new_group(str(data['idx']))
+            ac = f5h.create_new_group(str(data["idx"]))
             #store dict in the group
             if not subf:
                 [f5h.create_array(ac,key, value) for key, value in data.items()]   
@@ -129,7 +110,7 @@ class WriteH5Dataset(BaseWriteDataset):
         f5h.close()
 
     def add_metadata(self, f5h):
-        """ adds metadata to .h5 file """
+        """adds metadata to .h5 file."""
         nitems = len(self.metadata.items())
         if nitems > 0:
             ac = f5h.create_new_group("metadata","/")
@@ -137,23 +118,20 @@ class WriteH5Dataset(BaseWriteDataset):
                 f5h.create_array(ac,key, value)
 
     def get_data(self):
-        """ 
-        Python generator that saves the data passed by the source to a `*.h5` file and
-        yields the data to the next object.
-    
+        """Python generator that saves the data passed by the source to a `*.h5` file and yields the data to the next object.
+
         Returns
         -------
         Dictionary containing a sample of the data set 
         {feature_name[key] : feature[values]}. 
         """
-        
         self.writeflag = True
         f5h = self.get_initialized_file()      
         subf = self.get_filtered_features() 
         for data in self.source.get_data(): 
             if not self.writeflag: return     
             #create a group for each Sample
-            ac = f5h.create_new_group(str(data['idx']))
+            ac = f5h.create_new_group(str(data["idx"]))
             #store dict in the group
             if not subf:
                 [f5h.create_array(ac,key, value) for key, value in data.items()]   
@@ -193,16 +171,16 @@ if TF_FLAG:
 
 
     class WriteTFRecord(BaseWriteDataset):
+        """Class intended to write data from :class:`~acoupipe.pipeline.BasePipeline` to a .tfrecord.
+        
+        TFRecord files can be consumed by TensorFlow tf.data API. Stores data in binary format.
         """
-        Class intended to write data from :class:`~acoupipe.pipeline.BasePipeline` 
-        instances to a .tfrecord file that can be consumed by tensorflows 
-        tf.data API. Stores data in binary format.
-        """
+
         #: Name of the file to be saved. 
-        name = File(filter=['*.tfrecords'], 
+        name = File(filter=["*.tfrecords"], 
             desc="name of data file")   
         
-        #: Dictionary with encoding functions (dict values) to convert data yielded by the pipeline to binary format of .tfrecord file.
+        #: Dictionary with encoding functions (dict values) to convert data yielded by the pipeline to binary .tfrecord format.
         #: The key values of this dictionary are the feature names specified in the :attr:`features` attribute
         #: of the :attr:`source` object.         
         encoder_funcs = Dict(key_trait=Str(), value_trait=Function(), 
@@ -217,12 +195,9 @@ if TF_FLAG:
         options = Trait(None,tf.io.TFRecordOptions)
 
         def save(self):
-            """
-            saves the output of the :meth:`get_data()` method of a :class:`~acoupipe.pipeline.BasePipeline` 
-            derived class instance specified at :attr:`source` to .tfrecord file format.  
-            """
+            """Saves output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .tfrecord format."""
             with tf.io.TFRecordWriter(self.name,options=self.options) as writer:
-                for i,features in enumerate(self.source.get_data()):
+                for _i,features in enumerate(self.source.get_data()):
                     encoded_features = {n:self.encoder_funcs[n](f) for (n,f) in features.items() if self.encoder_funcs.get(n)}
                     example = tf.train.Example(features=tf.train.Features(feature=encoded_features))
                     # Serialize to string and write on the file
@@ -232,17 +207,15 @@ if TF_FLAG:
                 
             
         def get_data(self):
-            """ 
-            Python generator that saves the data passed by the source to a `*.tfrecord` file and
-            yields the data to the next object.
-        
+            """Python generator that saves the data passed by the source to a `*.tfrecord` file and yields the data.
+
             Returns
             -------
             Dictionary containing a sample of the data set 
             {feature_name[key] : feature[values]}. 
             """
             with tf.io.TFRecordWriter(self.name,options=self.options) as writer:
-                for i,features in enumerate(self.source.get_data()):
+                for _i,features in enumerate(self.source.get_data()):
                     encoded_features = {n:self.encoder_funcs[n](f) for (n,f) in features.items() if self.encoder_funcs.get(n)}
                     example = tf.train.Example(features=tf.train.Features(feature=encoded_features))
                     # Serialize to string and write on the file

@@ -518,6 +518,50 @@ if TF_FLAG:
     setattr(NonRedundantCSMFeature, "add_encoder_funcs", add_encoder_funcs)
 
 
+
+class EigmodeFeature(CSMFeature):
+
+    def __init__(self,feature_name,power_spectra,fidx=None,cache_dir=None,num_threads=1):
+        """_summary_.
+
+        Parameters
+        ----------
+        feature_name : str
+            name of the feature (e.g. "eigmode")
+        power_spectra : instance of acoular.PowerSpectra
+            object to calculate the CSM
+        fidx : int, optional
+            frequency index at which the CSM is returned, by default None, meaning that the
+            CSM for all frequency coefficients will be returned
+        cache_dir : str, optional
+            directory to store the cache files (only necessary if PowerSpectra.cached=True), 
+            by default None
+        num_threads : int, optional
+            the number of threads used by numba during parallel execution
+        """
+        super().__init__(feature_name,power_spectra,fidx,cache_dir,num_threads)
+
+    @complex_to_real
+    def get_feature(self):
+        """Calculates the eigenvectors of the cross-spectral matrix (CSM) from time data.
+
+        Returns
+        -------
+        numpy.array
+            The eigenvectors of the CSM with shape (1,M,M,2) or (B/2+1,M,M,2) if fidx=None. 
+            B: Blocksize of the FFT. M: Number of microphones.Real values will 
+            be stored at the first entry of the first dimension. 
+            Imaginary values are stored at the second entry of the last dimension.
+        """
+        numba.set_num_threads(self.num_threads)
+        if self.cache_dir:
+            config.cache_dir = self.cache_dir
+        eigmodes = self.power_spectra.eva[:,newaxis,:]*self.power_spectra.eve[:]
+        if self.fidx:
+            eigmodes = array([eigmodes[indices[0]:indices[1]].sum(0) for indices in self.fidx],dtype=complex)
+        return eigmodes
+
+
 # class RefSBL(SourceMapFeature):
 #     def __init__(self,feature_name,spectra_inout,steer,fidx):
 #         self.feature_name = feature_name

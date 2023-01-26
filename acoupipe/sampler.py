@@ -241,9 +241,7 @@ class SourceSetSampler(SetSampler):
 
 
 class ContainerSampler(BaseSampler):
-    """Special case of a Sampler to enable the use 
-    of an arbitrary function performing the sampling and that can be passed to a
-    :class:`BasePipeline` derived class.
+    """Special case of a Sampler to enable the use of an arbitrary sampling function.
     
     This class has no explicit target. Instead it takes an arbitrary callable 
     with the signature '<Signature (numpy.random.RandomState)>' or 
@@ -494,7 +492,7 @@ class MicGeomSampler(BaseSampler):
 
 
 class CovSampler(BaseSampler):
-    """Sampler to sample covariance matrices for a specific number of sources.  
+    """Sampler to sample covariance matrices for a specific number of sources.
     
     The current implementation only allows uncorrelated sources, meaning that the
     sampled covariances matrices at :attr:`target` are diagonal matrices. 
@@ -504,22 +502,39 @@ class CovSampler(BaseSampler):
     target = CArray(
         desc="the sampled complex covariance matrices")
 
+    variances = CArray(
+        desc="the sampled variances"
+        )
+    
     nsources = Int(
         desc="the number of sources to be sampled")
     
     nfft = Int(1,
         desc="number of fft bins at which the power is distributed")
 
-    #: True: same covariance matrix for all frequencies
-    single_value = Enum(True, 
-        desc="manages if a single value is chosen for all targets")
+    #: True: same amplitudes for all sources 
+    single_value = Bool(False, 
+        desc="manages if a single amplitude is chosen for all sources")
+
+    scale_variance = Bool(False)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random values
-        from :attr:`random_var`. 
-        """
-        full_strengths = self.rvs(size=self.nsources).astype(complex)
-        self.target = repeat(diag(full_strengths/self.nfft),self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
+        """Utilizes :meth:`rvs` function to draw random values from :attr:`random_var`."""
+        if self.single_value:
+            variance = self.rvs(size=1)
+            if self.scale_variance: # sum of variances is 1
+                variance = 1/self.nsources
+            self.variances = variance.copy() # copy full variance
+            variance /= self.nfft
+            variance = eye(self.nsources,dtype=complex)*variance.astype(complex)
+        else:
+            variance = self.rvs(size=self.nsources)
+            if self.scale_variance: # sum of variances is 1
+                variance /= variance.sum() 
+            self.variances = variance.copy() # copy full variance
+            variance /= self.nfft
+            variance = diag(variance.astype(complex))
+        self.target = repeat(variance,self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
         
 
 class SpectraSampler(CovSampler):
@@ -527,23 +542,36 @@ class SpectraSampler(CovSampler):
     target = CArray(dtype=complex,
         desc="the sampled auto and cross-power spectra")
     
-    single_value = Enum(False,
-        desc="individual spectra for each row in target")
+    single_spectra = Bool(False,
+        desc="individual spectra for each source")
 
     max_order = Int(16,
         desc="maximum order of the power spectra filter")
 
-    def rvs(self):
-        """Samples spectra."""
-        sigma2 = self.random_var.rvs(size=self.nsources, random_state=self.random_state).astype(complex)
-        Q = zeros((self.nfft,self.nsources,self.nsources),dtype=complex)
-        for i in range(self.nsources):
-            Hw = generate_uniform_parametric_eq(self.nfft, self.max_order, self.random_state)
-            Q[:,i,i] = Hw*Hw.conj()
-            Q[:,i,i] /= Q[:,i,i].sum()*sigma2[i]
-        return Q
-
     def sample(self):
         """Utilizes :meth:`rvs` function to evaluate the :attr:`random_func`."""
-        self.target = self.rvs()
+        if self.single_value: 
+            variance = self.rvs(size=1)
+            if self.scale_variance: # sum of variances is 1
+                variance = 1/self.nsources
+            variance = repeat(variance, self.nsources)
+        else:
+            variance = self.rvs(size=self.nsources)
+            if self.scale_variance: # sum of variances is 1
+                variance /= variance.sum()
+        Q = zeros((self.nfft,self.nsources,self.nsources),dtype=complex)
+        if self.single_spectra:
+            Hw = generate_uniform_parametric_eq(self.nfft, self.max_order, self.random_state)
+            Hw2 = Hw*Hw.conj()
+            Hw2 /= Hw2.sum()
+            for i in range(self.nsources):
+                Q[:,i,i] = Hw2*variance[i].astype(complex)            
+        else:
+            for i in range(self.nsources):
+                Hw = generate_uniform_parametric_eq(self.nfft, self.max_order, self.random_state)
+                Q[:,i,i] = Hw*Hw.conj()
+                Q[:,i,i] /= Q[:,i,i].sum()/variance[i].astype(complex)
+        self.target = Q
+        self.variances = variance.copy() # copy full variance
+
         

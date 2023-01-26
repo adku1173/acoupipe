@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-#pylint: disable-msg=E0611, E1103, C0103, R0901, R0902, R0903, R0904, W0232
-#------------------------------------------------------------------------------
-# Copyright (c) Adam Kujawski, Simon Jekosch, Art Pelling, Ennes Sarradj.
-#------------------------------------------------------------------------------
-
-"""
-Provides evaluatation of source mapping methods using classes derived from :class:`~acoupipe.evaluate.BaseEvaluator`.
-
+"""Provides evaluatation of source mapping methods using classes derived from :class:`~acoupipe.evaluate.BaseEvaluator`.
 
 .. autosummary::
     :toctree: generated/
@@ -18,10 +10,10 @@ Provides evaluatation of source mapping methods using classes derived from :clas
 """
 
 
-from acoular.grids import RectGrid
-from traits.api import Instance, HasPrivateTraits, CArray, Float, Property, Int, Bool
-from acoular import CircSector, RectGrid, L_p, integrate
 import numpy as np
+from acoular import CircSector, L_p, integrate
+from acoular.grids import RectGrid
+from traits.api import Bool, CArray, Float, HasPrivateTraits, Instance, Property
 
 
 class BaseEvaluator(HasPrivateTraits):
@@ -69,21 +61,20 @@ class BaseEvaluator(HasPrivateTraits):
         return radii
     
     def get_specific_level_error(self):
-        """Returns the specific level error (Herold and Sarradj, 2017)"""
+        """Returns the specific level error (Herold and Sarradj, 2017)."""
         pass
 
     def get_overall_level_error(self):
-        """Returns the overall level error (Herold and Sarradj, 2017)"""
+        """Returns the overall level error (Herold and Sarradj, 2017)."""
         pass
 
     def get_inverse_level_error(self):
-        """Returns the inverse level error (Herold and Sarradj, 2017)"""
+        """Returns the inverse level error (Herold and Sarradj, 2017)."""
         pass
 
 
 class PlanarSourceMapEvaluator(BaseEvaluator):
-    """
-    Class to evaluate the performance of microphone array methods on planar grid-based source maps.
+    """Class to evaluate the performance of microphone array methods on planar grid-based source maps.
 
     This class can be used to calculate different performance metrics
     to assess the performance of a source mapping method, including:
@@ -103,6 +94,12 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
 
     def _integrate_targets(self,multi_assignment=True):
         """integrates over target sectors.
+
+        Parameters
+        ----------
+        multi_assignment : bool, optional
+            if set True, the same amplitude can be assigned to multiple targets if 
+            the integration area overlaps. The default is True.
 
         Returns
         -------
@@ -126,10 +123,12 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
         if not self.sourcemap.ndim == 4:
             raise ValueError("attribute sourcemap is not of shape (number of frequencies, nxsteps, nysteps, nzsteps)!")
         if not self.sourcemap.shape[0] == self.target_pow.shape[0]:
-            raise ValueError(f"Number of p2 target values per source (shape {self.target_pow.shape}) does not match the number of sourcemaps (shape {self.sourcemap.shape}). Provide as many target values as sourcemaps!")
+            raise ValueError(
+                f"""Number of p2 target values per source (shape {self.target_pow.shape}) does not match the 
+                number of sourcemaps (shape {self.sourcemap.shape}). Provide as many target values as sourcemaps!""")
 
     def get_overall_level_error(self):
-        """Returns the overall level error (Herold and Sarradj, 2017)
+        """Returns the overall level error (Herold and Sarradj, 2017).
 
         Returns
         -------
@@ -140,7 +139,7 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
         return L_p(self.sourcemap.sum(axis=(1,2))) - L_p(self.target_pow.sum(axis=1))
 
     def get_specific_level_error(self):
-        """Returns the specific level error (Herold and Sarradj, 2017)
+        """Returns the specific level error (Herold and Sarradj, 2017).
 
         Returns
         -------
@@ -152,7 +151,7 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
         return L_p(integration_result) - L_p(self.target_pow)
 
     def get_inverse_level_error(self):
-        """Returns the inverse level error (Herold and Sarradj, 2017)
+        """Returns the inverse level error (Herold and Sarradj, 2017).
 
         Returns
         -------
@@ -160,15 +159,14 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
             inverse level error of shape=(nf,1)
         """
         self._validate_shapes()
-        integration_result = self._integrate_targets(multi_assignment=False) # do not allow to assign the same grid point to multiple sources (otherwise it may result in a positive inverse level error)
+        integration_result = self._integrate_targets(multi_assignment=False) 
         return L_p(integration_result.sum(axis=1)) - L_p(self.sourcemap.sum(axis=(1,2)))
 
 
     
 
 class GridlessEvaluator(BaseEvaluator):
-    """
-    Class to evaluate the performance of microphone array methods on planar grid-less source maps.
+    """Class to evaluate the performance of microphone array methods on planar grid-less source maps.
 
     This class can be used to calculate different performance metrics
     to assess the performance of a source mapping method, including:
@@ -214,7 +212,7 @@ class GridlessEvaluator(BaseEvaluator):
         return results
 
     def get_overall_level_error(self):
-        """Returns the overall level error (Herold and Sarradj, 2017)
+        """Returns the overall level error (Herold and Sarradj, 2017).
 
         Returns
         -------
@@ -225,20 +223,19 @@ class GridlessEvaluator(BaseEvaluator):
         return L_p(self.estimated_pow.sum(axis=1)) - L_p(self.target_pow.sum(axis=1))
 
     def get_specific_level_error(self):
-        """Returns the specific level error (Herold and Sarradj, 2017)
+        """Returns the specific level error (Herold and Sarradj, 2017).
 
         Returns
         -------
         numpy.array
             specific level error of shape=(nf,ns). nf: number of frequencies, ns: number of sources
         """
-
         self._validate_shapes()
         integration_result = self._integrate_targets()
         return L_p(integration_result) - L_p(self.target_pow)
 
     def get_inverse_level_error(self):
-        """Returns the inverse level error (Herold and Sarradj, 2017)
+        """Returns the inverse level error (Herold and Sarradj, 2017).
 
         Returns
         -------
@@ -250,8 +247,7 @@ class GridlessEvaluator(BaseEvaluator):
         return L_p(integration_result.sum(axis=1)) - L_p(self.estimated_pow.sum(axis=1))
 
     def get_localization_error(self):
-        """Returns the spatial distance between the estimated position and the ground-truth 
-        position at the same index 
+        """Returns the spatial distance between the estimated position and the ground-truth position at the same index.
 
         Returns
         -------
@@ -262,8 +258,7 @@ class GridlessEvaluator(BaseEvaluator):
         return np.linalg.norm(self.estimated_loc-self.target_loc,axis=1)
 
     def get_level_error(self):
-        """Returns the level difference in dB between the estimated power and the ground-truth 
-        power at the same index 
+        """Returns the level difference in dB between the estimated power and the ground-truth power at the same index.
 
         Returns
         -------

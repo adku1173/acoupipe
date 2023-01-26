@@ -20,7 +20,7 @@ from acoular import (
 from scipy.stats import norm, poisson
 
 from .config import TF_FLAG
-from .features import CSMFeature, NonRedundantCSMFeature, SourceMapFeature, get_source_p2
+from .features import CSMFeature, EigmodeFeature, NonRedundantCSMFeature, SourceMapFeature, get_source_p2
 from .helper import _handle_cache, _handle_log, get_frequency_index_range, set_pipeline_seeds
 from .pipeline import BasePipeline, DistributedPipeline
 from .sampler import ContainerSampler, MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
@@ -226,6 +226,15 @@ class Dataset1:
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
 
+        if "eigmode" in self.features:
+            feature = EigmodeFeature(feature_name="eigmode",
+                                    power_spectra=self.freq_data,
+                                    fidx=fidx,
+                                    cache_dir=self.cache_dir
+                                     )
+            features = feature.add_feature_funcs(features)
+            self._feature_objects.append(feature)
+        
         # if "ref_cleansc" in self.features:
         #     feature = RefSourceMapFeature(feature_name="ref_cleansc",
         #                                   beamformer=BeamformerCleansc(freq_data=self.freq_data, steer=self.steer, **bb_args),

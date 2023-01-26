@@ -1,12 +1,4 @@
-# -*- coding: utf-8 -*-
-#pylint: disable-msg=E0611, E1103, C0103, R0901, R0902, R0903, R0904, W0232
-#------------------------------------------------------------------------------
-# Copyright (c) 2020-2023, Adam Kujawski, Simon Jekosch, Art Pelling, Ennes Sarradj.
-#------------------------------------------------------------------------------
-
-"""
-Provides classes to load the datasets stored with :class:`~acoupipe.writer.BaseWriteDataset` derived classes. 
-Currently, only the loading of data stored in .h5 files is possible.
+"""Provides classes to load the datasets stored with :class:`~acoupipe.writer.BaseWriteDataset` derived classes.
 
 .. autosummary::
     :toctree: generated/
@@ -15,28 +7,26 @@ Currently, only the loading of data stored in .h5 files is possible.
     LoadH5Dataset
 
 """
-
-from traits.api import   Property,\
-cached_property,  CLong, File, Instance, \
-    on_trait_change, Dict ,HasPrivateTraits, List
-
-from acoular.h5files import H5FileBase ,_get_h5file_class
 from os import path
 
 from acoular import config
-config.h5library = "h5py"
+from acoular.h5files import H5FileBase, _get_h5file_class
+from traits.api import CLong, Dict, File, Instance, List, Property, cached_property, on_trait_change
 
 from .pipeline import DataGenerator
 
+config.h5library = "h5py"
+
+
+
 class BaseLoadDataset(DataGenerator):
-    """
-    Base class for all derived classes intended to load 
-    data stored with instances of type :class:`~acoupipe.writer.BaseWriteDataset`.
+    """Base class for all derived classes intended to load data stored by :class:`~acoupipe.writer.BaseWriteDataset`.
+    
     This class has no functionality and should not be used.
     """
 
     #:Full name of the .h5 file with data.
-    name = File(filter=['*'], 
+    name = File(filter=["*"], 
         desc="name of data file")
 
     def load_data(self):
@@ -46,8 +36,7 @@ class BaseLoadDataset(DataGenerator):
 
 
 class LoadH5Dataset(BaseLoadDataset):
-    """
-    Loads data sets stored into `*.h5` file format.
+    """Loads data sets stored into `*.h5` file format.
     
     This class loads data from `*.h5` files and
     provides information like the number of 
@@ -55,11 +44,11 @@ class LoadH5Dataset(BaseLoadDataset):
     """
 
     #: Full name of the .h5 file with data.
-    name = File(filter=['*.h5'], 
+    name = File(filter=["*.h5"], 
         desc="name of data file")
 
     #: Basename of the .h5 file with data, is set automatically.
-    basename = Property( depends_on = 'name', 
+    basename = Property( depends_on = "name", 
         desc="basename of data file")
     
     #: The  data as array.
@@ -93,17 +82,15 @@ class LoadH5Dataset(BaseLoadDataset):
     def _get_basename( self ):
         return path.splitext(path.basename(self.name))[0]
     
-    @on_trait_change('basename')
+    @on_trait_change("basename")
     def load_data( self ):
-        """ 
-        Open the .h5 file and set attributes.
-        """
+        """Open the .h5 file and set attributes."""
         if not path.isfile(self.name):
             # no file there
             self.numsamples = 0
             self.numfeatures = 0
             raise FileNotFoundError("No such file: %s" % self.name)
-        if self.h5f != None:
+        if self.h5f is not None:
             try:
                 self.h5f.close()
             except IOError:
@@ -114,31 +101,33 @@ class LoadH5Dataset(BaseLoadDataset):
         self.load_metadata()
 
     def load_dataset( self ):
-        """ loads dataset from .h5 file into the dataset attribute.
-        Should only be used if dataset is small in memory. """
+        """Loads dataset from .h5 file into the dataset attribute.
+        
+        Should only be used if dataset is small in memory. 
+        """
         for key in self.indices:
             self.dataset[key] = {}
             for feature in self.h5f[key].keys():
                 self.dataset[key][feature] = self.h5f[key][feature]
                     
     def load_metadata( self ):
-        """ loads metadata from .h5 file. Only for internal use. """
+        """loads metadata from .h5 file. Only for internal use."""
         self.metadata = {}
         indices = list(self.h5f.keys())
-        if'metadata' in indices:
-            indices.remove('metadata')
-            for feature in self.h5f['/metadata'].keys():
-                self.metadata[feature] = self.h5f['/metadata'][feature][()]
+        if"metadata" in indices:
+            indices.remove("metadata")
+            for feature in self.h5f["/metadata"].keys():
+                self.metadata[feature] = self.h5f["/metadata"][feature][()]
         int_indices = list(map(int,indices))
         int_indices.sort()
         self.indices = list(map(str,int_indices))
         self.numsamples=len(self.indices)        
         if self.numsamples > 0:
-            self.numfeatures = len(self.h5f[self.indices[0]].keys()) # assumes the same number of features in every sample of the dataset
+            self.numfeatures = len(self.h5f[self.indices[0]].keys())
             self.features = list(self.h5f[self.indices[0]].keys())
 
     def get_dataset_generator(self, features=[]):
-        """Creates a callable that returns a generator object. 
+        """Creates a callable that returns a generator object.
         
         This object can be used in conjunction with the Tensorflow `tf.data.Dataset` API to create
         a data generator with the :meth:`from_generator` method of the `Tensorflow Dataset API`_ 
@@ -179,10 +168,8 @@ class LoadH5Dataset(BaseLoadDataset):
         return sample_generator
 
     def get_data(self):
-        """ 
-        Python generator that iteratively yields the samples of the
-        dataset in ascending sample index order (e.g. 1,2,...,N). 
-        
+        """Python generator that iteratively yields the samples of the dataset in ascending sample index order (e.g. 1,2,...,N).
+
         Returns
         -------
         Dictionary containing a sample of the data set 

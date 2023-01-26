@@ -3,7 +3,7 @@ from os import path
 
 import numpy as np
 from acoular import Environment, ImportGrid, MicGeom, RectGrid3D
-from scipy.stats import norm, poisson, rayleigh
+from scipy.stats import norm, poisson, rayleigh, uniform
 
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
 
@@ -39,6 +39,27 @@ def calc_p2(freq_data,fidx):
     else:
         return freq_data.Q.copy()
 
+@complex_to_real
+def calc_n2(freq_data,fidx):
+    """Calculates the auto- and cross-power (Pa^2) of the noise.
+
+    Parameters
+    ----------
+    freq_data : AnalyticPowerSpectra
+        the source strength covariance matrix
+    fidx : None, list
+        frequency indices to be included
+
+    Returns
+    -------
+    numpy.array
+        covariance matrix containing the squared sound pressure of each source
+    """
+    if fidx:
+        return np.array([freq_data.noise[indices[0]:indices[1]].sum(0) for indices in fidx])
+    else:
+        return freq_data.noise.copy()
+
 class Dataset2(Dataset1):
 
     def __init__(
@@ -57,7 +78,8 @@ class Dataset2(Dataset1):
             grid = DEFAULT_GRID,
             cache_bf = False,
             cache_dir = "./datasets",         
-            progress_bar= False,   
+            progress_bar=False,   
+            sample_noise=False, 
             sample_spectra=False,
             config=None):  
         super().__init__(
@@ -80,21 +102,25 @@ class Dataset2(Dataset1):
                 config=config)
         # overwrite freq_data
         self.sample_spectra = sample_spectra
+        self.sample_noise = sample_noise
         fftfreq = abs(np.fft.fftfreq(512, 1./self.fs)[:int(512/2+1)])[1:]          
         self.freq_data = PowerSpectraAnalytic(frequencies=fftfreq)   
         self.random_var = {
         "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
-        "p2_rvar" : rayleigh(5),
+        "p2_rvar" : rayleigh(5), 
         "loc_rvar" : (
                     norm((self.grid.x_min + self.grid.x_max)/2,0.1688*(np.sqrt((self.grid.x_max-self.grid.x_min)**2))), #x
                     norm((self.grid.y_min + self.grid.y_max)/2,0.1688*(np.sqrt((self.grid.y_max-self.grid.y_min)**2))), #y
                     norm((self.grid.z_min + self.grid.z_max)/2,0*(np.sqrt((self.grid.z_max-self.grid.z_min)**2)))), #z
-        "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
+        "nsrc_rvar" : poisson(mu=3, loc=1),  # number of sources
+        "noise_rvar" : uniform(1e-06, 1e-03-1e-06)
         }
 
     def _prepare(self):
         self.freq_data.steer.grid = ImportGrid(gpos_file=self.loc_sampler.target)
         self.freq_data.Q = self.strength_sampler.target.copy()
+        if self.sample_noise:
+            self.freq_data.noise = self.noise_sampler.target.copy()
 
     def build_pipeline(self, parallel=False):
         # create copy for noisy positions
@@ -110,7 +136,13 @@ class Dataset2(Dataset1):
         features={
             "loc" : lambda: self.loc_sampler.target.copy(),
             "p2" : (calc_p2, self.freq_data, fidx),
+            "variances" : lambda: self.strength_sampler.variances.copy(),
             }                
+        if self.sample_noise:
+            features.update(
+                {"nvariances" : lambda: self.noise_sampler.variances.copy(),
+                "n2" : (calc_n2, self.freq_data, fidx),})
+            
         # add input features (csm, sourcemap, cleansc, ...)
         features.update(self.setup_features())
         # set up pipeline
@@ -122,22 +154,43 @@ class Dataset2(Dataset1):
 
     def setup_sampler(self):
         sampler = []
-        mic_sampling = MicGeomSampler(
+        mic_sampler = MicGeomSampler(
             random_var= self.random_var["mic_rvar"],
             target=self.noisy_mics,
             ddir=np.array([[1.0], [1.0], [1.0]]))  
-        sampler.append(mic_sampling)
+        sampler.append(mic_sampler)
 
         if not self.sample_spectra:
             self.strength_sampler = CovSampler(
                 random_var = self.random_var["p2_rvar"],
                 nsources = self.max_nsources,
+                scale_variance = True,
                 nfft = self.freq_data.fftfreq().shape[0])
+            
+            if self.sample_noise:
+                self.noise_sampler = CovSampler(
+                    random_var = self.random_var['noise_rvar'],
+                    nsources = self.mics.num_mics,
+                    single_value = True,
+                    nfft = self.freq_data.fftfreq().shape[0])
+                sampler.append(self.noise_sampler)
         else:
             self.strength_sampler = SpectraSampler(
                 random_var = self.random_var["p2_rvar"],
                 nsources = self.max_nsources,
+                scale_variance = True,
+                single_value = False,
+                single_spectra = False,
                 nfft = self.freq_data.fftfreq().shape[0])
+
+            if self.sample_noise:
+                self.noise_sampler = SpectraSampler(
+                    random_var = self.random_var['noise_rvar'],
+                    nsources = self.mics.num_mics,
+                    single_value = True,
+                    single_spectra = True,
+                    nfft = self.freq_data.fftfreq().shape[0])
+                sampler.append(self.noise_sampler)
 
         sampler.append(self.strength_sampler)
 
@@ -150,12 +203,13 @@ class Dataset2(Dataset1):
         sampler.append(self.loc_sampler)
       
         if not (self.max_nsources == self.min_nsources):  
-            nsrc_sampling = NumericAttributeSampler(
+            nsrc_sampler = NumericAttributeSampler(
                 random_var=self.random_var["nsrc_rvar"],
                 target=[self.strength_sampler,self.loc_sampler],
                 attribute="nsources",
                 single_value = True,
                 filter=lambda x: (x <= self.max_nsources) and (
                     x >= self.min_nsources))
-            sampler = [nsrc_sampling] + sampler
+            sampler = [nsrc_sampler] + sampler # need to be sampled first!
+
         return sampler
