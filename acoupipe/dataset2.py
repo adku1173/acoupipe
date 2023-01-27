@@ -2,7 +2,7 @@ from copy import deepcopy
 from os import path
 
 import numpy as np
-from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D
+from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D, SteeringVector
 from scipy.stats import norm, poisson, rayleigh, uniform
 
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
@@ -18,6 +18,7 @@ DEFAULT_ENV = Environment(c=343.)
 DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64.xml"))
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
+DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level")
 
 @complex_to_real
 def calc_p2(freq_data,fidx):
@@ -65,35 +66,23 @@ class Dataset2(Dataset1):
 
     def __init__(
             self, 
-            split, 
-            size, 
-            features, 
-            f=None, 
-            num=0, 
-            fs=51200,
-            max_nsources = 10,
-            min_nsources = 1,
-            df = 100,
             env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
             beamformer = DEFAULT_BEAMFORMER,
+            steer = DEFAULT_STEER,
             sample_noise=False, 
             sample_spectra=False,
-            sample_wishart=True):  
+            sample_wishart=True,
+            df = 100,
+            **kwargs):  
         super().__init__(
-                split=split, 
-                size=size, 
-                features=features, 
-                f=f, 
-                num=num, 
-                fs=fs, 
-                max_nsources=max_nsources, 
-                min_nsources=min_nsources,
                 env = env,
                 mics = mics,
                 grid = grid,
-                beamformer = beamformer)
+                beamformer = beamformer,
+                steer = steer,
+                **kwargs)
         # overwrite freq_data
         self.sample_spectra = sample_spectra
         self.sample_noise = sample_noise
@@ -109,7 +98,7 @@ class Dataset2(Dataset1):
                     norm((self.grid.y_min + self.grid.y_max)/2,0.1688*(np.sqrt((self.grid.y_max-self.grid.y_min)**2))), #y
                     norm((self.grid.z_min + self.grid.z_max)/2,0*(np.sqrt((self.grid.z_max-self.grid.z_min)**2)))), #z
         "nsrc_rvar" : poisson(mu=3, loc=1),  # number of sources
-        "noise_rvar" : uniform(1e-06, 1e-03-1e-06)
+        "noise_rvar" : uniform(1e-06, 1e-03-1e-06) # variance of the noise
         }
 
     def _prepare(self):
@@ -119,11 +108,14 @@ class Dataset2(Dataset1):
             self.freq_data.noise = self.noise_sampler.target.copy()
 
     def build_pipeline(self, parallel=False):
+        # sets the reference microphone to the one closest to the center
+        ref_mic = np.argmin(np.linalg.norm((self.mics.mpos - self.mics.center[:,np.newaxis]),axis=0))
+        self.steer.ref = self.mics.mpos[:,ref_mic]
         # create copy for noisy positions
         self.noisy_mics = deepcopy(self.mics) # Microphone geometry with positional noise
         steer_src = deepcopy(self.steer)
         steer_src.mics = self.noisy_mics
-        steer_src.ref = self.noisy_mics.mpos[:, self.ref_mic]
+        steer_src.ref = self.noisy_mics.mpos[:, ref_mic] #TODO: check if this is correct when sampled!
         self.freq_data.steer = steer_src
         # set up sampler
         sampler = self.setup_sampler()

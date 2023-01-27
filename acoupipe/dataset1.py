@@ -33,7 +33,8 @@ VERSION = "ds1-v01"
 DEFAULT_ENV = Environment(c=343.)
 DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64_ap1.xml"))
 DEFAULT_GRID = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63)
-DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
+DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")
+DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level")
 
 class Dataset1:
 
@@ -50,6 +51,7 @@ class Dataset1:
             env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
+            steer = DEFAULT_STEER,
             beamformer = DEFAULT_BEAMFORMER):       
         self.split = split
         self.size = size
@@ -62,11 +64,9 @@ class Dataset1:
         self.env = env
         self.mics = mics 
         self.grid = grid
+        self.steer = steer
         self.beamformer = beamformer
        # dependent attributes / objects
-        self.ref_mic = np.argmin(np.linalg.norm((mics.mpos - mics.center[:,np.newaxis]),axis=0))
-        self.steer = SteeringVector(
-            grid=self.grid, mics=self.mics, env=self.env, steer_type ="true level", ref = self.mics.mpos[:,self.ref_mic])
         self.freq_data = PowerSpectra(time_data=PointSource(signal=WNoiseGenerator(sample_freq=self.fs)),
             block_size=128, overlap="50%", window="Hanning", precision="complex64")
         # random variables
@@ -87,6 +87,9 @@ class Dataset1:
         return fidx
 
     def build_pipeline(self, parallel=False):
+        # sets the reference microphone
+        ref_mic = np.argmin(np.linalg.norm((self.mics.mpos - self.mics.center[:,np.newaxis]),axis=0))
+        self.steer.ref = self.mics.mpos[:,ref_mic]
         # create copy for noisy positions
         self.noisy_mics = deepcopy(self.mics) # Microphone geometry with positional noise
         white_noise_signals = [ # create source signal array
@@ -101,7 +104,7 @@ class Dataset1:
         self.source_freq_data = deepcopy(self.freq_data) # will be used to calculate the p2 value at the reference microphone 
         self.source_freq_data.cached = False
         self.source_freq_data.time_data = MaskedTimeInOut(source=self.sources_mix, invalid_channels=[_ for _ in range(
-            self.mics.num_mics) if not _ == self.ref_mic]) # mask all channels except ref mic       
+            self.mics.num_mics) if not _ == ref_mic]) # mask all channels except ref mic       
         # set up the feature dict with methods to get the labels
         fidx = self._get_freq_indices()
         features = {  # (callable, arg1, arg2, ...)
