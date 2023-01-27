@@ -15,9 +15,11 @@ from functools import wraps
 from time import time
 
 import ray
-from numpy.random import default_rng
+from numpy.random import RandomState, default_rng
 from tqdm import tqdm
 from traits.api import Bool, Callable, Dict, Either, HasPrivateTraits, Int, List, Str, Trait, Tuple
+
+from acoupipe.sampler import BaseSampler
 
 
 # Without the use of this decorator factory (wraps), the name of the 
@@ -73,6 +75,9 @@ class BasePipeline(DataGenerator):
             self._setup_default_logger() # define logger formatting if not specified otherwise      
 
     #: a list with instances of :class:`~acoupipe.sampler.BaseSampler` derived classes
+    #: alternatively, the list can contain objects of type :class:`numpy.random._generator.Generator` or
+    #: :class:`numpy.random.RandomState` for control reasons
+    #: Further objects can be passed if they consist of a 'attr'`seed` attribute.
     sampler = List([],
         desc="a list with instances of BaseSampler derived classes")
     
@@ -148,13 +153,18 @@ class BasePipeline(DataGenerator):
 
     def _sample(self):
         """Invocation of the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
-        [s.sample() for s in self.sampler]
+        [s.sample() for s in self.sampler if isinstance(s,BaseSampler)]
     
     def _set_new_seed(self):
         """Re-seeds :class:`BaseSampler` instances specified in :attr:`sampler` list."""
         if self.random_seeds:
             for i in range(len(self.sampler)):
-                self.sampler[i].random_state = default_rng(self._seeds[i]) 
+                if isinstance(self.sampler[i],BaseSampler):
+                    self.sampler[i].random_state = default_rng(self._seeds[i]) 
+                elif isinstance(self.sampler[i], RandomState):
+                    self.sampler[i].seed(self._seeds[i])
+                else:
+                    self.sampler[i].seed = self._seeds[i]
         
     def _set_meta_features(self):
         """Adds a feature (running index and/or sampler seeds) to data dictionary provided by :meth:`get_data` generator."""

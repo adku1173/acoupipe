@@ -73,6 +73,7 @@ class Dataset2(Dataset1):
             startsample=1, 
             max_nsources = 10,
             min_nsources = 1,
+            df = 100,
             env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
@@ -81,6 +82,7 @@ class Dataset2(Dataset1):
             progress_bar=False,   
             sample_noise=False, 
             sample_spectra=False,
+            sample_wishart=True,
             config=None):  
         super().__init__(
                 split=split, 
@@ -104,7 +106,9 @@ class Dataset2(Dataset1):
         self.sample_spectra = sample_spectra
         self.sample_noise = sample_noise
         fftfreq = abs(np.fft.fftfreq(512, 1./self.fs)[:int(512/2+1)])[1:]          
-        self.freq_data = PowerSpectraAnalytic(frequencies=fftfreq)   
+        self.freq_data = PowerSpectraAnalytic(frequencies=fftfreq, df=df)   
+        if sample_wishart:
+            self.freq_data.mode = "wishart"
         self.random_var = {
         "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
         "p2_rvar" : rayleigh(5), 
@@ -153,12 +157,21 @@ class Dataset2(Dataset1):
         return Pipeline(sampler=sampler,features=features, prepare=self._prepare, progress_bar=self.progress_bar)
 
     def setup_sampler(self):
-        sampler = []
+        sampler = [self.freq_data]
+
         mic_sampler = MicGeomSampler(
             random_var= self.random_var["mic_rvar"],
             target=self.noisy_mics,
             ddir=np.array([[1.0], [1.0], [1.0]]))  
         sampler.append(mic_sampler)
+
+        self.loc_sampler = LocationSampler(
+            random_var=self.random_var["loc_rvar"],
+            nsources = self.max_nsources,
+            x_bounds=(self.grid.x_min, self.grid.x_max),
+            y_bounds=(self.grid.y_min, self.grid.y_max),
+            z_bounds=(self.grid.z_min, self.grid.z_max))
+        sampler.append(self.loc_sampler)
 
         if not self.sample_spectra:
             self.strength_sampler = CovSampler(
@@ -166,10 +179,11 @@ class Dataset2(Dataset1):
                 nsources = self.max_nsources,
                 scale_variance = True,
                 nfft = self.freq_data.fftfreq().shape[0])
-            
+            sampler.append(self.strength_sampler)
+
             if self.sample_noise:
                 self.noise_sampler = CovSampler(
-                    random_var = self.random_var['noise_rvar'],
+                    random_var = self.random_var["noise_rvar"],
                     nsources = self.mics.num_mics,
                     single_value = True,
                     nfft = self.freq_data.fftfreq().shape[0])
@@ -182,26 +196,17 @@ class Dataset2(Dataset1):
                 single_value = False,
                 single_spectra = False,
                 nfft = self.freq_data.fftfreq().shape[0])
+            sampler.append(self.strength_sampler)
 
             if self.sample_noise:
                 self.noise_sampler = SpectraSampler(
-                    random_var = self.random_var['noise_rvar'],
+                    random_var = self.random_var["noise_rvar"],
                     nsources = self.mics.num_mics,
                     single_value = True,
                     single_spectra = True,
                     nfft = self.freq_data.fftfreq().shape[0])
                 sampler.append(self.noise_sampler)
-
-        sampler.append(self.strength_sampler)
-
-        self.loc_sampler = LocationSampler(
-            random_var=self.random_var["loc_rvar"],
-            nsources = self.max_nsources,
-            x_bounds=(self.grid.x_min, self.grid.x_max),
-            y_bounds=(self.grid.y_min, self.grid.y_max),
-            z_bounds=(self.grid.z_min, self.grid.z_max))
-        sampler.append(self.loc_sampler)
-      
+     
         if not (self.max_nsources == self.min_nsources):  
             nsrc_sampler = NumericAttributeSampler(
                 random_var=self.random_var["nsrc_rvar"],
