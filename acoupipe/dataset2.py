@@ -81,11 +81,9 @@ class Dataset2(Dataset1):
             beamformer = DEFAULT_BEAMFORMER,
             cache_bf = False,
             cache_dir = "./datasets",         
-            progress_bar=False,   
             sample_noise=False, 
             sample_spectra=False,
-            sample_wishart=True,
-            config=None):  
+            sample_wishart=True):  
         super().__init__(
                 split=split, 
                 size=size, 
@@ -102,9 +100,7 @@ class Dataset2(Dataset1):
                 beamformer = beamformer,
                 cache_csm=False,
                 cache_bf=cache_bf,
-                cache_dir=cache_dir, 
-                progress_bar=progress_bar,
-                config=config)
+                cache_dir=cache_dir)
         # overwrite freq_data
         self.sample_spectra = sample_spectra
         self.sample_noise = sample_noise
@@ -157,7 +153,7 @@ class Dataset2(Dataset1):
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        return Pipeline(sampler=sampler,features=features, prepare=self._prepare, progress_bar=self.progress_bar)
+        return Pipeline(sampler=sampler,features=features, prepare=self._prepare)
 
     def setup_sampler(self):
         sampler = [self.freq_data]

@@ -1,7 +1,7 @@
 from copy import deepcopy
 from datetime import datetime
 from os import path
-
+from functools import partial
 import numpy as np
 import ray
 from acoular import (
@@ -54,9 +54,7 @@ class Dataset1:
             beamformer = DEFAULT_BEAMFORMER,
             cache_csm = False,
             cache_bf = False,
-            cache_dir = "./datasets",
-            progress_bar = False,
-            config=None):       
+            cache_dir = "./datasets"):       
         self.split = split
         self.size = size
         self.startsample = startsample
@@ -73,8 +71,6 @@ class Dataset1:
         self.cache_csm = cache_csm
         self.cache_bf = cache_bf
         self.cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
-        self.progress_bar = progress_bar
-        self.config = config
        # dependent attributes / objects
         self.ref_mic = np.argmin(np.linalg.norm((mics.mpos - mics.center[:,np.newaxis]),axis=0))
         self.steer = SteeringVector(
@@ -127,7 +123,7 @@ class Dataset1:
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        return Pipeline(sampler=self.setup_sampler(),features=features, progress_bar=self.progress_bar)
+        return Pipeline(sampler=self.setup_sampler(),features=features)
 
     def setup_sampler(self):
         # callable function to draw and assign sound pressure RMS values to the sources of the SourceMixer object
@@ -231,7 +227,7 @@ class Dataset1:
         
         return features
 
-    def generate(self, tasks=1, head=None, log=False):
+    def generate(self, tasks=1, progress_bar=True, head=None, log=False):
         # Ray Config
         if tasks > 1:
             parallel=True
@@ -246,6 +242,7 @@ class Dataset1:
 
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
+        pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, self.startsample,
                            self.size, self.split)
@@ -253,7 +250,7 @@ class Dataset1:
         for data in pipeline.get_data():
             yield data
 
-    def save_tfrecord(self, name, tasks=1, head=None, log=False):
+    def save_tfrecord(self, name, tasks=1, progress_bar=True, head=None, log=False):
         if not TF_FLAG:
             raise ImportError("save data to .tfrecord format requires TensorFlow!")
 
@@ -270,6 +267,7 @@ class Dataset1:
 
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
+        pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, self.startsample,
                            self.size, self.split)
@@ -287,7 +285,7 @@ class Dataset1:
         WriteTFRecord(name=name, source=pipeline,
                       encoder_funcs=encoder_dict).save()
 
-    def save_h5(self, name, tasks=1, head=None, log=False):
+    def save_h5(self, name, tasks=1, progress_bar=True, head=None, log=False):
         if tasks > 1:
             parallel=True
             ray.shutdown()
@@ -301,6 +299,7 @@ class Dataset1:
 
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
+        pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, self.startsample,
                            self.size, self.split)
@@ -354,7 +353,7 @@ class Dataset1:
 
 if TF_FLAG:
     import tensorflow as tf
-    def get_tf_dataset(self):
+    def get_tf_dataset(self, tasks=1, progress_bar=False, head=None, log=False): 
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
-        return tf.data.Dataset.from_generator(self.generate,output_signature=signature)                                   
+        return tf.data.Dataset.from_generator(partial(self.generate,tasks,progress_bar,head,log) ,output_signature=signature)                                   
     Dataset1.get_tf_dataset = get_tf_dataset

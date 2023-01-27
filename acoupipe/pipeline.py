@@ -17,7 +17,7 @@ from time import time
 import ray
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
-from traits.api import Bool, Callable, Dict, Either, HasPrivateTraits, Int, List, Str, Trait, Tuple
+from traits.api import Callable, Dict, Either, HasPrivateTraits, Int, List, Str, Trait, Tuple
 
 from acoupipe.sampler import BaseSampler
 
@@ -114,10 +114,6 @@ class BasePipeline(DataGenerator):
     logger = Trait(logging.getLogger(__name__),
         desc="Logger instance to log timing statistics")
 
-    #: whether a progress bar should be displayed in the terminal
-    progress_bar = Bool(True,
-        desc="whether a progress bar should be displayed in the terminal")
-
     def _setup_default_logger(self):
         """standard logging to stdout, stderr."""
         #print(f"setup default logger is called by {self}")
@@ -180,8 +176,13 @@ class BasePipeline(DataGenerator):
             self._seeds = list(map(next,seed_iter))
             self._set_new_seed()        
     
-    def get_data(self):
+    def get_data(self, progress_bar=True):
         """provides the extracted features, sampler seeds and indices.
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            if True, a progress bar is displayed, by default True
 
         Yields
         ------
@@ -196,7 +197,7 @@ class BasePipeline(DataGenerator):
             seed_iter = None
             nsamples = self.numsamples
         self._set_meta_features()
-        for _ in tqdm(range(nsamples),colour="#1f77b4", disable=(not self.progress_bar)):
+        for _ in tqdm(range(nsamples),colour="#1f77b4", disable=(not progress_bar)):
             self._update_meta_features(seed_iter)
             self._sample()
             if self.prepare:
@@ -258,7 +259,7 @@ class DistributedPipeline(BasePipeline):
             self.prepare()
         self._schedule(task_dict)
 
-    def get_data(self):
+    def get_data(self, progress_bar=True):
         """Provides the extracted features, sampler seeds and indices.
 
         The calculation of all data samples is performed in parallel and asynchronously.
@@ -266,6 +267,11 @@ class DistributedPipeline(BasePipeline):
         the output of this generator yields non-ordered features/data samples. 
         However, the exact order can be recovered via the "idx" item (or "seeds" item) 
         provided in the output dictionary. 
+
+        Parameters
+        ----------
+        progress_bar : bool, optional
+            if True, a progress bar is displayed, by default True
 
         Yields
         ------
@@ -279,7 +285,7 @@ class DistributedPipeline(BasePipeline):
         else:
             seed_iter = None
             nsamples = self.numsamples
-        progress_bar = tqdm(range(nsamples),colour="#1f77b4",disable=(not self.progress_bar))
+        progress_bar = tqdm(range(nsamples),colour="#1f77b4",disable=(not progress_bar))
         self._set_meta_features()
         task_dict = {}
         finished_tasks = 0
