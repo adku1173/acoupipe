@@ -45,19 +45,14 @@ class Dataset1:
             f=None, 
             num=0, 
             fs=40*343.,
-            startsample=1, 
             max_nsources = 10,
             min_nsources = 1,
             env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
-            beamformer = DEFAULT_BEAMFORMER,
-            cache_csm = False,
-            cache_bf = False,
-            cache_dir = "./datasets"):       
+            beamformer = DEFAULT_BEAMFORMER):       
         self.split = split
         self.size = size
-        self.startsample = startsample
         self.features = features
         self.f = f
         self.num = num
@@ -68,15 +63,12 @@ class Dataset1:
         self.mics = mics 
         self.grid = grid
         self.beamformer = beamformer
-        self.cache_csm = cache_csm
-        self.cache_bf = cache_bf
-        self.cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
        # dependent attributes / objects
         self.ref_mic = np.argmin(np.linalg.norm((mics.mpos - mics.center[:,np.newaxis]),axis=0))
         self.steer = SteeringVector(
             grid=self.grid, mics=self.mics, env=self.env, steer_type ="true level", ref = self.mics.mpos[:,self.ref_mic])
         self.freq_data = PowerSpectra(time_data=PointSource(signal=WNoiseGenerator(sample_freq=self.fs)),
-            block_size=128, overlap="50%", window="Hanning", precision="complex64", cached=self.cache_csm)
+            block_size=128, overlap="50%", window="Hanning", precision="complex64")
         # random variables
         self.random_var = {
             "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
@@ -116,8 +108,6 @@ class Dataset1:
             "loc": (lambda smix: np.array([s.loc for s in smix.sources], dtype=np.float32).T, self.sources_mix),
             "p2": (get_source_p2, self.sources_mix, self.source_freq_data, fidx, None),
         }
-        # add input features (csm, sourcemap)
-        features.update(self.setup_features())
         # set up pipeline
         if parallel:
             Pipeline = DistributedPipeline
@@ -176,7 +166,12 @@ class Dataset1:
         else:
             return [mic_sampling, src_sampling,rms_sampling, pos_sampling]
                             
-    def setup_features(self):
+    def setup_features(self, cache_bf, cache_csm, cache_dir):
+
+        # setup cache if necessary
+        cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
+        self.freq_data.cached = cache_csm
+
         features = {} # dict with feature functions for pipeline object
         self._feature_objects = []
         fidx = self._get_freq_indices()
@@ -189,7 +184,7 @@ class Dataset1:
             feature = CSMFeature(feature_name="csm",
                                  power_spectra=self.freq_data,
                                  fidx=fidx,
-                                 cache_dir=self.cache_dir
+                                 cache_dir=cache_dir
                                  )
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
@@ -198,20 +193,20 @@ class Dataset1:
             feature = NonRedundantCSMFeature(feature_name="csmtriu",
                                              power_spectra=self.freq_data,
                                              fidx=fidx,
-                                             cache_dir=self.cache_dir
+                                             cache_dir=cache_dir
                                              )
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
 
         if "sourcemap" in self.features:
-            self.beamformer.cached = self.cache_bf
+            self.beamformer.cached = cache_bf
             self.beamformer.freq_data = self.freq_data
             self.beamformer.steer = self.steer
             feature = SourceMapFeature(feature_name="sourcemap",
                                        beamformer=self.beamformer,
                                        f=self.f,
                                        num=self.num,
-                                       cache_dir=self.cache_dir
+                                       cache_dir=cache_dir
                                        )
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
@@ -220,56 +215,58 @@ class Dataset1:
             feature = EigmodeFeature(feature_name="eigmode",
                                     power_spectra=self.freq_data,
                                     fidx=fidx,
-                                    cache_dir=self.cache_dir
+                                    cache_dir=cache_dir
                                      )
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
         
         return features
 
-    def generate(self, tasks=1, progress_bar=True, head=None, log=False):
-        # Ray Config
+    def _setup_generation_process(self, tasks, head, log, logname):
+
         if tasks > 1:
             parallel=True
             ray.shutdown()
             ray.init(address=head)
         else:
             parallel = False
+
         # Logging for debugging and timing statistic purpose
         if log:
-            _handle_log(
-                fname=f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log")
+            _handle_log(".".join(logname.split(".")[:-1]) + ".log")
+        return parallel
 
+    def generate(self, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
+        
+        # Logging for debugging and timing statistic purpose
+        logname = f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log"
+        # setup process
+        parallel = self._setup_generation_process(tasks, head, log, logname)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
-        pipeline.progress_bar = progress_bar
+        # add input features (csm, sourcemap)
+        pipeline.features.update(
+            self.setup_features(cache_csm, cache_bf, cache_dir))
         if parallel: pipeline.numworkers=tasks
-        set_pipeline_seeds(pipeline, self.startsample,
+        set_pipeline_seeds(pipeline, startsample,
                            self.size, self.split)
         # yield the data
-        for data in pipeline.get_data():
+        for data in pipeline.get_data(progress_bar=progress_bar):
             yield data
 
-    def save_tfrecord(self, name, tasks=1, progress_bar=True, head=None, log=False):
+    def save_tfrecord(self, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
         if not TF_FLAG:
             raise ImportError("save data to .tfrecord format requires TensorFlow!")
-
-        # Ray Config
-        if tasks > 1:
-            parallel=True
-            ray.shutdown()
-            ray.init(address=head)
-        else:
-            parallel = False
-        # Logging for debugging and timing statistic purpose
-        if log:
-            _handle_log(".".join(name.split(".")[:-1]) + ".log")
-
+        # setup process
+        parallel = self._setup_generation_process(tasks, head, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
+        # add input features (csm, sourcemap)
+        pipeline.features.update(
+            self.setup_features(cache_csm, cache_bf, cache_dir))        
         pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
-        set_pipeline_seeds(pipeline, self.startsample,
+        set_pipeline_seeds(pipeline, startsample,
                            self.size, self.split)
         
         # create Writer pipeline
@@ -283,25 +280,19 @@ class Dataset1:
             feature.add_encoder_funcs(encoder_dict)
         # create TFRecordWriter to save pipeline output to TFRecord File
         WriteTFRecord(name=name, source=pipeline,
-                      encoder_funcs=encoder_dict).save()
+                      encoder_funcs=encoder_dict).save(progress_bar)
 
-    def save_h5(self, name, tasks=1, progress_bar=True, head=None, log=False):
-        if tasks > 1:
-            parallel=True
-            ray.shutdown()
-            ray.init(address=head)
-        else:
-            parallel = False
-
-        # Logging for debugging and timing statistic purpose
-        if log:
-            _handle_log(".".join(name.split(".")[:-1]) + ".log")
-
+    def save_h5(self, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
+        # setup process
+        parallel = self._setup_generation_process(tasks, head, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel)
+        # add input features (csm, sourcemap)
+        pipeline.features.update(
+            self.setup_features(cache_csm, cache_bf, cache_dir))
         pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
-        set_pipeline_seeds(pipeline, self.startsample,
+        set_pipeline_seeds(pipeline, startsample,
                            self.size, self.split)
 
         # create Writer pipeline
@@ -313,7 +304,7 @@ class Dataset1:
                        source=pipeline,
                        features=list(pipeline.features.keys()),
                        metadata=metadata.copy(),
-                       ).save()  # start the calculation
+                       ).save(progress_bar)  # start the calculation
 
 
     def get_feature_shapes(self):
@@ -353,7 +344,10 @@ class Dataset1:
 
 if TF_FLAG:
     import tensorflow as tf
-    def get_tf_dataset(self, tasks=1, progress_bar=False, head=None, log=False): 
+    def get_tf_dataset(self, startsample=1, tasks=1, progress_bar=False, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False): 
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
-        return tf.data.Dataset.from_generator(partial(self.generate,tasks,progress_bar,head,log) ,output_signature=signature)                                   
+        return tf.data.Dataset.from_generator(
+            partial(
+                self.generate,startsample,tasks,progress_bar,cache_csm,cache_bf,cache_dir,head,log
+                ) ,output_signature=signature)                                   
     Dataset1.get_tf_dataset = get_tf_dataset

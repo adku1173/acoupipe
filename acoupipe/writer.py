@@ -38,15 +38,20 @@ class BaseWriteDataset(DataGenerator):
         # write to File...
         pass
 
-    def get_data(self):
+    def get_data(self, progress_bar=True):
         """Python generator that saves source output data to file and passes the data to the next object.
+
+        Parameters
+        ----------
+        progress_bar : bool
+            If True, a progress bar is shown.
 
         Returns
         -------
         Dictionary containing a sample of the data set 
         {feature_name[key] : feature[values]}. 
         """
-        for data in self.source.get_data():
+        for data in self.source.get_data(progress_bar):
             # write to File...
             yield data
 
@@ -93,7 +98,7 @@ class WriteH5Dataset(BaseWriteDataset):
                 subf = self.features
             return subf
         
-    def save(self):
+    def save(self, progress_bar=True):
         """Saves the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format."""
         f5h = self.get_initialized_file()
         subf = self.get_filtered_features() 
@@ -117,7 +122,7 @@ class WriteH5Dataset(BaseWriteDataset):
             for key, value in self.metadata.items():
                 f5h.create_array(ac,key, value)
 
-    def get_data(self):
+    def get_data(self, progress_bar=True):
         """Python generator that saves the data passed by the source to a `*.h5` file and yields the data to the next object.
 
         Returns
@@ -128,7 +133,7 @@ class WriteH5Dataset(BaseWriteDataset):
         self.writeflag = True
         f5h = self.get_initialized_file()      
         subf = self.get_filtered_features() 
-        for data in self.source.get_data(): 
+        for data in self.source.get_data(progress_bar): 
             if not self.writeflag: return     
             #create a group for each Sample
             ac = f5h.create_new_group(str(data["idx"]))
@@ -194,19 +199,18 @@ if TF_FLAG:
         #: Trait to set specific options to the .tfrecord file.
         options = Trait(None,tf.io.TFRecordOptions)
 
-        def save(self):
+        def save(self, progress_bar=True):
             """Saves output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .tfrecord format."""
             with tf.io.TFRecordWriter(self.name,options=self.options) as writer:
-                for _i,features in enumerate(self.source.get_data()):
+                for _i,features in enumerate(self.source.get_data(progress_bar)):
                     encoded_features = {n:self.encoder_funcs[n](f) for (n,f) in features.items() if self.encoder_funcs.get(n)}
                     example = tf.train.Example(features=tf.train.Features(feature=encoded_features))
                     # Serialize to string and write on the file
                     writer.write(example.SerializeToString())
                     writer.flush()
                 writer.close()
-                
             
-        def get_data(self):
+        def get_data(self, progress_bar=True):
             """Python generator that saves the data passed by the source to a `*.tfrecord` file and yields the data.
 
             Returns
@@ -215,7 +219,7 @@ if TF_FLAG:
             {feature_name[key] : feature[values]}. 
             """
             with tf.io.TFRecordWriter(self.name,options=self.options) as writer:
-                for _i,features in enumerate(self.source.get_data()):
+                for _i,features in enumerate(self.source.get_data(progress_bar)):
                     encoded_features = {n:self.encoder_funcs[n](f) for (n,f) in features.items() if self.encoder_funcs.get(n)}
                     example = tf.train.Example(features=tf.train.Features(feature=encoded_features))
                     # Serialize to string and write on the file

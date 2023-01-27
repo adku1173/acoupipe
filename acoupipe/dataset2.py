@@ -71,7 +71,6 @@ class Dataset2(Dataset1):
             f=None, 
             num=0, 
             fs=51200,
-            startsample=1, 
             max_nsources = 10,
             min_nsources = 1,
             df = 100,
@@ -79,8 +78,6 @@ class Dataset2(Dataset1):
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
             beamformer = DEFAULT_BEAMFORMER,
-            cache_bf = False,
-            cache_dir = "./datasets",         
             sample_noise=False, 
             sample_spectra=False,
             sample_wishart=True):  
@@ -91,16 +88,12 @@ class Dataset2(Dataset1):
                 f=f, 
                 num=num, 
                 fs=fs, 
-                startsample=startsample, 
                 max_nsources=max_nsources, 
                 min_nsources=min_nsources,
                 env = env,
                 mics = mics,
                 grid = grid,
-                beamformer = beamformer,
-                cache_csm=False,
-                cache_bf=cache_bf,
-                cache_dir=cache_dir)
+                beamformer = beamformer)
         # overwrite freq_data
         self.sample_spectra = sample_spectra
         self.sample_noise = sample_noise
@@ -146,8 +139,6 @@ class Dataset2(Dataset1):
                 {"nvariances" : lambda: self.noise_sampler.variances.copy(),
                 "n2" : (calc_n2, self.freq_data, fidx),})
             
-        # add input features (csm, sourcemap, cleansc, ...)
-        features.update(self.setup_features())
         # set up pipeline
         if parallel:
             Pipeline = DistributedPipeline
