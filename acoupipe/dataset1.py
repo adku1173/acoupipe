@@ -33,7 +33,7 @@ VERSION = "ds1-v01"
 DEFAULT_ENV = Environment(c=343.)
 DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64_ap1.xml"))
 DEFAULT_GRID = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63)
-
+DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
 
 class Dataset1:
 
@@ -51,6 +51,7 @@ class Dataset1:
             env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
+            beamformer = DEFAULT_BEAMFORMER,
             cache_csm = False,
             cache_bf = False,
             cache_dir = "./datasets",
@@ -68,6 +69,7 @@ class Dataset1:
         self.env = env
         self.mics = mics 
         self.grid = grid
+        self.beamformer = beamformer
         self.cache_csm = cache_csm
         self.cache_bf = cache_bf
         self.cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
@@ -118,7 +120,7 @@ class Dataset1:
             "loc": (lambda smix: np.array([s.loc for s in smix.sources], dtype=np.float32).T, self.sources_mix),
             "p2": (get_source_p2, self.sources_mix, self.source_freq_data, fidx, None),
         }
-        # add input features (csm, sourcemap, cleansc, ...)
+        # add input features (csm, sourcemap)
         features.update(self.setup_features())
         # set up pipeline
         if parallel:
@@ -205,20 +207,12 @@ class Dataset1:
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
 
-        bb_args = {"r_diag": False, "cached": self.cache_bf, "precision": "float32"}                   
         if "sourcemap" in self.features:
+            self.beamformer.cached = self.cache_bf
+            self.beamformer.freq_data = self.freq_data
+            self.beamformer.steer = self.steer
             feature = SourceMapFeature(feature_name="sourcemap",
-                                       beamformer=BeamformerBase(freq_data=self.freq_data, steer=self.steer, **bb_args),
-                                       f=self.f,
-                                       num=self.num,
-                                       cache_dir=self.cache_dir
-                                       )
-            features = feature.add_feature_funcs(features)
-            self._feature_objects.append(feature)
-
-        if "cleansc" in self.features:
-            feature = SourceMapFeature(feature_name="cleansc",
-                                       beamformer=BeamformerCleansc(freq_data=self.freq_data, steer=self.steer, **bb_args),
+                                       beamformer=self.beamformer,
                                        f=self.f,
                                        num=self.num,
                                        cache_dir=self.cache_dir
@@ -235,18 +229,6 @@ class Dataset1:
             features = feature.add_feature_funcs(features)
             self._feature_objects.append(feature)
         
-        # if "ref_cleansc" in self.features:
-        #     feature = RefSourceMapFeature(feature_name="ref_cleansc",
-        #                                   beamformer=BeamformerCleansc(freq_data=self.freq_data, steer=self.steer, **bb_args),
-        #                                   sourcemixer=self.sources_mix,
-        #                                   powerspectra=ps_ref,
-        #                                   r=0.05,
-        #                                   f=self.f,
-        #                                   num=self.num,
-        #                                   cache_dir=self.cache_dir
-        #                                   )
-        #     features = feature.add_feature_funcs(features)
-        #     self._feature_objects.append(feature)
         return features
 
     def generate(self, tasks=1, head=None, log=False):
@@ -367,8 +349,6 @@ class Dataset1:
             features_shapes.update({"csmtriu" : (fdim,mdim,mdim,1)})
         if "sourcemap" in self.features:
             features_shapes.update({"sourcemap" : (fdim,) + self.grid.shape })
-        if "cleansc" in self.features:
-            features_shapes.update({"cleansc" : (fdim,) + self.grid.shape })
         return features_shapes
 
 

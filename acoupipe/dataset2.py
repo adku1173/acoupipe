@@ -2,7 +2,7 @@ from copy import deepcopy
 from os import path
 
 import numpy as np
-from acoular import Environment, ImportGrid, MicGeom, RectGrid3D
+from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D
 from scipy.stats import norm, poisson, rayleigh, uniform
 
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
@@ -17,6 +17,7 @@ ap = 1.4648587220804408 # default aperture size
 DEFAULT_ENV = Environment(c=343.)
 DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64.xml"))
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
+DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
 
 @complex_to_real
 def calc_p2(freq_data,fidx):
@@ -77,6 +78,7 @@ class Dataset2(Dataset1):
             env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
+            beamformer = DEFAULT_BEAMFORMER,
             cache_bf = False,
             cache_dir = "./datasets",         
             progress_bar=False,   
@@ -97,6 +99,7 @@ class Dataset2(Dataset1):
                 env = env,
                 mics = mics,
                 grid = grid,
+                beamformer = beamformer,
                 cache_csm=False,
                 cache_bf=cache_bf,
                 cache_dir=cache_dir, 
