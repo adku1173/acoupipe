@@ -16,6 +16,7 @@ from acoular import (
     SourceMixer,
     SteeringVector,
     WNoiseGenerator,
+    SamplesGenerator,
 )
 from scipy.stats import norm, poisson
 
@@ -35,12 +36,17 @@ DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)),
 DEFAULT_GRID = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")
 DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level")
+DEFAULT_FREQ_DATA = PowerSpectra(time_data=SamplesGenerator(sample_freq=40*343), block_size=128, overlap="50%", window="Hanning", precision="complex64")
+DEFAULT_RANDOM_VAR = {
+            "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
+            "loc_rvar" : norm(loc=0, scale=0.1688*DEFAULT_MICS.aperture),  # source positions
+            "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
+        }
 
 class Dataset1:
 
     def __init__(
             self, 
-            split, 
             size, 
             features, 
             f=None, 
@@ -48,12 +54,12 @@ class Dataset1:
             fs=40*343.,
             max_nsources = 10,
             min_nsources = 1,
-            env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
             steer = DEFAULT_STEER,
-            beamformer = DEFAULT_BEAMFORMER):       
-        self.split = split
+            beamformer = DEFAULT_BEAMFORMER,
+            freq_data = DEFAULT_FREQ_DATA,
+            random_var = DEFAULT_RANDOM_VAR):       
         self.size = size
         self.features = features
         self.f = f
@@ -61,20 +67,12 @@ class Dataset1:
         self.fs = fs
         self.max_nsources = max_nsources
         self.min_nsources = min_nsources
-        self.env = env
         self.mics = mics 
         self.grid = grid
         self.steer = steer
         self.beamformer = beamformer
-       # dependent attributes / objects
-        self.freq_data = PowerSpectra(time_data=PointSource(signal=WNoiseGenerator(sample_freq=self.fs)),
-            block_size=128, overlap="50%", window="Hanning", precision="complex64")
-        # random variables
-        self.random_var = {
-            "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
-            "loc_rvar" : norm(loc=0, scale=0.1688*self.mics.aperture),  # source positions
-            "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
-        }
+        self.freq_data = freq_data
+        self.random_var = random_var
 
     def _get_freq_indices(self):
         if self.f is not None:
@@ -97,7 +95,7 @@ class Dataset1:
         ]  # Signals
         self.point_sources = [
             PointSource(
-                signal=signal, mics=self.noisy_mics, env=self.env, loc=(0, 0, self.grid.z)) for signal in white_noise_signals
+                signal=signal, mics=self.noisy_mics, env=self.steer.env, loc=(0, 0, self.grid.z)) for signal in white_noise_signals
         ]  # Monopole sources emitting the white noise signals
         self.sources_mix = SourceMixer(sources=self.point_sources) # Source Mixer mixing the signals of all sources
         self.freq_data.time_data = self.sources_mix
@@ -239,7 +237,7 @@ class Dataset1:
             _handle_log(".".join(logname.split(".")[:-1]) + ".log")
         return parallel
 
-    def generate(self, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
+    def generate(self, split, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
         
         # Logging for debugging and timing statistic purpose
         logname = f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log"
@@ -252,12 +250,12 @@ class Dataset1:
             self.setup_features(cache_csm, cache_bf, cache_dir))
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
-                           self.size, self.split)
+                           self.size, split)
         # yield the data
         for data in pipeline.get_data(progress_bar=progress_bar):
             yield data
 
-    def save_tfrecord(self, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
+    def save_tfrecord(self, split, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
         if not TF_FLAG:
             raise ImportError("save data to .tfrecord format requires TensorFlow!")
         # setup process
@@ -270,7 +268,7 @@ class Dataset1:
         pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
-                           self.size, self.split)
+                           self.size, split)
         
         # create Writer pipeline
         encoder_dict = {
@@ -285,7 +283,7 @@ class Dataset1:
         WriteTFRecord(name=name, source=pipeline,
                       encoder_funcs=encoder_dict).save(progress_bar)
 
-    def save_h5(self, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
+    def save_h5(self, split, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False):
         # setup process
         parallel = self._setup_generation_process(tasks, head, log, name)
         # get dataset pipeline that yields the data
@@ -296,7 +294,7 @@ class Dataset1:
         pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
-                           self.size, self.split)
+                           self.size, split)
 
         # create Writer pipeline
         metadata = {}
@@ -347,10 +345,10 @@ class Dataset1:
 
 if TF_FLAG:
     import tensorflow as tf
-    def get_tf_dataset(self, startsample=1, tasks=1, progress_bar=False, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False): 
+    def get_tf_dataset(self, split, startsample=1, tasks=1, progress_bar=False, head=None, cache_csm=False, cache_bf=False, cache_dir=".", log=False): 
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
         return tf.data.Dataset.from_generator(
             partial(
-                self.generate,startsample,tasks,progress_bar,cache_csm,cache_bf,cache_dir,head,log
+                self.generate,split, startsample,tasks,progress_bar,cache_csm,cache_bf,cache_dir,head,log
                 ) ,output_signature=signature)                                   
     Dataset1.get_tf_dataset = get_tf_dataset

@@ -13,12 +13,23 @@ from .pipeline import BasePipeline, DistributedPipeline
 from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttributeSampler, SpectraSampler
 
 VERSION = "ds2-v01"
-ap = 1.4648587220804408 # default aperture size
 DEFAULT_ENV = Environment(c=343.)
 DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64.xml"))
+ap = DEFAULT_MICS.aperture
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
 DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level")
+DEFAULT_FREQ_DATA = PowerSpectraAnalytic(df=500)
+DEFAULT_RANDOM_VAR = {
+    "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
+    "p2_rvar" : rayleigh(5), 
+    "loc_rvar" : (
+        norm((DEFAULT_GRID.x_min + DEFAULT_GRID.x_max)/2,0.1688*(np.sqrt((DEFAULT_GRID.x_max-DEFAULT_GRID.x_min)**2))),
+        norm((DEFAULT_GRID.y_min + DEFAULT_GRID.y_max)/2,0.1688*(np.sqrt((DEFAULT_GRID.y_max-DEFAULT_GRID.y_min)**2))),
+        norm((DEFAULT_GRID.z_min + DEFAULT_GRID.z_max)/2,0*(np.sqrt((DEFAULT_GRID.z_max-DEFAULT_GRID.z_min)**2)))), 
+    "nsrc_rvar" : poisson(mu=3, loc=1),  # number of sources
+    "noise_rvar" : uniform(1e-06, 1e-03-1e-06) # variance of the noise
+    }
 
 @complex_to_real
 def calc_p2(freq_data,fidx):
@@ -66,40 +77,32 @@ class Dataset2(Dataset1):
 
     def __init__(
             self, 
-            env = DEFAULT_ENV,
             mics = DEFAULT_MICS,
             grid = DEFAULT_GRID,
             beamformer = DEFAULT_BEAMFORMER,
             steer = DEFAULT_STEER,
+            freq_data = DEFAULT_FREQ_DATA,
+            random_var = DEFAULT_RANDOM_VAR,
             sample_noise=False, 
             sample_spectra=False,
             sample_wishart=True,
-            df = 100,
+            nfft = 512,
             **kwargs):  
         super().__init__(
-                env = env,
                 mics = mics,
                 grid = grid,
                 beamformer = beamformer,
                 steer = steer,
+                freq_data = freq_data,
+                random_var = random_var,
                 **kwargs)
         # overwrite freq_data
         self.sample_spectra = sample_spectra
         self.sample_noise = sample_noise
-        fftfreq = abs(np.fft.fftfreq(512, 1./self.fs)[:int(512/2+1)])[1:]          
-        self.freq_data = PowerSpectraAnalytic(frequencies=fftfreq, df=df)   
+        self.sample_wishart = sample_wishart
+        self.nfft = nfft
         if sample_wishart:
             self.freq_data.mode = "wishart"
-        self.random_var = {
-        "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
-        "p2_rvar" : rayleigh(5), 
-        "loc_rvar" : (
-                    norm((self.grid.x_min + self.grid.x_max)/2,0.1688*(np.sqrt((self.grid.x_max-self.grid.x_min)**2))), #x
-                    norm((self.grid.y_min + self.grid.y_max)/2,0.1688*(np.sqrt((self.grid.y_max-self.grid.y_min)**2))), #y
-                    norm((self.grid.z_min + self.grid.z_max)/2,0*(np.sqrt((self.grid.z_max-self.grid.z_min)**2)))), #z
-        "nsrc_rvar" : poisson(mu=3, loc=1),  # number of sources
-        "noise_rvar" : uniform(1e-06, 1e-03-1e-06) # variance of the noise
-        }
 
     def _prepare(self):
         self.freq_data.steer.grid = ImportGrid(gpos_file=self.loc_sampler.target)
@@ -108,6 +111,7 @@ class Dataset2(Dataset1):
             self.freq_data.noise = self.noise_sampler.target.copy()
 
     def build_pipeline(self, parallel=False):
+        self.freq_data.frequencies=abs(np.fft.fftfreq(self.nfft, 1./self.fs)[:int(self.nfft/2+1)])[1:]   
         # sets the reference microphone to the one closest to the center
         ref_mic = np.argmin(np.linalg.norm((self.mics.mpos - self.mics.center[:,np.newaxis]),axis=0))
         self.steer.ref = self.mics.mpos[:,ref_mic]
@@ -160,7 +164,7 @@ class Dataset2(Dataset1):
                 random_var = self.random_var["p2_rvar"],
                 nsources = self.max_nsources,
                 scale_variance = True,
-                nfft = self.freq_data.fftfreq().shape[0])
+                nfft = self.nfft)
             sampler.append(self.strength_sampler)
 
             if self.sample_noise:
@@ -168,7 +172,7 @@ class Dataset2(Dataset1):
                     random_var = self.random_var["noise_rvar"],
                     nsources = self.mics.num_mics,
                     single_value = True,
-                    nfft = self.freq_data.fftfreq().shape[0])
+                    nfft = self.nfft)
                 sampler.append(self.noise_sampler)
         else:
             self.strength_sampler = SpectraSampler(
@@ -177,7 +181,7 @@ class Dataset2(Dataset1):
                 scale_variance = True,
                 single_value = False,
                 single_spectra = False,
-                nfft = self.freq_data.fftfreq().shape[0])
+                nfft = self.nfft)
             sampler.append(self.strength_sampler)
 
             if self.sample_noise:
@@ -186,7 +190,7 @@ class Dataset2(Dataset1):
                     nsources = self.mics.num_mics,
                     single_value = True,
                     single_spectra = True,
-                    nfft = self.freq_data.fftfreq().shape[0])
+                    nfft = self.nfft)
                 sampler.append(self.noise_sampler)
      
         if not (self.max_nsources == self.min_nsources):  
