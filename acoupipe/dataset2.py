@@ -86,7 +86,7 @@ class Dataset2(Dataset1):
             sample_noise=False, 
             sample_spectra=False,
             sample_wishart=True,
-            nfft = 512,
+            nfft = 256,
             **kwargs):  
         super().__init__(
                 mics = mics,
@@ -111,7 +111,7 @@ class Dataset2(Dataset1):
             self.freq_data.noise = self.noise_sampler.target.copy()
 
     def build_pipeline(self, parallel=False):
-        self.freq_data.frequencies=abs(np.fft.fftfreq(self.nfft, 1./self.fs)[:int(self.nfft/2+1)])[1:]   
+        self.freq_data.frequencies=abs(np.fft.fftfreq(self.nfft*2, 1./self.fs)[:int(self.nfft+1)])[1:]   
         # sets the reference microphone to the one closest to the center
         ref_mic = np.argmin(np.linalg.norm((self.mics.mpos - self.mics.center[:,np.newaxis]),axis=0))
         self.steer.ref = self.mics.mpos[:,ref_mic]
