@@ -77,8 +77,6 @@ class Dataset2(Dataset1):
 
     def __init__(
             self, 
-            mics = DEFAULT_MICS,
-            grid = DEFAULT_GRID,
             beamformer = DEFAULT_BEAMFORMER,
             steer = DEFAULT_STEER,
             freq_data = DEFAULT_FREQ_DATA,
@@ -89,14 +87,11 @@ class Dataset2(Dataset1):
             nfft = 256,
             **kwargs):  
         super().__init__(
-                mics = mics,
-                grid = grid,
                 beamformer = beamformer,
                 steer = steer,
                 freq_data = freq_data,
                 random_var = random_var,
                 **kwargs)
-        # overwrite freq_data
         self.sample_spectra = sample_spectra
         self.sample_noise = sample_noise
         self.sample_wishart = sample_wishart
@@ -110,13 +105,13 @@ class Dataset2(Dataset1):
         if self.sample_noise:
             self.freq_data.noise = self.noise_sampler.target.copy()
 
-    def build_pipeline(self, parallel=False):
+    def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
         self.freq_data.frequencies=abs(np.fft.fftfreq(self.nfft*2, 1./self.fs)[:int(self.nfft+1)])[1:]   
         # sets the reference microphone to the one closest to the center
-        ref_mic = np.argmin(np.linalg.norm((self.mics.mpos - self.mics.center[:,np.newaxis]),axis=0))
-        self.steer.ref = self.mics.mpos[:,ref_mic]
+        ref_mic = np.argmin(np.linalg.norm((self.steer.mics.mpos - self.steer.mics.center[:,np.newaxis]),axis=0))
+        self.steer.ref = self.steer.mics.mpos[:,ref_mic]
         # create copy for noisy positions
-        self.noisy_mics = deepcopy(self.mics) # Microphone geometry with positional noise
+        self.noisy_mics = deepcopy(self.steer.mics) # Microphone geometry with positional noise
         steer_src = deepcopy(self.steer)
         steer_src.mics = self.noisy_mics
         steer_src.ref = self.noisy_mics.mpos[:, ref_mic] #TODO: check if this is correct when sampled!
@@ -134,7 +129,8 @@ class Dataset2(Dataset1):
             features.update(
                 {"nvariances" : lambda: self.noise_sampler.variances.copy(),
                 "n2" : (calc_n2, self.freq_data, fidx),})
-            
+        features.update(
+            self.setup_input_features(cache_csm, cache_bf, cache_dir))          
         # set up pipeline
         if parallel:
             Pipeline = DistributedPipeline
@@ -154,9 +150,9 @@ class Dataset2(Dataset1):
         self.loc_sampler = LocationSampler(
             random_var=self.random_var["loc_rvar"],
             nsources = self.max_nsources,
-            x_bounds=(self.grid.x_min, self.grid.x_max),
-            y_bounds=(self.grid.y_min, self.grid.y_max),
-            z_bounds=(self.grid.z_min, self.grid.z_max))
+            x_bounds=(self.steer.grid.x_min, self.steer.grid.x_max),
+            y_bounds=(self.steer.grid.y_min, self.steer.grid.y_max),
+            z_bounds=(self.steer.grid.z_min, self.steer.grid.z_max))
         sampler.append(self.loc_sampler)
 
         if not self.sample_spectra:
@@ -170,7 +166,7 @@ class Dataset2(Dataset1):
             if self.sample_noise:
                 self.noise_sampler = CovSampler(
                     random_var = self.random_var["noise_rvar"],
-                    nsources = self.mics.num_mics,
+                    nsources = self.steer.mics.num_mics,
                     single_value = True,
                     nfft = self.nfft)
                 sampler.append(self.noise_sampler)
@@ -187,7 +183,7 @@ class Dataset2(Dataset1):
             if self.sample_noise:
                 self.noise_sampler = SpectraSampler(
                     random_var = self.random_var["noise_rvar"],
-                    nsources = self.mics.num_mics,
+                    nsources = self.steer.mics.num_mics,
                     single_value = True,
                     single_spectra = True,
                     nfft = self.nfft)

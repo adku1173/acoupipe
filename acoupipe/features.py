@@ -5,6 +5,7 @@ if TF_FLAG:
     from .writer import float_list_feature
 from .helper import get_frequency_index_range, complex_to_real
 from numpy import zeros, array, float32, real, imag, triu_indices, newaxis
+from numpy.linalg import eigh
 import numba
 import warnings
 #from .sbl import SBL, Options
@@ -556,10 +557,11 @@ class EigmodeFeature(CSMFeature):
         numba.set_num_threads(self.num_threads)
         if self.cache_dir:
             config.cache_dir = self.cache_dir
-        eigmodes = self.power_spectra.eva[:,newaxis,:]*self.power_spectra.eve[:]
+        csm = self.power_spectra.csm[:]
         if self.fidx:
-            eigmodes = array([eigmodes[indices[0]:indices[1]].sum(0) for indices in self.fidx],dtype=complex)
-        return eigmodes
+            csm = array([csm[indices[0]:indices[1]].sum(0) for indices in self.fidx],dtype=complex)           
+        eva, eve = eigh(csm)
+        return eva[:,newaxis,:]*eve[:]
 
 
 # class RefSBL(SourceMapFeature):

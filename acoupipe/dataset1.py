@@ -54,8 +54,6 @@ class Dataset1:
             fs=40*343.,
             max_nsources = 10,
             min_nsources = 1,
-            mics = DEFAULT_MICS,
-            grid = DEFAULT_GRID,
             steer = DEFAULT_STEER,
             beamformer = DEFAULT_BEAMFORMER,
             freq_data = DEFAULT_FREQ_DATA,
@@ -67,8 +65,6 @@ class Dataset1:
         self.fs = fs
         self.max_nsources = max_nsources
         self.min_nsources = min_nsources
-        self.mics = mics 
-        self.grid = grid
         self.steer = steer
         self.beamformer = beamformer
         self.freq_data = freq_data
@@ -84,31 +80,33 @@ class Dataset1:
             fidx = None
         return fidx
 
-    def build_pipeline(self, parallel=False):
+    def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
         # sets the reference microphone
-        ref_mic = np.argmin(np.linalg.norm((self.mics.mpos - self.mics.center[:,np.newaxis]),axis=0))
-        self.steer.ref = self.mics.mpos[:,ref_mic]
+        ref_mic = np.argmin(np.linalg.norm((self.steer.mics.mpos - self.steer.mics.center[:,np.newaxis]),axis=0))
+        self.steer.ref = self.steer.mics.mpos[:,ref_mic]
         # create copy for noisy positions
-        self.noisy_mics = deepcopy(self.mics) # Microphone geometry with positional noise
+        self.noisy_mics = deepcopy(self.steer.mics) # Microphone geometry with positional noise
         white_noise_signals = [ # create source signal array
             WNoiseGenerator(sample_freq=self.fs, seed=i+1, numsamples=5*self.fs) for i in range(self.max_nsources)
         ]  # Signals
         self.point_sources = [
             PointSource(
-                signal=signal, mics=self.noisy_mics, env=self.steer.env, loc=(0, 0, self.grid.z)) for signal in white_noise_signals
+                signal=signal, mics=self.noisy_mics, env=self.steer.env, loc=(0, 0, self.steer.grid.z)) for signal in white_noise_signals
         ]  # Monopole sources emitting the white noise signals
         self.sources_mix = SourceMixer(sources=self.point_sources) # Source Mixer mixing the signals of all sources
         self.freq_data.time_data = self.sources_mix
         self.source_freq_data = deepcopy(self.freq_data) # will be used to calculate the p2 value at the reference microphone 
         self.source_freq_data.cached = False
         self.source_freq_data.time_data = MaskedTimeInOut(source=self.sources_mix, invalid_channels=[_ for _ in range(
-            self.mics.num_mics) if not _ == ref_mic]) # mask all channels except ref mic       
+            self.steer.mics.num_mics) if not _ == ref_mic]) # mask all channels except ref mic       
         # set up the feature dict with methods to get the labels
         fidx = self._get_freq_indices()
         features = {  # (callable, arg1, arg2, ...)
             "loc": (lambda smix: np.array([s.loc for s in smix.sources], dtype=np.float32).T, self.sources_mix),
             "p2": (get_source_p2, self.sources_mix, self.source_freq_data, fidx, None),
         }
+        features.update(
+            self.setup_input_features(cache_csm, cache_bf, cache_dir))
         # set up pipeline
         if parallel:
             Pipeline = DistributedPipeline
@@ -139,8 +137,8 @@ class Dataset1:
             # ldir: 1.0 along first two dimensions -> bivariate sampling
             ldir=np.array([[1.0], [1.0], [0.0]]),
             # only allow values in the observation area
-            x_bounds=(self.grid.x_min, self.grid.x_max),
-            y_bounds=(self.grid.y_min, self.grid.y_max),
+            x_bounds=(self.steer.grid.x_min, self.steer.grid.x_max),
+            y_bounds=(self.steer.grid.y_min, self.steer.grid.y_max),
         )
 
         src_sampling = SourceSetSampler(
@@ -167,7 +165,7 @@ class Dataset1:
         else:
             return [mic_sampling, src_sampling,rms_sampling, pos_sampling]
                             
-    def setup_features(self, cache_bf, cache_csm, cache_dir):
+    def setup_input_features(self, cache_bf, cache_csm, cache_dir):
 
         # setup cache if necessary
         cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
@@ -244,10 +242,7 @@ class Dataset1:
         # setup process
         parallel = self._setup_generation_process(tasks, head, log, logname)
         # get dataset pipeline that yields the data
-        pipeline = self.build_pipeline(parallel)
-        # add input features (csm, sourcemap)
-        pipeline.features.update(
-            self.setup_features(cache_csm, cache_bf, cache_dir))
+        pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
                            self.size, split)
@@ -261,10 +256,7 @@ class Dataset1:
         # setup process
         parallel = self._setup_generation_process(tasks, head, log, name)
         # get dataset pipeline that yields the data
-        pipeline = self.build_pipeline(parallel)
-        # add input features (csm, sourcemap)
-        pipeline.features.update(
-            self.setup_features(cache_csm, cache_bf, cache_dir))        
+        pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
@@ -287,10 +279,7 @@ class Dataset1:
         # setup process
         parallel = self._setup_generation_process(tasks, head, log, name)
         # get dataset pipeline that yields the data
-        pipeline = self.build_pipeline(parallel)
-        # add input features (csm, sourcemap)
-        pipeline.features.update(
-            self.setup_features(cache_csm, cache_bf, cache_dir))
+        pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
@@ -321,13 +310,13 @@ class Dataset1:
         else:
             ndim = None
         # number of microphones
-        mdim = self.mics.num_mics
+        mdim = self.steer.mics.num_mics
         features_shapes = {
             "idx" : (),
             "seeds" : (len(self.build_pipeline().sampler),),# TODO: this is not good...
             "loc" : (3,ndim),    
         }
-        #gdim = self.grid.shape
+        #gdim = self.steer.grid.shape
         if type(self).__name__ == "Dataset1":
             features_shapes.update({"p2" : (fdim,ndim)})
         elif type(self).__name__ == "Dataset2":
@@ -339,7 +328,7 @@ class Dataset1:
         if "csmtriu" in self.features:
             features_shapes.update({"csmtriu" : (fdim,mdim,mdim,1)})
         if "sourcemap" in self.features:
-            features_shapes.update({"sourcemap" : (fdim,) + self.grid.shape })
+            features_shapes.update({"sourcemap" : (fdim,) + self.steer.grid.shape })
         return features_shapes
 
 

@@ -3,8 +3,8 @@ from acoular import PowerSpectraImport, SteeringVector
 from numpy import diag_indices, dot, r_, tril_indices, zeros
 from numpy.random import RandomState
 from scipy.linalg import cholesky
-from traits.api import CArray, Either, Instance, Int, Property, property_depends_on
-
+from traits.api import CArray, Either, Instance, Int, Property, property_depends_on, cached_property
+from acoular.internal import digest
 
 class PowerSpectraAnalytic(PowerSpectraImport):
 
@@ -37,6 +37,16 @@ class PowerSpectraAnalytic(PowerSpectraImport):
 
     _noise_wishart = CArray(shape=(None,None,None), dtype=complex, 
         desc="noise covariance matrix sampled from the wishart distribution")
+  
+    # internal identifier
+    digest = Property( 
+        depends_on = ['_csmsum', 
+            ], 
+        )
+
+    @cached_property
+    def _get_digest( self ):
+        return digest( self )      
 
     def _validate_freq_data ( self ):
         if self.frequencies is None:
