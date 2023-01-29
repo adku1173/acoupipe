@@ -15,7 +15,7 @@ from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttribu
 VERSION = "ds2-v01"
 DEFAULT_ENV = Environment(c=343.)
 #DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64.xml"))
-DEFAULT_MICS = MicGeom(from_file=path.join("xml", "tub_vogel64.xml"))
+DEFAULT_MICS = MicGeom(from_file=path.join(".","xml", "tub_vogel64.xml"))
 ap = DEFAULT_MICS.aperture
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
