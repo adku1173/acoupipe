@@ -5,6 +5,7 @@ import numpy as np
 from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D, SteeringVector
 from scipy.stats import norm, poisson, rayleigh, uniform
 
+from acoupipe import __file__ as acoupipe_path
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
 
 from .dataset1 import Dataset1
@@ -15,7 +16,7 @@ from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttribu
 VERSION = "ds2-v01"
 DEFAULT_ENV = Environment(c=343.)
 #DEFAULT_MICS = MicGeom(from_file=path.join(path.dirname(path.abspath(__file__)), "xml", "tub_vogel64.xml"))
-DEFAULT_MICS = MicGeom(from_file=path.join(".","xml", "tub_vogel64.xml"))
+DEFAULT_MICS = MicGeom(from_file=path.join(path.split(acoupipe_path)[0], "xml", "tub_vogel64.xml"))
 ap = DEFAULT_MICS.aperture
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   

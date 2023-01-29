@@ -30,9 +30,11 @@ from .writer import WriteH5Dataset
 if TF_FLAG:
     from .writer import WriteTFRecord, float_list_feature, int64_feature, int_list_feature
 
+from acoupipe import __file__ as acoupipe_path
+
 VERSION = "ds1-v01"
 DEFAULT_ENV = Environment(c=343.)
-DEFAULT_MICS = MicGeom(from_file=path.join(".", "xml", "tub_vogel64_ap1.xml"))
+DEFAULT_MICS = MicGeom(from_file=path.join(path.split(acoupipe_path)[0], "xml", "tub_vogel64_ap1.xml"))
 DEFAULT_GRID = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")
 DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level")
