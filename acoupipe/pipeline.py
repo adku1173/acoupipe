@@ -303,6 +303,7 @@ class DistributedPipeline(BasePipeline):
                     raise exception
                 times[-1] = time() # add getter time
                 data["idx"] = task_dict.pop(id)
+                #del id
                 self.logger.info("id %i on pid %i: finished task." %(data["idx"],pid))
                 self._log_execution_time(data["idx"], times, pid)
                 if (nsamples - self._idx) > 0: # directly _schedule next task
