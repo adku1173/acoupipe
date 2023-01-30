@@ -17,7 +17,7 @@ from time import time
 import ray
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
-from traits.api import Callable, Dict, Either, HasPrivateTraits, Int, List, Str, Trait, Tuple
+from traits.api import Callable, Either, HasPrivateTraits, Int, List, Trait, Tuple
 
 from acoupipe.sampler import BaseSampler
 
@@ -39,13 +39,6 @@ def log_execution_time(f):
         (self._idx,end-start))
         return result
     return wrap
-
-def _extract_feature(f):
-    """evaluate feature function with optional arguments."""
-    if callable(f): 
-        return f()
-    elif type(f) == tuple:
-        return f[0](*list(f[1:]))
 
 
 class DataGenerator(HasPrivateTraits):
@@ -88,16 +81,14 @@ class BasePipeline(DataGenerator):
     sampler = List([],
         desc="a list with instances of BaseSampler derived classes")
     
-    #: dictionary consisting of feature names (key) and their extraction functions as callable (value)
-    #: one can either pass a callable (e.g. `features = {"print" : lambda: print("extract..")}`) or a tuple containing the 
-    #: callable and their arguments (e.g.: `features = {"print" : (lambda: print(x), "extract..")}`).
-    features = Dict(key_trait=Str(""), 
-        value_trait=Either(Callable, Tuple ),
-        desc="dictionary consisting of feature names (key) and their extraction functions as callable (value)")
-
-    #: an optional callable function that is executed after feature sampling and before feature extraction
-    prepare = Callable(desc="optional callable function used to prepare the feature extraction process")
-    
+    #: feature method for the extraction/generation of features and labels.
+    #: one can either pass a callable (e.g. `features = `lambda sampler: {"feature_name" : sampeler.target}`). 
+    #: Note that the callable must accept a list of :class:`acoupipe.sampler.BaseSampler` objects as first argument. 
+    #: Alternatively, if further arguments are necessary, one can pass a tuple containing the 
+    #: callable and their arguments (e.g.: `features = (some_func, arg1, arg2, ...)}`).
+    features = Either(Callable, Tuple,
+        desc="feature method for the extraction/generation of features and labels")
+   
     #: a list of `range(seeds)` associated with sampler objects in :attr:`sampler`. 
     #: A new seed will be collected from each range object during an evaluation of the :meth:`get_data()` generator.
     #: This seed is used to initialize an instance of :class:`numpy.random._generator.Generator` which is passed to 
@@ -144,38 +135,25 @@ class BasePipeline(DataGenerator):
     @log_execution_time   
     def _extract_features(self):
         """calculation of all features."""
-        # print(os.getpid())
-        return {n:_extract_feature(f) for (n,f) in self.features.items()}
-
-    def _sample(self):
-        """Invocation of the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
-        [s.sample() for s in self.sampler if isinstance(s,BaseSampler)]
-    
-    def _set_new_seed(self):
-        """Re-seeds :class:`BaseSampler` instances specified in :attr:`sampler` list."""
-        if self.random_seeds:
-            for i in range(len(self.sampler)):
-                if isinstance(self.sampler[i],BaseSampler):
-                    self.sampler[i].random_state = default_rng(self._seeds[i]) 
-                elif isinstance(self.sampler[i], RandomState):
-                    self.sampler[i].seed(self._seeds[i])
-                else:
-                    self.sampler[i].seed = self._seeds[i]
-        
-    def _set_meta_features(self):
-        """Adds a feature (running index and/or sampler seeds) to data dictionary provided by :meth:`get_data` generator."""
-        self._idx = 0
-        self.features["idx"] = lambda: self._idx # needs to be callable
-        if self.random_seeds:
-            self.features["seeds"] = lambda: list(self._seeds)
-
-    def _update_meta_features(self, seed_iter=None):
+        if callable(self.features):
+            return self.features(self.sampler)
+        else:
+            return self.features[0](self.sampler, *list(self.features[1:]))
+           
+    def _update_sample_index_and_seeds(self, seed_iter=None):
         """updates seeds and running index of associated with the current data sample of the dataset."""
         self._idx += 1
         if self.random_seeds: 
             self._seeds = list(map(next,seed_iter))
-            self._set_new_seed()        
-    
+            if self.random_seeds:
+                for i in range(len(self.sampler)):
+                    if isinstance(self.sampler[i],BaseSampler):
+                        self.sampler[i].random_state = default_rng(self._seeds[i]) 
+                    elif isinstance(self.sampler[i], RandomState):
+                        self.sampler[i].seed(self._seeds[i])
+                    else:
+                        self.sampler[i].seed = self._seeds[i]
+                
     def get_data(self, progress_bar=True):
         """provides the extracted features, sampler seeds and indices.
 
@@ -196,13 +174,12 @@ class BasePipeline(DataGenerator):
         else:
             seed_iter = None
             nsamples = self.numsamples
-        self._set_meta_features()
+        self._idx = 0
         for _ in tqdm(range(nsamples),colour="#1f77b4", disable=(not progress_bar)):
-            self._update_meta_features(seed_iter)
-            self._sample()
-            if self.prepare:
-                self.prepare()
-            yield self._extract_features()
+            self._update_sample_index_and_seeds(seed_iter)
+            [s.sample() for s in self.sampler]
+            data = {"idx" : self._idx, "seeds": list(self._seeds)}
+            yield data.update(self._extract_features())
 
 
 # logging timing statistics has to be performed differently in this class, since we don't want the logger
@@ -210,12 +187,37 @@ class BasePipeline(DataGenerator):
 # example for logging during multiprocessing: https://fanchenbao.medium.com/python3-logging-with-multiprocessing-f51f460b8778
 
 @ray.remote # pseudo calc function that should run asynchronously
-def _extract_features(features, times):
-    """remote calculation of all features."""
+def _extract_features(sampler_ref, feature_func, times, *args):
+    """Remote calculation of all features."""
     times[1] = time()
-    data = {n:_extract_feature(f) for (n,f) in features.items()} 
+    data = feature_func(sampler_ref, *args)
     times[2] = time()
     return (data, times, os.getpid())
+
+
+@ray.remote
+class SamplerActor(object):
+    """Actor class to sample data."""
+
+    def __init__(self, sampler):
+        self.sampler = sampler
+
+    def sample(self, seeds):
+        """Invocation of the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
+        self.set_new_seed(seeds)
+        [s.sample() for s in self.sampler]
+        return self.sampler
+
+    def set_new_seed(self, seeds=None):
+        """Re-seeds :class:`BaseSampler` instances specified in :attr:`sampler` list."""
+        if seeds:
+            for i in range(len(self.sampler)):
+                if isinstance(self.sampler[i],BaseSampler):
+                    self.sampler[i].random_state = RandomState(seeds[i])#default_rng(seeds[i]) 
+                elif isinstance(self.sampler[i], RandomState):
+                    self.sampler[i].seed(seeds[i])
+                else:
+                    self.sampler[i].seed = seeds[i]
 
 class DistributedPipeline(BasePipeline):
     """Class to calculate data (extract features) in parallel to build large datasets.
@@ -232,11 +234,14 @@ class DistributedPipeline(BasePipeline):
     #: each worker is associated with a stateless task.
     numworkers = Int(1,
         desc="number of tasks to be performed in parallel (usually number of CPUs)")
-    
-    def _schedule(self,task_dict):
+
+    def _schedule(self, sampler_ref, task_dict):
         """schedules the calculation of a new data sample and adds the sample index and start time to a task dictionary."""
         times = [time(), None, None, None] # (schedule timestamp, execution timestamp, stop timestamp, get timestamp)
-        result_id = _extract_features.remote(self.features, times) # calculation is started in new remote task 
+        if callable(self.features): 
+            result_id = _extract_features.remote(sampler_ref, self.features, times) # calculation is started in new remote task 
+        else:
+            result_id = _extract_features.remote(sampler_ref, self.features[0], times, *list(self.features[1:]))  
         task_dict[result_id] = {"idx" : self._idx, "seeds": list(self._seeds)}  # add sample index, and seeds)
 
     def _log_execution_time(self,task_index,times,pid):
@@ -251,13 +256,17 @@ class DistributedPipeline(BasePipeline):
         # self.logger.info("%i args:[%r] took: %2.4f sec" % \
         # (f.__name__,args,end-start))
 
-    def _prepare_and_start_task(self,task_dict,seed_iter):
-        self._update_meta_features(seed_iter)
-        self._sample()
+    def _sample_and_schedule_task(self,sampler_actor,task_dict,seed_iter):
+        self._update_sample_index_and_seeds(seed_iter)
+        sampler_ref = sampler_actor.sample.remote(self._seeds)
         self.logger.info("id %i: start task." %self._idx)
-        if self.prepare:
-            self.prepare()
-        self._schedule(task_dict)
+        self._schedule(sampler_ref,task_dict)
+
+    def _update_sample_index_and_seeds(self, seed_iter=None):
+        """updates seeds and running index of associated with the current data sample of the dataset."""
+        self._idx += 1
+        if self.random_seeds: 
+            self._seeds = list(map(next,seed_iter))
 
     def get_data(self, progress_bar=True):
         """Provides the extracted features, sampler seeds and indices.
@@ -278,6 +287,7 @@ class DistributedPipeline(BasePipeline):
         dict
             a sample of the dataset containing the extracted feature data, seeds, and index
         """
+        sampler_actors = [SamplerActor.remote(sampler=self.sampler) for _ in range(self.numworkers)]
         if self.random_seeds: 
             self._validate_random_seeds()
             seed_iter = list(map(iter,self.random_seeds))
@@ -286,11 +296,12 @@ class DistributedPipeline(BasePipeline):
             seed_iter = None
             nsamples = self.numsamples
         progress_bar = tqdm(range(nsamples),colour="#1f77b4",disable=(not progress_bar))
-        #self._set_meta_features()
         task_dict = {}
         finished_tasks = 0
+        actor_idx = 0
         for _ in range(min(nsamples,self.numworkers)): 
-            self._prepare_and_start_task(task_dict,seed_iter)
+            self._sample_and_schedule_task(sampler_actors[actor_idx],task_dict,seed_iter)
+            actor_idx = (actor_idx + 1) % self.numworkers
         while finished_tasks < nsamples: 
             done_ids, pending_ids = ray.wait(list(task_dict.keys()))
             if done_ids:
@@ -307,6 +318,7 @@ class DistributedPipeline(BasePipeline):
                 self.logger.info("id %i on pid %i: finished task." %(data["idx"],pid))
                 self._log_execution_time(data["idx"], times, pid)
                 if (nsamples - self._idx) > 0: # directly _schedule next task
-                    self._prepare_and_start_task(task_dict,seed_iter)
+                    self._sample_and_schedule_task(sampler_actors[0],task_dict,seed_iter)
+                    actor_idx = (actor_idx + 1) % self.numworkers
                 progress_bar.update()
                 yield data
