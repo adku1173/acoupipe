@@ -40,6 +40,13 @@ def log_execution_time(f):
         return result
     return wrap
 
+def _extract_feature(f):
+    """evaluate feature function with optional arguments."""
+    if callable(f): 
+        return f()
+    elif type(f) == tuple:
+        return f[0](*list(f[1:]))
+
 
 class DataGenerator(HasPrivateTraits):
     """Abstract base class that serves as a data generator.
@@ -134,18 +141,11 @@ class BasePipeline(DataGenerator):
                 raise ValueError("Length of range objects in random_seeds"\
                                  "list must be equal!")
 
-    def _extract_feature(self,f):
-        """evaluate feature function with optional arguments."""
-        if callable(f): 
-            return f()
-        elif type(f) == tuple:
-            return f[0](*list(f[1:]))
-
     @log_execution_time   
     def _extract_features(self):
         """calculation of all features."""
         # print(os.getpid())
-        return {n:self._extract_feature(f) for (n,f) in self.features.items()}
+        return {n:_extract_feature(f) for (n,f) in self.features.items()}
 
     def _sample(self):
         """Invocation of the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
@@ -209,6 +209,14 @@ class BasePipeline(DataGenerator):
 # to get pickled!
 # example for logging during multiprocessing: https://fanchenbao.medium.com/python3-logging-with-multiprocessing-f51f460b8778
 
+@ray.remote # pseudo calc function that should run asynchronously
+def _extract_features(features, times):
+    """remote calculation of all features."""
+    times[1] = time()
+    data = {n:_extract_feature(f) for (n,f) in features.items()} 
+    times[2] = time()
+    return (data, times, os.getpid())
+
 class DistributedPipeline(BasePipeline):
     """Class to calculate data (extract features) in parallel to build large datasets.
 
@@ -225,19 +233,11 @@ class DistributedPipeline(BasePipeline):
     numworkers = Int(1,
         desc="number of tasks to be performed in parallel (usually number of CPUs)")
     
-    @ray.remote # pseudo calc function that should run asynchronously
-    def _extract_features(self, times):
-        """remote calculation of all features."""
-        times[1] = time()
-        data = {n:self._extract_feature(f) for (n,f) in self.features.items()} 
-        times[2] = time()
-        return (data, times, os.getpid())
-
     def _schedule(self,task_dict):
         """schedules the calculation of a new data sample and adds the sample index and start time to a task dictionary."""
         times = [time(), None, None, None] # (schedule timestamp, execution timestamp, stop timestamp, get timestamp)
-        result_id = self._extract_features.remote(self, times) # calculation is started in new remote task 
-        task_dict[result_id] = self._idx # add sample index 
+        result_id = _extract_features.remote(self.features, times) # calculation is started in new remote task 
+        task_dict[result_id] = {"idx" : self._idx, "seeds": list(self._seeds)}  # add sample index, and seeds)
 
     def _log_execution_time(self,task_index,times,pid):
         self.logger.info("id %i on pid %i: scheduling task took: %2.32f sec" % \
@@ -286,7 +286,7 @@ class DistributedPipeline(BasePipeline):
             seed_iter = None
             nsamples = self.numsamples
         progress_bar = tqdm(range(nsamples),colour="#1f77b4",disable=(not progress_bar))
-        self._set_meta_features()
+        #self._set_meta_features()
         task_dict = {}
         finished_tasks = 0
         for _ in range(min(nsamples,self.numworkers)): 
@@ -302,7 +302,7 @@ class DistributedPipeline(BasePipeline):
                     self.logger.info("task with id %s failed with Traceback:" %task_dict[id], exc_info=True)
                     raise exception
                 times[-1] = time() # add getter time
-                data["idx"] = task_dict.pop(id)
+                data.update(task_dict.pop(id)) # add the remaining task_dict items to the data dict
                 #del id
                 self.logger.info("id %i on pid %i: finished task." %(data["idx"],pid))
                 self._log_execution_time(data["idx"], times, pid)
