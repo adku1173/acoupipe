@@ -181,7 +181,8 @@ class BasePipeline(DataGenerator):
                 if isinstance(self.sampler[i], BaseSampler):
                     self.sampler[i].sample()
             data = {"idx" : self._idx, "seeds": [(k,v) for k,v in self._seeds.items()]}
-            yield data.update(self._extract_features())
+            data.update(self._extract_features())
+            yield data
 
 
 # logging timing statistics has to be performed differently in this class, since we don't want the logger

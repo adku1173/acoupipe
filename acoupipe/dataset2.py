@@ -1,13 +1,16 @@
 from copy import deepcopy
+from functools import partial
 
 import numpy as np
+import ray
 from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D, SteeringVector
 from scipy.stats import norm, poisson, rayleigh, uniform
 
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
 
 from .dataset1 import Dataset1
-from .helper import complex_to_real
+from .features import get_csm, get_eigmode, get_nonredundant_csm, get_sourcemap
+from .helper import _handle_cache, complex_to_real
 from .pipeline import BasePipeline, DistributedPipeline
 from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttributeSampler, SpectraSampler
 
@@ -58,9 +61,11 @@ mpos = np.array(
 DEFAULT_MICS = MicGeom(mpos_tot=mpos)
 #DEFAULT_MICS = MicGeom(from_file=path.join(path.split(acoupipe_path)[0], "xml", "tub_vogel64.xml"))
 ap = DEFAULT_MICS.aperture
+ref_mic_idx = np.argmin(np.linalg.norm((DEFAULT_MICS.mpos - DEFAULT_MICS.center[:,np.newaxis]),axis=0))
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
-DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level")
+DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level", 
+                               ref=DEFAULT_MICS.mpos[:,ref_mic_idx])
 DEFAULT_FREQ_DATA = PowerSpectraAnalytic(df=500)
 DEFAULT_RANDOM_VAR = {
     "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
@@ -72,6 +77,191 @@ DEFAULT_RANDOM_VAR = {
     "nsrc_rvar" : poisson(mu=3, loc=1),  # number of sources
     "noise_rvar" : uniform(1e-06, 1e-03-1e-06) # variance of the noise
     }
+
+
+class Dataset2(Dataset1):
+
+    def __init__(
+            self, 
+            beamformer = DEFAULT_BEAMFORMER,
+            steer = DEFAULT_STEER,
+            freq_data = DEFAULT_FREQ_DATA,
+            random_var = DEFAULT_RANDOM_VAR,
+            sample_mic_noise=True,
+            sample_noise=False, 
+            sample_spectra=False,
+            sample_wishart=True,
+            nfft = 256,
+            **kwargs):  
+        super().__init__(
+                beamformer = beamformer,
+                steer = steer,
+                freq_data = freq_data,
+                random_var = random_var,
+                **kwargs)
+        self.sample_mic_noise = sample_mic_noise
+        self.sample_spectra = sample_spectra
+        self.sample_noise = sample_noise
+        self.sample_wishart = sample_wishart
+        self.nfft = nfft
+        if sample_wishart:
+            self.freq_data.mode = "wishart"
+
+    def build_sampler(self):
+#        sampler = [self.freq_data]
+        sampler = {}
+        if self.sample_mic_noise:
+            mic_sampler = MicGeomSampler(
+                random_var= self.random_var["mic_rvar"],
+                target=deepcopy(self.steer.mics),
+                ddir=np.array([[1.0], [1.0], [1.0]]))  
+            sampler[1] = mic_sampler
+
+        loc_sampler = LocationSampler(
+            random_var=self.random_var["loc_rvar"],
+            nsources = self.max_nsources,
+            x_bounds=(self.steer.grid.x_min, self.steer.grid.x_max),
+            y_bounds=(self.steer.grid.y_min, self.steer.grid.y_max),
+            z_bounds=(self.steer.grid.z_min, self.steer.grid.z_max))
+        sampler[2] = loc_sampler
+
+        if not self.sample_spectra:
+            strength_sampler = CovSampler(
+                random_var = self.random_var["p2_rvar"],
+                nsources = self.max_nsources,
+                scale_variance = True,
+                nfft = self.nfft)
+            sampler[3] = strength_sampler
+
+            if self.sample_noise:
+                noise_sampler = CovSampler(
+                    random_var = self.random_var["noise_rvar"],
+                    nsources = self.steer.mics.num_mics,
+                    single_value = True,
+                    nfft = self.nfft)
+                sampler[4] = noise_sampler
+        else:
+            strength_sampler = SpectraSampler(
+                random_var = self.random_var["p2_rvar"],
+                nsources = self.max_nsources,
+                scale_variance = True,
+                single_value = False,
+                single_spectra = False,
+                nfft = self.nfft)
+            sampler[3] = strength_sampler
+
+            if self.sample_noise:
+                noise_sampler = SpectraSampler(
+                    random_var = self.random_var["noise_rvar"],
+                    nsources = self.steer.mics.num_mics,
+                    single_value = True,
+                    single_spectra = True,
+                    nfft = self.nfft)
+                sampler[4] = noise_sampler
+     
+        if not (self.max_nsources == self.min_nsources):  
+            sampler[0] = NumericAttributeSampler(
+                random_var=self.random_var["nsrc_rvar"],
+                target=[strength_sampler,loc_sampler],
+                attribute="nsources",
+                single_value = True,
+                filter=lambda x: (x <= self.max_nsources) and (
+                    x >= self.min_nsources))
+        return sampler
+
+    def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
+        cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
+        self.freq_data.cached = cache_csm
+        self.beamformer.cached = cache_bf
+        # the frequencies of the spectra
+        self.freq_data.frequencies=abs(np.fft.fftfreq(self.nfft*2, 1./self.fs)[:int(self.nfft+1)])[1:]   
+        # the steering vector of the sources (holds the noisy data)
+        self.beamformer.steer = deepcopy(self.steer)
+        self.freq_data.steer = deepcopy(self.steer) # different from the one in the beamformer
+        # set up sampler
+        sampler = self.build_sampler()
+        # set up feature methods
+        fidx = self._get_freq_indices()
+        if fidx is not None:
+            # bound calculated frequencies for efficiency reasons
+            self.freq_data.ind_low = min([f[0] for f in fidx])
+            self.freq_data.ind_high = max([f[1] for f in fidx])           
+        # set up pipeline
+        if parallel:
+            freq_data = ray.put(self.freq_data) # already put in the object store
+            beamformer = ray.put(self.beamformer)
+            Pipeline = DistributedPipeline
+        else:
+            freq_data = self.freq_data
+            beamformer = self.beamformer
+            Pipeline = BasePipeline
+        return Pipeline(sampler=sampler, 
+                        features=(
+                            partial(calc_features,
+                                ref_mic_idx=ref_mic_idx,
+                                fidx = fidx,
+                                f = self.f,
+                                num = self.num,
+                                cache_bf = cache_bf,
+                                cache_csm = cache_csm,
+                                cache_dir = cache_dir), 
+                            self.features, freq_data, beamformer))
+
+def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
+    mic_sampler = s.get(1)
+    if mic_sampler is not None:
+        freq_data.steer.mics = s[1].target # use noisy microphone positions
+        freq_data.steer.ref = s[1].target.mpos[:, ref_mic_idx] 
+    freq_data.steer.grid = ImportGrid(gpos_file=s[2].target)
+    freq_data.Q = s[3].target
+    noise_sampler = s.get(4)
+    if noise_sampler is not None:
+        freq_data.noise = noise_sampler.target
+    beamformer.freq_data = freq_data # change the freq_data, but not the steering
+    # get features
+    data = {"loc" : s[2].target,
+            "p2" : calc_p2(freq_data, fidx),
+            "variances" : s[3].variances}
+    if noise_sampler is not None:
+        data.update({"nvariances" : noise_sampler.variances,
+                    "n2" : calc_n2(freq_data, fidx)})
+    data.update(
+        calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir)
+    )
+    return data
+
+def calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir):
+    data = {}   
+    if "csm" in input_features:
+        data.update(
+            {"csm": get_csm(freq_data=freq_data,
+                            fidx=fidx,
+                            cache_dir=cache_dir
+                            )
+            })
+    if "csmtriu" in input_features:
+        data.update(
+            {"csmtriu": get_nonredundant_csm(freq_data=freq_data,
+                                            fidx=fidx,
+                                            cache_dir=cache_dir
+                                            )
+            })
+    if "sourcemap" in input_features:
+        data.update(
+            {"sourcemap": get_sourcemap(beamformer=beamformer,
+                                            f=f,
+                                            num=num,
+                                            cache_dir=cache_dir
+                                            )
+            })
+    if "eigmode" in input_features:
+        data.update(
+            {"eigmode": get_eigmode(freq_data=freq_data,
+                                    fidx=fidx,
+                                    cache_dir=cache_dir
+                                    )
+            })
+    return data
 
 @complex_to_real
 def calc_p2(freq_data,fidx):
@@ -114,131 +304,3 @@ def calc_n2(freq_data,fidx):
         return np.array([freq_data.noise[indices[0]:indices[1]].sum(0) for indices in fidx])
     else:
         return freq_data.noise.copy()
-
-class Dataset2(Dataset1):
-
-    def __init__(
-            self, 
-            beamformer = DEFAULT_BEAMFORMER,
-            steer = DEFAULT_STEER,
-            freq_data = DEFAULT_FREQ_DATA,
-            random_var = DEFAULT_RANDOM_VAR,
-            sample_noise=False, 
-            sample_spectra=False,
-            sample_wishart=True,
-            nfft = 256,
-            **kwargs):  
-        super().__init__(
-                beamformer = beamformer,
-                steer = steer,
-                freq_data = freq_data,
-                random_var = random_var,
-                **kwargs)
-        self.sample_spectra = sample_spectra
-        self.sample_noise = sample_noise
-        self.sample_wishart = sample_wishart
-        self.nfft = nfft
-        if sample_wishart:
-            self.freq_data.mode = "wishart"
-
-    def _prepare(self):
-        self.freq_data.steer.grid = ImportGrid(gpos_file=self.loc_sampler.target)
-        self.freq_data.Q = self.strength_sampler.target.copy()
-        if self.sample_noise:
-            self.freq_data.noise = self.noise_sampler.target.copy()
-
-    def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
-        self.freq_data.frequencies=abs(np.fft.fftfreq(self.nfft*2, 1./self.fs)[:int(self.nfft+1)])[1:]   
-        # sets the reference microphone to the one closest to the center
-        ref_mic = np.argmin(np.linalg.norm((self.steer.mics.mpos - self.steer.mics.center[:,np.newaxis]),axis=0))
-        self.steer.ref = self.steer.mics.mpos[:,ref_mic]
-        # create copy for noisy positions
-        self.noisy_mics = deepcopy(self.steer.mics) # Microphone geometry with positional noise
-        steer_src = deepcopy(self.steer)
-        steer_src.mics = self.noisy_mics
-        steer_src.ref = self.noisy_mics.mpos[:, ref_mic] #TODO: check if this is correct when sampled!
-        self.freq_data.steer = steer_src
-        # set up sampler
-        sampler = self.setup_sampler()
-        # set up feature methods
-        fidx = self._get_freq_indices()
-        features={
-            "loc" : lambda: self.loc_sampler.target.copy(),
-            "p2" : (calc_p2, self.freq_data, fidx),
-            "variances" : lambda: self.strength_sampler.variances.copy(),
-            }                
-        if self.sample_noise:
-            features.update(
-                {"nvariances" : lambda: self.noise_sampler.variances.copy(),
-                "n2" : (calc_n2, self.freq_data, fidx),})
-        features.update(
-            self.setup_input_features(cache_csm, cache_bf, cache_dir))          
-        # set up pipeline
-        if parallel:
-            Pipeline = DistributedPipeline
-        else:
-            Pipeline = BasePipeline
-        return Pipeline(sampler=sampler,features=features, prepare=self._prepare)
-
-    def setup_sampler(self):
-        sampler = [self.freq_data]
-
-        mic_sampler = MicGeomSampler(
-            random_var= self.random_var["mic_rvar"],
-            target=self.noisy_mics,
-            ddir=np.array([[1.0], [1.0], [1.0]]))  
-        sampler.append(mic_sampler)
-
-        self.loc_sampler = LocationSampler(
-            random_var=self.random_var["loc_rvar"],
-            nsources = self.max_nsources,
-            x_bounds=(self.steer.grid.x_min, self.steer.grid.x_max),
-            y_bounds=(self.steer.grid.y_min, self.steer.grid.y_max),
-            z_bounds=(self.steer.grid.z_min, self.steer.grid.z_max))
-        sampler.append(self.loc_sampler)
-
-        if not self.sample_spectra:
-            self.strength_sampler = CovSampler(
-                random_var = self.random_var["p2_rvar"],
-                nsources = self.max_nsources,
-                scale_variance = True,
-                nfft = self.nfft)
-            sampler.append(self.strength_sampler)
-
-            if self.sample_noise:
-                self.noise_sampler = CovSampler(
-                    random_var = self.random_var["noise_rvar"],
-                    nsources = self.steer.mics.num_mics,
-                    single_value = True,
-                    nfft = self.nfft)
-                sampler.append(self.noise_sampler)
-        else:
-            self.strength_sampler = SpectraSampler(
-                random_var = self.random_var["p2_rvar"],
-                nsources = self.max_nsources,
-                scale_variance = True,
-                single_value = False,
-                single_spectra = False,
-                nfft = self.nfft)
-            sampler.append(self.strength_sampler)
-
-            if self.sample_noise:
-                self.noise_sampler = SpectraSampler(
-                    random_var = self.random_var["noise_rvar"],
-                    nsources = self.steer.mics.num_mics,
-                    single_value = True,
-                    single_spectra = True,
-                    nfft = self.nfft)
-                sampler.append(self.noise_sampler)
-     
-        if not (self.max_nsources == self.min_nsources):  
-            nsrc_sampler = NumericAttributeSampler(
-                random_var=self.random_var["nsrc_rvar"],
-                target=[self.strength_sampler,self.loc_sampler],
-                attribute="nsources",
-                single_value = True,
-                filter=lambda x: (x <= self.max_nsources) and (
-                    x >= self.min_nsources))
-            sampler = [nsrc_sampler] + sampler # need to be sampled first!
-
-        return sampler

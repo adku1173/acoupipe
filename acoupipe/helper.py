@@ -84,7 +84,7 @@ def get_frequency_index_range(freq,f,num):
         return (ind1,ind2) 
 
 
-def set_pipeline_seeds(pipeline,startsample,numsamples,dataset="training"):
+def set_pipeline_seeds(pipeline,startsample,size,dataset="training"):
     """Creates the random seed list for each of the sampler objects that is held by the pipeline object.
 
     Parameters
@@ -93,7 +93,7 @@ def set_pipeline_seeds(pipeline,startsample,numsamples,dataset="training"):
         the pipeline object holding the sampler classes
     startsample : int
         start sample to be calculated by the pipeline        
-    numsamples : int
+    size : int
         number of samples to be yielded by the pipeline
     dataset : str, optional
         the data set type, by default "training". Choose from ["training","validation"]
@@ -102,12 +102,13 @@ def set_pipeline_seeds(pipeline,startsample,numsamples,dataset="training"):
     if dataset=="training":
         off = 0
     elif dataset=="validation":
-        off = int(1e9) # a general offset to ensure that validation and training seeds never match (max seed is 2*32) 
+        off = int(1e9) # a general offset to ensure that validation and training seeds never match (max seed is 2**32) 
     elif dataset == "test":
         off = int(2e9)
     soff = int(1e7) # offset to ensure that seeds of sampler object doesn't match
-    pipeline.random_seeds = [
-        range(off+(i*soff)+startindex, off+(i*soff)+numsamples+startindex) for i in range(len(pipeline.sampler))]
+    pipeline.random_seeds = {i : range(off+(i*soff)+startindex, off+(i*soff)+size+startindex) for i in list(pipeline.sampler.keys())}
+    
+        
 
 def set_filename(writer,path=".",*args):
     """Sets the filename of the dataset.

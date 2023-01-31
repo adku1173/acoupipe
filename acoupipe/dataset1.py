@@ -1,28 +1,28 @@
 from copy import deepcopy
 from datetime import datetime
-from os import path
 from functools import partial
+from os import path
+
 import numpy as np
 import ray
 from acoular import (
     BeamformerBase,
-    BeamformerCleansc,
     Environment,
     MaskedTimeInOut,
     MicGeom,
     PointSource,
     PowerSpectra,
     RectGrid,
+    SamplesGenerator,
     SourceMixer,
     SteeringVector,
     WNoiseGenerator,
-    SamplesGenerator,
 )
 from scipy.stats import norm, poisson
 
 from .config import TF_FLAG
-from .features import CSMFeature, EigmodeFeature, NonRedundantCSMFeature, SourceMapFeature, get_source_p2
-from .helper import _handle_cache, _handle_log, get_frequency_index_range, set_pipeline_seeds
+from .features import get_csm, get_eigmode, get_nonredundant_csm, get_source_p2, get_sourcemap
+from .helper import _handle_log, get_frequency_index_range, set_pipeline_seeds
 from .pipeline import BasePipeline, DistributedPipeline
 from .sampler import ContainerSampler, MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
 from .writer import WriteH5Dataset
@@ -107,8 +107,8 @@ class Dataset1:
             "loc": (lambda smix: np.array([s.loc for s in smix.sources], dtype=np.float32).T, self.sources_mix),
             "p2": (get_source_p2, self.sources_mix, self.source_freq_data, fidx, None),
         }
-        features.update(
-            self.setup_input_features(cache_csm, cache_bf, cache_dir))
+        # features.update(
+        #     self.setup_input_features(cache_csm, cache_bf, cache_dir))
         # set up pipeline
         if parallel:
             Pipeline = DistributedPipeline
@@ -167,61 +167,7 @@ class Dataset1:
         else:
             return [mic_sampling, src_sampling,rms_sampling, pos_sampling]
                             
-    def setup_input_features(self, cache_bf, cache_csm, cache_dir):
 
-        # setup cache if necessary
-        cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
-        self.freq_data.cached = cache_csm
-
-        features = {} # dict with feature functions for pipeline object
-        self._feature_objects = []
-        fidx = self._get_freq_indices()
-        if fidx is not None:
-            # bound calculated frequencies for efficiency reasons
-            self.freq_data.ind_low = min([f[0] for f in fidx])
-            self.freq_data.ind_high = max([f[1] for f in fidx])    
-
-        if "csm" in self.features:
-            feature = CSMFeature(feature_name="csm",
-                                 power_spectra=self.freq_data,
-                                 fidx=fidx,
-                                 cache_dir=cache_dir
-                                 )
-            features = feature.add_feature_funcs(features)
-            self._feature_objects.append(feature)
-
-        if "csmtriu" in self.features:
-            feature = NonRedundantCSMFeature(feature_name="csmtriu",
-                                             power_spectra=self.freq_data,
-                                             fidx=fidx,
-                                             cache_dir=cache_dir
-                                             )
-            features = feature.add_feature_funcs(features)
-            self._feature_objects.append(feature)
-
-        if "sourcemap" in self.features:
-            self.beamformer.cached = cache_bf
-            self.beamformer.freq_data = self.freq_data
-            self.beamformer.steer = self.steer
-            feature = SourceMapFeature(feature_name="sourcemap",
-                                       beamformer=self.beamformer,
-                                       f=self.f,
-                                       num=self.num,
-                                       cache_dir=cache_dir
-                                       )
-            features = feature.add_feature_funcs(features)
-            self._feature_objects.append(feature)
-
-        if "eigmode" in self.features:
-            feature = EigmodeFeature(feature_name="eigmode",
-                                    power_spectra=self.freq_data,
-                                    fidx=fidx,
-                                    cache_dir=cache_dir
-                                     )
-            features = feature.add_feature_funcs(features)
-            self._feature_objects.append(feature)
-        
-        return features
 
     def _setup_generation_process(self, tasks, head, log, logname):
 
@@ -332,6 +278,40 @@ class Dataset1:
         if "sourcemap" in self.features:
             features_shapes.update({"sourcemap" : (fdim,) + self.steer.grid.shape })
         return features_shapes
+
+def calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir):
+    data = {}   
+    if "csm" in input_features:
+        data.update(
+            {"csm": get_csm(freq_data=freq_data,
+                            fidx=fidx,
+                            cache_dir=cache_dir
+                            )
+            })
+    if "csmtriu" in input_features:
+        data.update(
+            {"csmtriu": get_nonredundant_csm(freq_data=freq_data,
+                                            fidx=fidx,
+                                            cache_dir=cache_dir
+                                            )
+            })
+    if "sourcemap" in input_features:
+        data.update(
+            {"sourcemap": get_sourcemap(beamformer=beamformer,
+                                            f=f,
+                                            num=num,
+                                            cache_dir=cache_dir
+                                            )
+            })
+    if "eigmode" in input_features:
+        data.update(
+            {"eigmode": get_eigmode(freq_data=freq_data,
+                                    fidx=fidx,
+                                    cache_dir=cache_dir
+                                    )
+            })
+    return data
+
 
 
 if TF_FLAG:
