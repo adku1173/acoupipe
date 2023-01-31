@@ -9,8 +9,7 @@ from scipy.stats import norm, poisson, rayleigh, uniform
 
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
 
-from .dataset1 import Dataset1
-from .features import get_csm, get_eigmode, get_nonredundant_csm, get_sourcemap
+from .dataset1 import Dataset1, calc_input_features
 from .helper import _handle_cache, complex_to_real
 from .pipeline import BasePipeline, DistributedPipeline
 from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttributeSampler, SpectraSampler
@@ -174,6 +173,7 @@ class Dataset2(Dataset1):
 
     def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
         cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
+        ref_mic_idx = argmin(linalg.norm((self.steer.mics.mpos - self.steer.mics.center[:,newaxis]),axis=0))
         self.freq_data.cached = cache_csm
         self.beamformer.cached = cache_bf
         # the frequencies of the spectra
@@ -201,13 +201,13 @@ class Dataset2(Dataset1):
         return Pipeline(sampler=sampler, 
                         features=(
                             partial(calc_features,
-                                ref_mic_idx=ref_mic_idx,
                                 fidx = fidx,
                                 f = self.f,
                                 num = self.num,
                                 cache_bf = cache_bf,
                                 cache_csm = cache_csm,
-                                cache_dir = cache_dir), 
+                                cache_dir = cache_dir,
+                                ref_mic_idx=ref_mic_idx), 
                             self.features, freq_data, beamformer))
 
 def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
@@ -234,35 +234,6 @@ def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_
     data.update(
         calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir)
     )
-    return data
-
-def calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir):
-    data = {}   
-    if "csm" in input_features:
-        data.update(
-            {"csm": get_csm(freq_data=freq_data,
-                            fidx=fidx,
-                            cache_dir=cache_dir)
-            })
-    if "csmtriu" in input_features:
-        data.update(
-            {"csmtriu": get_nonredundant_csm(freq_data=freq_data,
-                                            fidx=fidx,
-                                            cache_dir=cache_dir)
-            })
-    if "sourcemap" in input_features:
-        data.update(
-            {"sourcemap": get_sourcemap(beamformer=beamformer,
-                                            f=f,
-                                            num=num,
-                                            cache_dir=cache_dir)
-            })
-    if "eigmode" in input_features:
-        data.update(
-            {"eigmode": get_eigmode(freq_data=freq_data,
-                                    fidx=fidx,
-                                    cache_dir=cache_dir)
-            })
     return data
 
 @complex_to_real

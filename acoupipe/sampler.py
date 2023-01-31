@@ -1,4 +1,4 @@
-"""All classes in this module are random processes that meant to be used to manipulate instances i.e. their attribute values according to a specified random distribution (random variable). 
+"""All classes in this module are random processes that meant to be used to manipulate instances i.e. their attribute values according to a specified random distribution (random variable).
 
 .. autosummary::
     :toctree: generated/
@@ -16,15 +16,33 @@
 
 """
 
-from traits.api import HasPrivateTraits, Instance, CArray, Float, Property,\
-    Str, cached_property, Tuple, List, Bool, Enum, Trait, Int, Either, Callable,\
-    on_trait_change
-from acoular import MicGeom, PointSource, SourceMixer, SamplesGenerator
-from numpy import array, pi, sin, cos, sum, eye, sort, diag, empty, repeat, newaxis, zeros
-from numpy.random import RandomState, Generator
-from scipy.stats import _distn_infrastructure
 from inspect import signature
+
+from acoular import MicGeom, PointSource, SamplesGenerator, SourceMixer
+from numpy import array, cos, diag, empty, eye, pi, repeat, sin, sort, sum, zeros
+from numpy.random import Generator, RandomState
+from scipy.stats import _distn_infrastructure
+from traits.api import (
+    Bool,
+    Callable,
+    CArray,
+    Either,
+    Enum,
+    Float,
+    HasPrivateTraits,
+    Instance,
+    Int,
+    List,
+    Property,
+    Str,
+    Trait,
+    Tuple,
+    cached_property,
+    on_trait_change,
+)
+
 from .filter import generate_uniform_parametric_eq
+
 
 class BaseSampler(HasPrivateTraits):
     """Base class that represents a random process manipulating attributes of an instance or a list of instances according to a specified random distribution.
@@ -59,7 +77,7 @@ class BaseSampler(HasPrivateTraits):
 
   
 class NumericAttributeSampler(BaseSampler):
-    """Random process that manipulates attributes of numeric type (e.g. int, float) 
+    """Random process that manipulates attributes of numeric type (e.g. int, float)
     according to a specified random distribution.
     """
     
@@ -83,7 +101,7 @@ class NumericAttributeSampler(BaseSampler):
         )
 
     def order_samples(self, samples):
-        """internal function to order drawn values"""
+        """internal function to order drawn values."""
         samples = sort(samples)
         if self.order == "descending":
             samples = samples[::-1]
@@ -100,7 +118,7 @@ class NumericAttributeSampler(BaseSampler):
             setattr(eval("target."+".".join(asub1)), asub2, value)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random 
+        """this function utilizes :meth:`rvs` function to draw random
         values from :attr:`random_var` that are going to be assigned 
         to the target instance attribute via internal :meth:`set_value` method.
         """
@@ -161,8 +179,9 @@ class SetSampler(BaseSampler):
         desc="Probability List, same lenght as the set, need to sum up to 1")
 
     def get_sample_propabilities(self):
-        """return propabilities associated with the samples in the 
-        given set (for internal use)."""
+        """return propabilities associated with the samples in the
+        given set (for internal use).
+        """
         if not self.prob_list:
             prob_list = None 
         else:
@@ -178,14 +197,14 @@ class SetSampler(BaseSampler):
             setattr(eval("target."+".".join(asub1)), asub2, value[0])
 
     def rvs(self, size=1):
-        """random variable sampling (for internal use)"""
+        """random variable sampling (for internal use)."""
         prob_list = self.get_sample_propabilities()
         value = self.random_state.choice(self.set, size=size,
                 replace=self.replace, p=prob_list)
         return value
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw  
+        """this function utilizes :meth:`rvs` function to draw
         values from :attr:`set` list that are going to be assigned 
         to the target instance attribute.
         """
@@ -216,8 +235,8 @@ class SourceSetSampler(SetSampler):
             desc="set of sources to be drawn") 
 
     #: number of samples to be drawn from the set
-    numsamples = Int(1,
-        desc="number of samples to be drawn from the set")
+    nsources = Int(1,
+        desc="number of sources to be drawn from the set")
 
     #: attribute where drawn sources are assigned to. Fixed to :attr:`sources` attribute
     #: of :class:`acoular.SourceMixer`.
@@ -225,18 +244,18 @@ class SourceSetSampler(SetSampler):
         desc="class instance samples the sources attribute of a SourceMixer instance")    
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw  
+        """this function utilizes :meth:`rvs` function to draw
         values from :attr:`set` list that are going to be assigned 
         to the target instance attribute.
         """
         # draw a single value from set -> assign to each target in target List
         if self.single_value:
-            samples = self.rvs(self.numsamples)
+            samples = self.rvs(self.nsources)
             for target in self.target:      
                 target.sources = list(samples) 
         else:
             for target in self.target:
-                samples = self.rvs(self.numsamples)
+                samples = self.rvs(self.nsources)
                 target.sources = list(samples) 
 
 
@@ -275,12 +294,12 @@ class ContainerSampler(BaseSampler):
                     "input.")
 
     def rvs(self):
-        """evokes the :attr:`random_func`"""
+        """evokes the :attr:`random_func`."""
         self._validate()
         self.random_func(self.random_state)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to evaluate the :attr:`random_func`"""
+        """this function utilizes :meth:`rvs` function to evaluate the :attr:`random_func`."""
         self.rvs()
 
 
@@ -311,8 +330,8 @@ class LocationSampler(BaseSampler):
         desc="limits of the allowed drawn locations along the x-axis (lower,upper)") 
        
     def _bounds_violated(self,loc):
-        """validation of drawn source locations. 
-        Returns False if location exceeds bounds
+        """validation of drawn source locations.
+        Returns False if location exceeds bounds.
         """
         if self.x_bounds[0]: 
             if (self.x_bounds[0] > loc[0]): return True
@@ -330,7 +349,7 @@ class LocationSampler(BaseSampler):
             return False
 
     def rvs(self):
-        """random variable sampling (for internal use)"""
+        """random variable sampling (for internal use)."""
         return array([
             self.random_var[0].rvs(size=1, random_state=self.random_state),
             self.random_var[1].rvs(size=1, random_state=self.random_state),
@@ -338,7 +357,7 @@ class LocationSampler(BaseSampler):
         ]).squeeze()
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random 
+        """this function utilizes :meth:`rvs` function to draw random
         values from :attr:`random_var` that are going to be assigned 
         to the :attr:`loc` attribute of a :class:`PointSource` instance.
         """
@@ -354,7 +373,7 @@ class LocationSampler(BaseSampler):
 
 
 class PointSourceSampler(LocationSampler):
-    """Random process that samples the locations of one or more 
+    """Random process that samples the locations of one or more
     instances of type :class:`PointSource`. 
     """
     
@@ -382,18 +401,18 @@ class PointSourceSampler(LocationSampler):
                 raise AttributeError("Elements in target must be instances of class acoular.PointSource")
 
     def sample_loc(self, target):
-        """sampling of a single target location (internal use)"""
+        """sampling of a single target location (internal use)."""
         loc_axs = self.ldir.nonzero()[0] # get axes to sample
         loc = array(target.loc)
         loc[loc_axs] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
         return loc
 
     def rvs(self, size=1):
-        """random variable sampling (for internal use)"""
+        """random variable sampling (for internal use)."""
         return self.random_var.rvs(size=size, random_state=self.random_state)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random 
+        """this function utilizes :meth:`rvs` function to draw random
         values from :attr:`random_var` that are going to be assigned 
         to the :attr:`loc` attribute of a :class:`PointSource` instance.
         """
@@ -456,7 +475,7 @@ class MicGeomSampler(BaseSampler):
         return array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
 
     def rotate(self):
-        """rotates the microphone array"""
+        """rotates the microphone array."""
         theta = 2 * pi * self.rscale * self.rvs()
         # Rodrigues' rotation formula
         R = eye(3) + sin(theta) * self.K + (1 - cos(theta)) * self.K @ self.K
@@ -464,14 +483,14 @@ class MicGeomSampler(BaseSampler):
         self.target.mpos_tot = new_mpos_tot.copy()
 
     def translate(self):
-        """translates the microphone array"""
+        """translates the microphone array."""
         new_mpos_tot = self.target.mpos_tot.copy()
         new_mpos_tot += sum(self.tdir *self.rvs(size=self.tdir.shape[-1]),
             axis=-1).reshape(-1, 1)
         self.target.mpos_tot = new_mpos_tot.copy()
 
     def deviate(self):
-        """deviates the individual microphone positions"""
+        """deviates the individual microphone positions."""
         dev_axs = self.ddir.nonzero()[0] # get axes to deviate
         new_mpos_tot = self.target.mpos_tot.copy()
         new_mpos_tot[dev_axs] += self.ddir[dev_axs] * \
@@ -479,9 +498,10 @@ class MicGeomSampler(BaseSampler):
         self.target.mpos_tot = new_mpos_tot.copy()
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random 
+        """this function utilizes :meth:`rvs` function to draw random
         values from :attr:`random_var` that are going to be used to variate 
-        the microphone positions of a :class:`MicGeom` instance."""
+        the microphone positions of a :class:`MicGeom` instance.
+        """
         self.target.mpos_tot = self.mpos_init.copy() # initialize
         if self.rvec.any():  # if rotation vector exist, rotate first!
             self.rotate()
