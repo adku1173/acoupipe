@@ -40,8 +40,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
   
     # internal identifier
     digest = Property( 
-        depends_on = ['_csmsum', 
-            ], 
+        depends_on = ['_csmsum', 'df', 'seed', 'mode, steer.digest, Q, noise, ind_low, ind_high'],
         )
 
     @cached_property
