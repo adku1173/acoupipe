@@ -1,9 +1,10 @@
 from copy import deepcopy
 from functools import partial
 
-import numpy as np
 import ray
 from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D, SteeringVector
+from numpy import argmin, array, fft, linalg, newaxis, sqrt
+from numpy.random import RandomState
 from scipy.stats import norm, poisson, rayleigh, uniform
 
 from acoupipe.spectra_analytic import PowerSpectraAnalytic
@@ -16,7 +17,7 @@ from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttribu
 
 VERSION = "ds2-v01"
 DEFAULT_ENV = Environment(c=343.)
-mpos = np.array(
+mpos = array(
     [[ 0.17166922,  0.27137782,  0.42934454,  0.55315335,  0.70508602,
          0.57496996,  0.42750231,  0.27354702,  0.12063113,  0.06875681,
          0.19167213,  0.3435895 ,  0.50976938,  0.35505328,  0.18113903,
@@ -61,7 +62,7 @@ mpos = np.array(
 DEFAULT_MICS = MicGeom(mpos_tot=mpos)
 #DEFAULT_MICS = MicGeom(from_file=path.join(path.split(acoupipe_path)[0], "xml", "tub_vogel64.xml"))
 ap = DEFAULT_MICS.aperture
-ref_mic_idx = np.argmin(np.linalg.norm((DEFAULT_MICS.mpos - DEFAULT_MICS.center[:,np.newaxis]),axis=0))
+ref_mic_idx = argmin(linalg.norm((DEFAULT_MICS.mpos - DEFAULT_MICS.center[:,newaxis]),axis=0))
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")                   
 DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level", 
@@ -71,9 +72,9 @@ DEFAULT_RANDOM_VAR = {
     "mic_rvar" : norm(loc=0, scale=0.001), # positional noise on the microphones  
     "p2_rvar" : rayleigh(5), 
     "loc_rvar" : (
-        norm((DEFAULT_GRID.x_min + DEFAULT_GRID.x_max)/2,0.1688*(np.sqrt((DEFAULT_GRID.x_max-DEFAULT_GRID.x_min)**2))),
-        norm((DEFAULT_GRID.y_min + DEFAULT_GRID.y_max)/2,0.1688*(np.sqrt((DEFAULT_GRID.y_max-DEFAULT_GRID.y_min)**2))),
-        norm((DEFAULT_GRID.z_min + DEFAULT_GRID.z_max)/2,0*(np.sqrt((DEFAULT_GRID.z_max-DEFAULT_GRID.z_min)**2)))), 
+        norm((DEFAULT_GRID.x_min + DEFAULT_GRID.x_max)/2,0.1688*(sqrt((DEFAULT_GRID.x_max-DEFAULT_GRID.x_min)**2))),
+        norm((DEFAULT_GRID.y_min + DEFAULT_GRID.y_max)/2,0.1688*(sqrt((DEFAULT_GRID.y_max-DEFAULT_GRID.y_min)**2))),
+        norm((DEFAULT_GRID.z_min + DEFAULT_GRID.z_max)/2,0*(sqrt((DEFAULT_GRID.z_max-DEFAULT_GRID.z_min)**2)))), 
     "nsrc_rvar" : poisson(mu=3, loc=1),  # number of sources
     "noise_rvar" : uniform(1e-06, 1e-03-1e-06) # variance of the noise
     }
@@ -108,13 +109,12 @@ class Dataset2(Dataset1):
             self.freq_data.mode = "wishart"
 
     def build_sampler(self):
-#        sampler = [self.freq_data]
         sampler = {}
         if self.sample_mic_noise:
             mic_sampler = MicGeomSampler(
                 random_var= self.random_var["mic_rvar"],
                 target=deepcopy(self.steer.mics),
-                ddir=np.array([[1.0], [1.0], [1.0]]))  
+                ddir=array([[1.0], [1.0], [1.0]]))  
             sampler[1] = mic_sampler
 
         loc_sampler = LocationSampler(
@@ -167,6 +167,9 @@ class Dataset2(Dataset1):
                 single_value = True,
                 filter=lambda x: (x <= self.max_nsources) and (
                     x >= self.min_nsources))
+        
+        if self.sample_wishart:
+            sampler[5] = RandomState()
         return sampler
 
     def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
@@ -174,7 +177,7 @@ class Dataset2(Dataset1):
         self.freq_data.cached = cache_csm
         self.beamformer.cached = cache_bf
         # the frequencies of the spectra
-        self.freq_data.frequencies=abs(np.fft.fftfreq(self.nfft*2, 1./self.fs)[:int(self.nfft+1)])[1:]   
+        self.freq_data.frequencies=abs(fft.fftfreq(self.nfft*2, 1./self.fs)[:int(self.nfft+1)])[1:]   
         # the steering vector of the sources (holds the noisy data)
         self.beamformer.steer = deepcopy(self.steer)
         self.freq_data.steer = deepcopy(self.steer) # different from the one in the beamformer
@@ -210,14 +213,17 @@ class Dataset2(Dataset1):
 def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
     mic_sampler = s.get(1)
     if mic_sampler is not None:
-        freq_data.steer.mics = s[1].target # use noisy microphone positions
+        freq_data.steer.mics = s[1].target # use noisy microphone positions for measurement
         freq_data.steer.ref = s[1].target.mpos[:, ref_mic_idx] 
     freq_data.steer.grid = ImportGrid(gpos_file=s[2].target)
     freq_data.Q = s[3].target
     noise_sampler = s.get(4)
     if noise_sampler is not None:
         freq_data.noise = noise_sampler.target
-    beamformer.freq_data = freq_data # change the freq_data, but not the steering
+    wishart_sampler = s.get(5)
+    if wishart_sampler is not None:
+        freq_data.seed = wishart_sampler.get_state()[1][0] # the current seed
+    beamformer.freq_data = freq_data # change the freq_data, but not the steering!
     # get features
     data = {"loc" : s[2].target,
             "p2" : calc_p2(freq_data, fidx),
@@ -236,30 +242,26 @@ def calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cac
         data.update(
             {"csm": get_csm(freq_data=freq_data,
                             fidx=fidx,
-                            cache_dir=cache_dir
-                            )
+                            cache_dir=cache_dir)
             })
     if "csmtriu" in input_features:
         data.update(
             {"csmtriu": get_nonredundant_csm(freq_data=freq_data,
                                             fidx=fidx,
-                                            cache_dir=cache_dir
-                                            )
+                                            cache_dir=cache_dir)
             })
     if "sourcemap" in input_features:
         data.update(
             {"sourcemap": get_sourcemap(beamformer=beamformer,
                                             f=f,
                                             num=num,
-                                            cache_dir=cache_dir
-                                            )
+                                            cache_dir=cache_dir)
             })
     if "eigmode" in input_features:
         data.update(
             {"eigmode": get_eigmode(freq_data=freq_data,
                                     fidx=fidx,
-                                    cache_dir=cache_dir
-                                    )
+                                    cache_dir=cache_dir)
             })
     return data
 
@@ -280,7 +282,7 @@ def calc_p2(freq_data,fidx):
         covariance matrix containing the squared sound pressure of each source
     """
     if fidx:
-        return np.array([freq_data.Q[indices[0]:indices[1]].sum(0) for indices in fidx])
+        return array([freq_data.Q[indices[0]:indices[1]].sum(0) for indices in fidx])
     else:
         return freq_data.Q.copy()
 
@@ -301,6 +303,6 @@ def calc_n2(freq_data,fidx):
         covariance matrix containing the squared sound pressure of each source
     """
     if fidx:
-        return np.array([freq_data.noise[indices[0]:indices[1]].sum(0) for indices in fidx])
+        return array([freq_data.noise[indices[0]:indices[1]].sum(0) for indices in fidx])
     else:
         return freq_data.noise.copy()
