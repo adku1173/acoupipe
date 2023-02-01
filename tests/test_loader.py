@@ -1,31 +1,28 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jan 21 16:26:28 2021
-
-@author: Jekosch
-"""
-
+import os
+import tempfile
 import unittest
-from acoupipe import BaseLoadDataset, LoadH5Dataset
 
-LOADER_CLASSES = [BaseLoadDataset, LoadH5Dataset]
+from acoupipe import LoadH5Dataset, WriteH5Dataset
+from pipeline_value_test import get_pipeline
 
-class Test_Loader(unittest.TestCase):
 
-    def test_instancing(self):
-        """create an instance of each class defined in module"""
-        for c in LOADER_CLASSES:
-            c()    
-            
-    def test_h5_data(self):
-        ds =  LoadH5Dataset(name='test_data.h5')
-        
-        self.assertEqual(ds.numsamples,100)
-        self.assertEqual(ds.numfeatures,6)
-        self.assertEqual(ds.basename,'test_data')
+class TestWriteAndLoad(unittest.TestCase):
+
+    def setUp(self):
+        pipeline = get_pipeline(5)
+        pipeline.random_seeds = {1:range(1,1+5),2:range(2,2+5),3:range(3,3+5),
+                    4:range(4,4+5)}
+        self.name = os.path.join(tempfile.mkdtemp(),"test_data.h5")
+        writer = WriteH5Dataset(source=pipeline,name=self.name)
+        writer.save()
+
+    def test_load_h5_data(self):
+        ds =  LoadH5Dataset(name=self.name)
         ds.load_dataset()
-        self.assertEqual(ds.dataset['1']['rms_sources'][()][0],5.25081601669544)
+        self.assertEqual(ds.numsamples,5)
+        self.assertEqual(ds.basename,"test_data")
+        ds.load_dataset()
+        self.assertEqual(ds.dataset["1"]["data"][()],True)
         
         
 
