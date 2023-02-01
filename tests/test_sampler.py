@@ -152,7 +152,7 @@ class Test_ContainerSampler(unittest.TestCase):
             sampler = {1:self.containerSampler},
             random_seeds={1:range(1,10)},
             features=lambda sm: {"random_values": self.target.attribute})
-        data = list(pipeline.get_data())
+        data = list(pipeline.get_data(progress_bar=False))
         for j,d in enumerate(data):
             self.assertEqual(d["random_values"],default_rng(j+1).random())
 
@@ -165,7 +165,7 @@ class Test_ContainerSampler(unittest.TestCase):
             sampler = {1:self.containerSampler},
             #random_seeds={},
             features=lambda sm: {"random_values": self.target.attribute})
-        data = list(pipeline.get_data())
+        data = list(pipeline.get_data(progress_bar=False))
         for _j,d in enumerate(data):
             self.assertEqual(d["random_values"],rng2.random())
 
@@ -246,7 +246,7 @@ class Test_BasePipeline(unittest.TestCase):
 
     def test_pipeline_without_explicit_seeds(self):
         """test if BasePipeline can handle samplers without given random_seeds."""
-        data = next(self.pipeline.get_data())
+        data = next(self.pipeline.get_data(progress_bar=False))
         self.assertTrue(data["data"])
 
     def test_too_short_random_seeds_input(self):
@@ -254,19 +254,20 @@ class Test_BasePipeline(unittest.TestCase):
         seeds = {
             1:range(1,1+self.size)}
         self.pipeline.random_seeds = seeds
-        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data()))
+        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data(progress_bar=False)))
     
     def test_non_equal_length_random_seeds_input(self):
         """test that exceptions are raised on random_seeds input of non-equal length."""
         self.test_seeds[0] = range(0,10)
         self.pipeline.random_seeds = self.test_seeds
-        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data()))
+        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data(progress_bar=False)))
 
 
 class Test_DistributedPipeline(Test_BasePipeline):
 
     def setUp(self):
         """will be called for every single test."""
+        ray.shutdown()
         ray.init()
         self.size = 3
         self.pipeline = get_distributed_pipeline(self.size,2) # two workers

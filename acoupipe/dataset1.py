@@ -17,7 +17,7 @@ from acoular import (
     SteeringVector,
     WNoiseGenerator,
 )
-from numpy import argmin, array, diagonal, float32, linalg, newaxis, sort, sqrt
+from numpy import argmin, array, diagonal, float32, linalg, newaxis, real, sort, sqrt
 from scipy.stats import norm, poisson, rayleigh
 
 from .config import TF_FLAG
@@ -28,7 +28,7 @@ from .sampler import CovSampler, MicGeomSampler, NumericAttributeSampler, PointS
 from .writer import WriteH5Dataset
 
 if TF_FLAG:
-    from .writer import WriteTFRecord, float_list_feature, int64_feature, int_list_feature
+    from .writer import WriteTFRecord, float_list_feature, int64_feature
 
 from acoupipe import __file__ as acoupipe_path
 
@@ -183,6 +183,9 @@ class Dataset1:
             # bound calculated frequencies for efficiency reasons
             self.freq_data.ind_low = min([f[0] for f in fidx])
             self.freq_data.ind_high = max([f[1] for f in fidx])           
+        else:
+            self.freq_data.ind_low = 0
+            self.freq_data.ind_high = None
         # set up pipeline
         if parallel:
             freq_data = ray.put(self.freq_data) # already put in the object store
@@ -266,6 +269,10 @@ class Dataset1:
                        ).save(progress_bar)  # start the calculation
 
     def get_feature_shapes(self):
+        # number of samplers
+        sampler = self.build_sampler()
+        sdim = len(sampler.values())
+        del sampler
         # number of frequencies
         fidx = self._get_freq_indices()
         if fidx is None:
@@ -281,22 +288,17 @@ class Dataset1:
         mdim = self.steer.mics.num_mics
         features_shapes = {
             "idx" : (),
-            "seeds" : (len(self.build_pipeline().sampler),),# TODO: this is not good...
-            "loc" : (3,ndim),    
-        }
-        #gdim = self.steer.grid.shape
-        if type(self).__name__ == "Dataset1":
-            features_shapes.update({"p2" : (fdim,ndim)})
-        elif type(self).__name__ == "Dataset2":
-            features_shapes.update({"p2" : (fdim,ndim,ndim,2)})
-        #for feature in self.features:
-            #TODO: feature objects should know their own shape here!
+            "seeds" : (sdim,2),
+            "loc" : (3,ndim),
+            "p2" : (fdim,ndim)}
         if "csm" in self.features:
             features_shapes.update({"csm" : (fdim,mdim,mdim,2)})
         if "csmtriu" in self.features:
             features_shapes.update({"csmtriu" : (fdim,mdim,mdim,1)})
         if "sourcemap" in self.features:
             features_shapes.update({"sourcemap" : (fdim,) + self.steer.grid.shape })
+        if "eigmode" in self.features:
+            features_shapes.update({"eigmode" : (fdim,mdim,mdim,2) })
         return features_shapes
 
 
@@ -307,7 +309,9 @@ if TF_FLAG:
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
         return tf.data.Dataset.from_generator(
             partial(
-                self.generate,split, startsample,tasks,progress_bar,cache_csm,cache_bf,cache_dir,address,log
+                self.generate,
+                split=split,startsample=startsample,tasks=tasks,progress_bar=progress_bar,
+                cache_csm=cache_csm,cache_bf=cache_bf,cache_dir=cache_dir,address=address,log=log
                 ) ,output_signature=signature)                                   
     Dataset1.get_tf_dataset = get_tf_dataset
 
@@ -315,7 +319,7 @@ if TF_FLAG:
 def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
     sourcemixer = s[2].target[0]
     # apply amplitudes
-    prms = sqrt(sort(diagonal(s[3].target[0]))) 
+    prms = sqrt(real(sort(diagonal(s[3].target[0])))) 
     for i,src in enumerate(sourcemixer.sources):
         src.signal.rms = prms[i]
     freq_data.time_data = sourcemixer# the sampled source mixer

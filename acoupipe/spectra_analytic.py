@@ -1,10 +1,11 @@
 
 from acoular import PowerSpectraImport, SteeringVector
+from acoular.internal import digest
 from numpy import diag_indices, dot, r_, tril_indices, zeros
 from numpy.random import default_rng
 from scipy.linalg import cholesky
-from traits.api import CArray, Either, Instance, Int, Property, property_depends_on, cached_property, Tuple
-from acoular.internal import digest
+from traits.api import CArray, Either, Instance, Int, Property, cached_property, property_depends_on
+
 
 class PowerSpectraAnalytic(PowerSpectraImport):
 
@@ -40,7 +41,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
   
     # internal identifier
     digest = Property( 
-        depends_on = ['_csmsum', 'df', 'seed', 'mode, steer.digest, Q, noise, ind_low, ind_high'],
+        depends_on = ["_csmsum", "df", "seed", "mode","steer.digest","Q","noise","ind_low","ind_high"],
         )
 
     @cached_property
@@ -74,7 +75,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         CA = dot(C, A)
         return dot(CA, CA.conjugate().T)/self.df
 
-    @property_depends_on("Q,noise,steer.digest,ind_low,ind_high")
+    @property_depends_on("Q,noise,steer.digest,ind_low,ind_high,mode,df,seed")
     def _get_csm ( self ):
         self._validate_freq_data()
         if self.mode == "analytic":
