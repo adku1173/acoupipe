@@ -86,6 +86,38 @@ class Dataset1:
             fidx = None
         return fidx
 
+    def get_dataset_metadata(self):
+        metadata = {}
+        metadata["version"] = VERSION
+        metadata["size"] = self.size
+        metadata["num"] = self.num
+        metadata["fs"] = self.fs
+        metadata["max_nsources"] = self.max_nsources
+        metadata["min_nsources"] = self.min_nsources
+        return metadata
+
+    def get_dataset_feature_names(self):
+        feature_names = ["idx","seeds","p2", "loc"]
+        if "csm" in self.features:
+            feature_names.append("csm")
+        if "csmtriu" in self.features:
+            feature_names.append("csmtriu")
+        if "eigmode" in self.features:
+            feature_names.append("eigmode")
+        if "sourcemap" in self.features:
+            feature_names.append("sourcemap")
+        return feature_names
+
+    def get_encoder_funcs(self):
+        encoder_dict = {
+            "idx": int64_feature,
+            "seeds": float_list_feature,
+        }
+        encoder_dict.update({
+            f : float_list_feature for f in self.get_dataset_feature_names() if f not in ["idx", "seeds"]
+        })
+        return encoder_dict
+
     def build_sampler(self):
         noisy_mics = deepcopy(self.steer.mics) # Microphone geometry with positional noise
         white_noise_signals = [ 
@@ -173,12 +205,12 @@ class Dataset1:
                             self.features, freq_data, beamformer))
            
 
-    def _setup_generation_process(self, tasks, head, log, logname):
+    def _setup_generation_process(self, tasks, address, log, logname):
 
         if tasks > 1:
             parallel=True
             ray.shutdown()
-            ray.init(address=head)
+            ray.init(address=address)
         else:
             parallel = False
 
@@ -187,13 +219,13 @@ class Dataset1:
             _handle_log(".".join(logname.split(".")[:-1]) + ".log")
         return parallel
 
-    def generate(self, split, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, 
+    def generate(self, split, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
                 cache_dir=".", log=False):
         
         # Logging for debugging and timing statistic purpose
         logname = f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log"
         # setup process
-        parallel = self._setup_generation_process(tasks, head, log, logname)
+        parallel = self._setup_generation_process(tasks, address, log, logname)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
@@ -203,54 +235,35 @@ class Dataset1:
         for data in pipeline.get_data(progress_bar=progress_bar):
             yield data
 
-    def save_tfrecord(self, split, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, 
+    def save_tfrecord(self, split, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
                     cache_dir=".", log=False):
         if not TF_FLAG:
             raise ImportError("save data to .tfrecord format requires TensorFlow!")
         # setup process
-        parallel = self._setup_generation_process(tasks, head, log, name)
+        parallel = self._setup_generation_process(tasks, address, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
-        pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
                            self.size, split)
-        
-        # create Writer pipeline
-        encoder_dict = {
-            "loc": float_list_feature,
-            "p2": float_list_feature,
-            "idx": int64_feature,
-            "seeds": int_list_feature,
-        }
-        for feature in self._feature_objects:
-            feature.add_encoder_funcs(encoder_dict)
         # create TFRecordWriter to save pipeline output to TFRecord File
         WriteTFRecord(name=name, source=pipeline,
-                      encoder_funcs=encoder_dict).save(progress_bar)
+                      encoder_funcs=self.get_encoder_funcs()).save(progress_bar)
 
-    def save_h5(self, split, name, startsample=1, tasks=1, progress_bar=True, head=None, cache_csm=False, cache_bf=False, 
+    def save_h5(self, split, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
                 cache_dir=".", log=False):
         # setup process
-        parallel = self._setup_generation_process(tasks, head, log, name)
+        parallel = self._setup_generation_process(tasks, address, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
-        pipeline.progress_bar = progress_bar
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample,
                            self.size, split)
-
         # create Writer pipeline
-        metadata = {}
-        for feature in self._feature_objects:
-            metadata = feature.add_metadata(metadata.copy())
-
         WriteH5Dataset(name=name,
                        source=pipeline,
-                       features=list(pipeline.features.keys()),
-                       metadata=metadata.copy(),
+                       metadata=self.get_dataset_metadata(),
                        ).save(progress_bar)  # start the calculation
-
 
     def get_feature_shapes(self):
         # number of frequencies
@@ -289,12 +302,12 @@ class Dataset1:
 
 if TF_FLAG:
     import tensorflow as tf
-    def get_tf_dataset(self, split, startsample=1, tasks=1, progress_bar=False, head=None, cache_csm=False, cache_bf=False, 
+    def get_tf_dataset(self, split, startsample=1, tasks=1, progress_bar=False, address=None, cache_csm=False, cache_bf=False, 
                         cache_dir=".", log=False): 
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
         return tf.data.Dataset.from_generator(
             partial(
-                self.generate,split, startsample,tasks,progress_bar,cache_csm,cache_bf,cache_dir,head,log
+                self.generate,split, startsample,tasks,progress_bar,cache_csm,cache_bf,cache_dir,address,log
                 ) ,output_signature=signature)                                   
     Dataset1.get_tf_dataset = get_tf_dataset
 

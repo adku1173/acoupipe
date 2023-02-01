@@ -15,6 +15,7 @@ from functools import wraps
 from time import time
 
 import ray
+from numpy import array
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
 from traits.api import Callable, Dict, Either, HasPrivateTraits, Int, Trait, Tuple
@@ -180,7 +181,7 @@ class BasePipeline(DataGenerator):
             for i in sampler_order:
                 if isinstance(self.sampler[i], BaseSampler):
                     self.sampler[i].sample()
-            data = {"idx" : self._idx, "seeds": [(k,v) for k,v in self._seeds.items()]}
+            data = {"idx" : self._idx, "seeds": array(list(self._seeds.items()))}
             data.update(self._extract_features())
             yield data
 
@@ -249,7 +250,7 @@ class DistributedPipeline(BasePipeline):
             result_id = _extract_features.remote(sampler_ref, self.features, times) # calculation is started in new remote task 
         else:
             result_id = _extract_features.remote(sampler_ref, self.features[0], times, *list(self.features[1:]))  
-        task_dict[result_id] = {"idx" : self._idx, "seeds": [(k,v) for k,v in self._seeds.items()]}  # add index, and seeds
+        task_dict[result_id] = {"idx" : self._idx, "seeds": array(list(self._seeds.items()))}  # add index, and seeds
         
     def _log_execution_time(self,task_index,times,pid):
         self.logger.info("id %i on pid %i: scheduling task took: %2.32f sec" % \

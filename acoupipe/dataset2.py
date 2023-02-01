@@ -107,6 +107,21 @@ class Dataset2(Dataset1):
         if sample_wishart:
             self.freq_data.mode = "wishart"
 
+    def get_dataset_metadata(self):
+        metadata = {}
+        metadata["version"] = VERSION
+        metadata["size"] = self.size
+        metadata["num"] = self.num
+        metadata["fs"] = self.fs
+        metadata["max_nsources"] = self.max_nsources
+        metadata["min_nsources"] = self.min_nsources
+        metadata["sample_mic_noise"] = self.sample_mic_noise
+        metadata["sample_noise"] = self.sample_noise
+        metadata["sample_spectra"] = self.sample_spectra
+        metadata["sample_wishart"] = self.sample_wishart
+        metadata["nfft"] = self.nfft
+        return metadata
+
     def build_sampler(self):
         sampler = {}
         if self.sample_mic_noise:
@@ -174,7 +189,7 @@ class Dataset2(Dataset1):
     def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
         cache_dir = _handle_cache(cache_bf, cache_csm, cache_dir)
         ref_mic_idx = argmin(linalg.norm((self.steer.mics.mpos - self.steer.mics.center[:,newaxis]),axis=0))
-        self.freq_data.cached = cache_csm
+        self.freq_data.cached = False # is always false for PowerSpectraAnalytic (Not implemented so far)
         self.beamformer.cached = cache_bf
         # the frequencies of the spectra
         self.freq_data.frequencies=abs(fft.fftfreq(self.nfft*2, 1./self.fs)[:int(self.nfft+1)])[1:]   
