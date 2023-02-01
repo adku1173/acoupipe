@@ -1,10 +1,11 @@
 
 from acoular import PowerSpectraImport, SteeringVector
-from numpy import diag_indices, dot, r_, tril_indices, zeros
-from numpy.random import RandomState
-from scipy.linalg import cholesky
-from traits.api import CArray, Either, Instance, Int, Property, property_depends_on, cached_property
 from acoular.internal import digest
+from numpy import diag_indices, dot, r_, tril_indices, zeros
+from numpy.random import default_rng
+from scipy.linalg import cholesky
+from traits.api import CArray, Either, Instance, Int, Property, cached_property, property_depends_on
+
 
 class PowerSpectraAnalytic(PowerSpectraImport):
 
@@ -21,7 +22,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
 
     #: the state of the random variable. only relevant if :attr:`mode` is 'wishart'
     seed = Int(1,
-        desc="random state of the random variable")
+        desc="seed value or random state of the random variable")
 
     df = Int(64,
         desc="degrees of freedom of the wishart distribution")
@@ -40,8 +41,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
   
     # internal identifier
     digest = Property( 
-        depends_on = ['_csmsum', 
-            ], 
+        depends_on = ["_csmsum", "df", "seed", "mode","steer.digest","Q","noise","ind_low","ind_high"],
         )
 
     @cached_property
@@ -75,7 +75,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         CA = dot(C, A)
         return dot(CA, CA.conjugate().T)/self.df
 
-    @property_depends_on("Q,noise,steer.digest,ind_low,ind_high")
+    @property_depends_on("Q,noise,steer.digest,ind_low,ind_high,mode,df,seed")
     def _get_csm ( self ):
         self._validate_freq_data()
         if self.mode == "analytic":
@@ -96,17 +96,17 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         return csm        
 
     def _calc_csm_wishart( self ):
-        rng1 = RandomState(self.seed)
-        rng2 = RandomState(self.seed+1)
         fftfreq = self.fftfreq()
         H = zeros((fftfreq.shape[0],self.steer.mics.num_mics,self.Q.shape[1]),dtype=complex)
         self._Q_wishart = zeros((fftfreq.shape[0],self.Q.shape[1],self.Q.shape[1]),dtype=complex)
         if self.noise is not None:
             self._noise_wishart = zeros((fftfreq.shape[0],self.noise.shape[1],self.noise.shape[1]),dtype=complex)
         for i in self.indices:
+            rng1 = default_rng([self.seed,i])
             H[i] = self.steer.transfer(fftfreq[i]).T
             self._Q_wishart[i] = self._sample_wishart(self.Q[i],rng1)
             if self.noise is not None:
+                rng2 = default_rng([self.seed+1,i])
                 self._noise_wishart[i] = self._sample_wishart(self.noise[i],rng2)
         csm = H@self._Q_wishart@H.swapaxes(2,1).conjugate()
         if self.noise is not None:
