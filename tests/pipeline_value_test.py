@@ -1,17 +1,12 @@
 """BasePipeline and Distributed Pipeline for testing."""
 
 from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
-from acoupipe import (
-    BasePipeline,
-    DistributedPipeline,
-    MicGeomSampler,
-    NumericAttributeSampler,
-    PointSourceSampler,
-    SourceSetSampler,
-)
 from numpy import array
 from numpy.random import RandomState
 from scipy.stats import norm, rayleigh
+
+from acoupipe.pipeline import BasePipeline, DistributedPipeline
+from acoupipe.sampler import MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
 
 mpos_tot = array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
        [-0.60619132,  1.20374544, -0.27378946, -1.38583541],

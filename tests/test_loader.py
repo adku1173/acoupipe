@@ -2,8 +2,10 @@ import os
 import tempfile
 import unittest
 
-from acoupipe import LoadH5Dataset, WriteH5Dataset
 from pipeline_value_test import get_pipeline
+
+from acoupipe.loader import LoadH5Dataset
+from acoupipe.writer import WriteH5Dataset
 
 
 class TestWriteAndLoad(unittest.TestCase):

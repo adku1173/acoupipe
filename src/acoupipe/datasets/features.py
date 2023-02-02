@@ -1,6 +1,6 @@
 from acoular import config
 
-from .config import TF_FLAG
+from acoupipe.config import TF_FLAG
 
 if TF_FLAG:
     pass
@@ -10,7 +10,7 @@ import numba
 from numpy import array, float32, imag, newaxis, real, triu_indices, zeros
 from numpy.linalg import eigh
 
-from .helper import complex_to_real
+from acoupipe.datasets.helper import complex_to_real
 
 #from .sbl import SBL, Options
 warnings.filterwarnings("ignore") # suppress pickling warnings

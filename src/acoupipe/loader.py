@@ -13,7 +13,7 @@ from acoular import config
 from acoular.h5files import H5FileBase, _get_h5file_class
 from traits.api import CLong, Dict, File, Instance, List, Property, cached_property, on_trait_change
 
-from .pipeline import DataGenerator
+from acoupipe.pipeline import DataGenerator
 
 config.h5library = "h5py"
 
@@ -126,7 +126,7 @@ class LoadH5Dataset(BaseLoadDataset):
             self.numfeatures = len(self.h5f[self.indices[0]].keys())
             self.features = list(self.h5f[self.indices[0]].keys())
 
-    def get_dataset_generator(self, features=[]):
+    def get_dataset_generator(self, features=None):
         """Creates a callable that returns a generator object.
         
         This object can be used in conjunction with the Tensorflow `tf.data.Dataset` API to create
@@ -148,7 +148,7 @@ class LoadH5Dataset(BaseLoadDataset):
         Parameters
         ----------
         features : list, optional
-            a list with names of the features to be yielded by the generator, by default [], 
+            a list with names of the features to be yielded by the generator, by default None, 
             meaning that all features will be considered. 
 
         Returns
@@ -157,7 +157,7 @@ class LoadH5Dataset(BaseLoadDataset):
             A callable that returns a generator object 
         """
         def sample_generator():
-            if not features:
+            if features is None:
                 for i in range(1,self.numsamples+1):
                     yield {key:value[()] for key,value in self.h5f[str(i)].items()}
             else:

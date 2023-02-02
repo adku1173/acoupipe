@@ -2,7 +2,8 @@ import unittest
 
 import numpy as np
 from acoular import ImportGrid, MicGeom, SteeringVector
-from acoupipe import PowerSpectraAnalytic
+
+from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 
 mg = MicGeom(mpos_tot=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
        [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
