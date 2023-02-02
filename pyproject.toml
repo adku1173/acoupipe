@@ -14,23 +14,18 @@ keywords = [
     "microphone array"
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Education",
     "Intended Audience :: Science/Research",
-    "Topic :: Scientific/Engineering :: Physics",
+    "Topic :: Scientific/Engineering :: Physics :: Machine Learning",
     "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3 :: Only"    
 ]
 dependencies = [
-	'acoular>=21.05',
-	'setuptools',
-	'ray>=1.2.0',
-	'pandas',
+	'acoular',
+	'ray',
 	'h5py',
-	#      'parameterized',	
 	'tqdm',
+	'parameterized',
 ]
 maintainers = [
     {name = "Adam Kujawski", email = "adam.kujawski@tu-berlin.de"},
@@ -52,7 +47,6 @@ repository = "https://github.com/adku1173/acoupipe"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-
 [tool.ruff]
 src = ["src"]
 ignore = [
@@ -61,7 +55,8 @@ ignore = [
     "B905",
     "N806", "N803",
     "E741"]
-line-length = 130
+line-length = 140
 select = ["B", "D", "E", "F", "I", "N", "Q", "W"]
 
-
+[tool.ruff.pydocstyle]
+convention = "numpy"
