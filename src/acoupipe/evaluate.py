@@ -4,7 +4,7 @@
     :toctree: generated/
 
     BaseEvaluator
-    PlanarSourceMapEvaluator
+    SourceMapEvaluator
     GridlessEvaluator
 
 """
@@ -14,12 +14,12 @@ import numpy as np
 from acoular import CircSector, L_p, integrate
 from acoular.grids import RectGrid
 from traits.api import Bool, CArray, Float, HasPrivateTraits, Instance, Property
-
+from scipy.spatial.distance import cdist
 
 class BaseEvaluator(HasPrivateTraits):
     """Base class to evaluate the performance of source mapping methods."""
     
-    #: the target locations with shape=(ns,ndim). ns is the number of ground-truth sources,
+    #: the target locations with shape=(ndim, ns). ns is the number of ground-truth sources,
     #: ndim specifies the spatial dimension
     target_loc = CArray(
         desc="locations of the ground-truth sources")  
@@ -44,20 +44,12 @@ class BaseEvaluator(HasPrivateTraits):
 
     def _get_sector_radii(self):
         ns = self.target_pow.shape[1]
-        if ns > 1: # only if multiple sources are present
-            if self.variable_sector_radii:
-                radii = [] 
-                for i in range(ns):
-                    intersourcedists = np.linalg.norm(self.target_loc - self.target_loc[i,:],axis=1)
-                    intersourcedists = intersourcedists[intersourcedists != 0] 
-                    if intersourcedists.min()/2 < self.r:
-                        radii.append(intersourcedists.min()/2)
-                    else: 
-                        radii.append(self.r)
-            else:
-                radii = [self.r]*ns
-        else:
-            radii = [self.r] 
+        radii = np.ones(ns)*self.r 
+        if self.variable_sector_radii:
+            intersrcdist = cdist(self.target_loc.T, self.target_loc.T)
+            intersrcdist[intersrcdist == 0] = np.inf
+            intersrcdist = intersrcdist.min(0)/2
+            radii = np.minimum(radii,intersrcdist)
         return radii
     
     def get_specific_level_error(self):
@@ -73,7 +65,7 @@ class BaseEvaluator(HasPrivateTraits):
         pass
 
 
-class PlanarSourceMapEvaluator(BaseEvaluator):
+class SourceMapEvaluator(BaseEvaluator):
     """Class to evaluate the performance of microphone array methods on planar grid-based source maps.
 
     This class can be used to calculate different performance metrics
@@ -92,6 +84,20 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
     grid = Instance(RectGrid,
         desc="beamforming grid instance that belongs to the sourcemap")
 
+    def _get_sectors(self):
+        """returns a list of CircSector objects for each target location."""
+        if self.target_loc.shape[0] in [2,3]:
+            sectors = [
+                CircSector(r=self.sector_radii[i],
+                                    x=self.target_loc[0,i],
+                                    y=self.target_loc[1,i]) 
+                for i in range(self.target_pow.shape[1])
+            ]
+        else:
+            raise ValueError(
+                "target_loc must have shape (2,nsources)! or (3,nsources) for 3D!")
+        return sectors
+
     def _integrate_targets(self,multi_assignment=True):
         """integrates over target sectors.
 
@@ -107,25 +113,26 @@ class PlanarSourceMapEvaluator(BaseEvaluator):
             returns the integrated p^2 values for each region
         """
         results = np.empty(shape=self.target_pow.shape)
+        sectors = self._get_sectors()
         for f in range(self.target_pow.shape[0]):
             pm = self.sourcemap[f].copy()
             for i in range(self.target_pow.shape[1]):
-                sector = CircSector(r=self.sector_radii[i],
-                                    x=self.target_loc[i, 0],
-                                    y=self.target_loc[i, 1])
-                results[f,i] = integrate(pm,self.grid,sector)
+                results[f,i] = integrate(pm,self.grid,sectors[i])
                 if not multi_assignment:
-                    indices = self.grid.indices(sector.x,sector.y,sector.r)
+                    indices = self.grid.subdomain(sectors[i])
                     pm[indices] = 0 # set values to zero (can not be assigned again)
         return results
 
     def _validate_shapes(self):
-        if not self.sourcemap.ndim == 4:
-            raise ValueError("attribute sourcemap is not of shape (number of frequencies, nxsteps, nysteps, nzsteps)!")
+        if self.grid.shape != self.sourcemap.shape[1:]:
+            raise ValueError("grid and sourcemap do not have the same shape!")
         if not self.sourcemap.shape[0] == self.target_pow.shape[0]:
             raise ValueError(
-                f"""Number of p2 target values per source (shape {self.target_pow.shape}) does not match the 
-                number of sourcemaps (shape {self.sourcemap.shape}). Provide as many target values as sourcemaps!""")
+                f"""Number of specified frequencies must match between the sourcemaps and the target power values!
+                (shape {self.target_pow.shape[0]}) does not match the number of sourcemaps (shape {self.sourcemap.shape[0]}). 
+                Provide as many target values as sourcemaps!""")
+        if self.target_loc.shape[0] > 3:
+            raise ValueError("target_loc cannot have more than 3 dimensions! Maybe you want to use a transposed target_loc array?")
 
     def get_overall_level_error(self):
         """Returns the overall level error (Herold and Sarradj, 2017).
