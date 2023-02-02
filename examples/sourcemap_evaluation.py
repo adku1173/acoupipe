@@ -1,12 +1,14 @@
 from os import path
+
 import acoular
 import matplotlib
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from acoupipe import PlanarSourceMapEvaluator, GridlessEvaluator, get_frequency_index_range
 import numpy as np
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
-micgeofile = path.join(path.split(acoular.__file__)[0],'xml','array_64.xml')
+from acoupipe.evaluate import GridlessEvaluator, PlanarSourceMapEvaluator, get_frequency_index_range
+
+micgeofile = path.join(path.split(acoular.__file__)[0],"xml","array_64.xml")
 mg = acoular.MicGeom( from_file=micgeofile )
 
 # create noise sources
@@ -22,7 +24,7 @@ ts = acoular.SourceMixer( sources=[ps1,ps2,ps3])
 cache = acoular.TimeCache(source=ts)
 
 # process microphone array signals
-ps = acoular.PowerSpectra( time_data=cache, block_size=1024, window='Hanning' )
+ps = acoular.PowerSpectra( time_data=cache, block_size=1024, window="Hanning" )
 rg = acoular.RectGrid( x_min=-0.2, x_max=0.2, y_min=-0.2, y_max=0.2, z=.5, \
 increment=0.01 )
 st = acoular.SteeringVector( grid = rg, mics=mg,ref=mg.mpos[:,8] )
@@ -32,7 +34,7 @@ sourcemap = bb.synthetic( 8000, 3 )
 
 # get the reference auto-power values at the reference microphone for each point source and for the 
 # full 8 kHz frequency band
-ps_ref = acoular.PowerSpectra( time_data=ts, block_size=1024, window='Hanning' )
+ps_ref = acoular.PowerSpectra( time_data=ts, block_size=1024, window="Hanning" )
 ps_ref.time_data = acoular.MaskedTimeInOut(source=ts,invalid_channels=[_ for _ in range(64) if not _  == 8]) # masking other channels than the reference channel
 # calculate the power spectrum for each source signal at reference position
 # 1.: get the frequency indices that belong to the 8 kHz band

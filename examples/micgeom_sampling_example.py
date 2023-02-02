@@ -1,20 +1,15 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from numpy.random import RandomState
-import matplotlib.pyplot as plt
-from acoular import MicGeom
-from acoupipe import MicGeomSampler
 
+from acoupipe.datasets.dataset1 import DEFAULT_MICS
+from acoupipe.sampler import MicGeomSampler
 
 nsamples = 10
 
 # create Microphone Geometry object
-mics = MicGeom(from_file="array64_d0o686.xml")
-
+mics = DEFAULT_MICS
 # define random state
 rng = RandomState(seed=1) 
 
@@ -38,7 +33,7 @@ plt.title("individual deviation on x-axis")
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker="x",s=10,label="true positions")
 plt.legend()    
 plt.show()
 
@@ -53,7 +48,7 @@ plt.title("individual deviation on x- and y- axis")
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker="x",s=10,label="true positions")
 plt.legend()    
 plt.show()
 
@@ -72,7 +67,7 @@ plt.title("rotation around z-axis")
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker="x",s=10,label="true positions")
 plt.legend()    
 plt.show()
 
@@ -89,6 +84,6 @@ plt.title("translation of full geometry along y-axis")
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker="x",s=10,label="true positions")
 plt.legend()    
 plt.show()
