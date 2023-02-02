@@ -10,7 +10,7 @@
 from os import path
 
 from acoular import config
-from acoular.h5files import H5FileBase, _get_h5file_class
+from h5py import File as H5File
 from traits.api import CLong, Dict, File, Instance, List, Property, cached_property, on_trait_change
 
 from acoupipe.pipeline import DataGenerator
@@ -50,11 +50,7 @@ class LoadH5Dataset(BaseLoadDataset):
     #: Basename of the .h5 file with data, is set automatically.
     basename = Property( depends_on = "name", 
         desc="basename of data file")
-    
-    #: The  data as array.
-    dataset = Dict(
-        desc="the actual time data array")
-    
+       
     #: Number of data samples, is set automatically / read from file.
     numsamples = CLong(0, 
         desc="number of samples in the dataset")
@@ -72,7 +68,7 @@ class LoadH5Dataset(BaseLoadDataset):
         desc="the indices of the dataset")
 
     #: HDF5 file object
-    h5f = Instance(H5FileBase, transient = True)
+    h5f = Instance(H5File, transient = True)
     
     #: Provides metadata stored in HDF5 file object
     metadata = Dict(
@@ -95,21 +91,9 @@ class LoadH5Dataset(BaseLoadDataset):
                 self.h5f.close()
             except IOError:
                 pass
-        file = _get_h5file_class()
-        self.h5f = file(self.name,mode="r")
-        #self.load_dataset()
+        self.h5f = H5File(self.name,mode="r")
         self.load_metadata()
 
-    def load_dataset( self ):
-        """Loads dataset from .h5 file into the dataset attribute.
-        
-        Should only be used if dataset is small in memory. 
-        """
-        for key in self.indices:
-            self.dataset[key] = {}
-            for feature in self.h5f[key].keys():
-                self.dataset[key][feature] = self.h5f[key][feature]
-                    
     def load_metadata( self ):
         """loads metadata from .h5 file. Only for internal use."""
         self.metadata = {}

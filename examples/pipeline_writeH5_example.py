@@ -94,7 +94,6 @@ for d in writer_rms.get_data():
 
 loader_sourcemap = LoadH5Dataset(name="sourcemap_"+DATASET_NAME)
 loader_rms = LoadH5Dataset(name="rms_"+DATASET_NAME)
-loader_rms.load_dataset()
 print(loader_sourcemap.numsamples)
 print(loader_sourcemap.numfeatures)
 

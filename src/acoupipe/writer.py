@@ -17,7 +17,7 @@ from datetime import datetime
 from os import path
 
 from acoular import config
-from acoular.h5files import _get_h5file_class
+from h5py import File as H5File
 from traits.api import Bool, Dict, File, Function, Instance, List, Str, Trait
 
 from acoupipe.config import TF_FLAG
@@ -84,10 +84,9 @@ class WriteH5Dataset(BaseWriteDataset):
             name = datetime.now().isoformat("_").replace(":","-").replace(".","_")
             self.name = path.join(config.td_dir,name+".h5")
 
-    def get_initialized_file(self):
-        file = _get_h5file_class()
+    def get_file(self):
         self.create_filename()
-        f5h = file(self.name, mode = "w")
+        f5h = H5File(self.name, mode = "w")
         return f5h
 
     def get_filtered_features(self):
@@ -97,30 +96,34 @@ class WriteH5Dataset(BaseWriteDataset):
             else:
                 subf = self.features
             return subf
-        
-    def save(self, progress_bar=True):
-        """Saves the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format."""
-        f5h = self.get_initialized_file()
-        subf = self.get_filtered_features() 
-        for data in self.source.get_data():
-            #create a group for each Sample
-            ac = f5h.create_new_group(str(data["idx"]))
-            #store dict in the group
-            if not subf:
-                [f5h.create_array(ac,key, value) for key, value in data.items()]   
-            else:
-                [f5h.create_array(ac,key, value) for key, value in data.items() if key in subf]   
-        self.add_metadata(f5h)
-        f5h.flush()
-        f5h.close()
 
-    def add_metadata(self, f5h):
+    def _add_data(self, f5h, data, subf):
+        dataset_idx = str(data["idx"])
+        #create a group for each Sample
+        f5h.create_group(dataset_idx)
+        #store dict in the group
+        if not subf:
+            [f5h.create_dataset(f"{dataset_idx}/{key}",data=value) for key, value in data.items()]
+        else:
+            [f5h.create_dataset(f"{dataset_idx}/{key}",data=value) for key, value in data.items() if key in subf]
+
+    def _add_metadata(self, f5h):
         """adds metadata to .h5 file."""
         nitems = len(self.metadata.items())
         if nitems > 0:
-            ac = f5h.create_new_group("metadata","/")
+            f5h.create_group("metadata")
             for key, value in self.metadata.items():
-                f5h.create_array(ac,key, value)
+                f5h.create_dataset(f"metadata/{key}",data=value)
+
+    def save(self, progress_bar=True):
+        """Saves the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format."""
+        f5h = self.get_file()
+        subf = self.get_filtered_features() 
+        for data in self.source.get_data():
+            self._add_data(f5h, data, subf)
+        self._add_metadata(f5h)
+        f5h.flush()
+        f5h.close()
 
     def get_data(self, progress_bar=True):
         """Python generator that saves the data passed by the source to a `*.h5` file and yields the data to the next object.
@@ -131,20 +134,15 @@ class WriteH5Dataset(BaseWriteDataset):
         {feature_name[key] : feature[values]}. 
         """
         self.writeflag = True
-        f5h = self.get_initialized_file()      
+        f5h = self.get_file()      
         subf = self.get_filtered_features() 
         for data in self.source.get_data(progress_bar): 
             if not self.writeflag: return     
-            #create a group for each Sample
-            ac = f5h.create_new_group(str(data["idx"]))
-            #store dict in the group
-            if not subf:
-                [f5h.create_array(ac,key, value) for key, value in data.items()]   
-            else:
-                [f5h.create_array(ac,key, value) for key, value in data.items() if key in subf]   
+            self._add_data(f5h, data, subf) 
             yield data
             f5h.flush()
-        self.add_metadata(f5h)
+        self._add_metadata(f5h)
+        f5h.flush()
         f5h.close()
         
 
