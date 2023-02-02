@@ -2,13 +2,23 @@ import unittest
 
 import ray
 from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
-from acoupipe import *
 from numpy import array
 from numpy.random import RandomState, default_rng
 from numpy.testing import assert_almost_equal
 from parameterized import parameterized
 from pipeline_value_test import get_distributed_pipeline, get_pipeline
 from scipy.stats import norm
+
+from acoupipe.pipeline import BasePipeline, DistributedPipeline
+from acoupipe.sampler import (
+    BaseSampler,
+    ContainerSampler,
+    MicGeomSampler,
+    NumericAttributeSampler,
+    PointSourceSampler,
+    SetSampler,
+    SourceSetSampler,
+)
 
 SAMPLER_CLASSES = [BaseSampler, NumericAttributeSampler,
            SetSampler, SourceSetSampler, PointSourceSampler,ContainerSampler, MicGeomSampler]
@@ -25,7 +35,7 @@ class Target:
     attribute = 0
 
 def create_test_method(target_instance):
-    """method used to test ContainerSampler class."""
+    """Method used to test ContainerSampler class."""
     def sample_method(random_state):
         target_instance.attribute = random_state.random()
     return sample_method
@@ -33,7 +43,7 @@ def create_test_method(target_instance):
 FLOAT_SET = [0.1,0.2,0.3,0.4] # a set with floats for testing
 
 
-class Test_SetSampler(unittest.TestCase):
+class TestSetSampler(unittest.TestCase):
 
     def setUp(self):
         self.sampler = SetSampler(random_state=RandomState(1),
@@ -67,7 +77,7 @@ class Test_SetSampler(unittest.TestCase):
         self.assertNotEqual(linkedTarget.linked_attribute,0)
 
 
-class Test_SourceSetSampler(unittest.TestCase):
+class TestSourceSetSampler(unittest.TestCase):
 
     def setUp(self):
         ps_set = [PointSource(signal=WNoiseGenerator(sample_freq=10),mics=MicGeom()) for i in range(4)]
@@ -95,7 +105,7 @@ class Test_SourceSetSampler(unittest.TestCase):
             self.assertTrue(self.sampler.target[0].sources!=self.sampler.target[1].sources)
 
 
-class Test_NumericAttributeSampler(Test_SetSampler):
+class TestNumericAttributeSampler(TestSetSampler):
 
     def setUp(self):
         self.sampler = NumericAttributeSampler(random_var=norm(loc=0,scale=0.1688),random_state=5,
@@ -131,7 +141,7 @@ class Test_NumericAttributeSampler(Test_SetSampler):
 
 
 
-class Test_ContainerSampler(unittest.TestCase):
+class TestContainerSampler(unittest.TestCase):
 
     def setUp(self):
         self.target = Target()
@@ -176,7 +186,7 @@ class Test_ContainerSampler(unittest.TestCase):
         self.containerSampler.random_func = random_func
         self.assertRaises(ValueError,self.containerSampler.sample)
 
-class Test_MicGeomSampler(unittest.TestCase):
+class TestMicGeomSampler(unittest.TestCase):
 
     def get_micgeom(self):
         rng = RandomState(1)
@@ -186,26 +196,28 @@ class Test_MicGeomSampler(unittest.TestCase):
     def get_sampler(self,stype="deviate"):
         rng = RandomState(2) 
         normal_distribution = norm(loc=0, scale= 0.1) 
-        if stype == 'deviate':
+        if stype == "deviate":
             sampler = MicGeomSampler(random_var=normal_distribution,
                                 random_state=rng,
                                 ddir = array([[1.],[1.],[1.]]))
-        elif stype == 'rotate':
+        elif stype == "rotate":
             sampler = MicGeomSampler(random_var=normal_distribution,
                                 random_state=rng,
                                 rvec = array([[1.],[1.],[1.]])) 
-        elif stype == 'translate':
+        elif stype == "translate":
             sampler = MicGeomSampler(random_var=normal_distribution,
                                 random_state=rng,
                                 tdir = array([[1.],[1.],[1.]])) 
         return sampler
 
     def test_mpos_init(self):
-        """1. test that mpos_init has not changed after sampling.
+        """Mpos init should be the same as the target mpos_tot.
+        
+        1. test that mpos_init has not changed after sampling.
         2. test that mpos changed due to sampling.
         3. test that digest of MicGeom object has changed after sampling. 
         """
-        for mode in ['deviate','rotate','translate']:
+        for mode in ["deviate","rotate","translate"]:
             with self.subTest(mode):
                 micgeom = self.get_micgeom()
                 digest1 = micgeom.digest
@@ -219,7 +231,7 @@ class Test_MicGeomSampler(unittest.TestCase):
                 self.assertNotEqual(digest1,digest2)
 
 
-class Test_Sampler(unittest.TestCase):
+class TestSampler(unittest.TestCase):
 
     def test_instancing(self):
         """create an instance of each class defined in module."""
@@ -235,7 +247,7 @@ class Test_Sampler(unittest.TestCase):
 
 
 
-class Test_BasePipeline(unittest.TestCase):
+class TestBasePipeline(unittest.TestCase):
 
     def setUp(self):
         """will be called for every single test."""
@@ -263,7 +275,7 @@ class Test_BasePipeline(unittest.TestCase):
         self.assertRaises(ValueError,lambda: next(self.pipeline.get_data(progress_bar=False)))
 
 
-class Test_DistributedPipeline(Test_BasePipeline):
+class TestDistributedPipeline(TestBasePipeline):
 
     def setUp(self):
         """will be called for every single test."""

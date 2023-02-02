@@ -1,7 +1,6 @@
 from copy import deepcopy
 from datetime import datetime
 from functools import partial
-from os import path
 
 import ray
 from acoular import (
@@ -20,21 +19,17 @@ from acoular import (
 from numpy import argmin, array, diagonal, float32, linalg, newaxis, real, sort, sqrt
 from scipy.stats import norm, poisson, rayleigh
 
-from .config import TF_FLAG
-from .features import get_csm, get_eigmode, get_nonredundant_csm, get_source_p2, get_sourcemap
-from .helper import _handle_cache, _handle_log, get_frequency_index_range, set_pipeline_seeds
-from .pipeline import BasePipeline, DistributedPipeline
-from .sampler import CovSampler, MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
-from .writer import WriteH5Dataset
-
-if TF_FLAG:
-    from .writer import WriteTFRecord, float_list_feature, int64_feature
-
-from acoupipe import __file__ as acoupipe_path
+from acoupipe.config import TF_FLAG
+from acoupipe.datasets.features import get_csm, get_eigmode, get_nonredundant_csm, get_source_p2, get_sourcemap
+from acoupipe.datasets.helper import _handle_cache, _handle_log, get_frequency_index_range, set_pipeline_seeds
+from acoupipe.datasets.micgeom import tub_vogel64_ap1
+from acoupipe.pipeline import BasePipeline, DistributedPipeline
+from acoupipe.sampler import CovSampler, MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
+from acoupipe.writer import WriteH5Dataset
 
 VERSION = "ds1-v02"
 DEFAULT_ENV = Environment(c=343.)
-DEFAULT_MICS = MicGeom(from_file=path.join(path.split(acoupipe_path)[0], "xml", "tub_vogel64_ap1.xml"))
+DEFAULT_MICS = MicGeom(mpos_tot=tub_vogel64_ap1)
 ref_mic_idx = argmin(linalg.norm((DEFAULT_MICS.mpos - DEFAULT_MICS.center[:,newaxis]),axis=0))
 DEFAULT_GRID = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")
@@ -52,8 +47,7 @@ DEFAULT_RANDOM_VAR = {
 class Dataset1:
 
     def __init__(
-            self, 
-            size, 
+            self,  
             features, 
             f=None, 
             num=0, 
@@ -64,7 +58,6 @@ class Dataset1:
             beamformer = DEFAULT_BEAMFORMER,
             freq_data = DEFAULT_FREQ_DATA,
             random_var = DEFAULT_RANDOM_VAR):       
-        self.size = size
         self.features = features
         self.f = f
         self.num = num
@@ -89,7 +82,6 @@ class Dataset1:
     def get_dataset_metadata(self):
         metadata = {}
         metadata["version"] = VERSION
-        metadata["size"] = self.size
         metadata["num"] = self.num
         metadata["fs"] = self.fs
         metadata["max_nsources"] = self.max_nsources
@@ -107,16 +99,6 @@ class Dataset1:
         if "sourcemap" in self.features:
             feature_names.append("sourcemap")
         return feature_names
-
-    def get_encoder_funcs(self):
-        encoder_dict = {
-            "idx": int64_feature,
-            "seeds": float_list_feature,
-        }
-        encoder_dict.update({
-            f : float_list_feature for f in self.get_dataset_feature_names() if f not in ["idx", "seeds"]
-        })
-        return encoder_dict
 
     def build_sampler(self):
         noisy_mics = deepcopy(self.steer.mics) # Microphone geometry with positional noise
@@ -222,7 +204,7 @@ class Dataset1:
             _handle_log(".".join(logname.split(".")[:-1]) + ".log")
         return parallel
 
-    def generate(self, split, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
+    def generate(self, split, size, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
                 cache_dir=".", log=False):
         
         # Logging for debugging and timing statistic purpose
@@ -232,36 +214,21 @@ class Dataset1:
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
-        set_pipeline_seeds(pipeline, startsample,
-                           self.size, split)
+        set_pipeline_seeds(pipeline, startsample, size, split)
+                           
         # yield the data
         for data in pipeline.get_data(progress_bar=progress_bar):
             yield data
 
-    def save_tfrecord(self, split, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
-                    cache_dir=".", log=False):
-        if not TF_FLAG:
-            raise ImportError("save data to .tfrecord format requires TensorFlow!")
-        # setup process
-        parallel = self._setup_generation_process(tasks, address, log, name)
-        # get dataset pipeline that yields the data
-        pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
-        if parallel: pipeline.numworkers=tasks
-        set_pipeline_seeds(pipeline, startsample,
-                           self.size, split)
-        # create TFRecordWriter to save pipeline output to TFRecord File
-        WriteTFRecord(name=name, source=pipeline,
-                      encoder_funcs=self.get_encoder_funcs()).save(progress_bar)
-
-    def save_h5(self, split, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
+    def save_h5(self, split, size, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
                 cache_dir=".", log=False):
         # setup process
         parallel = self._setup_generation_process(tasks, address, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
-        set_pipeline_seeds(pipeline, startsample,
-                           self.size, split)
+        set_pipeline_seeds(pipeline, startsample, size, split)
+                           
         # create Writer pipeline
         WriteH5Dataset(name=name,
                        source=pipeline,
@@ -300,20 +267,6 @@ class Dataset1:
         if "eigmode" in self.features:
             features_shapes.update({"eigmode" : (fdim,mdim,mdim,2) })
         return features_shapes
-
-
-if TF_FLAG:
-    import tensorflow as tf
-    def get_tf_dataset(self, split, startsample=1, tasks=1, progress_bar=False, address=None, cache_csm=False, cache_bf=False, 
-                        cache_dir=".", log=False): 
-        signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
-        return tf.data.Dataset.from_generator(
-            partial(
-                self.generate,
-                split=split,startsample=startsample,tasks=tasks,progress_bar=progress_bar,
-                cache_csm=cache_csm,cache_bf=cache_bf,cache_dir=cache_dir,address=address,log=log
-                ) ,output_signature=signature)                                   
-    Dataset1.get_tf_dataset = get_tf_dataset
 
 
 def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
@@ -365,3 +318,47 @@ def calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cac
                                     cache_dir=cache_dir)
             })
     return data
+
+
+
+if TF_FLAG:
+    import tensorflow as tf
+
+    from acoupipe.writer import WriteTFRecord, float_list_feature, int64_feature
+
+    def save_tfrecord(self, split, size, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False, 
+                    cache_dir=".", log=False):
+        # setup process
+        parallel = self._setup_generation_process(tasks, address, log, name)
+        # get dataset pipeline that yields the data
+        pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
+        if parallel: pipeline.numworkers=tasks
+        set_pipeline_seeds(pipeline, startsample, size, split)
+        # create TFRecordWriter to save pipeline output to TFRecord File
+        WriteTFRecord(name=name, source=pipeline,
+                      encoder_funcs=self.get_encoder_funcs()).save(progress_bar)
+    Dataset1.save_tfrecord = save_tfrecord
+
+
+    def get_tf_dataset(self, split, size, startsample=1, tasks=1, progress_bar=False, address=None, cache_csm=False, cache_bf=False, 
+                        cache_dir=".", log=False): 
+        signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
+        return tf.data.Dataset.from_generator(
+            partial(
+                self.generate,
+                split=split,size=size,startsample=startsample,tasks=tasks,progress_bar=progress_bar,
+                cache_csm=cache_csm,cache_bf=cache_bf,cache_dir=cache_dir,address=address,log=log
+                ) ,output_signature=signature)                                   
+    Dataset1.get_tf_dataset = get_tf_dataset
+
+    def get_encoder_funcs(self):
+        encoder_dict = {
+            "idx": int64_feature,
+            "seeds": float_list_feature,
+        }
+        encoder_dict.update({
+            f : float_list_feature for f in self.get_dataset_feature_names() if f not in ["idx", "seeds"]
+        })
+        return encoder_dict
+    Dataset1.get_encoder_funcs = get_encoder_funcs
+

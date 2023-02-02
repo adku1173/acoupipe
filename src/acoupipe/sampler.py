@@ -1,4 +1,4 @@
-"""All classes in this module are random processes that meant to be used to manipulate instances i.e. their attribute values according to a specified random distribution (random variable).
+"""Random processes to sample values according to a specified random distribution (random variable).
 
 .. autosummary::
     :toctree: generated/
@@ -23,6 +23,7 @@ from numpy import array, cos, diag, empty, eye, pi, repeat, sin, sort, sum, zero
 from numpy.random import Generator, RandomState
 from scipy.stats import _distn_infrastructure
 from traits.api import (
+    Any,
     Bool,
     Callable,
     CArray,
@@ -41,13 +42,14 @@ from traits.api import (
     on_trait_change,
 )
 
-from .filter import generate_uniform_parametric_eq
+from acoupipe.filter import generate_uniform_parametric_eq
 
 
 class BaseSampler(HasPrivateTraits):
-    """Base class that represents a random process manipulating attributes of an instance or a list of instances according to a specified random distribution.
-
+    """Base class that represents a random process.
+    
     This class has no functionality and should not be used in practice.
+    Manipulates attributes of an instance or a list of instances according to a specified random distribution.
     """
 
     #: a list of instances which attributes are to be manipulated
@@ -64,7 +66,7 @@ class BaseSampler(HasPrivateTraits):
 
     #: manages if the same sampled value is chosen for all objects in the :attr:`target` list 
     #: if False, one value for each target is drawn
-    single_value = Bool(False, #TODO: better rename to same_sample
+    single_value = Bool(False, 
         desc="manages if a single value is chosen for all targets")
 
     def rvs(self, size=1):
@@ -77,14 +79,19 @@ class BaseSampler(HasPrivateTraits):
 
   
 class NumericAttributeSampler(BaseSampler):
-    """Random process that manipulates attributes of numeric type (e.g. int, float)
-    according to a specified random distribution.
+    """Samples attributes of numeric type (e.g. int, float).
+    
+    This class samples attributes of numeric type (e.g. int, float) of an instance or a list of instances according 
+    to a specified random distribution.
+    The attribute to be sampled is specified by :attr:`attribute`.
+    The sampled values are normalized to the range [0,1] if :attr:`normalize` is set to True.
+    The sampled values are ordered in ascending or descending order for all objects in the :attr:`target` list if :attr:`order` 
+    is set to "ascending" or "descending". If no value is set (:attr:`order` `=None`), no ordering is performed. 
     """
     
     #: attribute of the object in the :attr:`target` list that should be 
     #: sampled by the random variable
-    attribute = Str("", 
-        desc="name of the target instance attribute to be manipulated (sampled)")
+    attribute = Str(desc="name of the target instance attribute to be manipulated (sampled)")
 
     #: whether to normalize the drawn values (maximum element equals 1).
     #: if :attr:`single_value` is set to True, this has no effect.
@@ -110,7 +117,7 @@ class NumericAttributeSampler(BaseSampler):
         return samples
 
     def set_value(self, target, value):
-        if len(self.attribute.split("."))== 1:
+        if len(self.attribute.split("."))== 1: 
             setattr(target, self.attribute, value)
         else:
             asub1 = self.attribute.split(".")[:-1]
@@ -118,8 +125,9 @@ class NumericAttributeSampler(BaseSampler):
             setattr(eval("target."+".".join(asub1)), asub2, value)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random
-        values from :attr:`random_var` that are going to be assigned 
+        """Random sampling of the target instance attribute.
+        
+        Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` that are going to be assigned 
         to the target instance attribute via internal :meth:`set_value` method.
         """
         if self.single_value:
@@ -144,9 +152,15 @@ class NumericAttributeSampler(BaseSampler):
 
         
 class SetSampler(BaseSampler):
-    """
-    Random process that draws one or multiple values 
-    from a given set of values and assigns those to the target. 
+    """Draws one or multiple values from a given set of values.
+
+    This class draws one or multiple values from a given set of values. 
+    The set of values is specified by :attr:`set`. 
+    The number of samples to be drawn is specified by :attr:`numsamples`.
+    The attribute to be sampled is specified by :attr:`attribute`. 
+    A list with sample probabilities can be specified by :attr:`probabilities`.
+    The attribute :attr:`replace` specifies if the same object in :attr:`set`
+    can be drawn multiple times.
     """
     
     #: not needed for this sampler; relies on numpy choice function.
@@ -158,8 +172,7 @@ class SetSampler(BaseSampler):
                         
     #: attribute of the object in the :attr:`target` list that should be 
     #: sampled by the random variable
-    attribute = Str("", 
-        desc="name of the target instance attribute to be manipulated (sampled)")
+    attribute = Str(desc="name of the target instance attribute to be manipulated (sampled)")
     
     #: a List of Samples representing the set
     set = List([], 
@@ -178,10 +191,8 @@ class SetSampler(BaseSampler):
     prob_list =  List([], 
         desc="Probability List, same lenght as the set, need to sum up to 1")
 
-    def get_sample_propabilities(self):
-        """return propabilities associated with the samples in the
-        given set (for internal use).
-        """
+    def _get_sample_propabilities(self):
+        """Return propabilities associated with the samples in the given set (for internal use)."""
         if not self.prob_list:
             prob_list = None 
         else:
@@ -198,15 +209,16 @@ class SetSampler(BaseSampler):
 
     def rvs(self, size=1):
         """random variable sampling (for internal use)."""
-        prob_list = self.get_sample_propabilities()
+        prob_list = self._get_sample_propabilities()
         value = self.random_state.choice(self.set, size=size,
                 replace=self.replace, p=prob_list)
         return value
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw
-        values from :attr:`set` list that are going to be assigned 
-        to the target instance attribute.
+        """Random sampling of the target instance attribute.
+        
+        Utilizes :meth:`rvs` function to draw random values from :attr:`set` that are going to be assigned 
+        to the target instance attribute :attr:`attribute` via internal :meth:`set_value` method.
         """
         # draw a single value from set -> assign to each target in target List
         if self.single_value:
@@ -220,10 +232,12 @@ class SetSampler(BaseSampler):
 
 
 class SourceSetSampler(SetSampler):
-    """
+    """Draws one or multiple sources of type :class:`acoular.SamplesGenerator` from a given set of sources.
+    
     From a given set of sources (type :class:`acoular.SamplesGenerator`), 
     :class:`SourceSetSampler` draws one or multiple sources from this set
-    and assigns those to one or more SourceMixer instances.
+    and assigns those to one or more SourceMixer instances. The number of sources to be drawn is specified by
+    :attr:`nsources`. The attribute to be sampled is specified by :attr:`attribute`.
     """
     
     #: a list of :class:`acoular.SourceMixer` instances 
@@ -244,11 +258,11 @@ class SourceSetSampler(SetSampler):
         desc="class instance samples the sources attribute of a SourceMixer instance")    
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw
-        values from :attr:`set` list that are going to be assigned 
-        to the target instance attribute.
+        """Random sampling of sources.
+        
+        Utilizes :meth:`rvs` function to draw sources from :attr:`set` that are going to be assigned 
+        to the :class:`acoular.SourceMixer` instance.
         """
-        # draw a single value from set -> assign to each target in target List
         if self.single_value:
             samples = self.rvs(self.nsources)
             for target in self.target:      
@@ -262,14 +276,14 @@ class SourceSetSampler(SetSampler):
 class ContainerSampler(BaseSampler):
     """Special case of a Sampler to enable the use of an arbitrary sampling function.
     
-    This class has no explicit target. Instead it takes an arbitrary callable 
-    with the signature '<Signature (numpy.random.RandomState)>' or 
+    Takes an arbitrary callable with the signature '<Signature (numpy.random.RandomState)>' or 
     '<Signature (numpy.random.Generator)>'. 
-    The callable is evoked via the :meth:`sample` method of this class. 
+    The callable is evoked via the :meth:`sample` method of this class.
+    The output of the callable is assigned to the :attr:`target` attribute. 
     """
 
-    target = Enum(None,
-        desc="this class has no explicit target")
+    target = Any(
+        desc="output of the callable is assigned to this attribute when calling the sample method")
 
     random_var = Enum(None,
         desc="this class has no explicit random variable")
@@ -296,18 +310,22 @@ class ContainerSampler(BaseSampler):
     def rvs(self):
         """evokes the :attr:`random_func`."""
         self._validate()
-        self.random_func(self.random_state)
+        return self.random_func(self.random_state)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to evaluate the :attr:`random_func`."""
-        self.rvs()
+        """Random sampling.
+        
+        this function utilizes :meth:`rvs` function to evaluate the :attr:`random_func`.
+        The output of the :attr:`random_func` can be accessed with the :attr:`target` attribute.
+        """
+        self.target = self.rvs()
 
 
 class LocationSampler(BaseSampler):
 
     #: locations
     target = CArray(
-        desc="a array with source locations")
+        desc="array with source locations")
 
     #: the number of source for which the location is sampled
     nsources = Int(
@@ -330,9 +348,7 @@ class LocationSampler(BaseSampler):
         desc="limits of the allowed drawn locations along the x-axis (lower,upper)") 
        
     def _bounds_violated(self,loc):
-        """validation of drawn source locations.
-        Returns False if location exceeds bounds.
-        """
+        """Validation of drawn source locations."""
         if self.x_bounds[0]: 
             if (self.x_bounds[0] > loc[0]): return True
         if self.x_bounds[1]: 
@@ -357,10 +373,7 @@ class LocationSampler(BaseSampler):
         ]).squeeze()
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random
-        values from :attr:`random_var` that are going to be assigned 
-        to the :attr:`loc` attribute of a :class:`PointSource` instance.
-        """
+        """Random sampling of locations."""
         loc_array = empty((3,self.nsources))
         for i in range(self.nsources):
             new_loc = self.rvs()
@@ -373,9 +386,7 @@ class LocationSampler(BaseSampler):
 
 
 class PointSourceSampler(LocationSampler):
-    """Random process that samples the locations of one or more
-    instances of type :class:`PointSource`. 
-    """
+    """Random process that samples the locations of one or more instances of type :class:`PointSource`."""
     
     #: a list of :class:`acoular.PointSource` instances 
     target = Trait(list,
@@ -412,10 +423,7 @@ class PointSourceSampler(LocationSampler):
         return self.random_var.rvs(size=size, random_state=self.random_state)
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random
-        values from :attr:`random_var` that are going to be assigned 
-        to the :attr:`loc` attribute of a :class:`PointSource` instance.
-        """
+        """Random sampling of :class:`acoular.PointSource` locations."""
         if self.ldir.any(): 
             for target in self.target:
                 new_loc = self.sample_loc(target)
@@ -427,9 +435,7 @@ class PointSourceSampler(LocationSampler):
 
 
 class MicGeomSampler(BaseSampler):
-    """Random process that samples the microphone positions of one
-    instance of type :class:`acoular.MicGeom`.
-    """
+    """Random disturbance of microphone positions of a :class:`acoular.MicGeom` object."""
 
     #: the microphone geometry instance (type :class:`acoular.MicGeom`)
     target = Instance(MicGeom, 
@@ -461,7 +467,7 @@ class MicGeomSampler(BaseSampler):
     rscale = Float(1.0, 
        desc="scaling factor of rotation deviation")
 
-    K = Property(
+    cpm = Property(
         depends_on=["rvec"],
         desc="cross-product matrix used in Rodrigues' rotation formula")
 
@@ -470,7 +476,7 @@ class MicGeomSampler(BaseSampler):
         return self.target.mpos_tot.copy()
 
     @cached_property
-    def _get_K(self):
+    def _get_cpm(self):
         [[x], [y], [z]] = self.rvec
         return array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
 
@@ -478,7 +484,7 @@ class MicGeomSampler(BaseSampler):
         """rotates the microphone array."""
         theta = 2 * pi * self.rscale * self.rvs()
         # Rodrigues' rotation formula
-        R = eye(3) + sin(theta) * self.K + (1 - cos(theta)) * self.K @ self.K
+        R = eye(3) + sin(theta) * self.cpm + (1 - cos(theta)) * self.cpm @ self.cpm
         new_mpos_tot = R @ self.target.mpos_tot.copy()
         self.target.mpos_tot = new_mpos_tot.copy()
 
@@ -498,10 +504,7 @@ class MicGeomSampler(BaseSampler):
         self.target.mpos_tot = new_mpos_tot.copy()
 
     def sample(self):
-        """this function utilizes :meth:`rvs` function to draw random
-        values from :attr:`random_var` that are going to be used to variate 
-        the microphone positions of a :class:`MicGeom` instance.
-        """
+        """Random sampling of microphone positions."""
         self.target.mpos_tot = self.mpos_init.copy() # initialize
         if self.rvec.any():  # if rotation vector exist, rotate first!
             self.rotate()
@@ -516,19 +519,29 @@ class CovSampler(BaseSampler):
     
     The current implementation only allows uncorrelated sources, meaning that the
     sampled covariances matrices at :attr:`target` are diagonal matrices. 
-    The strength (variance) of the sources follows the given random distribution at 'attr':`random_var`.
+    The strength (variance) of the sources follows the given random distribution at :attr:`random_var`.
+    The attribute :attr:`nsources` determines the number of sources to be sampled. 
+    The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
+    The power of each source is sampled from the given random distribution at :attr:`random_var`.
+    and assigned to :attr:`variances` after sampling. The attribute :attr:`single_value` determines if a single
+    power is chosen for all sources. 
+    The :attr:`scale_variance` attribute determines if the variance is scaled such that the sum of variances equals to 1.
     """
 
+    #: the sampled complex covariance matrices of shape (nfft, nsources, nsources)
     target = CArray(
         desc="the sampled complex covariance matrices")
 
+    #: the sampled variances of shape (nsources,)
     variances = CArray(
         desc="the sampled variances"
         )
     
+    #: the number of sources to be sampled
     nsources = Int(
         desc="the number of sources to be sampled")
     
+    #: the number of fft bins at which the power is distributed
     nfft = Int(1,
         desc="number of fft bins at which the power is distributed")
 
@@ -536,10 +549,16 @@ class CovSampler(BaseSampler):
     single_value = Bool(False, 
         desc="manages if a single amplitude is chosen for all sources")
 
+    #: True: sum of variances is 1
     scale_variance = Bool(False)
 
     def sample(self):
-        """Utilizes :meth:`rvs` function to draw random values from :attr:`random_var`."""
+        """Random sampling of covariance matrices.
+        
+        Utilizes :meth:`rvs` function to draw random values from :attr:`random_var`.
+        Output of the :meth:`rvs` function is the covariance matrix of the sources
+        and is assigned to :attr:`target`.
+        """
         if self.single_value:
             variance = self.rvs(size=1)
             if self.scale_variance: # sum of variances is 1
@@ -558,13 +577,31 @@ class CovSampler(BaseSampler):
         
 
 class SpectraSampler(CovSampler):
+    """Random sampling of power spectra.
 
+    The current implementation only allows uncorrelated sources, meaning that the 
+    sampled power spectra at :attr:`target` are diagonal matrices. 
+    The attribute :attr:`nsources` determines the number of sources to be sampled. 
+    The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
+    The power of each source is sampled from the given random distribution at :attr:`random_var`.
+    and assigned to :attr:`variances`. The attribute :attr:`single_value` determines if a single
+    power is chosen for all sources. The :attr:`scale_variance` attribute determines if the 
+    variance is scaled such that the sum of variances equals to 1.
+    The attribute :attr:`single_spectra` determines if the same underlying transfer function of
+    a power spectrum is assigned to all sources. The attribute :attr:`max_order` determines the
+    maximum order of the power spectra filter. The sampled Power Spectra are assigned to :attr:`target`
+    after sampling.
+    """
+
+    #: the sampled power spectra of shape (nfft, nsources, nsources)
     target = CArray(dtype=complex,
         desc="the sampled auto and cross-power spectra")
     
+    #: True: same spectra for all sources
     single_spectra = Bool(False,
         desc="individual spectra for each source")
 
+    #: the maximum order of the power spectra filter
     max_order = Int(16,
         desc="maximum order of the power spectra filter")
 

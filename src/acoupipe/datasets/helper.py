@@ -1,8 +1,8 @@
-from .config import TF_FLAG
-from .writer import WriteH5Dataset
+from acoupipe.config import TF_FLAG
+from acoupipe.writer import WriteH5Dataset
 
 if TF_FLAG:
-    from .writer import WriteTFRecord
+    from acoupipe.writer import WriteTFRecord
 import logging
 from datetime import datetime
 from os import path

@@ -1,6 +1,5 @@
 from copy import deepcopy
 from functools import partial
-from os import path
 
 import ray
 from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D, SteeringVector
@@ -8,17 +7,16 @@ from numpy import argmin, array, fft, linalg, newaxis, sqrt
 from numpy.random import RandomState
 from scipy.stats import norm, poisson, rayleigh, uniform
 
-from acoupipe import __file__ as acoupipe_path
-from acoupipe.spectra_analytic import PowerSpectraAnalytic
-
-from .dataset1 import Dataset1, calc_input_features
-from .helper import _handle_cache, complex_to_real
-from .pipeline import BasePipeline, DistributedPipeline
-from .sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttributeSampler, SpectraSampler
+from acoupipe.datasets.dataset1 import Dataset1, calc_input_features
+from acoupipe.datasets.helper import _handle_cache, complex_to_real
+from acoupipe.datasets.micgeom import tub_vogel64
+from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
+from acoupipe.pipeline import BasePipeline, DistributedPipeline
+from acoupipe.sampler import CovSampler, LocationSampler, MicGeomSampler, NumericAttributeSampler, SpectraSampler
 
 VERSION = "ds2-v01"
 DEFAULT_ENV = Environment(c=343.)
-DEFAULT_MICS = MicGeom(from_file=path.join(path.split(acoupipe_path)[0], "xml", "tub_vogel64.xml"))
+DEFAULT_MICS = MicGeom(mpos_tot=tub_vogel64)
 ap = DEFAULT_MICS.aperture
 ref_mic_idx = argmin(linalg.norm((DEFAULT_MICS.mpos - DEFAULT_MICS.center[:,newaxis]),axis=0))
 DEFAULT_GRID = RectGrid3D(y_min=-.5*ap,y_max=.5*ap,x_min=-.5*ap,x_max=.5*ap,z_min=.5*ap,z_max=.5*ap,increment=1/63*ap)
@@ -69,7 +67,6 @@ class Dataset2(Dataset1):
     def get_dataset_metadata(self):
         metadata = {}
         metadata["version"] = VERSION
-        metadata["size"] = self.size
         metadata["num"] = self.num
         metadata["fs"] = self.fs
         metadata["max_nsources"] = self.max_nsources

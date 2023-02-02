@@ -2,8 +2,10 @@ import os
 import tempfile
 import unittest
 
-from acoupipe import LoadH5Dataset, WriteH5Dataset
 from pipeline_value_test import get_pipeline
+
+from acoupipe.loader import LoadH5Dataset
+from acoupipe.writer import WriteH5Dataset
 
 
 class TestWriteAndLoad(unittest.TestCase):
@@ -17,12 +19,10 @@ class TestWriteAndLoad(unittest.TestCase):
         writer.save()
 
     def test_load_h5_data(self):
-        ds =  LoadH5Dataset(name=self.name)
-        ds.load_dataset()
+        ds = LoadH5Dataset(name=self.name)
         self.assertEqual(ds.numsamples,5)
         self.assertEqual(ds.basename,"test_data")
-        ds.load_dataset()
-        self.assertEqual(ds.dataset["1"]["data"][()],True)
+        self.assertEqual(ds.h5f["1"]["data"][()],True)
         
         
 
