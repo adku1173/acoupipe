@@ -68,6 +68,9 @@ class Dataset1:
         self.beamformer = beamformer
         self.freq_data = freq_data
         self.random_var = random_var
+        if self.f is not None:
+            if isinstance(self.f, (float, int)):
+                self.f = [self.f]
 
     def _get_freq_indices(self):
         if self.f is not None:
@@ -81,11 +84,16 @@ class Dataset1:
 
     def get_dataset_metadata(self):
         metadata = {}
-        metadata["version"] = VERSION
+        metadata["features"] = "-".join(self.features)
+        if self.f is not None:
+            metadata["f"] = "-".join(map(str,self.f))
+        else:
+            metadata["f"] = "all"
         metadata["num"] = self.num
         metadata["fs"] = self.fs
         metadata["max_nsources"] = self.max_nsources
         metadata["min_nsources"] = self.min_nsources
+        metadata["version"] = VERSION
         return metadata
 
     def get_dataset_feature_names(self):
