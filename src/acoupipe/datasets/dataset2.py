@@ -47,7 +47,7 @@ class Dataset2(Dataset1):
             random_var = DEFAULT_RANDOM_VAR,
             sample_mic_noise=True,
             sample_noise=False, 
-            sample_spectra=False,
+            sample_spectra=True,
             sample_wishart=True,
             nfft = 256,
             **kwargs):  

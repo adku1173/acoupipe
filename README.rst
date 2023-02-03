@@ -4,10 +4,12 @@
 AcouPipe
 ================================================================================
 
-**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with Acoular_ that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:
+**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with Acoular_ that can be used for training of deep neural networks and machine learning. 
+Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:
 
 * Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
 * Conventional Beamforming Map (e.g. in [Kuj19]_)
+* Eigenmodes of the Cross-Spectral Matrix (e.g. in [Kuj22]_)
 
 This allows the user to create data sets of manageable size that are portable and facilitate reproducible research.
 
@@ -15,11 +17,10 @@ AcouPipe supports distributed computation with Ray_ and comes with a default con
 
 Documentation can be found `here <https://adku1173.github.io/acoupipe/>`_.
 
-.. figure:: _static/msm_layout.png
+.. figure:: sphinx/source/_static/msm_layout.png
     :width: 780
 
     Virtual Measurement Setup of Example Dataset
-
 
 .. Links:
 .. _SLURM: https://slurm.schedmd.com/quickstart.html
