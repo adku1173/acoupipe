@@ -1,0 +1,14 @@
+#!/bin/bash
+#SBATCH --job-name=acoupipe_benchmark
+#SBATCH --nodes=1
+#SBATCH --output=acoupipe_benchmark_single_1.stdout
+
+DIRPATH=/home/wk/kujawski/dfg/acoupipe_throughput/throughput
+IMGNAME=/home/wk/kujawski/dfg/container/acoupipe-datasets-submodule_latest.sif
+
+srun singularity exec -B $DIRPATH $IMGNAME python -u $DIRPATH/main.py
+
+
+
+
+
