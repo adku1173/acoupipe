@@ -66,16 +66,21 @@ class Dataset2(Dataset1):
 
     def get_dataset_metadata(self):
         metadata = {}
-        metadata["version"] = VERSION
+        metadata["features"] = "-".join(self.features)
+        if self.f is not None:
+            metadata["f"] = "-".join(map(str,self.f))
+        else:
+            metadata["f"] = "all"
         metadata["num"] = self.num
         metadata["fs"] = self.fs
+        metadata["nfft"] = self.nfft
         metadata["max_nsources"] = self.max_nsources
         metadata["min_nsources"] = self.min_nsources
         metadata["sample_mic_noise"] = self.sample_mic_noise
         metadata["sample_noise"] = self.sample_noise
         metadata["sample_spectra"] = self.sample_spectra
         metadata["sample_wishart"] = self.sample_wishart
-        metadata["nfft"] = self.nfft
+        metadata["version"] = VERSION
         return metadata
 
     def build_sampler(self):
