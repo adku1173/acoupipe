@@ -39,6 +39,16 @@ full = [
     "tensorflow",
 ]
 
+dev = [
+    "tensorflow",
+    "numpydoc",
+    "sphinx",
+    "nbsphinx",
+    "sphinx-rtd-theme",
+    "sphinx-gallery",
+    "sphinxcontrib.bibtex"    
+]
+
 [project.urls]
 documentation = "https://adku1173.github.io/acoupipe/"
 repository = "https://github.com/adku1173/acoupipe"

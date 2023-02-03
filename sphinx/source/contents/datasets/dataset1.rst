@@ -3,15 +3,30 @@ Dataset1
 ========
 This section will explain the default dataset1, which was used in [Kuj22]_.
 
-The size of each split can be freely chosen since the dataset is fully synthetic.
-In [Kuj22]_ 50 million training samples and 10,000 validation samples were used.
-The number of sources was uniformly distributed in the training data.
-
 The following figure illustrates the virtual measurement setup.
 
 
 .. figure:: ../../_static/msm_layout.png
     :width: 780
+
+
+The dataset is created by a simulation process with Acoular_ and comprises the following independent splits:
+
+* training dataset  
+* validation dataset 
+* test dataset
+
+The size of each split ('training', 'validation', 'test') can be freely chosen since the dataset is fully synthetic.
+In [Kuj22]_ 50 million training samples and 10,000 validation samples were used.
+The number of sources was uniformly distributed in the training data.
+
+Instead of raw time-data, only the necessary input features for acoustical source characterization are stored.
+This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.
+Depending on the users choice, the dataset comprises the following input features:
+
+* Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
+* Conventional Beamforming Map (e.g. in [Kuj19]_)
+* Eigenmodes (e.g. in [Kuj22]_)
 
 
 Dataset Characteristics
