@@ -13,21 +13,24 @@ def _create_filename():
     name = f"throughput_{timestamp}.pkl"
     return path.join(dirpath,"results",name)
     
-def main(size,f,head,log):
-    
+def main(task_list,size,f,head,log):
+    filename = _create_filename()
+
     for dataset in ["dataset1", "dataset2"]:
 
         if dataset == "dataset1":
             from acoupipe.datasets.dataset1 import Dataset1 as Dataset
         elif dataset == "dataset2":
             from acoupipe.datasets.dataset2 import Dataset2 as Dataset
-        for tasks in [1,2,4,8,16,32]:
+        for tasks in task_list:
             for feature in ["sourcemap", "csmtriu", "csm", "eigmode"]:
+
+                initial_size = size*tasks # scale the initial size with the number of tasks
+
                 # create dataset
                 dataset = Dataset(features=[feature], f=f)
 
-                size += 1 # we add one sample to compensate the ray startup time
-                gen = dataset.generate(split="training", tasks=tasks, size=size, log=log, address=head, progress_bar=False)
+                gen = dataset.generate(split="training", tasks=tasks, size=initial_size+1, log=log, address=head, progress_bar=False)
                 next(gen)
 
                 t1 = time()
@@ -35,10 +38,9 @@ def main(size,f,head,log):
                     pass 
                 t = time() - t1
                 print(feature,t,tasks)
-                data = [[Dataset.__name__, feature, (size-1)/t, size-1, tasks, t, 
+                data = [[Dataset.__name__, feature, initial_size/t, initial_size, tasks, t, 
                                 socket.gethostname(), head, dataset.get_dataset_metadata()["version"]]]
 
-                filename = _create_filename()
                 if path.exists(filename):
                     df = pd.read_pickle(filename)
                     # add pandas row
@@ -52,9 +54,10 @@ def main(size,f,head,log):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--task_list", type=int, nargs="+", default=[1,2,4,8,16,32],)
     parser.add_argument("--f", type=float, nargs="+", default=None,
                         help="frequency or frequencies included by the features and labels. Default is 'None' (all frequencies included)")
-    parser.add_argument("--size", type=int, default=5000,
+    parser.add_argument("--size", type=int, default=500,
                         help="Total number of samples to simulate")
     parser.add_argument("--head", type=str, default=None,
                         help="IP address of the head node in the ray cluster. Only necessary when running in distributed mode.") 
