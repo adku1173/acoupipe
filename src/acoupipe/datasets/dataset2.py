@@ -1,7 +1,6 @@
 from copy import deepcopy
 from functools import partial
 
-import ray
 from acoular import BeamformerBase, Environment, ImportGrid, MicGeom, RectGrid3D, SteeringVector
 from numpy import argmin, array, fft, linalg, newaxis, sqrt
 from numpy.random import RandomState
@@ -174,24 +173,21 @@ class Dataset2(Dataset1):
             self.freq_data.ind_high = None
         # set up pipeline
         if parallel:
-            freq_data = ray.put(self.freq_data) # already put in the object store
-            beamformer = ray.put(self.beamformer)
             Pipeline = DistributedPipeline
         else:
-            freq_data = self.freq_data
-            beamformer = self.beamformer
             Pipeline = BasePipeline
         return Pipeline(sampler=sampler, 
-                        features=(
-                            partial(calc_features,
-                                fidx = fidx,
-                                f = self.f,
-                                num = self.num,
+                        features=partial(calc_features,
+                                freq_data=self.freq_data,
+                                beamformer=self.beamformer,
+                                input_features=self.features,
+                                fidx=fidx,
+                                f=self.f,
+                                num=self.num,
                                 cache_bf = cache_bf,
                                 cache_csm = cache_csm,
                                 cache_dir = cache_dir,
-                                ref_mic_idx=ref_mic_idx), 
-                            self.features, freq_data, beamformer))
+                                ref_mic_idx=ref_mic_idx))
 
     def get_feature_shapes(self):
         sampler = self.build_sampler() # number of samplers
@@ -232,7 +228,7 @@ class Dataset2(Dataset1):
         return features_shapes
 
 
-def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
+def calc_features(s, freq_data, beamformer, input_features, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
     mic_sampler = s.get(1)
     if mic_sampler is not None:
         freq_data.steer.mics = s[1].target # use noisy microphone positions for measurement
@@ -266,7 +262,7 @@ def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_
 
 @complex_to_real
 def calc_cov(cov, fidx):
-    """Returns the auto- and cross-power (Pa^2) of each source.
+    """Return the auto- and cross-power (Pa^2) of each source.
 
     Parameters
     ----------

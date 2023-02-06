@@ -178,24 +178,21 @@ class Dataset1:
             self.freq_data.ind_high = None
         # set up pipeline
         if parallel:
-            freq_data = ray.put(self.freq_data) # already put in the object store
-            beamformer = ray.put(self.beamformer)
             Pipeline = DistributedPipeline
         else:
-            freq_data = self.freq_data
-            beamformer = self.beamformer
             Pipeline = BasePipeline
         return Pipeline(sampler=sampler, 
-                        features=(
-                            partial(calc_features,
-                                fidx = fidx,
-                                f = self.f,
-                                num = self.num,
+                        features=partial(calc_features,
+                                freq_data=self.freq_data,
+                                beamformer=self.beamformer,
+                                input_features=self.features,
+                                fidx=fidx,
+                                f=self.f,
+                                num=self.num,
                                 cache_bf = cache_bf,
                                 cache_csm = cache_csm,
                                 cache_dir = cache_dir,
-                                ref_mic_idx=ref_mic_idx), 
-                            self.features, freq_data, beamformer))
+                                ref_mic_idx=ref_mic_idx))
            
 
     def _setup_generation_process(self, tasks, address, log, logname):
@@ -277,7 +274,7 @@ class Dataset1:
         return features_shapes
 
 
-def calc_features(s, input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
+def calc_features(s, freq_data, beamformer, input_features, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
     sourcemixer = s[2].target[0]
     # apply amplitudes
     prms = sqrt(real(sort(diagonal(s[3].target[0])))) 

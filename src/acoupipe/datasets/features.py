@@ -9,6 +9,7 @@ import warnings
 import numba
 from numpy import array, float32, imag, newaxis, real, triu_indices, zeros
 from numpy.linalg import eigh
+from threadpoolctl import threadpool_limits
 
 from acoupipe.datasets.helper import complex_to_real
 
@@ -16,7 +17,7 @@ from acoupipe.datasets.helper import complex_to_real
 warnings.filterwarnings("ignore") # suppress pickling warnings
 
 def get_sourcemap(beamformer, f=None, num=0, cache_dir=None, num_threads=1):
-    """Calculates the sourcemap with a specified beamformer instance of class (or derived class) of type acoular.BeamformerBase.
+    """Calculate the sourcemap with a specified beamformer instance of class (or derived class) of type acoular.BeamformerBase.
 
     Parameters
     ----------
@@ -59,7 +60,7 @@ def get_sourcemap(beamformer, f=None, num=0, cache_dir=None, num_threads=1):
 
 @complex_to_real
 def get_csm(freq_data, fidx=None, cache_dir=None, num_threads=1):
-    """Calculates the cross-spectral matrix (CSM) from time data.
+    """Calculate the cross-spectral matrix (CSM) from time data.
 
     Parameters
     ----------
@@ -93,7 +94,7 @@ def get_csm(freq_data, fidx=None, cache_dir=None, num_threads=1):
 
 @complex_to_real
 def get_eigmode(freq_data,fidx=None,cache_dir=None,num_threads=1):
-    """Calculates the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+    """Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
 
     Parameters
     ----------
@@ -123,12 +124,14 @@ def get_eigmode(freq_data,fidx=None,cache_dir=None,num_threads=1):
     csm = freq_data.csm[:]
     if fidx:
         csm = array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=complex)           
-    eva, eve = eigh(csm)
+    with threadpool_limits(limits=1, user_api="blas"): # limit the number of threads used by numpy LAPACK routines
+        # using a single thread improved throughput even in single task mode
+        eva, eve = eigh(csm)
     return eva[:,newaxis,:]*eve[:]
 
 
 def get_nonredundant_csm(freq_data, fidx=None, cache_dir=None, num_threads=1):
-    """Calculates the non-redundant cross-spectral matrix (CSM) from time data.
+    """Calculate the non-redundant cross-spectral matrix (CSM) from time data.
 
     According to:
     Paolo Castellini, Nicola Giulietti, Nicola Falcionelli, Aldo Franco Dragoni, Paolo Chiariotti,
@@ -166,7 +169,7 @@ def get_nonredundant_csm(freq_data, fidx=None, cache_dir=None, num_threads=1):
 
 
 def get_source_p2(source_mixer, freq_data, fidx=None, cache_dir=None, num_threads=1):
-    """Returns the [Pa^2] values at the reference microphone emitted by the sources contained by a acoular.SourceMixer object.
+    """Return the [Pa^2] values at the reference microphone emitted by the sources contained by a acoular.SourceMixer object.
 
     Parameters
     ----------
