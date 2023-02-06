@@ -23,12 +23,12 @@ def main(task_list,size,f,head,log):
         elif dataset == "dataset2":
             from acoupipe.datasets.dataset2 import Dataset2 as Dataset
         for tasks in task_list:
-            for feature in ["sourcemap", "csmtriu", "csm", "eigmode"]:
+            for feature in [[],["sourcemap"], ["csmtriu"], ["csm"], ["eigmode"]]:
 
                 initial_size = size*tasks # scale the initial size with the number of tasks
 
                 # create dataset
-                dataset = Dataset(features=[feature], f=f)
+                dataset = Dataset(features=feature, f=f)
 
                 gen = dataset.generate(split="training", tasks=tasks, size=initial_size+1, log=log, address=head, progress_bar=False)
                 next(gen)
@@ -38,7 +38,9 @@ def main(task_list,size,f,head,log):
                     pass 
                 t = time() - t1
                 print(feature,t,tasks)
-                data = [[Dataset.__name__, feature, initial_size/t, initial_size, tasks, t, 
+                if not feature:
+                    feature = ["None"]
+                data = [[Dataset.__name__, feature, f, initial_size/t, initial_size, tasks, t, 
                                 socket.gethostname(), head, dataset.get_dataset_metadata()["version"]]]
 
                 if path.exists(filename):
@@ -47,7 +49,7 @@ def main(task_list,size,f,head,log):
                     df.loc[len(df)] = data[0]
                     df.to_pickle(filename)
                 else:
-                    df = pd.DataFrame(columns=["dataset","feature", "throughput", "size", "tasks", "time", "hostname", "head", "version"], 
+                    df = pd.DataFrame(columns=["dataset","feature","f", "throughput", "size", "tasks", "time", "hostname", "head", "version"], 
                         data=data)
                     df.to_pickle(filename)
 

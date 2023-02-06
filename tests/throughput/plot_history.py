@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import seaborn as sns
 
-fname = "throughput_04-Feb-2023.pkl"
+fname = "throughput_06-Feb-2023.pkl"
 
 data = pd.read_pickle(os.path.join("results",fname))
 sns.set_theme(style="whitegrid")
