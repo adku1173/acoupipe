@@ -12,7 +12,7 @@
 
 import numpy as np
 from acoular import CircSector, L_p, integrate 
-from acoular.grids import RectGrid, ImportGrid
+from acoular.grids import Grid, ImportGrid
 from traits.api import Bool, CArray, Float, HasPrivateTraits, Instance, Property
 from scipy.spatial.distance import cdist
 
@@ -95,7 +95,7 @@ class SourceMapEvaluator(BaseEvaluator):
         desc="an array of shape=(nfrequencies,nxsteps,nysteps) containing sourcemaps to evaluate") 
 
     #: :class:`~acoular.grids.Grid`-derived object that provides the grid locations.
-    grid = Instance(RectGrid,
+    grid = Instance(Grid,
         desc="beamforming grid instance that belongs to the sourcemap")
 
     def _integrate_targets(self,multi_assignment=True):
@@ -143,7 +143,8 @@ class SourceMapEvaluator(BaseEvaluator):
             overall level error of shape=(nf,1)
         """
         self._validate_shapes()
-        return L_p(self.sourcemap.sum(axis=(1,2))) - L_p(self.target_pow.sum(axis=1))
+        sum_axis = tuple([i for i in range(1,len(self.sourcemap.shape))])
+        return L_p(self.sourcemap.sum(axis=sum_axis)) - L_p(self.target_pow.sum(axis=1))
 
     def get_specific_level_error(self):
         """Returns the specific level error (Herold and Sarradj, 2017).
@@ -167,7 +168,8 @@ class SourceMapEvaluator(BaseEvaluator):
         """
         self._validate_shapes()
         integration_result = self._integrate_targets(multi_assignment=False) 
-        return L_p(integration_result.sum(axis=1)) - L_p(self.sourcemap.sum(axis=(1,2)))
+        sum_axis = tuple([i for i in range(1,len(self.sourcemap.shape))])
+        return L_p(integration_result.sum(axis=1)) - L_p(self.sourcemap.sum(axis=sum_axis))
 
 
     
@@ -197,6 +199,8 @@ class GridlessEvaluator(BaseEvaluator):
             raise ValueError("attribute estimated_loc is not of shape (spatial dimension, number of sources)!")
         if not self.target_loc.ndim == 2:
             raise ValueError("attribute target_loc is not of shape (spatial dimension, number of sources)!")
+        if not self.target_pow.shape[1] == self.estimated_pow.shape[1]:
+            raise ValueError("number of target power values does not match the number of estimated source powers!")
 
     def _integrate_targets(self,multi_assignment=True):
         """integrates over target sectors.
