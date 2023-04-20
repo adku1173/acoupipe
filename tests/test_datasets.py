@@ -227,4 +227,5 @@ class TestDataset2(TestDataset1):
             self.assertIn(f, data.keys())
 
 if __name__ == "__main__":
+    ray.init()
     unittest.main()
