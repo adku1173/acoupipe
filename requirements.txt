@@ -1,5 +1,0 @@
-ray[default]>=1.2
-acoular>=21.05
-tensorflow>=2.3
-tqdm
-

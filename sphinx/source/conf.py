@@ -12,6 +12,7 @@
 
 import os
 import sys
+#import sphinx_gallery
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('../'))
 sys.path.insert(0, os.path.abspath('../../'))
@@ -25,7 +26,7 @@ copyright = '2021, Adam Kujawski, Art Pelling, Simon Jekosch'
 author = 'Adam Kujawski, Art Pelling, Simon Jekosch'
 
 # The full version, including alpha/beta/rc tags
-release = '01.06.2021'
+release = '30.11.2022'
 
 
 
@@ -40,8 +41,16 @@ extensions = [
     'sphinx.ext.doctest', 
     'sphinx.ext.githubpages',    
     'traits.util.trait_documenter',
-    'numpydoc' #conda install -c anaconda numpydoc
+#    'sphinx_gallery.gen_gallery',
+    'numpydoc', #conda install -c anaconda numpydoc
+    'nbsphinx',
+#    'sphinx_gallery.load_style',
+
 ]
+
+#sphinx_gallery_conf = {
+#    'examples_dirs': ['../../jupyter'],
+#}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
