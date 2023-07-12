@@ -22,6 +22,8 @@ RUN /usr/local/bin/python -m pip install --upgrade pip
 RUN bash -c 'echo "$(pip --version)"'
 # change directory to acoupipe
 RUN cd /acoupipe && pip install ".[full]"
+RUN pip install numba tbb
+RUN apt-get update && apt-get install -y --no-install-recommends libtbb-dev
 RUN cd /data
 
 # run the main.py script

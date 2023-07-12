@@ -27,14 +27,14 @@ DEFAULT_GRID1.increment = 1/5*1.5
 DEFAULT_GRID2.increment = 1/5*1.5
 
 class TestDataset1(unittest.TestCase):
-   
+
     dataset_cls = Dataset1
 
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         self.dataset = self.dataset_cls(
                             f=1000,
-                            features=[])      
+                            features=[])
         self.cls_name = type(self.dataset).__name__
 
     def tearDown(self):
@@ -42,7 +42,7 @@ class TestDataset1(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_values_correct(self):
-        """Test generate method of the datasets in single and multi task mode."""       
+        """Test generate method of the datasets in single and multi task mode."""
         for feature in ["sourcemap","csmtriu","csm","eigmode"]:
             with self.subTest(f"{feature}"):
                 self.dataset.features=[feature]
@@ -63,7 +63,7 @@ class TestDataset1(unittest.TestCase):
         data_gen = self.dataset.generate(split="training", size = 5, tasks=3, progress_bar=False)
         data_dist = [d for d in data_gen]
         for d in data_dist:
-            i = d["idx"] - 1 # idx starts at 1          
+            i = d["idx"] - 1 # idx starts at 1
             for feature in ["sourcemap","csm","csmtriu","eigmode","p2","loc"]:
                 self.assertEqual((d[feature] - data[i][feature]).sum(), 0.0)
 
@@ -83,8 +83,8 @@ class TestDataset1(unittest.TestCase):
     ])
     def test_get_feature_shapes(self, f, num):
         """Test if the output of the get_feature_shapes method is matches with the generated shapes.
-        
-        This test consideres a fixed number of sources (varying numbers result in None type shapes, which 
+
+        This test consideres a fixed number of sources (varying numbers result in None type shapes, which
         cannot be compared with the generated shapes). Vaying source numbers are implicitly tested in the
         test_get_tf_dataset method.
         """
@@ -129,7 +129,7 @@ class TestDataset2(TestDataset1):
                 for sample_spectra in [True, False]:
                     self.dataset.features=["sourcemap","csmtriu","csm", "eigmode"]
                     self.dataset.sample_wishart = sample_wishart
-                    self.dataset.sample_noise = sample_noise    
+                    self.dataset.sample_noise = sample_noise
                     self.dataset.sample_spectra = sample_spectra
                     data = next(self.dataset.generate(
                         split="training", tasks=1, size=1, progress_bar=False))
@@ -147,7 +147,7 @@ class TestDataset2(TestDataset1):
 
     def test_plausibility(self):
         """Test if the generated data is plausible.
-        
+
         * Variance of the sources should match the sum of the frequency amplitudes.
         * sum of the p2 values should equal the variances (in full frequency mode).
         * sum of the csm auto-power should be 1.
@@ -179,8 +179,8 @@ class TestDataset2(TestDataset1):
     ])
     def test_get_feature_shapes(self, f, num, sample_wishart, sample_noise, sample_spectra):
         """Test if the output of the get_feature_shapes method is matches with the generated shapes.
-        
-        This test consideres a fixed number of sources (varying numbers result in None type shapes, which 
+
+        This test consideres a fixed number of sources (varying numbers result in None type shapes, which
         cannot be compared with the generated shapes). Vaying source numbers are implicitly tested in the
         test_get_tf_dataset method.
         """
@@ -227,5 +227,4 @@ class TestDataset2(TestDataset1):
             self.assertIn(f, data.keys())
 
 if __name__ == "__main__":
-    ray.init()
-    unittest.main()            
+    unittest.main()

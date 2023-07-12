@@ -15,7 +15,7 @@ echo "Number of workers" $worker_num
 let "total_cores=${worker_num} * ${SLURM_CPUS_PER_TASK}"
 
 port=6379
-hname=$(hostname -I | awk '{print $2}') # first IP address given
+hname=$(hostname -I | awk '{print $1}') # first IP address given
 ip_head=$hname:$port
 export ip_head # Exporting for latter access by trainer.py
 echo $ip_head

@@ -4,7 +4,7 @@ from os import path
 
 
 def _create_filename(dataset, split, size, startsample, format):
-    dirpath = path.dirname(path.abspath(__file__)) 
+    dirpath = path.dirname(path.abspath(__file__))
     metadata = dataset.get_dataset_metadata()
     name = f"{split}_"
     name += f"{startsample}-{startsample+size-1}_"
@@ -12,7 +12,7 @@ def _create_filename(dataset, split, size, startsample, format):
     name += f"{datetime.now().strftime('%d-%b-%Y')}"
     name += f".{format}"
     return path.join(dirpath,name)
-    
+
 def main(
     dataset,
     split,
@@ -26,7 +26,7 @@ def main(
     name,
     format,
     log):
-    
+
     if dataset == "dataset1":
         from acoupipe.datasets.dataset1 import Dataset1 as Dataset
     elif dataset == "dataset2":
@@ -40,17 +40,13 @@ def main(
         name = _create_filename(dataset,split,size,startsample,format)
     print(f"Creating dataset '{name}'...")
 
-    if tasks > 1:
-        import ray
-        ray.init(address=head)
-
     # save file
     if format == "h5":
-        dataset.save_h5(split=split, tasks=tasks, startsample=startsample, 
-                        size = size, name=name, log=log)    
+        dataset.save_h5(split=split, tasks=tasks, startsample=startsample,
+                        address=head, size = size, name=name, log=log)
     elif format == "tfrecord":
-        dataset.save_tfrecord(split=split, tasks=tasks, startsample=startsample, 
-                        size = size, name=name,log=log)
+        dataset.save_tfrecord(split=split, tasks=tasks, startsample=startsample,
+                        address=head, size = size, name=name,log=log)
 
 if __name__ == "__main__":
 
@@ -72,16 +68,16 @@ if __name__ == "__main__":
     parser.add_argument("--size", type=int, required=True,
                         help="Total number of samples to simulate")
     parser.add_argument("--startsample", type=int, default=1,
-                        help="Start simulation at a specific sample of the dataset. Default: 1")                    
+                        help="Start simulation at a specific sample of the dataset. Default: 1")
     parser.add_argument("--tasks", type=int, default=1,
                         help="Number of asynchronous tasks. Defaults to '1' (non-distributed)")
     parser.add_argument("--head", type=str, default=None,
-                        help="IP address of the head node in the ray cluster. Only necessary when running in distributed mode.") 
+                        help="IP address of the head node in the ray cluster. Only necessary when running in distributed mode.")
     parser.add_argument("--log", action="store_true",
-                        help="Whether to log timing statistics to file. Only for internal use.")                          
+                        help="Whether to log timing statistics to file. Only for internal use.")
 
     # parse and execute main function
     kwargs = vars(parser.parse_args())
     main(**kwargs)
 
-  
+

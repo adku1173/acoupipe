@@ -33,13 +33,13 @@ DEFAULT_MICS = MicGeom(mpos_tot=tub_vogel64_ap1)
 ref_mic_idx = argmin(linalg.norm((DEFAULT_MICS.mpos - DEFAULT_MICS.center[:,newaxis]),axis=0))
 DEFAULT_GRID = RectGrid(y_min=-.5,y_max=.5,x_min=-.5,x_max=.5,z=.5,increment=1/63)
 DEFAULT_BEAMFORMER = BeamformerBase(r_diag = False, precision = "float32")
-DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level", 
+DEFAULT_STEER = SteeringVector(grid=DEFAULT_GRID, mics=DEFAULT_MICS, env=DEFAULT_ENV, steer_type ="true level",
                                 ref=DEFAULT_MICS.mpos[:,ref_mic_idx])
-DEFAULT_FREQ_DATA = PowerSpectra(time_data=SamplesGenerator(sample_freq=40*343), 
+DEFAULT_FREQ_DATA = PowerSpectra(time_data=SamplesGenerator(sample_freq=40*343),
                             block_size=128, overlap="50%", window="Hanning", precision="complex64")
 DEFAULT_RANDOM_VAR = {
             "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
-            "p2_rvar" : rayleigh(5), 
+            "p2_rvar" : rayleigh(5),
             "loc_rvar" : norm(loc=0, scale=0.1688*DEFAULT_MICS.aperture),  # source positions
             "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
         }
@@ -47,17 +47,17 @@ DEFAULT_RANDOM_VAR = {
 class Dataset1:
 
     def __init__(
-            self,  
-            features, 
-            f=None, 
-            num=0, 
+            self,
+            features,
+            f=None,
+            num=0,
             fs=40*343.,
             max_nsources = 10,
             min_nsources = 1,
             steer = DEFAULT_STEER,
             beamformer = DEFAULT_BEAMFORMER,
             freq_data = DEFAULT_FREQ_DATA,
-            random_var = DEFAULT_RANDOM_VAR):       
+            random_var = DEFAULT_RANDOM_VAR):
         self.features = features
         self.f = f
         self.num = num
@@ -110,11 +110,11 @@ class Dataset1:
 
     def build_sampler(self):
         noisy_mics = deepcopy(self.steer.mics) # Microphone geometry with positional noise
-        white_noise_signals = [ 
+        white_noise_signals = [
             WNoiseGenerator(sample_freq=self.fs, seed=i+1, numsamples=5*self.fs) for i in range(self.max_nsources)
-        ]  
+        ]
         point_sources = [PointSource(
-                signal=signal, mics=noisy_mics, env=self.steer.env, loc=(0, 0, self.steer.grid.z)) 
+                signal=signal, mics=noisy_mics, env=self.steer.env, loc=(0, 0, self.steer.grid.z))
                 for signal in white_noise_signals]  # Monopole sources emitting the white noise signals
         sourcemixer = SourceMixer(sources=point_sources) # Source Mixer mixing the signals of all sources
 
@@ -130,7 +130,7 @@ class Dataset1:
             set=point_sources,
             replace=False,
             nsources=self.max_nsources, #  number of sources is sampled by nrcs_sampling object
-        )  # draw point sources from point_sources set 
+        )  # draw point sources from point_sources set
         sampler[2] = srcsampler
 
         strength_sampler = CovSampler(
@@ -139,7 +139,7 @@ class Dataset1:
             scale_variance = False,
             nfft = 1)
         sampler[3] = strength_sampler
-            
+
         loc_sampler = PointSourceSampler(
             random_var=self.random_var["loc_rvar"],
             target=sourcemixer.sources,
@@ -149,7 +149,7 @@ class Dataset1:
             y_bounds=(self.steer.grid.y_min, self.steer.grid.y_max),)
         sampler[4] = loc_sampler
 
-        if not (self.max_nsources == self.min_nsources):  
+        if not (self.max_nsources == self.min_nsources):
             sampler[0] = NumericAttributeSampler(
                 random_var=self.random_var["nsrc_rvar"],
                 target=[strength_sampler, srcsampler],
@@ -172,7 +172,7 @@ class Dataset1:
         if fidx is not None:
             # bound calculated frequencies for efficiency reasons
             self.freq_data.ind_low = min([f[0] for f in fidx])
-            self.freq_data.ind_high = max([f[1] for f in fidx])           
+            self.freq_data.ind_high = max([f[1] for f in fidx])
         else:
             self.freq_data.ind_low = 0
             self.freq_data.ind_high = None
@@ -181,7 +181,7 @@ class Dataset1:
             Pipeline = DistributedPipeline
         else:
             Pipeline = BasePipeline
-        return Pipeline(sampler=sampler, 
+        return Pipeline(sampler=sampler,
                         features=partial(calc_features,
                                 freq_data=self.freq_data,
                                 beamformer=self.beamformer,
@@ -193,43 +193,47 @@ class Dataset1:
                                 cache_csm = cache_csm,
                                 cache_dir = cache_dir,
                                 ref_mic_idx=ref_mic_idx))
-           
 
-    def _setup_generation_process(self, tasks, log, logname):
+
+    def _setup_generation_process(self, tasks, address, log, logname):
+
         if tasks > 1:
             parallel=True
+            ray.shutdown()
+            ray.init(address=address)
         else:
             parallel = False
+
         # Logging for debugging and timing statistic purpose
         if log:
             _handle_log(".".join(logname.split(".")[:-1]) + ".log")
         return parallel
 
-    def generate(self, split, size, startsample=1, tasks=1, progress_bar=True, cache_csm=False, cache_bf=False, 
+    def generate(self, split, size, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False,
                 cache_dir=".", log=False):
-        
+
         # Logging for debugging and timing statistic purpose
         logname = f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log"
         # setup process
-        parallel = self._setup_generation_process(tasks, log, logname)
+        parallel = self._setup_generation_process(tasks, address, log, logname)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample, size, split)
-                           
+
         # yield the data
         for data in pipeline.get_data(progress_bar=progress_bar):
             yield data
 
-    def save_h5(self, split, size, name, startsample=1, tasks=1, progress_bar=True, cache_csm=False, cache_bf=False, 
+    def save_h5(self, split, size, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False,
                 cache_dir=".", log=False):
         # setup process
-        parallel = self._setup_generation_process(tasks, log, name)
+        parallel = self._setup_generation_process(tasks, address, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
         set_pipeline_seeds(pipeline, startsample, size, split)
-                           
+
         # create Writer pipeline
         WriteH5Dataset(name=name,
                        source=pipeline,
@@ -245,7 +249,7 @@ class Dataset1:
         fidx = self._get_freq_indices()
         if fidx is None:
             fdim = self.freq_data.fftfreq().shape[0]
-        else: 
+        else:
             fdim = len(fidx)
         # number of sources
         if self.max_nsources == self.min_nsources:
@@ -273,16 +277,16 @@ class Dataset1:
 def calc_features(s, freq_data, beamformer, input_features, fidx, f, num, cache_bf, cache_csm, cache_dir, ref_mic_idx):
     sourcemixer = s[2].target[0]
     # apply amplitudes
-    prms = sqrt(real(sort(diagonal(s[3].target[0])))) 
+    prms = sqrt(real(sort(diagonal(s[3].target[0]))))
     for i,src in enumerate(sourcemixer.sources):
         src.signal.rms = prms[i]
     freq_data.time_data = sourcemixer# the sampled source mixer
     beamformer.freq_data = freq_data # change the freq_data, but not the steering!
     # the measured p2
-    source_freq_data = deepcopy(freq_data) # will be used to calculate the p2 value at the reference microphone 
+    source_freq_data = deepcopy(freq_data) # will be used to calculate the p2 value at the reference microphone
     source_freq_data.cached = False
     source_freq_data.time_data = MaskedTimeInOut(source=sourcemixer, invalid_channels=[_ for _ in range(
-        beamformer.steer.mics.num_mics) if not _ == ref_mic_idx]) # mask all channels except ref mic    
+        beamformer.steer.mics.num_mics) if not _ == ref_mic_idx]) # mask all channels except ref mic
     # get features
     data = {"loc" : array([s.loc for s in sourcemixer.sources], dtype=float32).T,
             "p2" : get_source_p2(sourcemixer, source_freq_data, fidx, None) }
@@ -292,7 +296,7 @@ def calc_features(s, freq_data, beamformer, input_features, fidx, f, num, cache_
     return data
 
 def calc_input_features(input_features, freq_data, beamformer, fidx, f, num, cache_bf, cache_csm, cache_dir):
-    data = {}   
+    data = {}
     if "csm" in input_features:
         data.update(
             {"csm": get_csm(freq_data=freq_data,
@@ -327,10 +331,10 @@ if TF_FLAG:
 
     from acoupipe.writer import WriteTFRecord, float_list_feature, int64_feature
 
-    def save_tfrecord(self, split, size, name, startsample=1, tasks=1, progress_bar=True, cache_csm=False, cache_bf=False, 
+    def save_tfrecord(self, split, size, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False,
                     cache_dir=".", log=False):
         # setup process
-        parallel = self._setup_generation_process(tasks, log, name)
+        parallel = self._setup_generation_process(tasks, address, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
@@ -341,15 +345,15 @@ if TF_FLAG:
     Dataset1.save_tfrecord = save_tfrecord
 
 
-    def get_tf_dataset(self, split, size, startsample=1, tasks=1, progress_bar=False, cache_csm=False, cache_bf=False, 
-                        cache_dir=".", log=False): 
+    def get_tf_dataset(self, split, size, startsample=1, tasks=1, progress_bar=False, address=None, cache_csm=False, cache_bf=False,
+                        cache_dir=".", log=False):
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
         return tf.data.Dataset.from_generator(
             partial(
                 self.generate,
                 split=split,size=size,startsample=startsample,tasks=tasks,progress_bar=progress_bar,
-                cache_csm=cache_csm,cache_bf=cache_bf,cache_dir=cache_dir,log=log
-                ) ,output_signature=signature)                                   
+                cache_csm=cache_csm,cache_bf=cache_bf,cache_dir=cache_dir,address=address,log=log
+                ) ,output_signature=signature)
     Dataset1.get_tf_dataset = get_tf_dataset
 
     def get_encoder_funcs(self):
