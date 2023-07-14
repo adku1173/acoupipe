@@ -16,11 +16,12 @@
 
 """
 
+from copy import deepcopy
 from inspect import signature
 
 from acoular import MicGeom, PointSource, SamplesGenerator, SourceMixer
 from numpy import array, cos, diag, empty, eye, pi, repeat, sin, sort, sum, zeros
-from numpy.random import Generator, RandomState
+from numpy.random import Generator, RandomState, get_state
 from scipy.stats import _distn_infrastructure
 from traits.api import (
     Any,
@@ -607,9 +608,14 @@ class SpectraSampler(CovSampler):
 
     @on_trait_change("random_state")
     def copy_random_state(self):
-        state = self.random_state.get_state()
-        self._random_state = RandomState()
-        self._random_state.set_state(state)
+        state = get_state(self.random_state)
+        if isinstance(self.random_state, RandomState):
+            self._random_state = RandomState()
+            self._random_state.set_state(state)
+        elif isinstance(self.random_state, Generator):
+            self._random_state = Generator(deepcopy(self.random_state.bit_generator))
+        else:
+            raise ValueError("random_state must be either a RandomState or a Generator instance")
 
     def sample(self):
         """Utilizes :meth:`rvs` function to evaluate the :attr:`random_func`."""
