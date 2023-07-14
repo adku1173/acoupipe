@@ -40,13 +40,17 @@ def main(
         name = _create_filename(dataset,split,size,startsample,format)
     print(f"Creating dataset '{name}'...")
 
+    if tasks > 1:
+        import ray
+        ray.init(address=head)
+
     # save file
     if format == "h5":
         dataset.save_h5(split=split, tasks=tasks, startsample=startsample,
-                        address=head, size = size, name=name, log=log)
+                        size = size, name=name, log=log)
     elif format == "tfrecord":
         dataset.save_tfrecord(split=split, tasks=tasks, startsample=startsample,
-                        address=head, size = size, name=name,log=log)
+                        size = size, name=name,log=log)
 
 if __name__ == "__main__":
 

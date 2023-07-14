@@ -2,7 +2,6 @@ from copy import deepcopy
 from datetime import datetime
 from functools import partial
 
-import ray
 import scipy as sc
 from acoular import (
     BeamformerBase,
@@ -219,27 +218,23 @@ class Dataset1:
                                 ref_mic_idx=ref_mic_idx))
 
 
-    def _setup_generation_process(self, tasks, address, log, logname):
-
+    def _setup_generation_process(self, tasks, log, logname):
         if tasks > 1:
             parallel=True
-            ray.shutdown()
-            ray.init(address=address)
         else:
             parallel = False
-
         # Logging for debugging and timing statistic purpose
         if log:
             _handle_log(".".join(logname.split(".")[:-1]) + ".log")
         return parallel
 
-    def generate(self, split, size, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False,
+    def generate(self, split, size, startsample=1, tasks=1, progress_bar=True, cache_csm=False, cache_bf=False,
                 cache_dir=".", log=False):
 
         # Logging for debugging and timing statistic purpose
         logname = f"logfile_{datetime.now().strftime('%d-%b-%Y_%H-%M-%S')}" + ".log"
         # setup process
-        parallel = self._setup_generation_process(tasks, address, log, logname)
+        parallel = self._setup_generation_process(tasks, log, logname)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
@@ -249,10 +244,10 @@ class Dataset1:
         for data in pipeline.get_data(progress_bar=progress_bar):
             yield data
 
-    def save_h5(self, split, size, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False,
+    def save_h5(self, split, size, name, startsample=1, tasks=1, progress_bar=True, cache_csm=False, cache_bf=False,
                 cache_dir=".", log=False):
         # setup process
-        parallel = self._setup_generation_process(tasks, address, log, name)
+        parallel = self._setup_generation_process(tasks, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
@@ -355,10 +350,10 @@ if TF_FLAG:
 
     from acoupipe.writer import WriteTFRecord, float_list_feature, int64_feature
 
-    def save_tfrecord(self, split, size, name, startsample=1, tasks=1, progress_bar=True, address=None, cache_csm=False, cache_bf=False,
+    def save_tfrecord(self, split, size, name, startsample=1, tasks=1, progress_bar=True, cache_csm=False, cache_bf=False,
                     cache_dir=".", log=False):
         # setup process
-        parallel = self._setup_generation_process(tasks, address, log, name)
+        parallel = self._setup_generation_process(tasks, log, name)
         # get dataset pipeline that yields the data
         pipeline = self.build_pipeline(parallel, cache_csm, cache_bf, cache_dir)
         if parallel: pipeline.numworkers=tasks
@@ -369,14 +364,14 @@ if TF_FLAG:
     Dataset1.save_tfrecord = save_tfrecord
 
 
-    def get_tf_dataset(self, split, size, startsample=1, tasks=1, progress_bar=False, address=None, cache_csm=False, cache_bf=False,
+    def get_tf_dataset(self, split, size, startsample=1, tasks=1, progress_bar=False, cache_csm=False, cache_bf=False,
                         cache_dir=".", log=False):
         signature = {k: tf.TensorSpec(shape,dtype=tf.float32,name=k) for k, shape in self.get_feature_shapes().items()}
         return tf.data.Dataset.from_generator(
             partial(
                 self.generate,
                 split=split,size=size,startsample=startsample,tasks=tasks,progress_bar=progress_bar,
-                cache_csm=cache_csm,cache_bf=cache_bf,cache_dir=cache_dir,address=address,log=log
+                cache_csm=cache_csm,cache_bf=cache_bf,cache_dir=cache_dir,log=log
                 ) ,output_signature=signature)
     Dataset1.get_tf_dataset = get_tf_dataset
 
