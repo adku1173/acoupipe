@@ -1,7 +1,7 @@
 
 Dataset1
 ========
-This section will explain the default dataset1, which was used in [Kuj22]_.
+This section will explain the default dataset1, which was used in :cite:`Kujawski2022`.
 
 The following figure illustrates the virtual measurement setup.
 
@@ -17,16 +17,16 @@ The dataset is created by a simulation process with Acoular_ and comprises the f
 * test dataset
 
 The size of each split ('training', 'validation', 'test') can be freely chosen since the dataset is fully synthetic.
-In [Kuj22]_ 50 million training samples and 10,000 validation samples were used.
+In :cite:`Kujawski2022` 50 million training samples and 10,000 validation samples were used.
 The number of sources was uniformly distributed in the training data.
 
 Instead of raw time-data, only the necessary input features for acoustical source characterization are stored.
 This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.
 Depending on the users choice, the dataset comprises the following input features:
 
-* Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
-* Conventional Beamforming Map (e.g. in [Kuj19]_)
-* Eigenmodes (e.g. in [Kuj22]_)
+* Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in :cite:`Castellini2021`)
+* Conventional Beamforming Map (e.g. in :cite:`Kujawski2019`)
+* Eigenmodes (e.g. in :cite:`Kujawski2022`)
 
 
 Dataset Characteristics
@@ -63,7 +63,7 @@ One can save one of the three different input features to file:
 * **Conventional Beamforming Map:** :code:`'sourcemap'` of shape: (B,64,64,1)
 
 The first axis of each feature corresponds to the B FFT coefficients. The non-redundant CSM follows the 
-approach stated in [Cas21]_ (the conjugate complex of the normal CSM is neglected). 
+approach stated in :cite:`Castellini2021` (the conjugate complex of the normal CSM is neglected). 
 The underlying processing parameters used to calculate the CSM and/or the source map are:
 
 ===================== ========================================  

@@ -12,24 +12,19 @@
 
 import os
 import sys
+from pathlib import Path
 
-#import sphinx_gallery
-sys.path.insert(0, os.path.abspath("."))
-sys.path.insert(0, os.path.abspath("../"))
-sys.path.insert(0, os.path.abspath("../../"))
-sys.path.insert(0, os.path.abspath("../../../"))
-
+this_dir = Path(__file__).resolve().parent
+src_dir = (this_dir / '..' / '..' / 'src').resolve()
 
 # -- Project information -----------------------------------------------------
 
 project = "AcouPipe"
-copyright = "2021, Adam Kujawski, Art Pelling, Simon Jekosch"
-author = "Adam Kujawski, Art Pelling, Simon Jekosch"
+copyright = "Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj"
+author = "Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj"
 
 # The full version, including alpha/beta/rc tags
 release = "30.11.2022"
-
-
 
 # -- General configuration ---------------------------------------------------
 
@@ -42,16 +37,10 @@ extensions = [
     "sphinx.ext.doctest", 
     "sphinx.ext.githubpages",    
     "traits.util.trait_documenter",
-#    "sphinx_gallery.gen_gallery",
     "numpydoc", #conda install -c anaconda numpydoc
     "nbsphinx",
-#    "sphinx_gallery.load_style",
     "sphinxcontrib.bibtex", # to cite papers if necessary     
 ]
-
-#sphinx_gallery_conf = {
-#    "examples_dirs": ["../../jupyter"],
-#}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -68,7 +57,6 @@ autosummary_generate_overwrite = True # alternatively generate stub files manual
 numpydoc_show_class_members = False # Whether to show all members of a class in the Methods and Attributes sections automatically.
 numpydoc_show_inherited_class_members = False #Whether to show all inherited members of a class in the Methods and Attributes sections automatically.
 numpydoc_class_members_toctree = False #Whether to create a Sphinx table of contents for the lists of class methods and attributes. If a table of contents is made, Sphinx expects each entry to have a separate page.
-#autodoc_mock_imports = ["acoupipe"]
 
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]

@@ -144,5 +144,11 @@ Loader Module
 The :code:`loader.py` module provides the :code:`LoadH5Dataset` class to load the datasets stored into .h5 files.
 
 Examples
-------------------
+------------
+
+.. toctree::
+    :maxdepth: 1
+    
+    module/examples.rst
+
 
