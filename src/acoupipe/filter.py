@@ -4,7 +4,7 @@ import scipy.signal
 
 def generate_uniform_parametric_eq(num_points, max_order, rng):
     """Generate a random parametric EQ cascase.
-    
+
     Method according to [Nercessian 2020](https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf).
     This method is part of the `IIRNet project <https://github.com/csteinmetz1/IIRNet>`_.
     License: Apache License 2.0
@@ -18,7 +18,6 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     zeros = []
     poles = []
     sos_holder = []
-    -10
     num_peaks = (max_order) // 2 - 2  # Number of peaking filters to use paper=10
 
     omega_low = rng.uniform(low=0.0, high=np.pi)
@@ -91,5 +90,5 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     my_norms = sos[:, 3]
     sos = sos / my_norms[:, None]  ##sosfreqz requires sos[:,3]=1
     w, h = scipy.signal.sosfreqz(sos, worN=num_points)
-    return h
+    return h, sos
 
