@@ -1,4 +1,4 @@
-DataGenerator
+﻿DataGenerator
 ===============================
 
 .. currentmodule:: acoupipe.pipeline

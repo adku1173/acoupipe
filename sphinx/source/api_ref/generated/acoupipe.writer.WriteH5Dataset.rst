@@ -1,4 +1,4 @@
-WriteH5Dataset
+﻿WriteH5Dataset
 ==============================
 
 .. currentmodule:: acoupipe.writer

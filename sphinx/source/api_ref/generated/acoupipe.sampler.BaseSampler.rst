@@ -1,4 +1,4 @@
-BaseSampler
+﻿BaseSampler
 ============================
 
 .. currentmodule:: acoupipe.sampler
