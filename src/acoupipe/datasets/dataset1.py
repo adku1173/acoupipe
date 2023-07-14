@@ -3,9 +3,11 @@ from datetime import datetime
 from functools import partial
 
 import ray
+import scipy as sc
 from acoular import (
     BeamformerBase,
     Environment,
+    FiltWNoiseGenerator,
     MaskedTimeInOut,
     MicGeom,
     PointSource,
@@ -23,8 +25,9 @@ from acoupipe.config import TF_FLAG
 from acoupipe.datasets.features import get_csm, get_eigmode, get_nonredundant_csm, get_source_p2, get_sourcemap
 from acoupipe.datasets.helper import _handle_cache, _handle_log, get_frequency_index_range, set_pipeline_seeds
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
+from acoupipe.filter import generate_uniform_parametric_eq
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
-from acoupipe.sampler import CovSampler, MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
+from acoupipe.sampler import ContainerSampler, CovSampler, MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
 from acoupipe.writer import WriteH5Dataset
 
 VERSION = "ds1-v02"
@@ -41,7 +44,7 @@ DEFAULT_RANDOM_VAR = {
             "mic_rvar" : norm(loc=0, scale=0.001), # microphone array position noise; std -> 0.001 = 0.1% of the aperture size
             "p2_rvar" : rayleigh(5),
             "loc_rvar" : norm(loc=0, scale=0.1688*DEFAULT_MICS.aperture),  # source positions
-            "nsrc_rvar" : poisson(mu=3, loc=1)  # number of sources
+            "nsrc_rvar" : poisson(mu=3, loc=1),  # number of sources
         }
 
 class Dataset1:
@@ -57,7 +60,9 @@ class Dataset1:
             steer = DEFAULT_STEER,
             beamformer = DEFAULT_BEAMFORMER,
             freq_data = DEFAULT_FREQ_DATA,
-            random_var = DEFAULT_RANDOM_VAR):
+            random_var = DEFAULT_RANDOM_VAR,
+            sample_spectra=False,
+            ):
         self.features = features
         self.f = f
         self.num = num
@@ -68,6 +73,7 @@ class Dataset1:
         self.beamformer = beamformer
         self.freq_data = freq_data
         self.random_var = random_var
+        self.sample_spectra = sample_spectra
         if self.f is not None:
             if isinstance(self.f, (float, int)):
                 self.f = [self.f]
@@ -110,14 +116,17 @@ class Dataset1:
 
     def build_sampler(self):
         noisy_mics = deepcopy(self.steer.mics) # Microphone geometry with positional noise
-        white_noise_signals = [
-            WNoiseGenerator(sample_freq=self.fs, seed=i+1, numsamples=5*self.fs) for i in range(self.max_nsources)
+        if self.sample_spectra:
+            Signal = FiltWNoiseGenerator
+        else:
+            Signal = WNoiseGenerator
+        noise_signals = [
+            Signal(sample_freq=self.fs, seed=i+1, numsamples=5*self.fs) for i in range(self.max_nsources)
         ]
         point_sources = [PointSource(
                 signal=signal, mics=noisy_mics, env=self.steer.env, loc=(0, 0, self.steer.grid.z))
-                for signal in white_noise_signals]  # Monopole sources emitting the white noise signals
+                for signal in noise_signals]  # Monopole sources emitting the white noise signals
         sourcemixer = SourceMixer(sources=point_sources) # Source Mixer mixing the signals of all sources
-
         sampler = {}
         sampler[1] = MicGeomSampler(
             random_var=self.random_var["mic_rvar"],
@@ -157,6 +166,21 @@ class Dataset1:
                 single_value = True,
                 filter=lambda x: (x <= self.max_nsources) and (
                     x >= self.min_nsources))
+
+        if self.sample_spectra:
+            def sample_spectra(signals, rng):
+                for s in signals:
+                    if isinstance(s, FiltWNoiseGenerator):
+                        _, sos = generate_uniform_parametric_eq(
+                            self.freq_data.block_size//2+1, 16, rng=rng)
+                        b, a = sc.signal.zpk2tf(*sc.signal.sos2zpk(sos))
+                        s.ar = b
+                        s.ma = a
+                return
+            sampler[5] = ContainerSampler(
+                random_func = partial(sample_spectra, noise_signals),
+            )
+
         return sampler
 
     def build_pipeline(self, parallel, cache_csm, cache_bf, cache_dir):
