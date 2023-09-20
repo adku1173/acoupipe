@@ -1,4 +1,3 @@
-from multiprocessing.sharedctypes import Value
 import ray
 import argparse
 import logging
@@ -253,7 +252,6 @@ if "ref_cleansc" in args.features:
     feature_objects.append(feature)    
 
 # add features to the pipeline
-print(feature_methods)
 pipeline.features = feature_methods
 
 # for metadata

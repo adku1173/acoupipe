@@ -1,0 +1,12 @@
+Bootstrap: docker
+From: adku1173/acoupipe:21.08
+
+%post
+pip install --upgrade pip
+pip install ./acoupipe
+
+%files
+../acoupipe /acoupipe
+
+
+

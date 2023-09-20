@@ -1,5 +1,5 @@
-ray[default]>=1.2
-acoular>=21.05
+ray[default]>=1.2, <=2.0
+acoular>=21.05, <23.06
 tensorflow>=2.3
 tqdm
-
+pydantic<2
