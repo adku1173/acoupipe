@@ -1,18 +1,9 @@
 """Provides classes to load the datasets stored with :class:`~acoupipe.writer.BaseWriteDataset` derived classes.
-
-.. autosummary::
-    :toctree: generated/
-
-    BaseLoadDataset
-    LoadH5Dataset
-
 """
 from os import path
-
 from acoular import config
 from h5py import File as H5File
 from traits.api import CLong, Dict, File, Instance, List, Property, cached_property, on_trait_change
-
 from acoupipe.pipeline import DataGenerator
 
 config.h5library = "h5py"

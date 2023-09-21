@@ -1,21 +1,15 @@
 .. _example:
 
-Example
-===================================================
-
 This example page will guide you through a brief introductory step-by-step example script and is intended to show some of the basic functionality of **AcouPipe**.
 
-
-
-
 Prerequisites
--------------
+~~~~~~~~~~~~~~~
 It is assumed that **AcouPipe** along with all its dependencies, as well as NumPy_, SciPy_ and matplotlib_ are installed. Other than that, only a basic understanding of **Python** syntax is required.
 
 
 
 Sampling Microphone Array Geometries
-------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 One use case of **AcouPipe** is the sampling of a microphone array geometry.
 Sampling means that, for a given array geometry, a number of samples with slight perturbations in the microphone positions is generated.
 The purpose of **AcouPipe** is to generate large amounts of samples as quickly as possible, but for the sake of quick presentation, only a small number of samples is generated here.
@@ -77,7 +71,7 @@ To make individual microphone positions deviate along the x-axis only, the follo
     plt.legend()    
     plt.show()
 
-.. figure:: ../_static/example_1.png
+.. figure:: ../../_static/example_1.png
     :width: 780
 
 Note that, once the **AcouPipe** Sampler object is instantiated, it suffices to set some of its attributes, notably the *direction of deviation* :code:`mgs.ddir` and then simply call :code:`mgs.sample()`.
@@ -96,7 +90,7 @@ It is also possible to make individual microphone positions deviate along the x-
     plt.legend()    
     plt.show()
 
-.. figure:: ../_static/example_2.png
+.. figure:: ../../_static/example_2.png
     :width: 780
 
 Rotating the entire array around the z-axis is done using the *rotation vector* attribute :code:`mgs.rvec`.
@@ -117,7 +111,7 @@ Rotating the entire array around the z-axis is done using the *rotation vector* 
     plt.legend()    
     plt.show()
 
-.. figure:: ../_static/example_3.png
+.. figure:: ../../_static/example_3.png
     :width: 780
 
 Finally, the *direction of translation* attribute :code:`mgs.tdir` can be set in order to translate the entire array. Here, it is shifted along the y-axis.
@@ -137,7 +131,7 @@ Note that the *rotation vector* attribute :code:`mgs.rvec` needs to be set to ze
     plt.legend()    
     plt.show()
 
-.. figure:: ../_static/example_4.png
+.. figure:: ../../_static/example_4.png
     :width: 780
 
-Generating samples with **AcouPipe** can be as simple as that. The etire script can be found at :download:`micgeom_sampling_example.py <../../../examples/micgeom_sampling_example.py>`.
+Generating samples with **AcouPipe** can be as simple as that. The etire script can be found at :download:`micgeom_sampling_example.py <../../../../examples/micgeom_sampling_example.py>`.

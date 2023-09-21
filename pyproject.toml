@@ -35,9 +35,27 @@ maintainers = [
 ]
 
 [project.optional-dependencies]
-full = [
+dev = [
     "tensorflow",
+    "ipython",
+    "ipykernel",
+    "nb-clean",
+    "pre-commit",
+    "ruff==0.0.260",
+    "sphinx",
+    "sphinx-autoapi",
+    "nbsphinx",
+    "sphinx-rtd-theme",
+    "sphinx-gallery",
+    "sphinxcontrib.bibtex",
 ]
+
+[project.optional-dependencies]
+full = [
+    "tensorflow",   
+]
+
+
 
 [project.urls]
 documentation = "https://adku1173.github.io/acoupipe/"

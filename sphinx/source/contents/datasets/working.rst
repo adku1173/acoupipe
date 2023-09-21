@@ -1,62 +1,37 @@
 
-Dataset1
-========
-This section will explain the default dataset1, which was used in [Kuj22]_.
+.. _working:
 
-The size of each split can be freely chosen since the dataset is fully synthetic.
-In [Kuj22]_ 50 million training samples and 10,000 validation samples were used.
-The number of sources was uniformly distributed in the training data.
+Working with the Datasets
+=========================
 
-The following figure illustrates the virtual measurement setup.
-
-
-.. figure:: ../../_static/msm_layout.png
-    :width: 780
-
-
-Dataset Characteristics
--------------------------
-
-**fixed characteristics:**
-
-===================== ========================================  
-Environment           Unechoic, Resting, Homogeneous Fluid
-Microphone Array      Vogel's spiral, M=64, Aperture Size 1m
-Observation Area      x,y in [-0.5,0.5], z=0.5
-Source Type           Monopole 
-Source Signals        Uncorrelated White Noise (T=5s)
-Sampling Rate         He = 40, f=13720 Hz 
-No. of Time Samples   68.600 
-===================== ========================================
-
-**sampled characteristics:**
-
-==================================================================   ===================================================  
-Sensor Position Deviation [m]                                        Normal Distributed (sigma = 0.001)
-No. of Sources                                                       Poisson Distributed (lambda=3)
-Source Positions                                                     Normal Distributed (sigma = 0.1688) 
-Source Strength (:math:`{Pa}^2` at reference microphone)             Rayleigh Distributed (sigma_R=5)
-==================================================================   ===================================================
 
 Input Features
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-One can save one of the three different input features to file:
+Instead of raw time-data, only the necessary input features for acoustical source characterization are stored.
+This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.
+Depending on the users choice, the dataset comprises the following input features:
 
-* **Cross-Spectral Matrix (CSM):** :code:`'csm'` of shape: (B,64,64,2)
-* **non-redundant Cross-Spectral Matrix:** :code:`'csmtriu'` of shape: (B,64,64,1)
-* **Conventional Beamforming Map:** :code:`'sourcemap'` of shape: (B,64,64,1)
+* Cross-Spectral Matrix (:code:`csm`) / non-redundant Cross-Spectral Matrix (:code:`csmtriu`) (e.g. in :cite:`Castellini2021`)
+* Conventional Beamforming Map (:code:`sourcemap`) (e.g. in :cite:`Kujawski2019`)
+* Eigenmodes (:code:`eigmode`) (e.g. in :cite:`Kujawski2022`)
 
-The first axis of each feature corresponds to the B FFT coefficients. The non-redundant CSM follows the 
-approach stated in [Cas21]_ (the conjugate complex of the normal CSM is neglected). 
-The underlying processing parameters used to calculate the CSM and/or the source map are:
+.. One can save one of the three different input features to file:
 
-===================== ========================================  
-Block size            128 Samples
-Block overlap         50 %
-Windowing             von Hann / Hanning
-Steering vector       Formulation 3, see [Sar12]_
-===================== ========================================
+.. * **Cross-Spectral Matrix (CSM):** :code:`'csm'` of shape: (B,64,64,2)
+.. * **non-redundant Cross-Spectral Matrix:** :code:`'csmtriu'` of shape: (B,64,64,1)
+.. * **Conventional Beamforming Map:** :code:`'sourcemap'` of shape: (B,64,64,1)
+
+.. The first axis of each feature corresponds to the B FFT coefficients. The non-redundant CSM follows the 
+.. approach stated in :cite:`Castellini2021` (the conjugate complex of the normal CSM is neglected). 
+.. The underlying processing parameters used to calculate the CSM and/or the source map are:
+
+.. ===================== ========================================  
+.. Block size            128 Samples
+.. Block overlap         50 %
+.. Windowing             von Hann / Hanning
+.. Steering vector       Formulation 3, see [Sar12]_
+.. ===================== ========================================
 
 Labels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,6 +65,19 @@ The index referencing the sampled case in the dataset (starts at 1).
 A list with random seeds for each object that performs a random sampling of dataset properties.
 The combination is unique for each source case in the dataset. This makes it possible to re-simulate any 
 specific sample of the dataset.
+
+Dataset Splits
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+All datasets comprise the following independent splits:
+
+* training dataset
+* validation dataset 
+* test dataset
+
+The size of each split ('training', 'validation', 'test') can be freely chosen since the dataset is fully synthetic.
+E.g., in :cite:`Kujawski2022` 50 million training samples and 10,000 validation samples were used, by using uniformly distributed source numbers in the training data.
+
 
 File Formats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

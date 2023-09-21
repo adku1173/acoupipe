@@ -1,18 +1,44 @@
 """Random processes to sample values according to a specified random distribution (random variable).
 
-.. autosummary::
-    :toctree: generated/
+Sampler Module Purpose
+-----------------------
 
-    BaseSampler
-    NumericAttributeSampler
-    SetSampler
-    SourceSetSampler
-    ContainerSampler
-    LocationSampler
-    PointSourceSampler
-    MicGeomSampler
-    CovSampler
-    SpectraSampler
+A manipulation of object characteristics according to a certain 
+random distribution can be achieved by using the :code:`BaseSampler` derived classes included in the :code:`sampler.py` module. 
+All :code:`BaseSampler` derived classes represent random processes that can be used to manipulate the attributes of Acoular's objects according to a specified distribution. 
+A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all :code:`BaseSampler` derived classes. 
+AcouPipe offers a variety of different types of samplers in the :code:`sampler.py` module.
+The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the :code:`scipy.stats` module. 
+
+This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the :code:`BaseSampler` 
+derived :code:`NumericAttributeSampler` class is used. The two :code:`WNoiseGenerator` objects are given as targets to the sampler object. 
+New RMS values following a normal distribution are assigned to the :code:`WNoiseGenerator` objects each time the sample method of the :code:`NumericAttributeSampler` object is evaluated.    
+
+.. code-block:: python
+
+    import acoular
+    import acoupipe
+    from scipy.stats import norm
+
+    random_var = norm(loc=1.,scale=.5)
+
+    n1 = acoular.WNoiseGenerator( sample_freq=24000, 
+                    numsamples=24000*5, 
+                    rms=1.0,
+                    seed=1 )
+
+    n2 = acoular.WNoiseGenerator( sample_freq=24000, 
+                    numsamples=24000*5, 
+                    rms=.5,
+                    seed=2 )
+
+    rms_sampler = acoupipe.NumericAttributeSampler(
+                    target=[n1,n2],
+                    attribute='rms',
+                    random_var=random_var,
+                    random_state=10)
+
+    rms_sampler.sample()
 
 """
 

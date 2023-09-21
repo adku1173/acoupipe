@@ -1,4 +1,5 @@
 .. Links:
+
 .. _SLURM: https://slurm.schedmd.com/quickstart.html
 .. _Singularity: https://sylabs.io/guides/3.0/user-guide/quick_start.html
 .. _Ray: https://docs.ray.io/en/master/
@@ -15,8 +16,3 @@
 .. _NumPy: https://numpy.org/
 .. _SciPy: https://www.scipy.org/
 .. _matplotlib: https://matplotlib.org/
-
-
-.. Badges:
-.. |python-version| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8-blue
-   :target: https://www.python.org/
