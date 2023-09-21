@@ -1,14 +1,4 @@
-"""Provides evaluatation of source mapping methods using classes derived from :class:`~acoupipe.evaluate.BaseEvaluator`.
-
-.. autosummary::
-    :toctree: generated/
-
-    BaseEvaluator
-    SourceMapEvaluator
-    GridlessEvaluator
-
-"""
-
+"""Provides evaluatation of source mapping methods using classes derived from :class:`~acoupipe.evaluate.BaseEvaluator`."""
 
 import numpy as np
 from acoular import CircSector, L_p, integrate 

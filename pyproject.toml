@@ -47,7 +47,7 @@ dev = [
     "nbsphinx",
     "sphinx-rtd-theme",
     "sphinx-gallery",
-    "sphinxcontrib.bibtex"
+    "sphinxcontrib.bibtex",
 ]
 
 [project.optional-dependencies]

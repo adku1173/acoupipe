@@ -5,6 +5,14 @@ Dataset2
 .. figure:: ../../_static/msm_layout.png
     :width: 750
 
+
+.. toctree::
+    :maxdepth: 1
+    :caption: Class Documentation
+
+    ./../../autoapi/acoupipe/datasets/dataset2/index
+
+
 Environmental Characteristics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

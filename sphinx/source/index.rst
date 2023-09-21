@@ -12,11 +12,12 @@ AcouPipe supports distributed computation with Ray_ and comes with a default con
    :maxdepth: 1
    :caption: Contents
 
+   contents/install.rst
    contents/datasets.rst
-   contents/documentation.rst
+   contents/apidoc.rst
+   contents/examples.rst
    contents/lit.rst
-   api_ref/index_apiref.rst
-
+   
 Citation 
 ========
 
@@ -33,13 +34,6 @@ Here is an example citation in BibTeX format:
    doi = {10.1007/s11042-023-16947-w}
    }
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 
 
 

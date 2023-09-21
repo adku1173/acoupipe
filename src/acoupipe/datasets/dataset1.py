@@ -1,3 +1,5 @@
+"""Dataset 1 simulates time data from which features such as the Cross-Spectral Matrix (CSM), Beamforming Map, and Eigenmodes of the CSM can be calculated."""
+
 from copy import deepcopy
 from datetime import datetime
 from functools import partial

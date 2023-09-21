@@ -1,14 +1,20 @@
 """Provides classes to store the data extracted by :class:`~acoupipe.pipeline.BasePipeline` derived classes.
 
-Current implementation includes :class:`WriteH5Dataset` to save data to .h5 files and :class:`WriteTFRecord` to save to .tfrecord.
-The latter can be efficiently consumed by the `Tensorflow <https://www.tensorflow.org//>`_ framework. 
+Purpose of the Writer Module
+----------------------------
+The :code:`writer.py` module provides classes to store the data extracted by the pipeline. 
+The current implementation includes classes to save data in a container-like file format (.h5 file with the :code:`WriteH5Dataset` class) or 
+binary format (.tfrecord file with the :code:`WriteTFRecord` class). 
+The latter can be efficiently consumed by the Tensorflow framework for machine learning.
 
-.. autosummary::
-    :toctree: generated/
+.. code-block:: python
 
-    BaseWriteDataset
-    WriteH5Dataset
-    WriteTFRecord
+    file_writer = acoupipe.WriteH5Dataset(
+                source=pipeline,
+                )
+        
+    file_writer.save()
+  
 
 """
 

@@ -1,3 +1,6 @@
+"""Dataset 2 directly calculates the Cross-Spectral Matrix (CSM) and is used to calculate the Beamforming Map and Eigenmodes."""
+
+
 from copy import deepcopy
 from functools import partial
 
@@ -36,6 +39,22 @@ DEFAULT_RANDOM_VAR = {
 
 
 class Dataset2(Dataset1):
+    """Dataset2 class.
+
+    This class implements the second dataset. It is a subclass of Dataset1 and
+    inherits all its attributes and methods. The only difference is the
+    implementation of the build_pipeline method, which is adapted to the
+    different features of this dataset.
+    
+    Parameters
+    ----------
+    fs : int
+        sampling frequency
+    beamformer : acoular.BeamformerBase
+        beamformer object
+    steer : acoular.SteeringVector
+        steering vector object
+    """
 
     def __init__(
             self, 

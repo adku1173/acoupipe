@@ -1,12 +1,26 @@
 """All classes in this module can be used to calculate and provide data.
 
-.. autosummary::
-    :toctree: generated/
+Purpose of the Pipeline Module
+------------------------------
 
-    DataGenerator
-    BasePipeline
-    DistributedPipeline
+Classes defined in the :code:`pipeline.py` module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset. 
+The results of these tasks are the features (and labels) associated with a specific sample of the dataset. 
+Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the :code:`BasePipeline`'s :code:`get_data()` generator method. 
+It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file, as common machine learning frameworks, such as Tensorflow_, offer the possibility to consume data from Python generators.
+Control of the state of the sampling process is maintained via the :code:`sampler` attribute holding a list of :code:`BaseSampler` derived instances. 
 
+.. code-block:: python
+
+    def calculate_csm(powerspectra):
+        return powerspectra.csm
+
+    pipeline = acoupipe.BasePipeline(
+        sampler=[rms_sampler],
+        numsamples = 5,
+        features={'csm' : (calculate_csm, ps),}
+        )
+            
+    data_generator = pipeline.get_data()
 """
 
 import logging
