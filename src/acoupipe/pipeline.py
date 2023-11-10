@@ -214,20 +214,7 @@ class BasePipeline(DataGenerator):
         pbar.close()
 
 
-# logging timing statistics has to be performed differently in this class, since we don't want the logger
-# to get pickled!
-# example for logging during multiprocessing: https://fanchenbao.medium.com/python3-logging-with-multiprocessing-f51f460b8778
-
-@ray.remote # pseudo calc function that should run asynchronously
-def _extract_features(sampler_ref, feature_func, times, *args):
-    """Remote calculation of all features."""
-    times[1] = time()
-    data = feature_func(sampler_ref, *args)
-    times[2] = time()
-    return (data, times, os.getpid())
-
-
-@ray.remote(num_cpus=1)
+@ray.remote
 class SamplerActor(object):
     """Actor class to sample data."""
 

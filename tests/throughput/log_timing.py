@@ -1,14 +1,12 @@
-from acoupipe.datasets.experimental import DatasetMIRACLE
 from acoupipe.datasets.synthetic import DatasetSynthetic1
 
 feature = "csm"
 
-dataset = DatasetSynthetic1()
-dataset = DatasetMIRACLE()
-#dataset.logger.setLevel("INFO")
+dataset = DatasetSynthetic1(tasks=8)
 
-gen = dataset.generate(features=[feature,"f","num"], f=100, num=3, split="training", size=10, progress_bar=False)
+gen = dataset.generate(features=[], f=100, num=3, split="training", size=10, progress_bar=False)
+next(gen)
 
-data = next(gen)
-print(data)
+gen2 = dataset.generate(features=[], f=100, num=3, split="training", size=10, progress_bar=False)
+data = next(gen2)
 
