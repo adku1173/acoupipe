@@ -1,33 +1,89 @@
-from acoular import config
+from functools import partial
 
-from acoupipe.config import TF_FLAG
-
-if TF_FLAG:
-    pass
-import warnings
-
-import numba
-from numpy import array, float32, imag, newaxis, real, triu_indices, zeros
+import acoular as ac
+import numpy as np
+from numpy import array, imag, newaxis, real, triu_indices
 from numpy.linalg import eigh
 from threadpoolctl import threadpool_limits
+from traits.api import Callable, CArray, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str
 
-from acoupipe.datasets.helper import complex_to_real
+from acoupipe.config import TF_FLAG
+from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
+from acoupipe.datasets.utils import (
+    blockwise_transfer,
+    get_frequency_index_range,
+    get_point_sources_recursively,
+    get_uncorrelated_noise_source_recursively,
+)
 
-#from .sbl import SBL, Options
-warnings.filterwarnings("ignore") # suppress pickling warnings
+#warnings.filterwarnings("ignore") # suppress pickling warnings
 
-def get_sourcemap(beamformer, f=None, num=0, cache_dir=None, num_threads=1):
-    """Calculate the sourcemap with a specified beamformer instance of class (or derived class) of type acoular.BeamformerBase.
 
-    Parameters
+
+class BaseFeatureCatalog(HasPrivateTraits):
+    """BaseFeatureCatalog base class for handling feature funcs.
+
+    Attributes
     ----------
+    name : str
+        Name of the feature.
+
+    Methods
+    -------
+    get_feature_func()
+        Returns the feature function.
+    """
+
+    name = Str
+    dtype = Callable
+
+    def get_feature_func(self):
+        """Will return a method depending on the class parameters."""
+        return
+
+
+class TimeDataFeature(BaseFeatureCatalog):
+    """TimeDataFeature class for handling time data.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='time_data').
+    time_data : instance of class acoular.SamplesGenerator
+        The source delivering the time data.
+
+    Methods
+    -------
+    get_feature_func()
+        Returns the callable for calculating the time data.
+    """
+
+    name = Str("time_data")
+    time_data = Instance(ac.SamplesGenerator, desc="time data")
+
+    def get_feature_func(self):
+        """Return the callable for calculating the time data."""
+        def _calc_time_data(sampler, time_data, name, dtype):
+            return {
+                name: dtype(ac.tools.return_result(time_data))}
+        return partial(_calc_time_data,time_data=self.time_data, name=self.name, dtype=self.dtype)
+
+
+class SourcemapFeature(BaseFeatureCatalog):
+    """SourcemapFeature class for handling sourcemap features.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='sourcemap').
     beamformer : instance of class acoular.BeamformerBase
-        beamformer to calculate the source map feature
+        The beamformer to calculate the sourcemap.
     f : float
-        frequency to evaluate
+        The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
     num : integer
         Controls the width of the frequency bands considered; defaults to
         0 (single frequency line).
+
         ===  =====================
         num  frequency band width
         ===  =====================
@@ -36,300 +92,834 @@ def get_sourcemap(beamformer, f=None, num=0, cache_dir=None, num_threads=1):
         3    third-octave band
         n    1/n-octave band
         ===  =====================
-    cache_dir : str, optional
-        directory to store the cache files (only necessary if PowerSpectra.cached=True), 
-        by default None
-    num_threads : int, optional
-        the number of threads used by numba during parallel execution
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be considered. Is determined
+        automatically from attr:`f` and attr:`num`.
 
-    Returns
+    Methods
     -------
-    numpy.array
-        sourcemap feature of either shape (1,nxsteps,nysteps,nzsteps) or (B/2+1,nxsteps,nysteps,nzsteps). 
-        B: Blocksize of the FFT.
+    get_feature_func()
+        Returns the callable for calculating the sourcemap.
+    set_freq_limits()
+        Sets the frequency limits of the beamformer so that the result is only
+        calculated for necessary frequencies.
     """
-    numba.set_num_threads(num_threads)
-    if cache_dir:
-        config.cache_dir = cache_dir
-    if not f:
-        sm = array([beamformer.synthetic(f,num=num) for f in beamformer.freq_data.fftfreq()])
-    else:
-        sm = array([beamformer.synthetic(freq,num=num) for freq in f]) 
-    return sm
 
+    name = Str("sourcemap")
+    beamformer = Instance(ac.BeamformerBase, desc="beamformer")
+    f = Either(None, Float, List(Float), desc="frequency")
+    num = Int
+    fidx = Property(desc="frequency indices")
 
-@complex_to_real
-def get_csm(freq_data, fidx=None, cache_dir=None, num_threads=1):
-    """Calculate the cross-spectral matrix (CSM) from time data.
+    def _get_fidx(self):
+        """Return a list of tuples containing the frequency indices."""
+        if self.f is not None:
+            if isinstance(self.f, (float, int)):
+                f = [self.f]
+            else:
+                f = self.f
+            fidx = [get_frequency_index_range(
+                self.beamformer.freq_data.fftfreq(), f_, self.num) for f_ in f]
+        else:
+            if self.num != 0:
+                raise ValueError(
+            'Frequencies "f" must be given if a fractional octave band is specified.')
+            fidx = None
+        return fidx
 
-    Parameters
+    def set_freq_limits(self):
+        """Set the frequency limits of the beamformer so that the result is only calculated for necessary frequencies."""
+        if self.beamformer.freq_data is not None:
+            if self.fidx is not None:
+                self.beamformer.freq_data.ind_low = min([f[0] for f in self.fidx])
+                self.beamformer.freq_data.ind_high = max([f[1] for f in self.fidx])
+            else:
+                self.beamformer.freq_data.ind_low = 0
+                self.beamformer.freq_data.ind_high = None
+
+    @staticmethod
+    def calc_beamformer1(sampler, beamformer, f, num, name):
+        sm = array([beamformer.synthetic(freq,num=num) for freq in f])
+        return {name: sm}
+
+    @staticmethod
+    def calc_beamformer2(sampler, beamformer, name):
+        f = beamformer.freq_data.fftfreq()
+        sm = array([beamformer.synthetic(freq,num=0) for freq in f])
+        return {name: sm}
+
+    def get_feature_func(self):
+        """Return the callable for calculating the sourcemap."""
+        self.set_freq_limits()
+        if self.f is not None:
+            if isinstance(self.f, (float, int)):
+                f = [self.f]
+            else:
+                f = self.f
+            return partial(self.calc_beamformer1, beamformer=self.beamformer, f=f, num=self.num, name=self.name)
+        else:
+            return partial(self.calc_beamformer2, beamformer=self.beamformer, name=self.name)
+
+class SpectraFeature(BaseFeatureCatalog):
+    """Handles the calculation of features in the frequency domain.
+
+    Attributes
     ----------
-    freq_data : instance of class acoular.PowerSpectra
-        power spectra to calculate the csm feature
-    fidx : list of tuples, optional     
-        list of tuples containing the start and end indices of the frequency bands to be considered,
-        by default None
-    cache_dir : str, optional   
-        directory to store the cache files (only necessary if PowerSpectra.cached=True),
-        by default None
-    num_threads : int, optional
-        the number of threads used by numba during parallel execution
-    
+    name : str
+        Name of the feature.
+    freq_data : instance of class acoular.BaseSpectra
+        The frequency data to calculate the feature for.
+    f : float
+        the frequency (or center frequency) of interest
+    num : int
+        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be considered.
 
-    Returns
+    Methods
     -------
-    numpy.array
-        The cross-spectral matrix with shape (1,M,M,2) or (B/2+1,M,M,2) if fidx=None.
-        B: Blocksize of the FFT. M: Number of microphones. Real values will
-        be stored at the first entry of the last dimension.
-        Imaginary values are stored at the second entry of the last dimension.
+    get_feature_func()
+        Returns the callable for calculating the feature.
+    set_freq_limits()
+        Sets the frequency limits of the freq_data so that the result is only
+        calculated for necessary frequencies.
     """
-    numba.set_num_threads(num_threads)
-    if cache_dir:
-        config.cache_dir = cache_dir
-    csm = freq_data.csm[:]
-    if fidx:
+
+    freq_data = Instance(ac.BaseSpectra, desc="spectrogram")
+    f = Either(None, Float, List(Float), desc="frequency")
+    num = Int
+    fidx = Property(desc="frequency indices")
+
+    def _get_fidx(self):
+        if self.f is not None:
+            if isinstance(self.f, (float, int)):
+                f = [self.f]
+            else:
+                f = self.f
+            fidx = [get_frequency_index_range(
+                self.freq_data.fftfreq(), f_, self.num) for f_ in f]
+        else:
+            if self.num != 0:
+                raise ValueError(
+            'Frequencies "f" must be given if a fractional octave band is specified.')
+            fidx = None
+        return fidx
+
+    def set_freq_limits(self):
+        """Set the frequency limits of the spectra object so that the result is only calculated for necessary frequencies."""
+        if self.freq_data is not None:
+            if self.fidx is not None:
+                self.freq_data.ind_low = min([f[0] for f in self.fidx])
+                self.freq_data.ind_high = max([f[1] for f in self.fidx])
+            else:
+                self.freq_data.ind_low = 0
+                self.freq_data.ind_high = None
+
+
+class SpectrogramFeature(SpectraFeature):
+    """SpectrogramFeature class for handling spectrogram features.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='spectrogram').
+    freq_data : instance of class acoular.FFTSpectra
+        The object which calculates the spectrogram data.
+    f : float
+        the frequency (or center frequency) of interest
+    num : int
+        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be considered.
+
+    Methods
+    -------
+    get_feature_func()
+        Returns the callable for calculating the spectrogram.
+    set_freq_limits()
+        Sets the frequency limits of the freq_data so that the result is only
+        calculated for necessary frequencies.
+    """
+
+    name = Str("spectrogram")
+    freq_data = Instance(ac.FFTSpectra, desc="spectrogram")
+
+    @staticmethod
+    def calc_spectrogram1(sampler, freq_data, name):
+        spectrogram = np.stack(
+            list((_.copy() for _ in freq_data.result())),axis=0)
+        return {name:spectrogram}
+
+    @staticmethod
+    def calc_spectrogram2(sampler, freq_data, fidx, name):
+        spectrogram = np.stack(
+            list((_.copy() for _ in freq_data.result())),axis=0)
+        spectrogram = np.array(
+                [spectrogram[:,indices[0]:indices[1]].sum(1) for indices in fidx],
+                    dtype=complex).swapaxes(0,1)
+        return {name:spectrogram}
+
+    def get_feature_func(self):
+        if self.fidx is None:
+            return partial(self.calc_spectrogram1, freq_data = self.freq_data, name=self.name)
+        else:
+            return partial(self.calc_spectrogram2, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+
+
+class CSMFeature(SpectraFeature):
+    """CSMFeature class for handling cross-spectral matrix calculation.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='csm').
+    freq_data : instance of class acoular.PowerSpectra
+        The object which calculates the cross-spectral matrix.
+    f : float
+        the frequency (or center frequency) of interest
+    num : int
+        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be considered.
+
+    Methods
+    -------
+    get_feature_func()
+        Returns the callable for calculating the cross-spectral matrix.
+    set_freq_limits()
+        Sets the frequency limits of the freq_data so that the result is only
+        calculated for necessary frequencies.
+    """
+
+    name = Str("csm")
+    freq_data = Instance(ac.PowerSpectra, desc="cross spectral matrix")
+
+    @staticmethod
+    def calc_csm1(sampler, freq_data, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+
+        Returns
+        -------
+        numpy.array
+            The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+        """
+        return {name: freq_data.csm[:]}
+
+    @staticmethod
+    def calc_csm2(sampler, freq_data, fidx, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+        fidx : list of tuples, optional
+            list of tuples containing the start and end indices of the frequency bands to be considered,
+            by default None
+
+
+        Returns
+        -------
+        numpy.array
+            The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+            depending on the number of frequencies in fidx.
+        """
+        csm = freq_data.csm[:]
         csm = array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=complex)
-    return csm
+        return {name :csm}
 
-@complex_to_real
-def get_eigmode(freq_data,fidx=None,cache_dir=None,num_threads=1):
-    """Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+    def get_feature_func(self):
+        """Return the callable for calculating the cross-spectral matrix."""
+        self.set_freq_limits()
+        if self.fidx is None:
+            return partial(self.calc_csm1, freq_data = self.freq_data, name=self.name)
+        else:
+            return partial(self.calc_csm2, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
 
-    Parameters
-    ----------
-    freq_data : instance of class acoular.PowerSpectra
-        power spectra to calculate the csm feature
-    fidx : list of tuples, optional     
-        list of tuples containing the start and end indices of the frequency bands to be considered,
-        by default None
-    cache_dir : str, optional   
-        directory to store the cache files (only necessary if PowerSpectra.cached=True),
-        by default None
-    num_threads : int, optional
-        the number of threads used by numba during parallel execution
-    
 
-    Returns
-    -------
-    numpy.array
-        The eigenvalue scaled eigenvectors with shape (1,M,M,2) or (B/2+1,M,M,2) if fidx=None.
-        B: Blocksize of the FFT. M: Number of microphones. Real values will
-        be stored at the first entry of the last dimension.
-        Imaginary values are stored at the second entry of the last dimension.
+class CSMtriuFeature(SpectraFeature):
+
+    name = Str("csmtriu")
+    freq_data = Instance(ac.PowerSpectra, desc="cross spectral matrix calculation class")
+
+    @staticmethod
+    def transform(csm):
+        csmtriu_real = np.zeros(csm.shape)
+        csm_triu_imag = np.zeros(csm.shape)
+        num_mics = csm.shape[1]
+        for i in range(csm.shape[0]):
+            csmtriu_real[i][triu_indices(num_mics)] = real(csm[i])[triu_indices(num_mics)] # add real part at upper triangular matrix
+            csm_triu_imag[i][triu_indices(num_mics)] = imag(csm[i])[triu_indices(num_mics)]
+        return csmtriu_real + csm_triu_imag.transpose(0,2,1)
+
+    @staticmethod
+    def calc_csmtriu1(sampler, freq_data, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+
+        Returns
+        -------
+        numpy.array
+            The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+        """
+        return {name: CSMtriuFeature.transform(freq_data.csm[:])}
+
+    @staticmethod
+    def calc_csmtriu2(sampler, freq_data, fidx, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+        fidx : list of tuples, optional
+            list of tuples containing the start and end indices of the frequency bands to be considered,
+            by default None
+
+
+        Returns
+        -------
+        numpy.array
+            The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+            depending on the number of frequencies in fidx.
+        """
+        csm = freq_data.csm[:]
+        csm = array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=complex)
+        return {name: CSMtriuFeature.transform(csm)}
+
+    def get_feature_func(self):
+        self.set_freq_limits()
+        if self.fidx is None:
+            return partial(self.calc_csmtriu1, freq_data = self.freq_data, name=self.name)
+        else:
+            return partial(self.calc_csmtriu2, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+
+
+class EigmodeFeature(SpectraFeature):
+
+        name = Str("eigmode")
+        freq_data = Instance(ac.PowerSpectra, desc="cross spectral matrix calculation class")
+
+        @staticmethod
+        def transform(csm):
+            with threadpool_limits(limits=1, user_api="blas"): # limit the number of threads used by numpy LAPACK routines
+                # using a single thread improved throughput even in single task mode
+                eva, eve = eigh(csm)
+            return eva[:,newaxis,:]*eve[:]
+
+        @staticmethod
+        def calc_eigmode1(sampler, freq_data, name):
+            """Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+
+            Parameters
+            ----------
+            freq_data : instance of class acoular.PowerSpectra
+                power spectra to calculate the csm feature
+
+            Returns
+            -------
+            numpy.array
+                The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics).
+            """
+            return {name: EigmodeFeature.transform(freq_data.csm[:])}
+
+        @staticmethod
+        def calc_eigmode2(sampler, freq_data, fidx, name):
+            """Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+
+            Parameters
+            ----------
+            freq_data : instance of class acoular.PowerSpectra
+                power spectra to calculate the csm feature
+            fidx : list of tuples, optional
+                list of tuples containing the start and end indices of the frequency bands to be considered,
+                by default None
+
+
+            Returns
+            -------
+            numpy.array
+                The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics) with numfreq
+                depending on the number of frequencies in fidx.
+            """
+            csm = freq_data.csm[:]
+            csm = array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=complex)
+            return {name: EigmodeFeature.transform(csm)}
+
+
+        def get_feature_func(self):
+            self.set_freq_limits()
+            if self.fidx is None:
+                return partial(self.calc_eigmode1, freq_data = self.freq_data, name=self.name)
+            else:
+                return partial(self.calc_eigmode2, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+
+
+class LocFeature(BaseFeatureCatalog):
+
+    name = Str("loc")
+    freq_data = Instance(ac.PowerSpectra, desc="cross spectral matrix calculation class")
+
+    @staticmethod
+    def calc_loc1(sampler, freq_data, name):
+        sources = get_point_sources_recursively(freq_data.source)
+        locs = np.array([src.loc for src in sources]).T
+        return {name: locs}
+
+    @staticmethod
+    def calc_loc2(sampler, freq_data, name):
+        return {name: freq_data.steer.grid.gpos_file}
+
+    def get_feature_func(self):
+        if isinstance(self.freq_data, PowerSpectraAnalytic):
+            return partial(self.calc_loc2, freq_data = self.freq_data, name=self.name)
+        elif isinstance(self.freq_data, ac.BaseSpectra):
+            return partial(self.calc_loc1, freq_data = self.freq_data, name=self.name)
+        else:
+            raise NotImplementedError(f"Unknown freq_data type {self.freq_data.__class__.__name__}.")
+
+
+class AnalyticSourceStrengthFeature(SpectraFeature):
+
+    ref = CArray(dtype=float, shape=(3,), value=(0,0,0), desc="reference location")
+    ref_mic = Either(Int, None, default=None, desc="reference microphone index")
+    name = Str("source_strength_analytic")
+    cross_strength = Enum(False) # can later be extended for sources' cross-power values
+    freq_data = Instance(ac.BaseSpectra, desc="cross spectral matrix calculation class")
+
+    @staticmethod
+    def calc_source_strength_analytic1_fullfreq(sampler, freq_data, ref, ref_mic, name):
+        sources = get_point_sources_recursively(freq_data.source)
+        nfft = freq_data.fftfreq().shape[0]
+        strength = np.zeros((nfft, len(sources)))
+        for j, source in enumerate(sources):
+            if isinstance(source, ac.PointSourceConvolve):
+                ir = source.kernel[:,ref_mic].copy()
+                tf = blockwise_transfer(ir[np.newaxis], blocksize=freq_data.block_size).squeeze()
+                strength[:,j] = np.real(tf*tf.conjugate())*source.signal.rms**2/nfft
+            elif isinstance(source, ac.PointSource):
+                d = np.linalg.norm(source.loc-ref)
+                if isinstance(source.signal, ac.WNoiseGenerator):
+                    strength[:,j] = np.ones(nfft)*(source.signal.rms/d)**2/nfft
+                else:
+                    raise NotImplementedError(
+                        f"Cannot handle source signal type {source.signal.__class__.__name__}.")
+            else:
+                raise NotImplementedError(
+                    f"Cannot handle source type {source.__class__.__name__}.")
+        return {name: strength}
+
+    @staticmethod
+    def calc_source_strength_analytic1_partfreq(sampler, freq_data, fidx, name, ref, ref_mic):
+        strength = AnalyticSourceStrengthFeature.calc_source_strength_analytic1_fullfreq(sampler, freq_data, ref, ref_mic, name)[name]
+        return {name: np.array([strength[indices[0]:indices[1]].sum(0) for indices in fidx])}
+
+    @staticmethod
+    def calc_source_strength_analytic2_fullfreq(sampler, freq_data,name):
+        freqs = freq_data.fftfreq()
+        strength = np.stack([freq_data.Q[i].diagonal() for i in range(freqs.shape[0])],axis=0)
+        return {name: np.real(strength)}
+
+    @staticmethod
+    def calc_source_strength_analytic2_partfreq(sampler, freq_data, fidx, name):
+        strength = np.array([freq_data.Q[indices[0]:indices[1]].sum(0).diagonal() for indices in fidx],dtype=complex)
+        return {name: np.real(strength)}
+
+    @staticmethod
+    def calc_source_strength_analytic_custom_transfer_fullfreq(sampler, freq_data, ref_mic, name):
+        freqs = freq_data.fftfreq()
+        strength = np.real(np.stack([freq_data.Q[i].diagonal() for i in range(freqs.shape[0])],axis=0))
+        transfer = freq_data.custom_transfer[:,ref_mic].copy()
+        transfer *= transfer.conjugate()
+        strength = strength*np.real(transfer)
+        return {name: strength}
+
+    @staticmethod
+    def calc_source_strength_analytic_custom_transfer_partfreq(sampler, freq_data, fidx, ref_mic, name):
+        full_strength = AnalyticSourceStrengthFeature.calc_source_strength_analytic_custom_transfer_fullfreq(sampler, freq_data, ref_mic, name)[name]
+        strength = np.array([full_strength[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=float)
+        return {name: strength}
+
+    def get_feature_func(self):
+        if isinstance(self.freq_data, PowerSpectraAnalytic):
+            self.set_freq_limits()
+            if self.fidx is None:
+                if self.ref_mic is None:
+                    return partial(self.calc_source_strength_analytic2_fullfreq, freq_data = self.freq_data, name=self.name)
+                else:
+                    return partial(self.calc_source_strength_analytic_custom_transfer_fullfreq, freq_data = self.freq_data, ref_mic=self.ref_mic, name=self.name)
+            else:
+                if self.ref_mic is None:
+                    return partial(self.calc_source_strength_analytic2_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+                else:
+                    return partial(self.calc_source_strength_analytic_custom_transfer_partfreq, freq_data = self.freq_data,fidx = self.fidx, ref_mic=self.ref_mic, name=self.name)
+        elif isinstance(self.freq_data, ac.BaseSpectra):
+            if self.fidx is None:
+                return partial(
+                    self.calc_source_strength_analytic1_fullfreq, freq_data = self.freq_data, ref=self.ref, ref_mic=self.ref_mic, name=self.name)
+            else:
+                return partial(
+                    self.calc_source_strength_analytic1_partfreq, freq_data = self.freq_data,fidx = self.fidx, ref=self.ref, ref_mic=self.ref_mic, name=self.name)
+        else:
+            raise NotImplementedError(f"No feature function with freq_data type {self.freq_data.__class__.__name__}.")
+
+
+class EstimatedSourceStrengthFeature(SpectraFeature):
+
+    name = Str("source_strength_estimated")
+    ref_mic = Either(Int, None, default=None, desc="reference microphone index")
+
+    @staticmethod
+    def calc_source_strength_estimated1_fullfreq(sampler,freq_data, name):
+        sources = get_point_sources_recursively(freq_data.source)
+        nfft = freq_data.fftfreq().shape[0]
+        strength = np.zeros((nfft, len(sources)))
+        for j, src in enumerate(sources):
+            freq_data.source = src
+            spectrogram = SpectrogramFeature.calc_spectrogram1(sampler,freq_data, name="spectrogram")["spectrogram"]
+            strength[:,j] = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0).squeeze()
+        return {name: strength}
+
+    @staticmethod
+    def calc_source_strength_estimated1_partfreq(sampler, freq_data, fidx, name):
+        sources = get_point_sources_recursively(freq_data.source)
+        strength = np.zeros((len(fidx), len(sources)))
+        for j, src in enumerate(sources):
+            freq_data.source = src
+            spectrogram = SpectrogramFeature.calc_spectrogram2(sampler,freq_data,fidx, name="spectrogram")["spectrogram"]
+            strength[:,j] = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0).squeeze()
+        return {name: strength}
+
+    @staticmethod
+    def calc_source_strength_estimated2_fullfreq(sampler, freq_data, name):
+        freqs = freq_data.fftfreq()
+        strength = np.stack([freq_data._Q[i].diagonal() for i in range(freqs.shape[0])],axis=0)
+        return {name: np.real(strength)}
+
+    @staticmethod
+    def calc_source_strength_estimated2_partfreq(sampler, freq_data, fidx, name):
+        strength = np.array([freq_data._Q[indices[0]:indices[1]].sum(0).diagonal() for indices in fidx],dtype=complex)
+        return {name: np.real(strength)}
+
+    @staticmethod
+    def calc_source_strength_estimated3_fullfreq(sampler,freq_data, name):
+        sources = get_point_sources_recursively(freq_data.source)
+        nfft = freq_data.fftfreq().shape[0]
+        strength = np.zeros((nfft, len(sources)))
+        for j, src in enumerate(sources):
+            freq_data.source = src
+            strength[:,j] = np.real(freq_data.csm[:,0,0])
+        return {name: strength}
+
+    @staticmethod
+    def calc_source_strength_estimated3_partfreq(sampler,freq_data, fidx, name):
+        sources = get_point_sources_recursively(freq_data.source)
+        strength = np.zeros((len(fidx), len(sources)))
+        for j, src in enumerate(sources):
+            freq_data.source = src
+            csm = freq_data.csm[:]
+            strength[:,j] = np.real(np.array(
+                [csm[indices[0]:indices[1]].sum(0).diagonal() for indices in fidx],
+                dtype=complex))
+        return {name: strength}
+
+    @staticmethod
+    def calc_source_strength_estimated_custom_transfer_fullfreq(sampler, freq_data, ref_mic, name):
+        freqs = freq_data.fftfreq()
+        strength = np.real(np.stack([freq_data._Q[i].diagonal() for i in range(freqs.shape[0])],axis=0))
+        transfer = freq_data.custom_transfer[:,ref_mic].copy()
+        transfer *= transfer.conjugate()
+        strength = strength*np.real(transfer)
+        return {name: strength}
+
+    @staticmethod
+    def calc_source_strength_estimated_custom_transfer_partfreq(sampler, freq_data, fidx, ref_mic, name):
+        full_strength = EstimatedSourceStrengthFeature.calc_source_strength_estimated_custom_transfer_fullfreq(
+            sampler, freq_data, ref_mic, name)[name]
+        strength = np.array([full_strength[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=float)
+        return {name: strength}
+
+    def get_feature_func(self):
+
+        if isinstance(self.freq_data, PowerSpectraAnalytic):
+            self.set_freq_limits()
+            if self.fidx is None:
+                if self.ref_mic is None:
+                    return partial(self.calc_source_strength_estimated2_fullfreq, freq_data = self.freq_data, name=self.name)
+                else:
+                    return partial(self.calc_source_strength_estimated_custom_transfer_fullfreq, freq_data = self.freq_data, ref_mic=self.ref_mic, name=self.name)
+            else:
+                if self.ref_mic is None:
+                    return partial(self.calc_source_strength_estimated2_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+                else:
+                    return partial(self.calc_source_strength_estimated_custom_transfer_partfreq, freq_data = self.freq_data,fidx = self.fidx, ref_mic=self.ref_mic, name=self.name)
+
+        elif isinstance(self.freq_data, ac.PowerSpectra):
+            self.set_freq_limits()
+            if self.fidx is None:
+                return partial(self.calc_source_strength_estimated3_fullfreq, freq_data = self.freq_data, name=self.name)
+            else:
+                return partial(self.calc_source_strength_estimated3_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+
+        elif isinstance(self.freq_data, ac.FFTSpectra):
+            if self.fidx is None:
+                return partial(self.calc_source_strength_estimated1_fullfreq, freq_data = self.freq_data, name=self.name)
+            else:
+                return partial(self.calc_source_strength_estimated1_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+        else:
+            raise NotImplementedError(f"Unsupported freq_data type {self.freq_data.__class__}.")
+
+
+
+class AnalyticNoiseStrengthFeature(SpectraFeature):
+
+    name = Str("noise_strength_analytic")
+    cross_strength = Enum(False) # can later be extended for cross-power values
+    freq_data = Instance(ac.BaseSpectra, desc="cross spectral matrix calculation class")
+
+    @staticmethod
+    def calc_noise_strength_analytic1_fullfreq(sampler, freq_data, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        nfft = freq_data.fftfreq().shape[0]
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((freq_data.fftfreq().shape[0],num_mics))}
+        elif len(sources) == 1:
+            source = sources[0]
+            mdim = source.mics.num_mics
+            if isinstance(source.signal, ac.WNoiseGenerator):
+                strength = np.ones((nfft,mdim))*(source.signal.rms**2/nfft)
+            else:
+                raise NotImplementedError(
+                    f"Cannot handle source signal type {source.signal.__class__.__name__}.")
+        else:
+            raise ValueError("Only one uncorrelated noise source is supported.")
+        return {name: strength}
+
+    @staticmethod
+    def calc_noise_strength_analytic1_partfreq(sampler, freq_data, fidx, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((len(fidx),num_mics))}
+        elif len(sources) == 1:
+            nfft = freq_data.fftfreq().shape[0]
+            source = sources[0]
+            mdim = source.mics.num_mics
+            if isinstance(source.signal, ac.WNoiseGenerator):
+                strength = np.ones((nfft,mdim))*(source.signal.rms**2/nfft)
+            else:
+                raise NotImplementedError(
+                    f"Cannot handle source signal type {source.signal.__class__.__name__}.")
+        else:
+            raise ValueError("Only one uncorrelated noise source is supported.")
+        return {name: np.array([strength[indices[0]:indices[1]].sum(0) for indices in fidx])}
+
+    @staticmethod
+    def calc_noise_strength_analytic2_fullfreq(sampler, freq_data,name):
+        if freq_data.noise is None:
+            return {name: np.zeros((freq_data.fftfreq().shape[0],freq_data.steer.mics.num_mics))}
+        else:
+            freqs = freq_data.fftfreq()
+            strength = np.stack([freq_data.noise[i].diagonal() for i in range(freqs.shape[0])],axis=0)
+            return {name: np.real(strength)}
+
+    @staticmethod
+    def calc_noise_strength_analytic2_partfreq(sampler, freq_data, fidx, name):
+        if freq_data.noise is None:
+            return {name: np.zeros((len(fidx),freq_data.steer.mics.num_mics))}
+        else:
+            strength = np.array([freq_data.noise[indices[0]:indices[1]].sum(0).diagonal() for indices in fidx],dtype=complex)
+            return {name: np.real(strength)}
+
+    def get_feature_func(self):
+        if isinstance(self.freq_data, PowerSpectraAnalytic):
+            self.set_freq_limits()
+            if self.fidx is None:
+                return partial(self.calc_noise_strength_analytic2_fullfreq, freq_data = self.freq_data, name=self.name)
+            else:
+                return partial(self.calc_noise_strength_analytic2_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+
+        elif isinstance(self.freq_data, ac.BaseSpectra):
+            if self.fidx is None:
+                return partial(self.calc_noise_strength_analytic1_fullfreq, freq_data = self.freq_data, name=self.name)
+            else:
+                return partial(self.calc_noise_strength_analytic1_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+        else:
+            raise NotImplementedError(f"No feature function with freq_data type {self.freq_data.__class__.__name__}.")
+
+
+
+class EstimatedNoiseStrengthFeature(SpectraFeature):
+
+    name = Str("noise_strength_estimated")
+
+    @staticmethod
+    def calc_noise_strength_estimated1_fullfreq(sampler,freq_data, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((freq_data.fftfreq().shape[0],num_mics))}
+        elif len(sources) == 1:
+            freq_data.source = sources[0]
+            spectrogram = SpectrogramFeature.calc_spectrogram1(sampler,freq_data, name="spectrogram")["spectrogram"]
+            strength = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0)
+            return {name: strength}
+        else:
+            raise ValueError("Only one uncorrelated noise source is supported.")
+
+    @staticmethod
+    def calc_noise_strength_estimated1_partfreq(sampler, freq_data, fidx, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        freq_data.fftfreq().shape[0]
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((len(fidx),num_mics))}
+        elif len(sources) == 1:
+            freq_data.source = sources[0]
+            spectrogram = SpectrogramFeature.calc_spectrogram2(sampler,freq_data,fidx, name="spectrogram")["spectrogram"]
+            strength = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0)
+            return {name: strength}
+        else:
+            raise ValueError("Only one uncorrelated noise source is supported.")
+
+    @staticmethod
+    def calc_noise_strength_estimated2_fullfreq(sampler, freq_data, name):
+        freqs = freq_data.fftfreq()
+        if freq_data._noise is None:
+            return {name: np.zeros((freqs.shape[0],freq_data.steer.mics.num_mics))}
+        strength = np.stack([freq_data._noise[i].diagonal() for i in range(freqs.shape[0])],axis=0)
+        return {name: np.real(strength)}
+
+    @staticmethod
+    def calc_noise_strength_estimated2_partfreq(sampler, freq_data, fidx, name):
+        if freq_data._noise is None:
+            return {name: np.zeros((len(fidx),freq_data.steer.mics.num_mics))}
+        strength = np.array([freq_data._noise[indices[0]:indices[1]].sum(0).diagonal() for indices in fidx],dtype=complex)
+        return {name: np.real(strength)}
+
+    def get_feature_func(self):
+        if isinstance(self.freq_data, PowerSpectraAnalytic):
+            self.set_freq_limits()
+            if self.fidx is None:
+                return partial(self.calc_noise_strength_estimated2_fullfreq, freq_data = self.freq_data, name=self.name)
+            else:
+                return partial(self.calc_noise_strength_estimated2_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+
+        elif isinstance(self.freq_data, ac.FFTSpectra):
+            if self.fidx is None:
+                return partial(self.calc_noise_strength_estimated1_fullfreq, freq_data = self.freq_data, name=self.name)
+            else:
+                return partial(self.calc_noise_strength_estimated1_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
+        else:
+            raise NotImplementedError(f"Unsupported freq_data type {self.freq_data.__class__}.")
+
+
+class BaseFeatureCollection(HasPrivateTraits):
     """
-    numba.set_num_threads(num_threads)
-    if cache_dir:
-        config.cache_dir = cache_dir
-    csm = freq_data.csm[:]
-    if fidx:
-        csm = array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=complex)           
-    with threadpool_limits(limits=1, user_api="blas"): # limit the number of threads used by numpy LAPACK routines
-        # using a single thread improved throughput even in single task mode
-        eva, eve = eigh(csm)
-    return eva[:,newaxis,:]*eve[:]
+    BaseFeatureCollection base class for handling feature funcs.
 
-
-def get_nonredundant_csm(freq_data, fidx=None, cache_dir=None, num_threads=1):
-    """Calculate the non-redundant cross-spectral matrix (CSM) from time data.
-
-    According to:
-    Paolo Castellini, Nicola Giulietti, Nicola Falcionelli, Aldo Franco Dragoni, Paolo Chiariotti,
-        A neural network based microphone array approach to grid-less noise source localization,
-        Applied Acoustics, Volume 177, 2021.
-
-    Parameters
+    Attributes
     ----------
-    freq_data : instance of class acoular.PowerSpectra
-        power spectra to calculate the csm feature
-    fidx : list of tuples, optional     
-        list of tuples containing the start and end indices of the frequency bands to be considered,
-        by default None
-    cache_dir : str, optional   
-        directory to store the cache files (only necessary if PowerSpectra.cached=True),
-        by default None
-    num_threads : int, optional
-        the number of threads used by numba during parallel execution
-    
+    feature_funcs : list
+        List of feature_funcs.
 
-    Returns
+    Methods
     -------
-    numpy.array
-        The non-redundant cross-spectral matrix with shape (1,M,M,1) or (B/2+1,M,M,1) if fidx=None.
-        B: Blocksize of the FFT. M: Number of microphones. 
+    add_feature()
+        Add a feature to the BaseFeatureCollection.
     """
-    numba.set_num_threads(num_threads)
-    if cache_dir:
-        config.cache_dir = cache_dir
-    if not fidx:
-        return _transform_csm(freq_data.csm)
-    else:  
-        csm = _transform_csm(freq_data.csm)  
-        return array([csm[indices[0]:indices[1]].sum(0) for indices in fidx],dtype=float32)
+
+    feature_funcs = List(desc="list of feature_funcs")
+    feature_tf_encoder_mapper = Dict(desc="feature encoder mapper")
+    feature_tf_shape_mapper = Dict(desc="feature shape mapper")
+    feature_tf_dtype_mapper = Dict(desc="feature dtype mapper")
+
+    def __init__(self):
+        HasPrivateTraits.__init__(self)
+        if TF_FLAG:
+            from acoupipe.writer import int64_feature, int_list_feature
+            self.feature_tf_encoder_mapper = {"idx" : int64_feature,
+                                            "seeds" : int_list_feature,}
+            self.feature_tf_shape_mapper = {"idx" : (),
+                                            "seeds" : (None,2)}
+            self.feature_tf_dtype_mapper = {"idx" : "int64",
+                                            "seeds" : "int64"}
 
 
-def get_source_p2(source_mixer, freq_data, fidx=None, cache_dir=None, num_threads=1):
-    """Return the [Pa^2] values at the reference microphone emitted by the sources contained by a acoular.SourceMixer object.
+    def add_feature_func(self, feature_func):
+        """
+        Add a feature_func to the BaseFeatureCollection.
 
-    Parameters
+        Parameters
+        ----------
+        feature_func : str
+            Feature to be added.
+        """
+        self.feature_funcs.append(feature_func)
+
+    def get_feature_funcs(self):
+        """
+        Get all feature_funcs of the BaseFeatureCollection.
+
+        Returns
+        -------
+        list
+            List of feature_funcs.
+        """
+        def calc_features(sampler, feature_funcs):
+            data = {}
+            for ffunc in feature_funcs:
+                data.update(ffunc(sampler=sampler))
+            return data
+        return partial(calc_features, feature_funcs=self.feature_funcs)
+
+
+class BaseFeatureCollectionBuilder(HasPrivateTraits):
+    """
+    BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.
+
+    Attributes
     ----------
-    source_mixer : instance of acoular.SourceMixer
-        SourceMixer object holding PointSource objects
-    freq_data : instance of acoular.PowerSpectra
-        object to calculate the Pa^2 value
-    fidx : int, optional
-        frequency index at which the Pa^2 value is returned, by default None, meaning that the
-        Pa^2 values of all frequency coefficients will be returned
-    cache_dir : str, optional
-        directory to store the cache files (only necessary if PowerSpectra.cached=True), by default None
-    num_threads : int, optional
-        the number of threads used by numba during parallel execution
+    feature_collection : BaseFeatureCollection
+        BaseFeatureCollection object.
 
-    Returns
+    Methods
     -------
-    numpy.array
-        The sources Pa^2 values at the reference microphone with shape (nsources,) or (nsources,B/2+1). 
-        B: Blocksize of the FFT.
+    add_feature()
+        Add a feature to the BaseFeatureCollection.
     """
-    numba.set_num_threads(num_threads)
-    if cache_dir:
-        config.cache_dir = cache_dir
-    return _get_ref_mic_pow(source_mixer, freq_data, fidx )
+
+    feature_collection = Instance(BaseFeatureCollection, desc="BaseFeatureCollection object")
+
+    def add_custom(self, feature_func):
+        """
+        Add a custom feature to the BaseFeatureCollection.
+
+        Parameters
+        ----------
+        feature_func : str
+            Feature to be added.
+        """
+        self.feature_collection.add_feature_func(feature_func)
 
 
-def _get_ref_mic_pow(source_mixer,freq_data,fidx=None):
-    p2 = []
-    for src in source_mixer.sources:
-        freq_data.time_data.source=src
-        p2.append(real(freq_data.csm[:][:,0,0]))
-    p2 = array(p2)
-    if fidx:
-        return array([p2[:,indices[0]:indices[1]].sum(1) for indices in fidx])
-    else:
-        return p2.T
+    def build(self):
+        """
+        Build a BaseFeatureCollection.
 
-def _transform_csm(csm):
-    csm_list = []
-    num_mics = csm.shape[1]
-    for i in range(csm.shape[0]):
-        csm_recover_real = zeros((num_mics,num_mics),dtype=float32)
-        csm_recover_imag = zeros((num_mics,num_mics),dtype=float32)
-        csm_recover_real[triu_indices(num_mics)] = real(csm[i])[triu_indices(num_mics)] # add real part at upper triangular matrix
-        csm_recover_imag[triu_indices(num_mics)] = imag(csm[i])[triu_indices(num_mics)]
-        csm_list.append(csm_recover_real + csm_recover_imag.T)
-    return array(csm_list,dtype=float32)[...,newaxis]
-
-
-# def get_eigmap(beamformer, n=16, f=None, num=0, cache_dir=None, num_threads=1):
-#     """Calculates the sourcemap with a specified beamformer instance
-#     of class (or derived class) of type acoular.BeamformerBase.
-
-#     Parameters
-#     ----------
-#     beamformer : instance of class acoular.BeamformerBase
-#         beamformer to calculate the source map feature
-#     n : int
-#         eigenvalue components to calculate (n strongest)
-#     f : float
-#         frequency to evaluate
-#     num : integer
-#         Controls the width of the frequency bands considered; defaults to
-#         0 (single frequency line).
-#         ===  =====================
-#         num  frequency band width
-#         ===  =====================
-#         0    single frequency line
-#         1    octave band
-#         3    third-octave band
-#         n    1/n-octave band
-#         ===  =====================
-#     cache_dir : str, optional
-#         directory to store the cache files (only necessary if PowerSpectra.cached=True), 
-#         by default None
-#     num_threads : int, optional
-#         the number of threads used by numba during parallel execution
-
-#     Returns
-#     -------
-#     numpy.array
-#         sourcemap feature of either shape (n,nxsteps,nysteps) or (n,B/2+1,n,nxsteps,nysteps). 
-#         B: Blocksize of the FFT.
-#     """
-#     numba.set_num_threads(num_threads)
-#     if cache_dir:
-#         config.cache_dir = cache_dir
-#     if not f:
-#         eig_maps = []
-#         for i in range(n):
-#             beamformer.n = (-1)-i # get the sourcemap for the n largest eigenvalues
-#             eig_maps.append([beamformer.synthetic(f,num=num) for f in beamformer.freq_data.fftfreq()])
-#         return array(eig_maps)
-#     else:
-#         eig_maps = []
-#         for i in range(n):
-#             beamformer.n = (-1)-i # get the sourcemap for the n largest eigenvalues
-#             eig_maps.append(beamformer.synthetic(f,num=num))
-#         return array(eig_maps) # sort from largest to smallest 
-
-
-# def get_SBLmap(spectra_inout, steer, fidx=None):
-#     """
-#     """
-#     options = Options(convergence_error=10 ** (-8), gamma_range=10 ** (-4), convergence_maxiter=5000, 
-#               convergence_min_iteration=1, status_report=1, fixedpoint=1, Nsource=len(spectra_inout.source.sources), flag=0)    
-#     fftfreq = spectra_inout.fftfreq()
-#     A = zeros((steer.mics.num_mics,steer.grid.size,fftfreq.shape[0]), dtype = complex)
-#     for v in range(fftfreq.shape[0]):
-#         A[:,:,v] = steer.transfer(fftfreq[v]).T
-#     if not fidx:
-#         NotImplementedError("full frequency support currently not implemented")
-#     else:
-#         source_maps = []        
-#         for freq_index in fidx:
-#             nfreq = freq_index[1]-freq_index[0]
-#             Ysignal = transpose(array(list(spectra_inout.result())),[2,0,1])
-#             gamma, report = SBL(A[:,:,freq_index[0]:freq_index[1]], Ysignal[:,:,freq_index[0]:freq_index[1]], options)
-#             gamma *= nfreq
-#             source_maps.append(gamma)
-#         return array(source_maps) 
-
-# def get_spectrogram(spectra_inout, fidx=None, cache_dir=None, num_threads=1):
-#     """Calculates the cross-spectral matrix (CSM). 
-
-#     Parameters
-#     ----------
-#     spectra_inout : instance of spectacoular.SpectraInOut
-#         object to calculate the CSM
-#     fidx : int, optional
-#         frequency index at which the CSM is returned, by default None, meaning that the
-#         CSM for all frequency coefficients will be returned
-#     cache_dir : str, optional
-#         directory to store the cache files (only necessary if PowerSpectra.cached=True), 
-#         by default None
-#     num_threads : int, optional
-#         the number of threads used by numba during parallel execution
-
-#     Returns
-#     -------
-#     numpy.array
-#         The complex spectrogram matrix with shape (2,B/2+1,T,M) if fidx=None. 
-#         B: Blocksize of the FFT. M: Number of microphones.Real values will 
-#         be stored at the first entry of the first dimension. 
-#         Imaginary values will be stored at the second entry of the first dimension.
-#     """
-#     numba.set_num_threads(num_threads)
-#     if cache_dir:
-#         config.cache_dir = cache_dir
-#     res = array(list(spectra_inout.result())).swapaxes(0,1)        
-#     if fidx: # list with freq index tuples [(1,10),(15,17),...]
-#         # we need a structured numpy array in this case
-#         # this gets sketchy here....
-#         # TODO: raise an error if the tuples are of differen range 
-#         raise NotImplementedError()
-#         # return array(
-#         #     [array(
-#               [real(res[indices[0]:indices[1],...]), imag(res[indices[0]:indices[1],...])],dtype=float32) for indices in fidx ],
-#         #     dtype=float32)
-#     else:
-#         return array([real(res), imag(res)],dtype=float32)
-
+        Returns
+        -------
+        BaseFeatureCollection
+            BaseFeatureCollection object.
+        """
+        return self.feature_collection

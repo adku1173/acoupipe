@@ -3,16 +3,16 @@
 Sampler Module Purpose
 -----------------------
 
-A manipulation of object characteristics according to a certain 
-random distribution can be achieved by using the :code:`BaseSampler` derived classes included in the :code:`sampler.py` module. 
-All :code:`BaseSampler` derived classes represent random processes that can be used to manipulate the attributes of Acoular's objects according to a specified distribution. 
-A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all :code:`BaseSampler` derived classes. 
+A manipulation of object characteristics according to a certain
+random distribution can be achieved by using the :code:`BaseSampler` derived classes included in the :code:`sampler.py` module.
+All :code:`BaseSampler` derived classes represent random processes that can be used to manipulate the attributes of Acoular's objects according to a specified distribution.
+A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all :code:`BaseSampler` derived classes.
 AcouPipe offers a variety of different types of samplers in the :code:`sampler.py` module.
-The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the :code:`scipy.stats` module. 
+The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the :code:`scipy.stats` module.
 
-This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the :code:`BaseSampler` 
-derived :code:`NumericAttributeSampler` class is used. The two :code:`WNoiseGenerator` objects are given as targets to the sampler object. 
-New RMS values following a normal distribution are assigned to the :code:`WNoiseGenerator` objects each time the sample method of the :code:`NumericAttributeSampler` object is evaluated.    
+This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the :code:`BaseSampler`
+derived :code:`NumericAttributeSampler` class is used. The two :code:`WNoiseGenerator` objects are given as targets to the sampler object.
+New RMS values following a normal distribution are assigned to the :code:`WNoiseGenerator` objects each time the sample method of the :code:`NumericAttributeSampler` object is evaluated.
 
 .. code-block:: python
 
@@ -22,13 +22,13 @@ New RMS values following a normal distribution are assigned to the :code:`WNoise
 
     random_var = norm(loc=1.,scale=.5)
 
-    n1 = acoular.WNoiseGenerator( sample_freq=24000, 
-                    numsamples=24000*5, 
+    n1 = acoular.WNoiseGenerator( sample_freq=24000,
+                    numsamples=24000*5,
                     rms=1.0,
                     seed=1 )
 
-    n2 = acoular.WNoiseGenerator( sample_freq=24000, 
-                    numsamples=24000*5, 
+    n2 = acoular.WNoiseGenerator( sample_freq=24000,
+                    numsamples=24000*5,
                     rms=.5,
                     seed=2 )
 
@@ -42,12 +42,11 @@ New RMS values following a normal distribution are assigned to the :code:`WNoise
 
 """
 
-from copy import deepcopy
 from inspect import signature
 
-from acoular import MicGeom, PointSource, SamplesGenerator, SourceMixer
-from numpy import array, cos, diag, empty, eye, pi, repeat, sin, sort, sum, zeros
-from numpy.random import Generator, RandomState, get_state
+import acoular as ac
+import numpy as np
+from numpy.random import Generator, RandomState
 from scipy.stats import _distn_infrastructure
 from traits.api import (
     Any,
@@ -68,8 +67,6 @@ from traits.api import (
     cached_property,
     on_trait_change,
 )
-
-from acoupipe.filter import generate_uniform_parametric_eq
 
 
 class BaseSampler(HasPrivateTraits):
@@ -93,7 +90,7 @@ class BaseSampler(HasPrivateTraits):
 
     #: manages if the same sampled value is chosen for all objects in the :attr:`target` list
     #: if False, one value for each target is drawn
-    single_value = Bool(False,
+    equal_value = Bool(False,
         desc="manages if a single value is chosen for all targets")
 
     def rvs(self, size=1):
@@ -121,12 +118,12 @@ class NumericAttributeSampler(BaseSampler):
     attribute = Str(desc="name of the target instance attribute to be manipulated (sampled)")
 
     #: whether to normalize the drawn values (maximum element equals 1).
-    #: if :attr:`single_value` is set to True, this has no effect.
+    #: if :attr:`equal_value` is set to True, this has no effect.
     normalize = Bool(False,
         desc="if attribute is True, sampled values will be normalized")
 
     #: whether to order the drawn values in ascending or descending order for all objects in the :attr:`target` list.
-    #: if :attr:`single_value` is set to True, this has no effect. If no value is set (:attr:`order` `=None`), no ordering is performed.
+    #: if :attr:`equal_value` is set to True, this has no effect. If no value is set (:attr:`order` `=None`), no ordering is performed.
     order = Either("ascending","descending")
 
     #: sampled value filter (resample if callable filter returns False)
@@ -136,7 +133,7 @@ class NumericAttributeSampler(BaseSampler):
 
     def order_samples(self, samples):
         """Internal function to order drawn values."""
-        samples = sort(samples)
+        samples = np.sort(samples)
         if self.order == "descending":
             samples = samples[::-1]
         elif self.order == "ascending":
@@ -157,7 +154,7 @@ class NumericAttributeSampler(BaseSampler):
         Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` that are going to be assigned
         to the target instance attribute via internal :meth:`set_value` method.
         """
-        if self.single_value:
+        if self.equal_value:
             value = self.rvs()[0]
             if self.filter: # resample if filter returns False
                 while not self.filter(value):
@@ -248,7 +245,7 @@ class SetSampler(BaseSampler):
         to the target instance attribute :attr:`attribute` via internal :meth:`set_value` method.
         """
         # draw a single value from set -> assign to each target in target List
-        if self.single_value:
+        if self.equal_value:
             samples = self.rvs(self.numsamples)
             for target in self.target:
                 self.set_value(target, samples)
@@ -268,11 +265,11 @@ class SourceSetSampler(SetSampler):
     """
 
     #: a list of :class:`acoular.SourceMixer` instances
-    target = List(Instance(SourceMixer, ()),
+    target = List(Instance(ac.SourceMixer, ()),
         desc="the SourceMixer instances holding a subset of sources")
 
     # a list of :class:`acoular.SamplesGenerator` instances representing the set of sources
-    set = List(Instance(SamplesGenerator, ()),
+    set = List(Instance(ac.SamplesGenerator, ()),
             desc="set of sources to be drawn")
 
     #: number of samples to be drawn from the set
@@ -290,7 +287,7 @@ class SourceSetSampler(SetSampler):
         Utilizes :meth:`rvs` function to draw sources from :attr:`set` that are going to be assigned
         to the :class:`acoular.SourceMixer` instance.
         """
-        if self.single_value:
+        if self.equal_value:
             samples = self.rvs(self.nsources)
             for target in self.target:
                 target.sources = list(samples)
@@ -374,6 +371,9 @@ class LocationSampler(BaseSampler):
     z_bounds = Tuple(None, None,
         desc="limits of the allowed drawn locations along the x-axis (lower,upper)")
 
+    #: optional grid object to which the drawn locations are snapped to
+    grid = Instance(ac.Grid)
+
     def _bounds_violated(self,loc):
         """Validation of drawn source locations."""
         if self.x_bounds[0]:
@@ -393,15 +393,23 @@ class LocationSampler(BaseSampler):
 
     def rvs(self):
         """Random variable sampling (for internal use)."""
-        return array([
+        return np.array([
             self.random_var[0].rvs(size=1, random_state=self.random_state),
             self.random_var[1].rvs(size=1, random_state=self.random_state),
             self.random_var[2].rvs(size=1, random_state=self.random_state),
         ]).squeeze()
 
-    def sample(self):
-        """Random sampling of locations."""
-        loc_array = empty((3,self.nsources))
+    def _sample_no_bounds(self):
+        """Sample locations without bounds."""
+        loc_array = np.empty((3,self.nsources))
+        for i in range(self.nsources):
+            new_loc = self.rvs()
+            loc_array[:,i] = new_loc
+        self.target = loc_array
+
+    def _sample_with_bounds(self):
+        """Sample locations with bounds."""
+        loc_array = np.empty((3,self.nsources))
         for i in range(self.nsources):
             new_loc = self.rvs()
             while self._bounds_violated(new_loc):
@@ -409,6 +417,27 @@ class LocationSampler(BaseSampler):
             else:
                 loc_array[:,i] = new_loc
         self.target = loc_array
+
+    def _sample_grid(self):
+        """Sample of locations with grid."""
+        loc_array = np.empty((3,self.nsources))
+        gpos = self.grid.gpos
+        for i in range(self.nsources):
+            new_loc = self.rvs()
+            index = np.argmin(np.linalg.norm(gpos-new_loc[:,np.newaxis],axis=0))
+            loc_array[:,i] = gpos[:,index]
+        self.target = loc_array
+
+    def sample(self):
+        """Random sampling of locations."""
+        if self.grid:
+            self._sample_grid()
+        elif self.x_bounds[0] or self.x_bounds[1] or \
+            self.y_bounds[0] or self.y_bounds[1] or \
+            self.z_bounds[0] or self.z_bounds[1]:
+            self._sample_with_bounds()
+        else:
+            self._sample_no_bounds()
 
 
 
@@ -425,7 +454,7 @@ class PointSourceSampler(LocationSampler):
 
     #:manages if a single value is chosen for all targets
     #: is fixed to False (one value for each object in :attr:`target` list is drawn)
-    single_value = Enum(False,
+    equal_value = Enum(False,
         desc="manages if the same sampled value is assigned to all targets; (only False is valid)")
 
     #: (x,y,z)-directions of location sampling
@@ -435,13 +464,13 @@ class PointSourceSampler(LocationSampler):
     @on_trait_change("target")
     def validate_target(self):
         for t in self.target:
-            if not isinstance(t,PointSource):
+            if not isinstance(t,ac.PointSource):
                 raise AttributeError("Elements in target must be instances of class acoular.PointSource")
 
     def sample_loc(self, target):
         """Sampling of a single target location (internal use)."""
         loc_axs = self.ldir.nonzero()[0] # get axes to sample
-        loc = array(target.loc)
+        loc = np.array(target.loc)
         loc[loc_axs] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
         return loc
 
@@ -465,18 +494,20 @@ class MicGeomSampler(BaseSampler):
     """Random disturbance of microphone positions of a :class:`acoular.MicGeom` object."""
 
     #: the microphone geometry instance (type :class:`acoular.MicGeom`)
-    target = Instance(MicGeom,
+    target = Instance(ac.MicGeom,
         desc="microphone geometry whose positions are sampled")
 
     #:manages if a single value is chosen for all targets
     #:if False one value for each target is drawn
-    single_value = Enum(True,
+    equal_value = Enum(True,
         desc="manages if a single value is chosen for all targets")
 
     #: a copy of the initial microphone geometry object provided as the
     #: :attr:`target` attribute value.
-    mpos_init = Property(depends_on=["target"],
+    mpos_init = Property(depends_on=["target","_mpos_init"],
         desc="a copy of the initial microphone geometry")
+
+    _mpos_init = Either(None, CArray(shape = (3, None)), default=None)
 
     #: (x,y,z)-directions of full geometry translation
     tdir = CArray( dtype=float, shape=(3, (1, 3)),
@@ -500,25 +531,32 @@ class MicGeomSampler(BaseSampler):
 
     @cached_property
     def _get_mpos_init(self):
-        return self.target.mpos_tot.copy()
+        if self._mpos_init is None:
+            return self.target.mpos_tot.copy()
+        else:
+            return self._mpos_init.copy()
+
+    def _set_mpos_init(self, mpos):
+        self._mpos_init = mpos.copy()
+
 
     @cached_property
     def _get_cpm(self):
         [[x], [y], [z]] = self.rvec
-        return array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
+        return np.array([[0, -z, y], [z, 0, -x], [-y, x, 0]])
 
     def rotate(self):
         """Rotates the microphone array."""
-        theta = 2 * pi * self.rscale * self.rvs()
+        theta = 2 * np.pi * self.rscale * self.rvs()
         # Rodrigues' rotation formula
-        R = eye(3) + sin(theta) * self.cpm + (1 - cos(theta)) * self.cpm @ self.cpm
+        R = np.eye(3) + np.sin(theta) * self.cpm + (1 - np.cos(theta)) * self.cpm @ self.cpm
         new_mpos_tot = R @ self.target.mpos_tot.copy()
         self.target.mpos_tot = new_mpos_tot.copy()
 
     def translate(self):
         """Translates the microphone array."""
         new_mpos_tot = self.target.mpos_tot.copy()
-        new_mpos_tot += sum(self.tdir *self.rvs(size=self.tdir.shape[-1]),
+        new_mpos_tot += np.sum(self.tdir *self.rvs(size=self.tdir.shape[-1]),
             axis=-1).reshape(-1, 1)
         self.target.mpos_tot = new_mpos_tot.copy()
 
@@ -550,7 +588,7 @@ class CovSampler(BaseSampler):
     The attribute :attr:`nsources` determines the number of sources to be sampled.
     The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
     The power of each source is sampled from the given random distribution at :attr:`random_var`.
-    and assigned to :attr:`variances` after sampling. The attribute :attr:`single_value` determines if a single
+    and assigned to :attr:`variances` after sampling. The attribute :attr:`equal_value` determines if a single
     power is chosen for all sources.
     The :attr:`scale_variance` attribute determines if the variance is scaled such that the sum of variances equals to 1.
     """
@@ -573,7 +611,7 @@ class CovSampler(BaseSampler):
         desc="number of fft bins at which the power is distributed")
 
     #: True: same amplitudes for all sources
-    single_value = Bool(False,
+    equal_value = Bool(False,
         desc="manages if a single amplitude is chosen for all sources")
 
     #: True: sum of variances is 1
@@ -586,89 +624,89 @@ class CovSampler(BaseSampler):
         Output of the :meth:`rvs` function is the covariance matrix of the sources
         and is assigned to :attr:`target`.
         """
-        if self.single_value:
+        if self.equal_value:
             variance = self.rvs(size=1)
             if self.scale_variance: # sum of variances is 1
                 variance = 1/self.nsources
-            variance = repeat(variance, self.nsources)
+            variance = np.repeat(variance, self.nsources)
         else:
             variance = self.rvs(size=self.nsources)
             if self.scale_variance: # sum of variances is 1
                 variance /= variance.sum()
         self.variances = variance.copy() # copy full variance
         variance /= self.nfft
-        variance = diag(variance.astype(complex))
-        self.target = repeat(variance,self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
+        variance = np.diag(variance.astype(complex))
+        self.target = np.repeat(variance,self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
 
 
-class SpectraSampler(CovSampler):
-    """Random sampling of power spectra.
+# class SpectraSampler(CovSampler):
+#     """Random sampling of power spectra.
 
-    The current implementation only allows uncorrelated sources, meaning that the
-    sampled power spectra at :attr:`target` are diagonal matrices.
-    The attribute :attr:`nsources` determines the number of sources to be sampled.
-    The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
-    The power of each source is sampled from the given random distribution at :attr:`random_var`.
-    and assigned to :attr:`variances`. The attribute :attr:`single_value` determines if a single
-    power is chosen for all sources. The :attr:`scale_variance` attribute determines if the
-    variance is scaled such that the sum of variances equals to 1.
-    The attribute :attr:`single_spectra` determines if the same underlying transfer function of
-    a power spectrum is assigned to all sources. The attribute :attr:`max_order` determines the
-    maximum order of the power spectra filter. The sampled Power Spectra are assigned to :attr:`target`
-    after sampling.
-    """
+#     The current implementation only allows uncorrelated sources, meaning that the
+#     sampled power spectra at :attr:`target` are diagonal matrices.
+#     The attribute :attr:`nsources` determines the number of sources to be sampled.
+#     The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
+#     The power of each source is sampled from the given random distribution at :attr:`random_var`.
+#     and assigned to :attr:`variances`. The attribute :attr:`equal_value` determines if a single
+#     power is chosen for all sources. The :attr:`scale_variance` attribute determines if the
+#     variance is scaled such that the sum of variances equals to 1.
+#     The attribute :attr:`equal_spectra` determines if the same underlying transfer function of
+#     a power spectrum is assigned to all sources. The attribute :attr:`max_order` determines the
+#     maximum order of the power spectra filter. The sampled Power Spectra are assigned to :attr:`target`
+#     after sampling.
+#     """
 
-    #: the sampled power spectra of shape (nfft, nsources, nsources)
-    target = CArray(dtype=complex,
-        desc="the sampled auto and cross-power spectra")
+#     #: the sampled power spectra of shape (nfft, nsources, nsources)
+#     target = CArray(dtype=complex,
+#         desc="the sampled auto and cross-power spectra")
 
-    #: True: same spectra for all sources
-    single_spectra = Bool(False,
-        desc="individual spectra for each source")
+#     #: True: same spectra for all sources
+#     equal_spectra = Bool(False,
+#         desc="individual spectra for each source")
 
-    #: the maximum order of the power spectra filter
-    max_order = Int(16,
-        desc="maximum order of the power spectra filter")
+#     #: the maximum order of the power spectra filter
+#     max_order = Int(16,
+#         desc="maximum order of the power spectra filter")
 
-    _random_state = Either(RandomState, Generator)
+#     _random_state = Either(RandomState, Generator)
 
-    @on_trait_change("random_state")
-    def copy_random_state(self):
-        state = get_state(self.random_state)
-        if isinstance(self.random_state, RandomState):
-            self._random_state = RandomState()
-            self._random_state.set_state(state)
-        elif isinstance(self.random_state, Generator):
-            self._random_state = Generator(deepcopy(self.random_state.bit_generator))
-        else:
-            raise ValueError("random_state must be either a RandomState or a Generator instance")
+#     @on_trait_change("random_state")
+#     def copy_random_state(self):
+#         state = get_state(self.random_state)
+#         if isinstance(self.random_state, RandomState):
+#             self._random_state = RandomState()
+#             self._random_state.set_state(state)
+#         elif isinstance(self.random_state, Generator):
+#             self._random_state = Generator(deepcopy(self.random_state.bit_generator))
+#         else:
+#             raise ValueError("random_state must be either a RandomState or a Generator instance")
 
-    def sample(self):
-        """Utilizes :meth:`rvs` function to evaluate the :attr:`random_func`."""
-        if self.single_value:
-            variance = self.rvs(size=1)
-            if self.scale_variance: # sum of variances is 1
-                variance = 1/self.nsources
-            variance = repeat(variance, self.nsources)
-        else:
-            variance = self.rvs(size=self.nsources)
-            if self.scale_variance: # sum of variances is 1
-                variance /= variance.sum()
-        Q = zeros((self.nfft,self.nsources,self.nsources),dtype=complex)
-        if self.single_spectra:
-            Hw,_ = generate_uniform_parametric_eq(self.nfft, self.max_order, self._random_state)
-            Hw = Hw.conj()/(Hw.conj() * Hw) # invert filter response
-            Hw2 = Hw*Hw.conj()
-            Hw2 /= Hw2.sum()
-            for i in range(self.nsources):
-                Q[:,i,i] = Hw2*variance[i].astype(complex)
-        else:
-            for i in range(self.nsources):
-                Hw, _ = generate_uniform_parametric_eq(self.nfft, self.max_order, self._random_state)
-                Hw = Hw.conj()/(Hw.conj() * Hw) # invert filter response
-                Q[:,i,i] = Hw*Hw.conj()
-                Q[:,i,i] /= Q[:,i,i].sum()/variance[i].astype(complex)
-        self.target = Q
-        self.variances = variance.copy() # copy full variance
+#     def sample(self):
+#         """Utilizes :meth:`rvs` function to evaluate the :attr:`random_func`."""
+#         if self.equal_value:
+#             variance = self.rvs(size=1)
+#             if self.scale_variance: # sum of variances is 1
+#                 variance = 1/self.nsources
+#             variance = np.repeat(variance, self.nsources)
+#         else:
+#             variance = self.rvs(size=self.nsources)
+#             if self.scale_variance: # sum of variances is 1
+#                 variance /= variance.sum()
+#         Q = np.zeros((self.nfft,self.nsources,self.nsources),dtype=complex)
+#         if self.equal_spectra:
+#             Hw,_ = generate_uniform_parametric_eq(self.nfft, self.max_order, self._random_state)
+#             Hw = Hw.conj()/(Hw.conj() * Hw) # invert filter response
+#             Hw2 = Hw*Hw.conj()
+#             Hw2 /= Hw2.sum()
+#             for i in range(self.nsources):
+#                 Q[:,i,i] = Hw2*variance[i].astype(complex)
+#         else:
+#             for i in range(self.nsources):
+#                 Hw, _ = generate_uniform_parametric_eq(self.nfft, self.max_order, self._random_state)
+#                 Hw = Hw.conj()/(Hw.conj() * Hw) # invert filter response
+#                 Q[:,i,i] = Hw*Hw.conj()
+#                 Q[:,i,i] /= Q[:,i,i].sum()/variance[i].astype(complex)
+#         self.target = Q
+#         self.variances = variance.copy() # copy full variance
 
 

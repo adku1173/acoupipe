@@ -3,7 +3,8 @@ AcouPipe
 ================================================================================
 
 **AcouPipe** :cite:`Kujawski2023` is a Python toolbox for generating unique acoustical source localization and characterization datasets with Acoular_ :cite:`Sarradj2017` that can be used for training of deep neural networks and machine learning. 
-Existing datasets primarily addresses the development of microphone array processing algorithms for acoustic testing. 
+
+.. Existing datasets primarily addresses the development of microphone array processing algorithms for acoustic testing. 
 
 AcouPipe supports distributed computation with Ray_ and comes with a default configuration dataset inside a pre-built Docker container that can be downloaded from DockerHub_.
 

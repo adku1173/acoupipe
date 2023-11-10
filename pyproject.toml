@@ -50,7 +50,6 @@ dev = [
     "sphinxcontrib.bibtex",
 ]
 
-[project.optional-dependencies]
 full = [
     "tensorflow",   
 ]

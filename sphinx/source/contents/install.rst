@@ -4,11 +4,10 @@ Install
 
 Dependencies
 ------------
-This package works with Python 3.7 or 3.8 and depends on:
+The AcouPipe package depends on:
 
 * Acoular_
 * Ray_
-* Pandas_
 * h5py_
 * tqdm_
 * Tensorflow_ (optional)

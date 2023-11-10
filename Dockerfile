@@ -4,6 +4,13 @@ FROM python:3.10
 # set the working directory in the container
 WORKDIR /data
 
+# custom acoular version
+RUN git clone https://git.tu-berlin.de/acoular-dev/kujawski/acoular.git
+RUN cd acoular
+RUN git pull
+RUN pip install ~/acoular/.
+RUN cd ..
+
 # copy needed scripts to workingdir
 COPY . /acoupipe
 
