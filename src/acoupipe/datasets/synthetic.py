@@ -32,11 +32,48 @@ from acoupipe.datasets.utils import get_uncorrelated_noise_source_recursively
 
 
 class DatasetSynthetic1(DatasetBase):
-    """Dataset1 class for generating microphone array data."""
+    """A simple microphone array data generator class.
+
+    DatasetSynthetic1 relies on synthetic source signals from which the features are extracted and has
+    been used in several publications, e.g. :cite:`Kujawski2022`.
+    """
 
     def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
-                snap_to_grid=False, signal_length=5, fs=40*343., min_nsources=1, #TODO: change the sample frequency to 40*343?
+                snap_to_grid=False, signal_length=5, fs=13720., min_nsources=1,
                 max_nsources=10, tasks=1, logger=None, config=None):
+        """Initialize the DatasetSynthetic1 object.
+
+        The input parameters are passed to the DatasetSynthetic1Config object, which creates
+        all necessary objects for the simulation of microphone array data.
+
+        Parameters
+        ----------
+        mode : str
+            Type of calculation method. Can be either :code:`welch`, :code:`analytic` or :code:`wishart`.
+            Defaults to :code:`welch`.
+        mic_pos_noise : bool
+            Apply positional noise to microphone geometry. Defaults to True.
+        mic_sig_noise : bool
+            Apply additional uncorrelated white noise to microphone signals. Defaults to True.
+        snap_to_grid : bool
+            Snap source locations to grid. The grid is defined in the config object as
+            config.grid. Defaults to False.
+        signal_length : float
+            Length of the signal in seconds. Defaults to 5 seconds.
+        fs : float
+            Sampling frequency in Hz. Defaults to 13720 Hz.
+        min_nsources : int
+            Minimum number of sources in the dataset. Defaults to 1.
+        max_nsources : int
+            Maximum number of sources in the dataset. Defaults to 10.
+        tasks : int
+            Number of parallel tasks. Defaults to 1.
+        logger : logging.Logger
+            Logger object. Defaults to None.
+        config : DatasetSynthetic1Config
+            Configuration object. Defaults to None. If None, a default configuration
+            object is created.
+        """
         if config is None:
             config = Dataset1Config(
                 mode=mode, signal_length=signal_length, fs=fs,
@@ -137,18 +174,52 @@ class Dataset1Config(ConfigBase):
     fs : float
         Sampling frequency in Hz.
     signal_length : float
-        Length of the signal in seconds.
+        Length of the source signals in seconds.
     max_nsources : int
         Maximum number of sources.
     min_nsources : int
         Minimum number of sources.
     mode : str
-        Type of PowerSpectra calculation method.
+        Type of CSM calculation method.
     mic_pos_noise : bool
         Apply positional noise to microphone geometry.
     mic_sig_noise : bool
         Apply signal noise to microphone signals.
-
+    snap_to_grid : bool
+        Snap source locations to grid.
+    fft_params : dict
+        FFT parameters with default items :code:`block_size=128`,
+        :code:`overlap="50%"`, :code:`window="Hanning"` and :code:`precision="complex64"`.
+    env : ac.Environment
+        Instance of acoular.Environment defining the environmental coditions,
+        i.e. the speed of sound.
+    mics : ac.MicGeom
+        Instance of acoular.MicGeom defining the microphone array geometry.
+    noisy_mics : ac.MicGeom
+        a second instance of acoular.MicGeom defining the noisy microphone array geometry.
+    obs : ac.MicGeom
+        Instance of acoular.MicGeom defining the observation point which is used as the
+        reference position when calculating the source strength.
+    grid : ac.RectGrid
+        Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
+        the source map.
+    source_grid : ac.Grid
+        Instance of acoular.Grid. Only relevant if :attr:`snap_to_grid` is :code:`True`.
+        Then, the source locations are snapped to this grid. Default is a copy of :attr:`grid`.
+    beamformer : ac.BeamformerBase
+        Instance of acoular.BeamformerBase defining the beamformer used to calculate the sourcemap.
+    steer : ac.SteeringVector
+        Instance of acoular.SteeringVector defining the steering vector used to calculate the sourcemap.
+    freq_data : ac.PowerSpectra
+        Instance of acoular.PowerSpectra defining the frequency domain data. Only used if :attr:`mode` is
+        :code:`welch`. Otherwise, an instance of :class:`acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic`
+        is used.
+    fft_spectra : ac.FFTSpectra
+        Instance of acoular.FFTSpectra used to calculate the spectrogram data. Only used if :attr:`mode` is
+        :code:`welch`.
+    fft_obs_spectra : ac.PowerSpectra
+        Instance of acoular.PowerSpectra used to calculate the source strength at the observation point given in
+        :attr:`obs`.
     signals : list
         List of signals.
     sources : list
@@ -167,37 +238,10 @@ class Dataset1Config(ConfigBase):
         Number of sources sampler.
     mic_noise_sampler : sp.ContainerSampler
         Microphone noise sampler that creates random uncorrelated noise at the microphones.
-
-    Methods
-    -------
-    __init__(fs=40*343,  **kwargs)
-        Initialize the configuration object with default or provided values.
-    get_sampler()
-        Get sampler objects for dataset generation.
-    _create_signals()
-        Create a list of signal objects.
-    _create_sources()
-        Create source objects based on signals.
-    _create_freq_data()
-        Create frequency domain data configuration object.
-    _create_mic_noise_signal()
-        Create microphone noise signal configuration object.
-    _create_mic_noise_source()
-        Create microphone noise source configuration object.
-    _create_micgeom_sampler()
-        Create microphone geometry positional noise sampler.
-    _create_location_sampler()
-        Create source location sampler.
-    _create_rms_sampler()
-        Create signal RMS sampler.
-    _create_nsources_sampler()
-        Create number of sources sampler.
-    _create_mic_noise_sampler()
-        Create microphone noise sampler.
     """
 
     # public traits
-    fs = Float(40*343, desc="sampling frequency")
+    fs = Float(13720, desc="sampling frequency")
     signal_length = Float(5, desc="length of the signal in seconds")
     max_nsources = Int(10, desc="maximum number of sources")
     min_nsources = Int(1, desc="minimum number of sources")
@@ -217,7 +261,7 @@ class Dataset1Config(ConfigBase):
     mics = Instance(ac.MicGeom, desc="microphone geometry configuration")
     noisy_mics = Instance(ac.MicGeom, desc="microphone geometry configuration")
     obs = Instance(ac.MicGeom, desc="observation point configuration")
-    grid = Instance(ac.RectGrid, desc="rectangular grid configuration")
+    grid = Instance(ac.RectGrid, desc="grid configuration")
     source_grid = Instance(ac.Grid, desc="source grid configuration (only relevant if snap_to_grid=True)")
     beamformer = Instance(ac.BeamformerBase, desc="beamformer configuration")
     steer = Instance(ac.SteeringVector, desc="steering vector configuration")

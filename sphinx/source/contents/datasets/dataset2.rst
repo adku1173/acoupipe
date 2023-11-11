@@ -10,6 +10,6 @@ DatasetMIRACLE
     :maxdepth: 1
     :caption: Class Documentation
 
-    ./../../autoapi/acoupipe/datasets/dataset2/index
+    ./../../autoapi/acoupipe/datasets/experimental/index
 
 

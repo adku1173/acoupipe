@@ -17,14 +17,7 @@ if TF_FLAG:
 
 
 class ConfigBase(HasPrivateTraits):
-    """
-    Configuration base class for generating microphone array datasets.
-
-    Methods
-    -------
-    get_sampler()
-        Build dictionary containing sampler objects (override in subclasses).
-    """
+    """Configuration base class for generating microphone array datasets."""
 
     def get_sampler(self):
         """Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
@@ -60,19 +53,6 @@ class DatasetBase(HasPrivateTraits):
         Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
     pipeline : BasePipeline
         Pipeline object for dataset generation (is determined automatically).
-
-    Methods
-    -------
-    generate(split, size, start_idx=0, tasks=1, progress_bar=True)
-        Generate dataset samples.
-    save_h5(split, size, name, start_idx=0, tasks=1, progress_bar=True)
-        Save dataset to an HDF5 file.
-    save_tfrecord(split, size, name, start_idx=0, tasks=1, progress_bar=True)
-        Save dataset to a TFRecord file (for TensorFlow users).
-    get_tf_dataset(split, size, start_idx=0, tasks=1, progress_bar=False)
-        Get a TensorFlow dataset from the generated data (for TensorFlow users).
-    get_tfrecord_parser()
-        Get a parser function for the TFRecord dataset (for TensorFlow users).
     """
 
     config = Instance(ConfigBase, desc="configuration object")

@@ -10,14 +10,6 @@ DatasetSynthetic1
 
 .. toctree::
     :maxdepth: 1
-    :caption: Class Documentation
-
-    ./../../autoapi/acoupipe/datasets/dataset1/index
-
-
-
-.. toctree::
-    :maxdepth: 1
     :caption: Class Documentation:
 
     ../../autoapi/acoupipe/datasets/synthetic/index

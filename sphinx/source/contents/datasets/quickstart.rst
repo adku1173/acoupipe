@@ -4,18 +4,10 @@
 Quickstart
 ==========
 
-
-Currently, AcouPipe provides two default classes to generate microphone array datasets:
-
-**DatasetSynthetic1** relies on synthetic source signals from which the features are extracted and has been used in the following 
-publications: :cite:`Kujawski2019`, :cite:`Kujawski2022`, :cite:`Feng2022`.
-
-**DatasetMIRACLE** relies on synthetic source signals and measured spatial room impulse responses, acquired at the TU Berlin anechoic chamber :cite:`Kujawski2023a`.
-
 Generate Datasets 
 -----------------
 
-To generate microphone array data with one of the classes above, the user needs to instantiate the respective class and call the method :meth:`generate` with the desired parameters. 
+To generate microphone array data with one of the available dataset generators, the user needs to instantiate the respective class and call the method :meth:`generate` with the desired parameters. 
 
 The following code snippet shows how to create a dataset generator:
 

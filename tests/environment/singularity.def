@@ -13,8 +13,8 @@ pip install ~/acoular/.
 cd ~
 git clone https://github.com/adku1173/acoupipe.git
 cd acoupipe
-git checkout experimental
-git branch --set-upstream-to=origin/experimental
+git checkout dev
+git branch --set-upstream-to=origin/dev
 git pull
 pip install ~/acoupipe/.
 

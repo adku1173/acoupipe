@@ -28,10 +28,6 @@ class BaseFeatureCatalog(HasPrivateTraits):
     name : str
         Name of the feature.
 
-    Methods
-    -------
-    get_feature_func()
-        Returns the feature function.
     """
 
     name = Str
@@ -51,11 +47,6 @@ class TimeDataFeature(BaseFeatureCatalog):
         Name of the feature (default='time_data').
     time_data : instance of class acoular.SamplesGenerator
         The source delivering the time data.
-
-    Methods
-    -------
-    get_feature_func()
-        Returns the callable for calculating the time data.
     """
 
     name = Str("time_data")
@@ -95,14 +86,6 @@ class SourcemapFeature(BaseFeatureCatalog):
     fidx : list of tuples
         List of tuples containing the start and end indices of the frequency bands to be considered. Is determined
         automatically from attr:`f` and attr:`num`.
-
-    Methods
-    -------
-    get_feature_func()
-        Returns the callable for calculating the sourcemap.
-    set_freq_limits()
-        Sets the frequency limits of the beamformer so that the result is only
-        calculated for necessary frequencies.
     """
 
     name = Str("sourcemap")
@@ -175,14 +158,6 @@ class SpectraFeature(BaseFeatureCatalog):
         the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
     fidx : list of tuples
         List of tuples containing the start and end indices of the frequency bands to be considered.
-
-    Methods
-    -------
-    get_feature_func()
-        Returns the callable for calculating the feature.
-    set_freq_limits()
-        Sets the frequency limits of the freq_data so that the result is only
-        calculated for necessary frequencies.
     """
 
     freq_data = Instance(ac.BaseSpectra, desc="spectrogram")
@@ -231,14 +206,6 @@ class SpectrogramFeature(SpectraFeature):
         the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
     fidx : list of tuples
         List of tuples containing the start and end indices of the frequency bands to be considered.
-
-    Methods
-    -------
-    get_feature_func()
-        Returns the callable for calculating the spectrogram.
-    set_freq_limits()
-        Sets the frequency limits of the freq_data so that the result is only
-        calculated for necessary frequencies.
     """
 
     name = Str("spectrogram")
@@ -281,14 +248,6 @@ class CSMFeature(SpectraFeature):
         the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
     fidx : list of tuples
         List of tuples containing the start and end indices of the frequency bands to be considered.
-
-    Methods
-    -------
-    get_feature_func()
-        Returns the callable for calculating the cross-spectral matrix.
-    set_freq_limits()
-        Sets the frequency limits of the freq_data so that the result is only
-        calculated for necessary frequencies.
     """
 
     name = Str("csm")
@@ -832,11 +791,6 @@ class BaseFeatureCollection(HasPrivateTraits):
     ----------
     feature_funcs : list
         List of feature_funcs.
-
-    Methods
-    -------
-    add_feature()
-        Add a feature to the BaseFeatureCollection.
     """
 
     feature_funcs = List(desc="list of feature_funcs")
@@ -892,11 +846,6 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
     ----------
     feature_collection : BaseFeatureCollection
         BaseFeatureCollection object.
-
-    Methods
-    -------
-    add_feature()
-        Add a feature to the BaseFeatureCollection.
     """
 
     feature_collection = Instance(BaseFeatureCollection, desc="BaseFeatureCollection object")

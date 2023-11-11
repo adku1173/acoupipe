@@ -93,7 +93,7 @@ def main(datasets,methods,modes,task_list,features,size,freqs,head,srirdir):
                     for feature in features:
                         for f in freqs:
 
-                            if mode != "welch" and "time_data" in feature or "spectrogram" in feature:
+                            if (mode != "welch" and "time_data" in feature) or (mode != "welch" and "spectrogram" in feature):
                                 continue
 
                             logging.info("---------------------------------------------------")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--datasets", type=str, nargs="+", default=["DatasetSynthetic1"], choices=["DatasetSynthetic1", "DatasetMIRACLE"])
     parser.add_argument("--task_list", type=int, nargs="+", default=[1])
-    parser.add_argument("--features", type=str, nargs="+", default=["sourcemap","csmtriu","csm","eigmode","time_data","spectrogram"])
+    parser.add_argument("--features", type=str, nargs="+", default=["spectrogram","sourcemap","csmtriu","csm","eigmode","time_data"])
     parser.add_argument("--methods", type=str, nargs="+", default=["generate"])
     parser.add_argument("--freqs", type=float, nargs="+", default=[4000, None],
                         help="frequency or frequencies included by the features and labels. Default is 'None' (all frequencies included)")

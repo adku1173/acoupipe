@@ -1,12 +1,10 @@
 # Configuration file for the Sphinx documentation builder.
 #
 # -- Path setup --------------------------------------------------------------
-import os
-import sys
 from pathlib import Path
 
 this_dir = Path(__file__).resolve().parent
-src_dir = (this_dir / '..' / '..' / 'src').resolve()
+src_dir = (this_dir / ".." / ".." / "src").resolve()
 
 # -- Project information -----------------------------------------------------
 
@@ -20,26 +18,27 @@ release = "30.09.2023"
 # -- General configuration ---------------------------------------------------
 
 extensions = [
-    'sphinx.ext.napoleon',  # needed to use google or numpy docstrings in python functions instead of rst
-    'autoapi.extension',  # automatically create the module documentation
-    'sphinx.ext.coverage',
-    "sphinx.ext.intersphinx",  # Link to Acoular documentation 
-    #"sphinx_autodoc_typehints",  # 
-    "sphinx.ext.doctest", 
-    "sphinx.ext.githubpages",    
+    "sphinx.ext.napoleon",  # needed to use google or numpy docstrings in python functions instead of rst
+    "autoapi.extension",  # automatically create the module documentation
+    "sphinx.ext.coverage",
+    "sphinx.ext.intersphinx",  # Link to Acoular documentation
+    #"sphinx_autodoc_typehints",  #
+    "sphinx.ext.doctest",
+    "sphinx.ext.githubpages",
     "traits.util.trait_documenter",
     #"numpydoc", #conda install -c anaconda numpydoc
     "nbsphinx", # allows to include jupyter notebooks into rst documentation
-    "sphinxcontrib.bibtex", # to cite papers if necessary     
+    "sphinxcontrib.bibtex", # to cite papers if necessary
 ]
 
 # auto api configuration
-autoapi_type = 'python'
-autoapi_dirs = [src_dir / 'acoupipe']
+autoapi_type = "python"
+autoapi_dirs = [src_dir / "acoupipe"]
 autoapi_add_toctree_entry = False  # no seperate index.rst file created by autoapi
-autoapi_options = ['show-inheritance']  
-autoapi_skip_classes = []
-
+autoapi_options = ["show-inheritance"]
+autoapi_skip_classes = ["Dataset1TestConfig", "sample_rms", "sample_mic_noise_variance",
+    "signal_seed", "Dataset1FeatureCollectionBuilder"]
+autoapi_python_class_content = "both"
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]
 
@@ -66,9 +65,11 @@ with open("contents/links.rst") as f:
 
 # skip certain classes
 def skip_classes(app, what, name, obj, skip, options):
-    if what == 'class':
+    if what == "class":
+        skip = any([name.endswith(cls_name) for cls_name in autoapi_skip_classes])
+    elif what == "function":
         skip = any([name.endswith(cls_name) for cls_name in autoapi_skip_classes])
     return skip
 
 def setup(sphinx):
-   sphinx.connect('autoapi-skip-member', skip_classes)
+   sphinx.connect("autoapi-skip-member", skip_classes)

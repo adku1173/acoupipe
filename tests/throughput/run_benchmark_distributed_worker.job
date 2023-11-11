@@ -14,11 +14,12 @@ export OMP_NUM_THREADS=1
 
 IMGNAME=../environment/acoupipe_test.sif
 
-let "worker_num=(${SLURM_NTASKS} - 1)" ### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)-1
+let "worker_num=(${SLURM_NTASKS}-1)" ### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)
+let "cpu_num=(${SLURM_NTASKS})"
 echo "Number of workers" $worker_num
 
 # Define the total number of CPU cores available to ray
-let "total_cores=${worker_num} * ${SLURM_CPUS_PER_TASK}"
+let "total_cores=${cpu_num} * ${SLURM_CPUS_PER_TASK}"
 
 port=6379
 hname=$(hostname -I | awk '{print $1}') # first IP address given
