@@ -16,28 +16,29 @@ jobs:
     - name: Login to docker 
       env:
         DOCKER_PWD: ${{secrets.DOCKER_PASSWORD}}
+        ACOULAR_TOKEN: ${{secrets.ACOULAR_READ_ACCESS_TOKEN}}
       run: 
         docker login -u adku1173 -p $DOCKER_PWD 
     - name: Build jupyter image
-      run: DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target jupyter --build-arg TOKEN=${secrets.ACOULAR_READ_ACCESS_TOKEN} --tag adku1173/acoupipe:dev-jupyter-gpu
+      run: DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target jupyter --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag adku1173/acoupipe:dev-jupyter-gpu
     
     - name: Push base to DockerHub
       run: docker push adku1173/acoupipe:dev-jupyter-gpu
       
     - name: Build base image
-      run: DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target base --build-arg TOKEN=${secrets.ACOULAR_READ_ACCESS_TOKEN} --tag adku1173/acoupipe:dev-base
+      run: DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target base --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag adku1173/acoupipe:dev-base
     
     - name: Push base to DockerHub
       run: docker push adku1173/acoupipe:dev-base
       
     - name: Build full image
-      run: DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target full --build-arg TOKEN=${secrets.ACOULAR_READ_ACCESS_TOKEN} --tag adku1173/acoupipe:dev-full
+      run: DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target full --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag adku1173/acoupipe:dev-full
     
     - name: Push base to DockerHub
       run: docker push adku1173/acoupipe:dev-full     
       
     - name: Build dev image
-      run: docker build . --file Dockerfile --target dev --build-arg TOKEN=${secrets.ACOULAR_READ_ACCESS_TOKEN} --tag adku1173/acoupipe:dev-dev
+      run: docker build . --file Dockerfile --target dev --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag adku1173/acoupipe:dev-dev
     
     - name: Push base to DockerHub
       run: DOCKER_BUILDKIT=1 docker push adku1173/acoupipe:dev-dev
