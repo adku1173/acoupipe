@@ -3,9 +3,8 @@ name: DockerHub Continous Integration
 on:
   push:
     branches: 
-    	- master
-    	- docker
-    	
+    - master
+    - dev
 jobs:
 
   build:
