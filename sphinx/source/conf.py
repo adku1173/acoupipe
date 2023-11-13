@@ -54,6 +54,13 @@ html_theme = "sphinx_rtd_theme"
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+
+latex_elements = {
+    "preamble": r"""
+\usepackage{tabular}
+"""
+}
+
 # -- rst_epilog --------------------------------------------------------------
 
 # rst_epilog is implicitly added to the end of each file before compiling to

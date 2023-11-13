@@ -1,3 +1,19 @@
+"""Contains classes for the generation of microphone array datasets with experimentally acquired signals for acoustic testing applications.
+
+    Currently, the following dataset generators are available:
+
+    * :class:`DatasetMIRACLE`: A microphone array dataset generator, relying on measured spatial room impulse responses from the `MIRACLE`_ dataset and synthetic white noise signals.
+
+.. _measurement setup:
+
+.. figure:: ../../../../_static/msm_miracle.png
+    :width: 750
+    :align: center
+
+    Measurement setup `R2` from the `MIRACLE`_ dataset.
+
+"""
+
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
@@ -23,16 +39,193 @@ link_address = {
 }
 
 class DatasetMIRACLE(DatasetBase):
+    r"""A microphone array dataset generator using experimentally measured data.
 
-    def __init__(self, mode="analytic", mic_sig_noise=True, signal_length=5,min_nsources=1, max_nsources=10,
-                srir_dir=None, exp_config="A1", ref_mic_index=63, tasks=1, config=None,
-                ):
+    DatasetSynthetic1 relies on measured spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset.
+
+    MIRACLE is a SRIR dataset explicitly designed for acoustic testing applications using a planar microphone array focused on a
+    rectangular observation area. It consists of a total of 856, 128 captured spatial room impulse responses and dense spatial sampling of
+    the observation area.
+
+    The data generation process is similar to :class:`acoupipe.datasets.synthetic.DatasetSynthetic1`, but uses measured
+    transfer functions / impulse responses instead of analytic ones. Multi-source scenarios with possibly closing neighboring sources are
+    realized by superimposing signals that have been convolved with the provided SRIRs.
+
+    **Scenarios**
+
+    The MIRACLE dataset provides SRIRs from different measurement setups with the same microphone array,
+    which can be selected by the :code:`scenario` parameter.
+    The underlying measurement setup for :code:`scenario="R2"` is shown in the `measurement setup`_ figure.
+
+    .. list-table:: Available scenarios
+        :header-rows: 1
+        :widths: 5 10 10 10 10 10
+
+        *   - Scenario
+            - Environment
+            - c0
+            - # SRIRs
+            - Source-plane dist.
+            - Spatial sampling
+        *   - A1
+            - Anechoic
+            - 344.7 m/s
+            - 4096
+            - 73.4 cm
+            - 23.3 mm
+        *   - D1
+            - Anechoic
+            - 344.8 m/s
+            - 4096
+            - 73.4 cm
+            - 5.0 mm
+        *   - A2
+            - Anechoic
+            - 345.0 m/s
+            - 4096
+            - 146.7 cm
+            - 23.3 mm
+        *   - R2
+            - Reflective Ground
+            - 345.2 m/s
+            - 4096
+            - 146.7 cm
+            - 23.3 mm
+
+
+    **Default FFT parameters**
+
+    The underlying default FFT parameters are:
+
+    .. table:: FFT Parameters
+
+        ===================== ========================================
+        Sampling Rate         fs=32,000 Hz
+        Block size            512 Samples
+        Block overlap         50 %
+        Windowing             von Hann / Hanning
+        ===================== ========================================
+
+    **Default randomized properties**
+
+    Several properties of the dataset are randomized for each source case when generating the data. This includes the number of sources,
+    their positions, and strength. Their respective distributions, are closely related to :cite:`Herold2017`.
+    Uncorrelated white noise is added to the microphone channels by default. Note that the source positions are sampled from a grid
+    according to the spatial sampling of the MIRACLE dataset.
+
+    .. table:: Randomized properties
+
+        ==================================================================   ===================================================
+        No. of Sources                                                       Poisson distributed (:math:`\lambda=3`)
+        Source Positions [m]                                                 Bivariate normal distributed (:math:`\sigma = 0.1688 d_a`)
+        Source Strength (:math:`[{Pa}^2]` at reference position)               Rayleigh distributed (:math:`\sigma_{R}=5`)
+        Relative Noise Variance                                              Uniform distributed (:math:`10^{-6}`, :math:`0.1`)
+        ==================================================================   ===================================================
+
+    Example
+    -------
+
+    This is a quick example on how to use the :class:`acoupipe.datasets.experimental.DatasetMIRACLE` dataset for generation of source cases
+    with multiple sources. First, import the class and instantiate. One can either specify the path, where the SRIR files from the MIRACLE_
+    project are stored, or one can set `srir_dir=None`. The latter will download the corresponding SRIR dataset into Acoular's cache directory.
+
+    .. code-block:: python
+
+        from acoupipe.datasets.experimental import DatasetMIRACLE
+
+        srir_dir = None
+        # srir_dir = <local path to the MIRACLE dataset>
+
+        dataset = DatasetMIRACLE(scenario='A1', mode='wishart')
+
+    Now, extract the :code:`sourcmap` feature iteratively with:
+
+    .. code-block:: python
+
+        dataset_generator = dataset.generate(size=10, f=2000, features=['sourcemap','loc','f'], split='training')
+
+        data_sample = next(dataset_generator)
+
+    And finally, plot the results:
+
+    .. code-block:: python
+
+        import acoular as ac
+        import matplotlib.pyplot as plt
+        import numpy as np
+
+        extent = dataset.config.grid.extend()
+
+        # sound pressure level
+        Lm = ac.L_p(data_sample['sourcemap']).T
+        Lm_max = Lm.max()
+        Lm_min = Lm.max() - 20
+
+        # plot sourcemap
+        plt.figure()
+        plt.title(f'Beamforming Map (f={data_sample["f"][0]} Hz, scenario={dataset.config.scenario})')
+        plt.imshow(Lm, vmax=Lm_max, vmin=Lm_min, extent=extent, origin='lower')
+        plt.colorbar(label='Sound Pressure Level (dB)')
+        # plot source locations
+        for loc in data_sample['loc'].T:
+            plt.scatter(loc[0], loc[1])
+        plt.xlabel('x (m)')
+        plt.ylabel('y (m)')
+        plt.show()
+
+    The resulting plot for the different scenarios should look like this:
+
+        .. figure:: ../../../../_static/exp_sourcemap_example.png
+            :width: 750
+            :align: center
+
+
+    **Initialization Parameters**
+    """
+
+    def __init__(self, srir_dir=None, scenario="A1", ref_mic_index=63,
+                mode="welch", mic_sig_noise=True, signal_length=5, min_nsources=1, max_nsources=10,
+                tasks=1, config=None):
+        """Initialize the DatasetMIRACLE object.
+
+        Input parameters are passed to the DatasetMIRACLEConfig object, which creates
+        all necessary objects for the simulation of microphone array data.
+
+        Parameters
+        ----------
+        srir_dir : str, optional
+            Path to the directory where the SRIR files are stored. Default is None, which
+            sets the path to the Acoular cache directory. The SRIR files are downloaded from the
+            `MIRACLE`_ dataset if they are not found in the directory.
+        scenario : str, optional
+            Scenario of the dataset. Possible values are "A1", "D1", "A2", "R2".
+        ref_mic_index : int, optional
+            Index of the microphone that is used as reference observation point.
+            Default is 63, which is the index of the centermost microphone.
+        mode : str, optional
+            Mode of the dataset. Possible values are "analytic", "welch", "wishart".
+            Default is "welch".
+        mic_sig_noise : bool, optional
+            Add uncorrelated noise to the microphone signals. Default is True.
+        signal_length : float, optional
+            Length of the signal in seconds. Default is 5.
+        min_nsources : int, optional
+            Minimum number of sources per sample. Default is 1.
+        max_nsources : int, optional
+            Maximum number of sources per sample. Default is 10.
+        tasks : int, optional
+            Number of parallel processes. Default is 1.
+        config : DatasetMIRACLEConfig, optional
+            DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
+        """
         if srir_dir is None:
             srir_dir = Path(ac.config.cache_dir).absolute()
+        else:
+            srir_dir = Path(srir_dir).absolute()
         if config is None:
             config = DatasetMIRACLEConfig(
                 mode=mode, signal_length=signal_length,min_nsources=min_nsources, max_nsources=max_nsources,
-                srir_dir=srir_dir, exp_config=exp_config, ref_mic_index=ref_mic_index, mic_sig_noise=mic_sig_noise)
+                srir_dir=srir_dir, scenario=scenario, ref_mic_index=ref_mic_index, mic_sig_noise=mic_sig_noise)
         self.config = config
         super().__init__(tasks=tasks, config=config)
 
@@ -142,8 +335,8 @@ class MIRACLEFeatureCollectionBuilder(Dataset1FeatureCollectionBuilder):
 
 class DatasetMIRACLEConfig(Dataset1Config):
 
-    srir_dir = Instance(Path)
-    exp_config = Either("A1","D1","A2","R2", default="A1", desc="experimental configuration")
+    srir_dir = Either(Instance(Path), Str)
+    scenario = Either("A1","D1","A2","R2", default="A1", desc="experimental configuration")
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc="reference microphone index (default: index of the centermost mic)")
@@ -160,22 +353,22 @@ class DatasetMIRACLEConfig(Dataset1Config):
     def _get_filename(self):
         return self._filename
 
-    @on_trait_change("srir_dir, exp_config")
+    @on_trait_change("srir_dir, scenario")
     def set_filename(self):
         if self.srir_dir is not None:
-            file = Path(self.srir_dir / f"{self.exp_config}").with_suffix(".h5")
+            file = Path(self.srir_dir / f"{self.scenario}").with_suffix(".h5")
             if not file.exists():
                 if not self.srir_dir.exists():
                     self.srir_dir.mkdir(parents=True)
-                print(f"Downloading SRIR file {self.exp_config+'.h5'} to {self.srir_dir}...")
+                print(f"Downloading SRIR file {self.scenario+'.h5'} to {self.srir_dir}...")
                 with tqdm(unit = "B", unit_scale = True, unit_divisor = 1024, miniters = 1) as t:
                     file, headers = urlretrieve(
-                        link_address[self.exp_config], file, reporthook = tqdm_hook(t), data = None)
+                        link_address[self.scenario], file, reporthook = tqdm_hook(t), data = None)
                 for name, value in headers.items():
                     print(f"{name}: {value}")
             self._filename = str(file)
 
-    @on_trait_change("mode, signal_length, max_nsources, mic_sig_noise, fft_params, exp_config, ref_mic_index, filename")
+    @on_trait_change("mode, signal_length, max_nsources, mic_sig_noise, fft_params, scenario, ref_mic_index, filename")
     def create_acoular_pipeline(self):
         if Path(self.filename).is_file():
             self.env = self._create_env()

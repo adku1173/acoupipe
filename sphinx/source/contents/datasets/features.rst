@@ -3,17 +3,17 @@
 Features
 ========
 
-By specifying the desired features, only the necessary data for acoustical source characterization and localization is stored.
+By specifying the desired features, only the necessary data is stored.
 This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.
-Depending on the users choice, the dataset comprises different input features, explained the following.
+Depending on the users choice, the dataset comprises different features, explained the following.
 
 **Notation**
 
-Regarding the mathematical notation, the following conventions are used:
+Regarding the mathematical notation in this section, the following conventions are used:
 
 * Boldface type for vectors and matrices, e.g., :math:`\mathbf{p}` represents a vector, while :math:`\mathbf{H}` denotes a matrix
-* Calligraphic type for sets, e.g., :math:`\mathcal{G}` represents a set of ground-truth source characteristics
 * Blackboard Bold is used to indicate number spaces, e.g., :math:`\mathbb{C}` represents the complex number space 
+.. * Calligraphic type for sets, e.g., :math:`\mathcal{G}` represents a set of ground-truth source characteristics
 
 
 Microphone array sound pressure signals (:code:`'time_data'`)
@@ -219,12 +219,12 @@ The representation of the estimated source strength slightly differs, depending 
 Analytic noise power (:code:`'noise_strength_analytic'`)
 ---------------------------------------------------------
 
-The analytic noise power refers to the expectation value (infinite number of snapshots) of the squared sound pressure amplitude :math:`\mathbb{E}[p^2_j(\mathbf{r}_m,f)]` at each m-th microphone. The data is stored in a Numpy array of shape (F,M), where F is the number of frequency bins and M is the number of microphones.
+The analytic noise power refers to the expectation value (infinite number of snapshots) of the squared sound pressure amplitude :math:`\mathbb{E}[p^2(\mathbf{r}_m,f)]` at each m-th microphone. The data is stored in a Numpy array of shape (F,M), where F is the number of frequency bins and M is the number of microphones.
 
 Estimated noise power (:code:`'noise_strength_estimated'`)
 -----------------------------------------------------------
 
-The estimated noise power is the block-wise averaged squared sound pressure amplitude :math:`1/B p^2_j(\mathbf{r}_m,f)` at each m-th microphone, where B is the number of time data blocks. The data is stored in a Numpy array of shape (F,M), where F is the number of frequency bins and M is the number of microphones. 
+The estimated noise power is the block-wise averaged squared sound pressure amplitude :math:`1/B p^2(\mathbf{r}_m,f)` at each m-th microphone, where B is the number of time data blocks. The data is stored in a Numpy array of shape (F,M), where F is the number of frequency bins and M is the number of microphones. 
 
 The representation of the estimated noise power slightly differs, depending on the choosen calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`). With :code:`mode='analytic'`, the estimated noise power equals the analytic noise power. With :code:`mode='welch'`, the estimated noise power is calculated according to Welch's method. With :code:`mode='wishart'`, the estimated noise power is a snapshot deficient approximation of the analytic noise power.
 
@@ -267,18 +267,6 @@ Random seeds (:code:`'seeds'`)
 
 A list with random seeds used by the Sampler objects involved.
 The combination is unique for each source case in the dataset. Primarily for internal use.
-
-
-
-**Source strength at the reference microphone:** :code:`'p2'`
-
-The averaged squared sound pressure value at the reference microphone position (red dot) is
-stored as an estimate of the source strength for each individual source and frequency.
-A value of zero is stored for non-existing sources. With a maximum number of 10 possible sources, this results 
-in an array of shape (65,J) per case, whereby J refers to the number of sources present. 
-It should be noted that the entries are sorted in descending order according to the overall RMS value of the source signal. 
-The descending order is not strictly maintained when only a single frequency coefficient is considered.
-
 
 
 

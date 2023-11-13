@@ -7,7 +7,7 @@ Quickstart
 Generate Datasets 
 -----------------
 
-To generate microphone array data with one of the available dataset generators, the user needs to instantiate the respective class and call the method :meth:`generate` with the desired parameters. 
+To generate microphone array data with one of the available dataset generation methods, the user needs to import and instantiate the respective class and call the method :meth:`generate` with the desired parameters. The :meth:`generate` method returns a Python generator, which can be used to extract the desired features.
 
 The following code snippet shows how to create a dataset generator:
 
@@ -16,13 +16,15 @@ The following code snippet shows how to create a dataset generator:
 
     from acoupipe.datasets.synthetic import DatasetSynthetic1
     
+    # instantiate dataset class
     dataset = DatasetSynthetic1()
-    # generate data for frequency 2000 Hz (single frequency)
+
+    # create data generator for frequency 2000 Hz (single frequency)
     data_generator = dataset.generate(
         size=10, split='training', features=['sourcemap','loc', 'f'], f=[2000], num=0)
                                           
 
-The user has to specify the :code:`size` of the dataset, the dataset split :code:`split` and the :code:`features` to be extracted. A full list of available features can be found in the :ref:`Features section <features>`. Optionally, the user can specify certain frequencies :code:`f` and the desired bandwidth :code:`num`. If no frequencies are given, the dataset will be generated for all frequencies in the range :math:`[0, 1/fs]` Hz.
+The user has to specify the :code:`size` of the dataset, the dataset split :code:`split` and the :code:`features` to be extracted. A full list of available features can be found in the :ref:`Features section <features>`. Optionally, the user can specify certain frequencies :code:`f` and the desired bandwidth :code:`num`. If no frequencies are given, the features will be extracted for all frequencies in the range :math:`[0, fs/2]` Hz.
 
 .. admonition:: Dataset Splits
 
@@ -35,19 +37,19 @@ The user has to specify the :code:`size` of the dataset, the dataset split :code
     The size of each split can be freely chosen.
     
 
-In this example, we choose the :code:`sourcemap` feature, which is a 2D beamforming map with the squared sound pressure amplitudes as values. Furthermore, we include the source locations :code:`loc` and frequencies :code:`f` as potential labels of the dataset. 
+In this example, we choose the :code:`sourcemap` feature, which is a 2D beamforming map with the squared sound pressure amplitudes at a reference position as values. Furthermore, we include the source locations :code:`loc` and frequencies :code:`f` as potential labels of the dataset. 
 
-There are a few things to note when extracting data with the data generator: 
+There are a few things to note when extracting features with the data generator: 
 
 .. code-block:: python
 
     data_sample = next(data_generator)
 
 
-First, the data generator returns a single sample at a time, consisting of a dictionary with the feature names as keys and the corresponding data as values. Second, the :code:`data_sample` dictionary includes two additional items, namely the :code:`idx` and :code:`seeds` of the sample. The :code:`idx` is the sample index and the :code:`seeds` are the random seeds used to generate the sample. Both are included for reproducible data generation, especially in multi-processing scenarios.
+First, the data generator returns a single sample at a time, consisting of a dictionary with the feature names as keys and the corresponding data as values. Second, the :code:`data_sample` dictionary includes two additional items, namely the :code:`idx` and :code:`seeds` of the sample. The :code:`idx` is the sample index and the :code:`seeds` are the random seeds used to generate the sample. Both are included for reproducible data generation, especially in multi-processing scenarios where the sample order may not be maintained.
 
 .. note::
-    The frequency included in the data might be slightly different from the specified frequency. This is due to the fact that the frequency is chosen from a discrete set of frequencies, which depends on the parameters of the FFT and the sampling rate :code:`fs` of the dataset. 
+    The frequency included in the data might be slightly different from the specified frequency. This is usually indicated by a warning and is due to the fact that the frequency is chosen from a discrete set of frequencies, which depends on the parameters of the FFT and the sampling rate :code:`fs` of the dataset. 
     
 The sampling rate and the FFT parameters can be adjusted the following way:
 

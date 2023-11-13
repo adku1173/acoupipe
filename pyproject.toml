@@ -51,7 +51,8 @@ dev = [
 ]
 
 full = [
-    "tensorflow",   
+    "tensorflow",
+    "pandas",   
 ]
 
 

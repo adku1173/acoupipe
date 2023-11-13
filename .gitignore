@@ -20,6 +20,6 @@ __pycache__/
 *.pyd
 .vscode/
 */__pycache__/*
-venv
 tests/environment/acoupipe_test.sif
 tests/throughput/results/*.png
+.venv/*

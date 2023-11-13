@@ -8,8 +8,8 @@ Datasets
     :maxdepth: 1
 
     datasets/quickstart
-    datasets/dataset1
-    datasets/dataset2
+    Synthetic Datasets <../autoapi/acoupipe/datasets/synthetic/index>
+    Experimental Datasets <../autoapi/acoupipe/datasets/experimental/index>
     datasets/features
 
 
