@@ -4,7 +4,7 @@ AcouPipe
 
 **AcouPipe** :cite:`Kujawski2023` is a Python toolbox for generating unique acoustical source localization and characterization datasets with Acoular_ :cite:`Sarradj2017` that can be used for training of deep neural networks and machine learning. 
 
-AcouPipe supports distributed computation with Ray_ and comes with two default datasets. A pre-built Docker container can be downloaded from DockerHub_.
+AcouPipe supports distributed computation with Ray_ and comes with two default datasets, which enables to create data for machine learning on the fly! A pre-built Docker container can be downloaded from DockerHub_.
 
 
 .. toctree::
@@ -35,6 +35,16 @@ See the latest performance benchmarks on `DatasetSynthetic1` for the most comput
 .. image:: _static/compute4_all_features-over-tasks_DatasetSynthetic1_fNone.png
    :width: 100%
    :align: center
+
+
+Depending on the computational complexity of the feature extraction task, dataset generation can be even distributed over multiple machines. Note that this is only useful if the extraction task is computationally demanding and the data that needs to be transferred between the nodes is not too large.
+The following figure shows the speedup of the dataset generation for the `DatasetSynthetic1` dataset on multiple compute nodes, each of which has 16 physical cores:
+
+.. image:: _static/compute1_all_features-over-tasks_DatasetSynthetic1_f4000.png
+   :width: 100%
+   :align: center
+
+
 
 Citation 
 ========
