@@ -527,6 +527,7 @@ class DatasetMIRACLEConfig(Dataset1Config):
                 src.kernel = kernel
                 src.signal.seed = seed_sampler.target+i
                 src.signal.rms = np.sqrt(prms_sq[i])
+                src.loc = (loc[0,i],loc[1,i],loc[2,i] )
             freq_data.source.sources = subset_sources # apply subset of sources
             fft_spectra.source = freq_data.source # only for spectrogram feature
             # update observation point
