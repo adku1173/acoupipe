@@ -3,6 +3,8 @@
 # -- Path setup --------------------------------------------------------------
 from pathlib import Path
 
+import acoupipe as ap
+
 this_dir = Path(__file__).resolve().parent
 src_dir = (this_dir / ".." / ".." / "src").resolve()
 
@@ -13,7 +15,7 @@ copyright = "Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj"
 author = "Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj"
 
 # The full version, including alpha/beta/rc tags
-release = "30.09.2023"
+release = f"{ap.__version__}"
 
 # -- General configuration ---------------------------------------------------
 

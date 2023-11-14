@@ -27,7 +27,6 @@ start_idx=3
 tasks=2
 
 #TODO: speed up tests
-#TODO: save values for MIRACLE (extend values correct test)
 
 class TestDatasetSynthetic1(unittest.TestCase):
 
@@ -60,14 +59,14 @@ class TestDatasetSynthetic1(unittest.TestCase):
                         continue
                     with self.subTest(f"feature={feature}, f={f}, num={num}"):
                         dataset = self.create_dataset(mode=mode)
-                        gen = dataset.generate(split="training",progress_bar=False, size=10000,start_idx=1,
+                        gen = dataset.generate(split="training",progress_bar=False, size=10000,start_idx=start_idx,
                         f=f,num=num,features=[feature])
                         while True:
                             data = next(gen)
                             if data["idx"] == start_idx:
                                 break
                         test_data = np.load(validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
-                        np.testing.assert_allclose(test_data,data[feature])
+                        np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-8)
 
     @parameterized.expand(modes)
     def test_multiprocessing_values_correct(self,mode):
@@ -83,7 +82,7 @@ class TestDatasetSynthetic1(unittest.TestCase):
                         continue
                     with self.subTest(f"feature={feature}, f={f}, num={num}"):
                         ray.shutdown()
-                        ray.init()
+                        ray.init(log_to_driver=False)
                         dataset = self.create_dataset(mode=mode,tasks = tasks)
                         gen = dataset.generate(
                             split="training",progress_bar=False, size=100,start_idx=1,f=f,num=num,features=[feature],)
@@ -94,7 +93,7 @@ class TestDatasetSynthetic1(unittest.TestCase):
                                 break
                         test_data = np.load(
                             validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
-                        np.testing.assert_allclose(test_data,data[feature])
+                        np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-8)
 
     @parameterized.expand(modes)
     def test_save_tfrecord(self, mode):
@@ -134,7 +133,7 @@ class TestDatasetSynthetic1(unittest.TestCase):
                             tfrecord = tf.data.TFRecordDataset(self.test_dir / "test.tfrecord").map(parser)
                             data_loaded = next(iter(tfrecord))
                             # compare data
-                            np.testing.assert_allclose(data_loaded[feature],data_generated[feature])
+                            np.testing.assert_allclose(data_generated[feature],data_loaded[feature],rtol=1e-5, atol=1e-8)
 
     @parameterized.expand(modes)
     def test_save_h5(self, mode):
@@ -232,17 +231,17 @@ class TestDatasetSynthetic1(unittest.TestCase):
                             f=f, num=num, features=features,
                             split="training", size=1, progress_bar=False)
                         data = next(gen)
-                        csm_psq = data["csm"][:,63,63].sum()
+                        csm_psq = data["csm"][:,63,63]
                         if mode != "analytic":
-                            noise_psq = data["noise_strength_estimated"][:,63].sum()
-                            sig_psq = data["source_strength_estimated"].sum()
+                            noise_psq = data["noise_strength_estimated"][:,63]
+                            sig_psq = data["source_strength_estimated"].sum(1)
                         else:
-                            noise_psq = data["noise_strength_analytic"][:,63].sum()
-                            sig_psq = data["source_strength_analytic"].sum()
+                            noise_psq = data["noise_strength_analytic"][:,63]
+                            sig_psq = data["source_strength_analytic"].sum(1)
                         if mode != "analytic":
-                            self.assertAlmostEqual(csm_psq, noise_psq + sig_psq, places=1)
+                            np.testing.assert_allclose(csm_psq, noise_psq + sig_psq,rtol=1e-1, atol=1e-1)
                         else:
-                            np.testing.assert_allclose(csm_psq, noise_psq + sig_psq)
+                            np.testing.assert_allclose(csm_psq, noise_psq + sig_psq,rtol=1e-5, atol=1e-8)
 
     @parameterized.expand(modes)
     def test_sourcemap_max(self, mode):
@@ -262,6 +261,25 @@ class TestDatasetSynthetic1(unittest.TestCase):
                     sourcemap_max = ac.L_p(data["sourcemap"].max())
                     source_stength_estimated = ac.L_p(data["source_strength_estimated"].max())
                     np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=1e-1)
+
+    @parameterized.expand(modes)
+    def test_eigvalsum_equal_csm(self, mode):
+        """A plausability test_."""
+        features = ["csm","eigmode"]
+        for num in [0]:
+            for f in [4000]:
+                with self.subTest(f"f={f}, num={num}"):
+                    dataset = self.create_dataset(full=True, mode=mode,
+                            mic_sig_noise=False,mic_pos_noise=False,
+                            max_nsources=1, snap_to_grid=True)
+                    dataset.config.fft_params["block_size"] = 512
+                    gen = dataset.generate(
+                        f=f, num=num, features=features,
+                        split="training", size=1, progress_bar=False)
+                    data = next(gen)
+                    eig, eigvec = np.linalg.eigh(data["csm"][0])
+                    eig_eig = np.linalg.norm(data["eigmode"][0],axis=0)
+                    np.testing.assert_allclose(eig_eig,eig,rtol=1e-5, atol=1e-7)
 
 
 

@@ -13,7 +13,6 @@ Regarding the mathematical notation in this section, the following conventions a
 
 * Boldface type for vectors and matrices, e.g., :math:`\mathbf{p}` represents a vector, while :math:`\mathbf{H}` denotes a matrix
 * Blackboard Bold is used to indicate number spaces, e.g., :math:`\mathbb{C}` represents the complex number space 
-.. * Calligraphic type for sets, e.g., :math:`\mathcal{G}` represents a set of ground-truth source characteristics
 
 
 Microphone array sound pressure signals (:code:`'time_data'`)

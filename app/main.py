@@ -44,7 +44,7 @@ def main(
 
     if tasks > 1:
         import ray
-        ray.init(address=head)
+        ray.init(address=head, log_to_driver=log)
 
     # save file
     if format == "h5":
@@ -58,6 +58,10 @@ def main(
                         size = size, name=name)
 
 if __name__ == "__main__":
+    import os
+
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="DatasetSynthetic1", choices=["DatasetSynthetic1", "DatasetMIRACLE"],

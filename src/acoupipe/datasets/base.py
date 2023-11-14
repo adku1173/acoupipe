@@ -1,3 +1,4 @@
+"""Base classes for generating microphone array datasets."""
 
 import logging
 from functools import partial
@@ -394,13 +395,6 @@ if TF_FLAG:
         tf.data.Dataset
             TensorFlow dataset containing the generated data. The dataset elements have the structure defined
             by the output_signature, which is based on the shapes of dataset features.
-
-        Examples
-        --------
-        The dataset can be used to train a TensorFlow model.
-        # TODO: show example from docs!
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic1
-
         """
         pipeline = self.pipeline
         # self._setup_logging(pipeline=pipeline)
