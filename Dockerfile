@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:latest-gpu-jupyter AS jupyter
+FROM tensorflow/tensorflow:2.13.0-gpu-jupyter AS jupyter
 
 #https://github.com/numba/numba/issues/4032 -> the numba cache directory
 # should be at a writable location when using no 
