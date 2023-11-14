@@ -15,8 +15,8 @@ RUN cd /tmp/acoupipe
 
 # install
 RUN pip install /tmp/acoupipe
-RUN pip install numba tbb
-RUN apt-get update && apt-get install -y --no-install-recommends libtbb-dev
+#RUN pip install numba tbb
+#RUN apt-get update && apt-get install -y --no-install-recommends libtbb-dev
 
 ############################################ base builds ###########################################################
 
@@ -53,8 +53,8 @@ COPY ./app /app
 
 # install
 RUN pip install /tmp/acoupipe
-RUN pip install numba tbb
-RUN apt-get update && apt-get install -y --no-install-recommends libtbb-dev
+#RUN pip install numba tbb
+#RUN apt-get update && apt-get install -y --no-install-recommends libtbb-dev
 
 # run the main.py script to save data to file
 CMD [ "python", "/app/main.py" ]
