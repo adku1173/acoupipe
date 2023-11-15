@@ -198,7 +198,6 @@ class DatasetSynthetic1(DatasetBase):
         if "time_data" in features:
             if self.config.mode == "welch":
                 builder.add_time_data(self.config.freq_data.source)
-                return builder.build()
             else:
                 raise ValueError("time_data feature is not possible with modes ['analytic', 'wishart'].")
         if "spectrogram" in features:
