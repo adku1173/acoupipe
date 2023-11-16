@@ -11,7 +11,6 @@ import numba
 import pandas as pd
 import ray
 
-logging.basicConfig(level=logging.INFO)
 
 def get_dataset(dataset,**kwargs):
     if dataset == "DatasetSynthetic1":
@@ -83,6 +82,7 @@ def time_save_tfrecord(dataset, **kwargs):
     return None, t
 
 def main(datasets,methods,modes,task_list,features,size,freqs,head,srirdir):
+    logging.basicConfig(level=logging.INFO)
     logging.info(f"Running throughput test on {socket.gethostname()}")
     logging.info(f"Numba threading layer: {numba.config.THREADING_LAYER}")
     filename = create_filename()
@@ -102,7 +102,7 @@ def main(datasets,methods,modes,task_list,features,size,freqs,head,srirdir):
 
                             if tasks > 1:
                                 logging.info(f"Starting ray cluster with head node {head}")
-                                ray.init(head)
+                                ray.init(head, log_to_driver=False)
 
                             # create dataset
                             if feature == "None":
@@ -152,6 +152,7 @@ if __name__ == "__main__":
                         help="IP address of the head node in the ray cluster. Only necessary when running in distributed mode.")
     parser.add_argument("--srirdir", type=str, default=None,
                         help="Path to the SRIR directory (only necessary for DatasetMIRACLE)")
+    parser.add_argument("--loglevel", type=str, default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
     # parse and execute main function
     kwargs = vars(parser.parse_args())
     main(**kwargs)

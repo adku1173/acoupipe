@@ -7,8 +7,11 @@
 ###SBATCH --partition=TestAndBuild
 
 export NUMBA_NUM_THREADS=1
-export NUMBA_THREADING_LAYER=tbb
 export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export BLIS_NUM_THREADS=1
+export TF_CPP_MIN_LOG_LEVEL=3
 
 #module load singularity
 

@@ -7,6 +7,12 @@ export OMP_NUM_THREADS=1
 IMGNAME=../environment/acoupipe_test.sif
 
 #module load singularity
+export NUMBA_NUM_THREADS=1
+export OMP_NUM_THREADS=1
+export MKL_NUM_THREADS=1
+export OPENBLAS_NUM_THREADS=1
+export BLIS_NUM_THREADS=1
+export TF_CPP_MIN_LOG_LEVEL=3
 
 tasks=("1" "2" "4" "8" "16")
 for dataset in "DatasetSynthetic1" "DatasetMIRACLE"; do

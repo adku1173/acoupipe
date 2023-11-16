@@ -216,7 +216,8 @@ class DatasetSynthetic1(DatasetBase):
         if "loc" in features:
             builder.add_loc(self.config.freq_data)
         if "source_strength_analytic" in features:
-            builder.add_source_strength_analytic(self.config.freq_data, f, num, ref=self.config.steer.ref)
+            builder.add_source_strength_analytic(
+                self.config.freq_data, f, num, steer=self.config.source_steer)
         if "source_strength_estimated" in features:
             if self.config.mode == "welch":
                 freq_data = self.config.fft_obs_spectra
@@ -581,7 +582,7 @@ class Dataset1Config(ConfigBase):
             random_func = sample_mic_noise_variance)
 
     @staticmethod
-    def calc_welch_prepare_func(sampler, beamformer, sources, fft_spectra, fft_obs_spectra, obs):
+    def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
         # restore sampler and acoular objects
         micgeom_sampler = sampler.get(1)
         seed_sampler = sampler.get(2)
@@ -608,10 +609,11 @@ class Dataset1Config(ConfigBase):
                 mic_noise_signal.seed = seed_sampler.target+1000
                 freq_data.source.source.mics = noisy_mics
         subset_sources = sources[:nsources]
-        dist = np.linalg.norm(loc-beamformer.steer.ref[:,np.newaxis],axis=0)
+        source_steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
         for i,src in enumerate(subset_sources):
             src.signal.seed = seed_sampler.target+i
-            src.signal.rms = np.sqrt(prms_sq[i])*dist[i] # weight the RMS with the distance to the reference position
+            # weight the RMS with the distance to the reference position
+            src.signal.rms = np.sqrt(prms_sq[i])*source_steer.r0[i]
             src.loc = (loc[0,i], loc[1,i], loc[2,i]) # apply wishart locations
             src.mics = noisy_mics
         freq_data.source.sources = subset_sources # apply subset of sources
@@ -664,6 +666,7 @@ class Dataset1Config(ConfigBase):
             self.calc_welch_prepare_func,
             beamformer=self.beamformer,
             sources=self.sources,
+            source_steer = self.source_steer,
             fft_spectra=self.fft_spectra,
             fft_obs_spectra=self.fft_obs_spectra,
             obs = self.obs)
@@ -773,9 +776,9 @@ class Dataset1FeatureCollectionBuilder(BaseFeatureCollectionBuilder):
             self.feature_collection.feature_tf_dtype_mapper.update(
                 {"loc" : "float32"})
 
-    def add_source_strength_analytic(self, freq_data, f, num, ref):
+    def add_source_strength_analytic(self, freq_data, f, num, steer):
         calc_strength = AnalyticSourceStrengthFeature(
-            freq_data=freq_data, f=f, num=num, ref=ref).get_feature_func()
+            freq_data=freq_data, f=f, num=num, steer=steer).get_feature_func()
         self.feature_collection.add_feature_func(calc_strength)
         if TF_FLAG:
             from acoupipe.writer import float_list_feature

@@ -4,8 +4,7 @@ import acoular as ac
 import numpy as np
 from numpy import array, imag, newaxis, real, triu_indices
 from numpy.linalg import eigh
-from threadpoolctl import threadpool_limits
-from traits.api import Callable, CArray, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str
+from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str
 
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
@@ -15,9 +14,6 @@ from acoupipe.datasets.utils import (
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
-
-#warnings.filterwarnings("ignore") # suppress pickling warnings
-
 
 
 class BaseFeatureCatalog(HasPrivateTraits):
@@ -370,9 +366,7 @@ class EigmodeFeature(SpectraFeature):
 
         @staticmethod
         def transform(csm):
-            with threadpool_limits(limits=1, user_api="blas"): # limit the number of threads used by numpy LAPACK routines
-                # using a single thread improved throughput even in single task mode
-                eva, eve = eigh(csm)
+            eva, eve = eigh(csm)
             return eva[:,newaxis,:]*eve[:]
 
         @staticmethod
@@ -449,14 +443,15 @@ class LocFeature(BaseFeatureCatalog):
 
 class AnalyticSourceStrengthFeature(SpectraFeature):
 
-    ref = CArray(dtype=float, shape=(3,), value=(0,0,0), desc="reference location")
-    ref_mic = Either(Int, None, default=None, desc="reference microphone index")
     name = Str("source_strength_analytic")
     cross_strength = Enum(False) # can later be extended for sources' cross-power values
     freq_data = Instance(ac.BaseSpectra, desc="cross spectral matrix calculation class")
+    steer = Instance(ac.SteeringVector, desc="steering vector object defining the path between the sources and the microphones")
+    ref_mic = Either(Int, None, default=None, desc="reference microphone index")
+
 
     @staticmethod
-    def calc_source_strength_analytic1_fullfreq(sampler, freq_data, ref, ref_mic, name):
+    def calc_source_strength_analytic1_fullfreq(sampler, freq_data, steer, ref_mic, name):
         sources = get_point_sources_recursively(freq_data.source)
         nfft = freq_data.fftfreq().shape[0]
         strength = np.zeros((nfft, len(sources)))
@@ -466,9 +461,8 @@ class AnalyticSourceStrengthFeature(SpectraFeature):
                 tf = blockwise_transfer(ir[np.newaxis], blocksize=freq_data.block_size).squeeze()
                 strength[:,j] = np.real(tf*tf.conjugate())*source.signal.rms**2/nfft
             elif isinstance(source, ac.PointSource):
-                d = np.linalg.norm(source.loc-ref)
                 if isinstance(source.signal, ac.WNoiseGenerator):
-                    strength[:,j] = np.ones(nfft)*(source.signal.rms/d)**2/nfft
+                    strength[:,j] = np.ones(nfft)*(source.signal.rms/steer.r0[j])**2/nfft
                 else:
                     raise NotImplementedError(
                         f"Cannot handle source signal type {source.signal.__class__.__name__}.")
@@ -478,8 +472,8 @@ class AnalyticSourceStrengthFeature(SpectraFeature):
         return {name: strength}
 
     @staticmethod
-    def calc_source_strength_analytic1_partfreq(sampler, freq_data, fidx, name, ref, ref_mic):
-        strength = AnalyticSourceStrengthFeature.calc_source_strength_analytic1_fullfreq(sampler, freq_data, ref, ref_mic, name)[name]
+    def calc_source_strength_analytic1_partfreq(sampler, freq_data, fidx, name, steer, ref_mic):
+        strength = AnalyticSourceStrengthFeature.calc_source_strength_analytic1_fullfreq(sampler, freq_data, steer, ref_mic, name)[name]
         return {name: np.array([strength[indices[0]:indices[1]].sum(0) for indices in fidx])}
 
     @staticmethod
@@ -524,10 +518,10 @@ class AnalyticSourceStrengthFeature(SpectraFeature):
         elif isinstance(self.freq_data, ac.BaseSpectra):
             if self.fidx is None:
                 return partial(
-                    self.calc_source_strength_analytic1_fullfreq, freq_data = self.freq_data, ref=self.ref, ref_mic=self.ref_mic, name=self.name)
+                    self.calc_source_strength_analytic1_fullfreq, freq_data = self.freq_data, steer=self.steer, ref_mic=self.ref_mic, name=self.name)
             else:
                 return partial(
-                    self.calc_source_strength_analytic1_partfreq, freq_data = self.freq_data,fidx = self.fidx, ref=self.ref, ref_mic=self.ref_mic, name=self.name)
+                    self.calc_source_strength_analytic1_partfreq, freq_data = self.freq_data,fidx = self.fidx, steer=self.steer, ref_mic=self.ref_mic, name=self.name)
         else:
             raise NotImplementedError(f"No feature function with freq_data type {self.freq_data.__class__.__name__}.")
 
