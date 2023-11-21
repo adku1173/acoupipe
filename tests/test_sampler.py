@@ -280,7 +280,7 @@ class TestDistributedPipeline(TestBasePipeline):
     def setUp(self):
         """Will be called for every single test."""
         ray.shutdown()
-        ray.init()
+        ray.init(log_to_driver=False)
         self.size = 3
         self.pipeline = get_distributed_pipeline(self.size,2) # two workers
         self.test_seeds = {

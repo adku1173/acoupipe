@@ -35,9 +35,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install ".[dev]"
         python -c 'import acoupipe'    
-    - name: Test 
+    - name: Tests 
       run: |
-        pip install parameterized
         chmod +x ../acoupipe/tests/run_tests.sh
         cd ../acoupipe/tests/
         bash run_tests.sh
