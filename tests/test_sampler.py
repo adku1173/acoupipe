@@ -1,6 +1,5 @@
 import unittest
 
-import ray
 from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
 from numpy import array
 from numpy.random import RandomState, default_rng
@@ -279,8 +278,8 @@ class TestDistributedPipeline(TestBasePipeline):
 
     def setUp(self):
         """Will be called for every single test."""
-        ray.shutdown()
-        ray.init(log_to_driver=False)
+        #ray.shutdown()
+        #ray.init(log_to_driver=False)
         self.size = 3
         self.pipeline = get_distributed_pipeline(self.size,2) # two workers
         self.test_seeds = {
@@ -288,7 +287,7 @@ class TestDistributedPipeline(TestBasePipeline):
 
     def tearDown(self):
         """Will be called after every single test."""
-        ray.shutdown()
+        #ray.shutdown()
 
 
 if __name__ == "__main__":

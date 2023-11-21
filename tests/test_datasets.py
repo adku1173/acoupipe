@@ -9,7 +9,6 @@ from pathlib import Path
 
 import acoular as ac
 import numpy as np
-import ray
 import tensorflow as tf
 from parameterized import parameterized
 
@@ -32,7 +31,7 @@ class TestDatasetSynthetic1(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = Path(tempfile.mkdtemp())
-        print(f"Creating {self.test_dir}")
+        #print(f"Creating {self.test_dir}")
 
     @staticmethod
     def create_dataset(full=False, tasks=1, **kwargs):
@@ -42,7 +41,7 @@ class TestDatasetSynthetic1(unittest.TestCase):
         return DatasetSynthetic1(config=config,tasks=tasks,**kwargs)
 
     def tearDown(self):
-        print(f"Removing {self.test_dir}")
+        #print(f"Removing {self.test_dir}")
         shutil.rmtree(self.test_dir)
 
     @parameterized.expand(modes)
@@ -81,15 +80,14 @@ class TestDatasetSynthetic1(unittest.TestCase):
                     if f is None and num != 0:
                         continue
                     with self.subTest(f"feature={feature}, f={f}, num={num}"):
-                        ray.shutdown()
-                        ray.init(log_to_driver=False)
+                        #ray.shutdown()
+                        #ray.init(log_to_driver=False)
                         dataset = self.create_dataset(mode=mode,tasks = tasks)
                         gen = dataset.generate(
                             split="training",progress_bar=False, size=100,start_idx=1,f=f,num=num,features=[feature],)
                         while True:
                             data = next(gen)
                             if data["idx"] == start_idx:
-                                print(data["seeds"])
                                 break
                         test_data = np.load(
                             validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
@@ -287,10 +285,10 @@ class MIRACLEDataset(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = Path(tempfile.mkdtemp())
-        print(f"Creating {self.test_dir}")
+        #print(f"Creating {self.test_dir}")
 
     def tearDown(self):
-        print(f"Removing {self.test_dir}")
+        #print(f"Removing {self.test_dir}")
         shutil.rmtree(self.test_dir)
 
     def create_dataset(self, full=True, tasks=1, **kwargs):
