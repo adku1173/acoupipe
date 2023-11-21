@@ -56,7 +56,9 @@ def plot_all_features_over_tasks(name, device):
 
 if __name__ == "__main__":
 
-    name = "throughput_c807562092a5_10-Nov-2023.pkl"
+    name = ["throughput_97028e1eef7b_16-Nov-2023.pkl",
+    		"throughput_3facbf3ec212_16-Nov-2023.pkl",
+            "throughput_f296ebdfcabd_17-Nov-2023.pkl"]
     plot_all_features_over_tasks(name, device="compute4")
 
     name = [

@@ -1,27 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "acoupipe"
-version = "23.1"
-description = "Library for sampling large-scale microphone array data with Acoular for machine learning"
+version = "23.11" # Date based release versioning
+description = "Library for the generation of large-scale microphone array data for machine learning"
 readme = "README.rst"
-requires-python = ">=3.7,<11"
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.8"
 authors = [
     {name = "Acoular Development Team", email = "info@acoular.org"},
 ]
-license = {file = "LICENSE"}
 keywords = [
     "deep learning",
     "beamforming",
-    "microphone array"
+    "microphone array",
+    "sound source localization",
+    "sound source characterization",
 ]
 classifiers = [
-    "Intended Audience :: Education",
+    "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Physics",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3 :: Only"    
 ]
 dependencies = [
-	'acoular',
+	'acoular>=23.11',
 	'ray',
 	'h5py',
 	'tqdm',
@@ -48,22 +54,19 @@ dev = [
     "sphinx-rtd-theme",
     "sphinx-gallery",
     "sphinxcontrib.bibtex",
+    "pandas",   
 ]
 
 full = [
     "tensorflow",
-    "pandas",   
 ]
-
 
 
 [project.urls]
 documentation = "https://adku1173.github.io/acoupipe/"
 repository = "https://github.com/adku1173/acoupipe"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+source = "https://github.com/adku1173/acoupipe"
+tracker = "https://github.com/adku1173/acoupipe/issues"
 
 [tool.ruff]
 src = ["src"]

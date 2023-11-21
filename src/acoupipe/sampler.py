@@ -16,29 +16,36 @@ New RMS values following a normal distribution are assigned to the :code:`WNoise
 
 .. code-block:: python
 
-    import acoular
-    import acoupipe
+    import acoular as ac
+    from acoupipe.sampler import NumericAttributeSampler
     from scipy.stats import norm
 
     random_var = norm(loc=1.,scale=.5)
 
-    n1 = acoular.WNoiseGenerator( sample_freq=24000,
+    n1 = ac.WNoiseGenerator( sample_freq=24000,
                     numsamples=24000*5,
                     rms=1.0,
                     seed=1 )
 
-    n2 = acoular.WNoiseGenerator( sample_freq=24000,
+    n2 = ac.WNoiseGenerator( sample_freq=24000,
                     numsamples=24000*5,
                     rms=.5,
                     seed=2 )
 
-    rms_sampler = acoupipe.NumericAttributeSampler(
+    rms_sampler = NumericAttributeSampler(
                     target=[n1,n2],
                     attribute='rms',
                     random_var=random_var,
                     random_state=10)
 
     rms_sampler.sample()
+    print(n1.rms, n2.rms)
+
+The output of the example is:
+
+.. code-block:: python
+
+    1.6657932520647591 1.3576394871992028
 
 """
 
@@ -132,7 +139,7 @@ class NumericAttributeSampler(BaseSampler):
         )
 
     def order_samples(self, samples):
-        """Internal function to order drawn values."""
+        """Order drawn values (Internal function)."""
         samples = np.sort(samples)
         if self.order == "descending":
             samples = samples[::-1]
@@ -375,19 +382,25 @@ class LocationSampler(BaseSampler):
     grid = Instance(ac.Grid)
 
     def _bounds_violated(self,loc):
-        """Validation of drawn source locations."""
+        """Validate drawn source locations."""
         if self.x_bounds[0]:
-            if (self.x_bounds[0] > loc[0]): return True
+            if (self.x_bounds[0] > loc[0]):
+                return True
         if self.x_bounds[1]:
-            if (loc[0] > self.x_bounds[1]): return True
+            if (loc[0] > self.x_bounds[1]):
+                return True
         if self.y_bounds[0]:
-            if (self.y_bounds[0] > loc[1]): return True
+            if (self.y_bounds[0] > loc[1]):
+                return True
         if self.y_bounds[1]:
-            if (loc[1] > self.y_bounds[1]): return True
+            if (loc[1] > self.y_bounds[1]):
+                return True
         if self.z_bounds[0]:
-            if (self.z_bounds[0] > loc[2]): return True
+            if (self.z_bounds[0] > loc[2]):
+                return True
         if self.z_bounds[1]:
-            if (loc[2] > self.z_bounds[1]): return True
+            if (loc[2] > self.z_bounds[1]):
+                return True
         else:
             return False
 
@@ -468,7 +481,7 @@ class PointSourceSampler(LocationSampler):
                 raise AttributeError("Elements in target must be instances of class acoular.PointSource")
 
     def sample_loc(self, target):
-        """Sampling of a single target location (internal use)."""
+        """Sample a single target location (internal use)."""
         loc_axs = self.ldir.nonzero()[0] # get axes to sample
         loc = np.array(target.loc)
         loc[loc_axs] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
@@ -554,7 +567,7 @@ class MicGeomSampler(BaseSampler):
         self.target.mpos_tot = new_mpos_tot.copy()
 
     def translate(self):
-        """Translates the microphone array."""
+        """Translate the microphone array."""
         new_mpos_tot = self.target.mpos_tot.copy()
         new_mpos_tot += np.sum(self.tdir *self.rvs(size=self.tdir.shape[-1]),
             axis=-1).reshape(-1, 1)
@@ -579,64 +592,64 @@ class MicGeomSampler(BaseSampler):
             self.deviate()
 
 
-class CovSampler(BaseSampler):
-    """Sampler to sample covariance matrices for a specific number of sources.
+# class CovSampler(BaseSampler):
+#     """Sampler to sample covariance matrices for a specific number of sources.
 
-    The current implementation only allows uncorrelated sources, meaning that the
-    sampled covariances matrices at :attr:`target` are diagonal matrices.
-    The strength (variance) of the sources follows the given random distribution at :attr:`random_var`.
-    The attribute :attr:`nsources` determines the number of sources to be sampled.
-    The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
-    The power of each source is sampled from the given random distribution at :attr:`random_var`.
-    and assigned to :attr:`variances` after sampling. The attribute :attr:`equal_value` determines if a single
-    power is chosen for all sources.
-    The :attr:`scale_variance` attribute determines if the variance is scaled such that the sum of variances equals to 1.
-    """
+#     The current implementation only allows uncorrelated sources, meaning that the
+#     sampled covariances matrices at :attr:`target` are diagonal matrices.
+#     The strength (variance) of the sources follows the given random distribution at :attr:`random_var`.
+#     The attribute :attr:`nsources` determines the number of sources to be sampled.
+#     The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
+#     The power of each source is sampled from the given random distribution at :attr:`random_var`.
+#     and assigned to :attr:`variances` after sampling. The attribute :attr:`equal_value` determines if a single
+#     power is chosen for all sources.
+#     The :attr:`scale_variance` attribute determines if the variance is scaled such that the sum of variances equals to 1.
+#     """
 
-    #: the sampled complex covariance matrices of shape (nfft, nsources, nsources)
-    target = CArray(
-        desc="the sampled complex covariance matrices")
+#     #: the sampled complex covariance matrices of shape (nfft, nsources, nsources)
+#     target = CArray(
+#         desc="the sampled complex covariance matrices")
 
-    #: the sampled variances of shape (nsources,)
-    variances = CArray(
-        desc="the sampled variances"
-        )
+#     #: the sampled variances of shape (nsources,)
+#     variances = CArray(
+#         desc="the sampled variances"
+#         )
 
-    #: the number of sources to be sampled
-    nsources = Int(
-        desc="the number of sources to be sampled")
+#     #: the number of sources to be sampled
+#     nsources = Int(
+#         desc="the number of sources to be sampled")
 
-    #: the number of fft bins at which the power is distributed
-    nfft = Int(1,
-        desc="number of fft bins at which the power is distributed")
+#     #: the number of fft bins at which the power is distributed
+#     nfft = Int(1,
+#         desc="number of fft bins at which the power is distributed")
 
-    #: True: same amplitudes for all sources
-    equal_value = Bool(False,
-        desc="manages if a single amplitude is chosen for all sources")
+#     #: True: same amplitudes for all sources
+#     equal_value = Bool(False,
+#         desc="manages if a single amplitude is chosen for all sources")
 
-    #: True: sum of variances is 1
-    scale_variance = Bool(False)
+#     #: True: sum of variances is 1
+#     scale_variance = Bool(False)
 
-    def sample(self):
-        """Random sampling of covariance matrices.
+#     def sample(self):
+#         """Random sampling of covariance matrices.
 
-        Utilizes :meth:`rvs` function to draw random values from :attr:`random_var`.
-        Output of the :meth:`rvs` function is the covariance matrix of the sources
-        and is assigned to :attr:`target`.
-        """
-        if self.equal_value:
-            variance = self.rvs(size=1)
-            if self.scale_variance: # sum of variances is 1
-                variance = 1/self.nsources
-            variance = np.repeat(variance, self.nsources)
-        else:
-            variance = self.rvs(size=self.nsources)
-            if self.scale_variance: # sum of variances is 1
-                variance /= variance.sum()
-        self.variances = variance.copy() # copy full variance
-        variance /= self.nfft
-        variance = np.diag(variance.astype(complex))
-        self.target = np.repeat(variance,self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
+#         Utilizes :meth:`rvs` function to draw random values from :attr:`random_var`.
+#         Output of the :meth:`rvs` function is the covariance matrix of the sources
+#         and is assigned to :attr:`target`.
+#         """
+#         if self.equal_value:
+#             variance = self.rvs(size=1)
+#             if self.scale_variance: # sum of variances is 1
+#                 variance = 1/self.nsources
+#             variance = np.repeat(variance, self.nsources)
+#         else:
+#             variance = self.rvs(size=self.nsources)
+#             if self.scale_variance: # sum of variances is 1
+#                 variance /= variance.sum()
+#         self.variances = variance.copy() # copy full variance
+#         variance /= self.nfft
+#         variance = np.diag(variance.astype(complex))
+#         self.target = np.repeat(variance,self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
 
 
 # class SpectraSampler(CovSampler):

@@ -17,12 +17,12 @@ class BaseLoadDataset(DataGenerator):
     This class has no functionality and should not be used.
     """
 
-    #:Full name of the .h5 file with data.
+    #:Full name of the file with data.
     name = File(filter=["*"],
         desc="name of data file")
 
     def load_data(self):
-        # load a File...
+        """Open a dataset file and set attributes."""
         pass
 
 
@@ -109,17 +109,18 @@ class LoadH5Dataset(BaseLoadDataset):
         a data generator with the :meth:`from_generator` method of the `Tensorflow Dataset API`_
         to feed machine learning models.
 
-        Example to create a repeatable data set with the Tensorflow  `tf.data.Dataset` API:
+        Example to create a repeatable data set with the Tensorflow `tf.data.Dataset` API is given in
+
 
         >>> h5data = LoadH5Dataset(name="some_dataset.h5")
-        >>> generator = h5data.get_dataset_generator(features=['p2'])
+        >>> generator = h5data.get_dataset_generator(features=['loc'])
         >>> output_signature = {
-        ...    'p2' : tf.TensorSpec(shape=(16,), dtype=tf.float32),
+        ...    'loc' : tf.TensorSpec(shape=(3,None), dtype=tf.float32),
         ... }
         >>>
         >>> dataset = tf.data.Dataset.from_generator(generator,
         ...     output_signature=output_signature).repeat()
-        >>> p2 = next(iter(dataset)) # return p2
+        >>> loc = next(iter(dataset)) # return locations
 
         Parameters
         ----------
@@ -154,8 +155,9 @@ class LoadH5Dataset(BaseLoadDataset):
 
         Returns
         -------
-        Dictionary containing a sample of the data set
-        {feature_name[key] : feature[values]}.
+        dict
+            Dictionary containing a sample of the dataset
+            {feature_name[key] : feature[values]}
         """
         indices = list(self.h5f.keys())
         for idx in indices:

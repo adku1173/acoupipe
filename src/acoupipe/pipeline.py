@@ -11,16 +11,50 @@ Control of the state of the sampling process is maintained via the :code:`sample
 
 .. code-block:: python
 
-    def calculate_csm(powerspectra):
-        return powerspectra.csm
+    import acoular as ac
+    from acoupipe.sampler import NumericAttributeSampler
+    from acoupipe.pipeline import BasePipeline, DistributedPipeline
+    from scipy.stats import norm
 
-    pipeline = acoupipe.BasePipeline(
-        sampler=[rms_sampler],
+    random_var = norm(loc=1.,scale=.5)
+
+    n1 = ac.WNoiseGenerator( sample_freq=24000,
+                    numsamples=24000*5,
+                    rms=1.0,
+                    seed=1 )
+
+    rms_sampler = NumericAttributeSampler(
+                    target=[n1],
+                    attribute='rms',
+                    random_var=random_var,
+                    random_state=10)
+
+
+    def calculate_squared_rms(sampler):
+        n1 = sampler[0].target[0]
+        return {'rms_sq' : n1.rms**2 }
+
+    pipeline = BasePipeline(
         numsamples = 5,
-        features={'csm' : (calculate_csm, ps),}
+        #random_seeds = [range(5)],
+        sampler=[rms_sampler],
+        features=calculate_squared_rms,
         )
 
-    data_generator = pipeline.get_data()
+    for data in pipeline.get_data():
+        print(data)
+
+
+The example returns the following output:
+
+.. code-block:: bash
+
+    100%|██████████| 5/5 [00:00<00:00, 2250.65it/s]
+    {'idx': 0, 'seeds': array([[0, 0]]), 'rms_sq': 1.1296822432174416}
+    {'idx': 1, 'seeds': array([[0, 1]]), 'rms_sq': 1.3754413005160537}
+    {'idx': 2, 'seeds': array([[0, 2]]), 'rms_sq': 1.197988677085426}
+    {'idx': 3, 'seeds': array([[0, 3]]), 'rms_sq': 4.082256836394099}
+    {'idx': 4, 'seeds': array([[0, 4]]), 'rms_sq': 0.454416774044029}
 """
 
 import logging
@@ -84,11 +118,13 @@ class BasePipeline(DataGenerator):
     given.
     """
 
-    #: a list with instances of :class:`~acoupipe.sampler.BaseSampler` derived classes
-    #: alternatively, the list can contain objects of type :class:`numpy.random._generator.Generator` or
+    #: a dictionary with instances of :class:`~acoupipe.sampler.BaseSampler` derived classes as keys
+    #: alternatively, the dict can contain objects of type :class:`numpy.random._generator.Generator` or
     #: :class:`numpy.random.RandomState` for control reasons
-    sampler = Dict(key_trait=Int,
-        desc="a list with instances of BaseSampler derived classes")
+    #: (e.g. :code:`sampler = {0 : rms_sampler, 1 : numpy.random.RandomState(1)}`).
+    #: The trait also accepts a list of samples (e.g. :code:`sampler = [rms_sampler, numpy.random.RandomState(1)]`).
+    #: which is then converted to a dictionary with the indices of the list as keys.
+    sampler = Property(desc="Dictionary with instances of BaseSampler derived classes as values and their sample order indices as keys")
 
     #: feature method for the extraction/generation of features and labels.
     #: one can either pass a callable (e.g. `features = `lambda sampler: {"feature_name" : sampeler.target}`).
@@ -98,18 +134,20 @@ class BasePipeline(DataGenerator):
     features = Either(Callable, Tuple,
         desc="feature method for the extraction/generation of features and labels")
 
-    #: a list of `range(seeds)` associated with sampler objects in :attr:`sampler`.
+    #: a dict with values of `range(seeds)` associated with sampler objects in :attr:`sampler`.
     #: A new seed will be collected from each range object during an evaluation of the :meth:`get_data()` generator.
     #: This seed is used to initialize an instance of :class:`numpy.random._generator.Generator` which is passed to
     #: the :attr:`random_state` of the samplers in :attr:`sampler`. If not given, :meth:`get_data()` relies on
     #: :attr:`numsamples`.
-    random_seeds = Dict(key_trait=Int, value_trait=range,
-        desc="List of seeds associated with sampler objects")
+    random_seeds = Property(desc="Dictionary of seeds associated with sampler objects")
 
     #: number of samples to calculate by :meth:`get_data()`.
     #: Will be superseded by the :attr:`random_seeds` attribute if specified.
     numsamples = Int(0,
         desc="number of data samples to calculate. Will be superseded by the random_seeds attribute if specified")
+
+    #: logger instance to log calculation times for each data sample
+    logger = Property(desc="Logger instance to log timing statistics")
 
     _idx = Int(0,
         desc="Internal running index")
@@ -117,10 +155,11 @@ class BasePipeline(DataGenerator):
     _seeds = Dict(key_trait=Int, value_trait=Int,
         desc="Internal running seeds")
 
-    #: logger instance to log calculation times for each data sample
-    logger = Property(desc="Logger instance to log timing statistics")
-
     _logger = Instance(logging.Logger, desc="Internal logger instance")
+
+    _sampler = Dict(key_trait=Int)
+
+    _random_seeds = Either(Dict(key_trait=Int), None)
 
     def _get_logger(self):
         if self._logger is None:
@@ -144,11 +183,11 @@ class BasePipeline(DataGenerator):
         logger.addHandler(stream_handler)
         return logger
 
-    def _validate_random_seeds(self):
+    def validate_random_seeds(self):
         """Validate specified random seeds."""
         if self.random_seeds:
             if len(self.random_seeds.keys()) != len(self.sampler.keys()):
-                raise ValueError("Number of given range objects in random_seeds"\
+                raise ValueError("Number of given range objects in random_seeds "\
                                   "and number of sampler objects need to be equal!")
             if len(set(list(map(len,self.random_seeds.values())))) != 1:
                 raise ValueError("Length of range objects in random_seeds"\
@@ -166,15 +205,34 @@ class BasePipeline(DataGenerator):
         self._idx += 1
         if self.random_seeds:
             self._seeds = {k : next(seed_iter[k]) for k in seed_iter.keys()}
-            for k in self.sampler.keys():
+        else:
+            self._seeds = {k : k+self._idx for k in self.sampler.keys()}
+        for k in self.sampler.keys():
+            if isinstance(self.sampler[k],BaseSampler):
+                self.sampler[k].random_state = default_rng(self._seeds[k])
+                #self.logger.error(f"update {self.sampler[k].__class__.__name__}, state: {self.sampler[k].random_state.__getstate__()}")
+            elif isinstance(self.sampler[k], RandomState):
+                self.sampler[k].seed(self._seeds[k])
+            else:
+                self.sampler[k].seed = self._seeds[k]
 
-                if isinstance(self.sampler[k],BaseSampler):
-                    self.sampler[k].random_state = default_rng(self._seeds[k])
-                    #self.logger.error(f"update {self.sampler[k].__class__.__name__}, state: {self.sampler[k].random_state.__getstate__()}")
-                elif isinstance(self.sampler[k], RandomState):
-                    self.sampler[k].seed(self._seeds[k])
-                else:
-                    self.sampler[k].seed = self._seeds[k]
+    def _get_sampler(self):
+        return self._sampler
+
+    def _set_sampler(self, sampler):
+        if isinstance(sampler, list):
+            self._sampler = {k : v for k,v in enumerate(sampler)}
+        else:
+            self._sampler = sampler
+
+    def _get_random_seeds(self):
+        return self._random_seeds
+
+    def _set_random_seeds(self, random_seeds):
+        if isinstance(random_seeds, list):
+            self._random_seeds = {k : v for k,v in enumerate(random_seeds)}
+        else:
+            self._random_seeds = random_seeds
 
     def get_data(self, progress_bar=True, start_idx=1):
         """Provide the extracted features, sampler seeds and indices.
@@ -193,7 +251,7 @@ class BasePipeline(DataGenerator):
         """
         self._idx = (start_idx-1)
         if self.random_seeds:
-            self._validate_random_seeds()
+            self.validate_random_seeds()
             seed_iter = {k : iter(v) for k,v in self.random_seeds.items()}
             nsamples = len(list(self.random_seeds.values())[0])
         else:
@@ -308,6 +366,8 @@ class DistributedPipeline(BasePipeline):
         self._idx += 1
         if self.random_seeds:
             self._seeds = {k : next(seed_iter[k]) for k in seed_iter.keys()}
+        else:
+            self._seeds = {k : k+self._idx for k in self.sampler.keys()}
 
     def get_data(self, progress_bar=True, start_idx=1):
         """Provide the extracted features, sampler seeds and indices.
@@ -328,11 +388,11 @@ class DistributedPipeline(BasePipeline):
         Yields
         ------
         dict
-            a sample of the dataset containing the extracted feature data, seeds, and index
+            A sample of the dataset containing the extracted feature data, seeds, and index
         """
         self._idx = (start_idx-1)
         if self.random_seeds:
-            self._validate_random_seeds()
+            self.validate_random_seeds()
             seed_iter = {k : iter(v) for k,v in self.random_seeds.items()}
             nsamples = len(list(self.random_seeds.values())[0])
         else:

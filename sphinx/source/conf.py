@@ -39,7 +39,7 @@ autoapi_dirs = [src_dir / "acoupipe"]
 autoapi_add_toctree_entry = False  # no seperate index.rst file created by autoapi
 autoapi_options = ["show-inheritance"]
 autoapi_skip_classes = ["Dataset1TestConfig", "sample_rms", "sample_mic_noise_variance",
-    "signal_seed", "Dataset1FeatureCollectionBuilder"]
+    "signal_seed", "Dataset1FeatureCollectionBuilder", "ActorHandler", "SamplerActor","log_execution_time", "bytes_feature"]
 autoapi_python_class_content = "both"
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]

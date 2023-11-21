@@ -81,8 +81,8 @@ def time_save_tfrecord(dataset, **kwargs):
     shutil.rmtree(dir)
     return None, t
 
-def main(datasets,methods,modes,task_list,features,size,freqs,head,srirdir):
-    logging.basicConfig(level=logging.INFO)
+def main(datasets,methods,modes,task_list,features,size,freqs,head,srirdir,loglevel):
+    logging.basicConfig(level=loglevel)
     logging.info(f"Running throughput test on {socket.gethostname()}")
     logging.info(f"Numba threading layer: {numba.config.THREADING_LAYER}")
     filename = create_filename()

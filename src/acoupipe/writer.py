@@ -9,7 +9,7 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
 
 .. code-block:: python
 
-    file_writer = acoupipe.WriteH5Dataset(
+    file_writer = acoupipe.writer.WriteH5Dataset(
                 source=pipeline,
                 )
 
@@ -41,7 +41,7 @@ class BaseWriteDataset(DataGenerator):
     source = Instance(DataGenerator)
 
     def save(self):
-        """Saves data from a :class:`~acoupipe.pipeline.BasePipeline` instance specified at :attr:`source` to file."""
+        """Save data from a :class:`~acoupipe.pipeline.BasePipeline` instance specified at :attr:`source` to file."""
         # write to File...
         pass
 
@@ -57,8 +57,9 @@ class BaseWriteDataset(DataGenerator):
 
         Returns
         -------
-        Dictionary containing a sample of the data set
-        {feature_name[key] : feature[values]}.
+        dict
+            Dictionary containing a sample of the data set
+            {feature_name[key] : feature[values]}.
         """
         for data in self.source.get_data(progress_bar,start_idx):
             # write to File...
@@ -117,7 +118,7 @@ class WriteH5Dataset(BaseWriteDataset):
             [f5h.create_dataset(f"{dataset_idx}/{key}",data=value) for key, value in data.items() if key in subf]
 
     def _add_metadata(self, f5h):
-        """Adds metadata to .h5 file."""
+        """Add metadata to .h5 file."""
         nitems = len(self.metadata.items())
         if nitems > 0:
             f5h.create_group("metadata")
@@ -125,7 +126,7 @@ class WriteH5Dataset(BaseWriteDataset):
                 f5h.create_dataset(f"metadata/{key}",data=value)
 
     def save(self, progress_bar=True, start_idx=1):
-        """Saves the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format."""
+        """Save the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format."""
         f5h = self.get_file()
         subf = self.get_filtered_features()
         for data in self.source.get_data(progress_bar, start_idx):
@@ -139,8 +140,9 @@ class WriteH5Dataset(BaseWriteDataset):
 
         Returns
         -------
-        Dictionary containing a sample of the data set
-        {feature_name[key] : feature[values]}.
+        dict
+            Dictionary containing a sample of the data set
+            {feature_name[key] : feature[values]}.
         """
         self.writeflag = True
         f5h = self.get_file()
@@ -212,7 +214,7 @@ if TF_FLAG:
         options = Trait(None,tf.io.TFRecordOptions)
 
         def save(self, progress_bar=True,start_idx=1):
-            """Saves output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .tfrecord format."""
+            """Save output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .tfrecord format."""
             with tf.io.TFRecordWriter(self.name,options=self.options) as writer:
                 for _i,features in enumerate(self.source.get_data(progress_bar,start_idx)):
                     encoded_features = {n:self.encoder_funcs[n](f) for (n,f) in features.items() if self.encoder_funcs.get(n)}
