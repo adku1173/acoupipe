@@ -101,7 +101,7 @@ class DatasetMIRACLE(DatasetBase):
 
         ===================== ========================================
         Sampling Rate         fs=32,000 Hz
-        Block size            512 Samples
+        Block size            256 Samples
         Block overlap         50 %
         Windowing             von Hann / Hanning
         ===================== ========================================
@@ -343,7 +343,7 @@ class DatasetMIRACLEConfig(Dataset1Config):
     snap_to_grid = Enum(True, desc="snap source positions to measured grid")
     fs = Enum(32000, desc="sampling frequency")
     fft_params = Dict({
-                    "block_size" : 512,
+                    "block_size" : 256,
                     "overlap" : "50%",
                     "window" : "Hanning",
                     "precision" : "complex64"},
@@ -453,8 +453,7 @@ class DatasetMIRACLEConfig(Dataset1Config):
         return ac.ImportGrid(gpos_file=gpos_file)
 
     @staticmethod
-    def calc_analytic_prepare_func(sampler, beamformer, filename, ref_mic):
-        with h5.File(filename, "r") as file:
+    def calc_analytic_prepare_func(sampler, beamformer, ir, ref_mic):
             seed_sampler = sampler.get(2)
             rms_sampler = sampler.get(3)
             loc_sampler = sampler.get(4)
@@ -470,7 +469,7 @@ class DatasetMIRACLEConfig(Dataset1Config):
                 ir_idx = np.where( np.sum(loc_sampler.grid.gpos - loc[:,i][:,np.newaxis],axis=0) == 0)
                 assert len(ir_idx) == 1
                 tf = blockwise_transfer(
-                    file["data/impulse_response"][ir_idx[0][0]], freq_data.block_size).T
+                    ir[ir_idx[0][0]], freq_data.block_size).T
                 # normalize the transfer functions to match the prms at reference mic
                 tf_pow = np.real(tf[:,ref_mic]*tf[:,ref_mic].conjugate()).sum(0) / nfft
                 tf = tf / np.sqrt(tf_pow)
@@ -492,11 +491,11 @@ class DatasetMIRACLEConfig(Dataset1Config):
                 freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
             else:
                 freq_data.noise = None
-        return {}
+            return {}
 
     @staticmethod
-    def calc_welch_prepare_func(sampler, beamformer, sources, fft_spectra, fft_obs_spectra, obs, filename, ref_mic):
-        with h5.File(filename, "r") as file:
+    def calc_welch_prepare_func(sampler, beamformer, sources, fft_spectra, fft_obs_spectra, obs, ir, ref_mic):
+        #with h5.File(filename, "r") as file:
             # restore sampler and acoular objects
             seed_sampler = sampler.get(2)
             rms_sampler = sampler.get(3)
@@ -520,7 +519,7 @@ class DatasetMIRACLEConfig(Dataset1Config):
             for i,src in enumerate(subset_sources):
                 ir_idx = np.where( np.sum(loc_sampler.grid.gpos - loc[:,i][:,np.newaxis],axis=0) == 0)
                 assert len(ir_idx) == 1
-                kernel = file["data/impulse_response"][ir_idx[0][0]].T
+                kernel = np.copy(ir[ir_idx[0][0]].T) # copy, otherwise ray will raise read only error
                 # normalize energy
                 kernel /=  np.sqrt(np.sum(kernel[:,ref_mic]**2))
                 src.kernel = kernel
@@ -535,9 +534,12 @@ class DatasetMIRACLEConfig(Dataset1Config):
                 src.mics = obs
                 src.kernel = src.kernel[:,ref_mic][:,np.newaxis]
             fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
-        return {}
+            return {}
 
     def get_prepare_func(self):
+        file = h5.File(self.filename, "r")
+        ir = file["data/impulse_response"][()]
+        # file access with h5py is slow and not serializable
         if self.mode == "welch":
             prepare_func = partial(
             self.calc_welch_prepare_func,
@@ -546,13 +548,13 @@ class DatasetMIRACLEConfig(Dataset1Config):
             fft_spectra=self.fft_spectra,
             fft_obs_spectra=self.fft_obs_spectra,
             obs = self.obs,
-            filename=self.filename,
+            ir=ir,
             ref_mic=self.ref_mic_index)
         else:
             prepare_func = partial(
             self.calc_analytic_prepare_func,
             beamformer=self.beamformer,
-            filename=self.filename,
+            ir=ir,
             ref_mic=self.ref_mic_index)
         return prepare_func
 

@@ -250,7 +250,6 @@ def complex_to_real(func):
             imag(a)[...,newaxis]],axis=-1)
     return complex_to_real_wrapper
 
-
 def get_point_sources_recursively(source):
     """Recursively get all point sources from a `acoular.TimeInOut` object.
 
