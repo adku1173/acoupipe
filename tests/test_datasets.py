@@ -67,7 +67,7 @@ class TestDatasetSynthetic1(unittest.TestCase):
                         test_data = np.load(validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
                         if feature == "eigmode": # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
                             # we therefore just test the first eigenmode
-                            np.testing.assert_allclose(data[feature][:,:,0],test_data[:,:,0],rtol=1e-5, atol=1e-7)
+                            np.testing.assert_allclose(data[feature][:,:,-1],test_data[:,:,-1],rtol=1e-5, atol=1e-7)
                         else:
                             np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-7)
 
@@ -96,8 +96,8 @@ class TestDatasetSynthetic1(unittest.TestCase):
                         test_data = np.load(
                             validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
                         if feature == "eigmode": # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
-                            # we therefore just test the first eigenmode
-                            np.testing.assert_allclose(data[feature][:,:,0],test_data[:,:,0],rtol=1e-5, atol=1e-7)
+                            # we therefore just test the strongest eigenmode
+                            np.testing.assert_allclose(data[feature][:,:,-1],test_data[:,:,-1],rtol=1e-5, atol=1e-7)
                         else:
                             np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-7)
 
