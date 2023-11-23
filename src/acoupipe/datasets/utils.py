@@ -351,8 +351,9 @@ def blockwise_transfer(ir,blocksize):
         Power spectrum of the impulse response.
     """
     n_channels, n_samples = ir.shape
-    pad = blocksize - n_samples % blocksize
-    ir = np.pad(ir,((0,0),(0,pad)))
+    if n_samples % blocksize != 0:
+        pad = blocksize - n_samples % blocksize
+        ir = np.pad(ir,((0,0),(0,pad)))
     n_blocks = ir.shape[-1] // blocksize
     tf = np.zeros((n_channels, blocksize//2+1), dtype=complex)
     for i in range(n_blocks):
