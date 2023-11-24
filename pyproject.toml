@@ -56,6 +56,7 @@ dev = [
     "sphinx-gallery",
     "sphinxcontrib.bibtex",
     "pandas",   
+    "pandoc",
 ]
 
 full = [
