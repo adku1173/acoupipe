@@ -15,7 +15,7 @@ Datasets
 
 Currently, AcouPipe provides two default classes to generate microphone array datasets:
 
-* **DatasetSynthetic1** is a simple and fast method that relies on synthetic white noise signals and spatially stationary sources in anechoic conditions. 
+* **DatasetSynthetic** is a simple and fast method that relies on synthetic white noise signals and spatially stationary sources in anechoic conditions. 
 
 .. figure:: sphinx/source/_static/msm_layout.png
    :width: 600
@@ -35,13 +35,13 @@ Instead of raw time-data, only the necessary input features for machine learning
 
 This allows the user to create data sets of manageable size that are portable, or even to create data on the fly, and facilitate reproducible research.
 
-See the latest performance benchmarks on `DatasetSynthetic1` for the most computational demanding features:
+See the latest performance benchmarks on `DatasetSynthetic` for the most computational demanding features:
 
-.. image:: sphinx/source/_static/compute4_all_features-over-tasks_DatasetSynthetic1_f4000.png
+.. image:: sphinx/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_f4000.png
    :width: 100%
    :align: center
 
-.. image:: sphinx/source/_static/compute4_all_features-over-tasks_DatasetSynthetic1_fNone.png
+.. image:: sphinx/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_fNone.png
    :width: 100%
    :align: center
 

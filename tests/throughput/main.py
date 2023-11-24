@@ -13,8 +13,8 @@ import ray
 
 
 def get_dataset(dataset,**kwargs):
-    if dataset == "DatasetSynthetic1":
-        from acoupipe.datasets.synthetic import DatasetSynthetic1 as Dataset
+    if dataset == "DatasetSynthetic":
+        from acoupipe.datasets.synthetic import DatasetSynthetic as Dataset
         kwargs.pop("srir_dir")
         return Dataset(**kwargs)
     elif dataset == "DatasetMIRACLE":
@@ -139,7 +139,7 @@ def main(datasets,methods,modes,task_list,features,size,freqs,head,srirdir,logle
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--datasets", type=str, nargs="+", default=["DatasetSynthetic1"], choices=["DatasetSynthetic1", "DatasetMIRACLE"])
+    parser.add_argument("--datasets", type=str, nargs="+", default=["DatasetSynthetic"], choices=["DatasetSynthetic", "DatasetMIRACLE"])
     parser.add_argument("--task_list", type=int, nargs="+", default=[1])
     parser.add_argument("--features", type=str, nargs="+", default=["spectrogram","sourcemap","csmtriu","csm","eigmode","time_data"])
     parser.add_argument("--methods", type=str, nargs="+", default=["generate"])

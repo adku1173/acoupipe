@@ -1,14 +1,14 @@
 
 
 import numpy as np
-from test_datasets import IMPLEMENTED_FEATURES, TestDatasetSynthetic1, TestMIRACLEDataset, start_idx, validation_data_path
+from test_datasets import IMPLEMENTED_FEATURES, TestMIRACLEDataset, start_idx, validation_data_path
 
 if __name__ == "__main__":
 
     signal_length = 0.5
 
     for mode in ["analytic","welch","wishart"]:
-        dataset = TestDatasetSynthetic1.create_dataset(
+        dataset = TestDatasetSynthetic.create_dataset(
             mode=mode,)
         for f in [None,1000]:
             for num in [0,3]:

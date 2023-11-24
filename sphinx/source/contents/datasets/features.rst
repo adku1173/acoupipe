@@ -24,7 +24,7 @@ The size of N depends on the signal length :code:`signal_length` and the samplin
 
 .. code-block:: python
 
-    dataset = DatasetSynthetic1(signal_length=1.0,fs=16000)
+    dataset = DatasetSynthetic(signal_length=1.0,fs=16000)
 
 .. note::
     The :code:`time_data` feature is only available if the choosen calculation mode is :code:`mode="welch"`. Otherwise, the time data is not simulated and can therefore not be used as a feature.
@@ -37,7 +37,7 @@ The number of time data blocks depends on the signal length :code:`signal_length
 
 .. code-block:: python
 
-    dataset = DatasetSynthetic1(signal_length=1.0,fs=16000)
+    dataset = DatasetSynthetic(signal_length=1.0,fs=16000)
     dataset.config.fft_params['block_size'] = 512
     dataset.config.fft_params['overlap'] = '50%''
 
@@ -52,9 +52,9 @@ The :code:`csm` feature corresponds to the cross-spectral matrix (CSM) :math:`\m
 
 .. code-block:: python
 
-    dataset = DatasetSynthetic1(mode='analytic')
+    dataset = DatasetSynthetic(mode='analytic')
 
-The representations only slightly differ, depending on the choosen CSM calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`), as can be seen for the following example extracted from `DatasetSynthetic1`:
+The representations only slightly differ, depending on the choosen CSM calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`), as can be seen for the following example extracted from `DatasetSynthetic`:
 
 .. image:: ../../_static/csm_example.png
     :width: 800
@@ -126,7 +126,7 @@ Compressed Cross-spectral matrix (:code:`'csmtriu'`)
 
 The CSM is a complex Hermitian matrix and contains redundant information. By using :code:`features=['csmtriu']`, only the upper triangular part of the CSM is returned (the conjugate complex of the CSM is neglected; see :cite:`Castellini2021`). The data is stored in a real-valued Numpy array of shape (F,M,M), where M is the number of microphones and F is the number of frequency bins. Similarly as for the :code:`csm` feature, the representation depends on the choosen mode (:code:`analytic`, :code:`welch` or :code:`wishart`).
 
-The representations only slightly differ, depending on the choosen CSM calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`), as can be seen for the following example extracted from `DatasetSynthetic1`:
+The representations only slightly differ, depending on the choosen CSM calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`), as can be seen for the following example extracted from `DatasetSynthetic`:
 
 .. image:: ../../_static/csmtriu_example.png
     :width: 800
@@ -184,7 +184,7 @@ Here, :math:`r_{t, m}` refers to the distance between the steered location and t
 Sarradj demonstrated that using formulation III, the maximum sound pressure level depicted in a sound map may not precisely correspond to the true position of a single sound source. 
 However, the study also revealed that the maximum does equal the true source strength for larger Helmholtz numbers.
 
-The representation slightly differs, depending on the choosen CSM calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`), as can be seen for the following example extracted from `DatasetSynthetic1`:
+The representation slightly differs, depending on the choosen CSM calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`), as can be seen for the following example extracted from `DatasetSynthetic`:
 
 .. image:: ../../_static/sourcemap_example.png
     :width: 800
@@ -254,7 +254,7 @@ The index referencing the sampled case in the dataset (default: starts at 0). A 
 .. code-block:: python
 
    ntasks = <number of parallel tasks>
-   dataset = DatasetSynthetic1(tasks=ntasks)
+   dataset = DatasetSynthetic(tasks=ntasks)
    for data in dataset.generate(start_idx=100, ...):
          ...
 

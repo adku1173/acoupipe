@@ -32,8 +32,8 @@ def main(
         import logging
         logging.basicConfig(level=logging.INFO)
 
-    if dataset == "DatasetSynthetic1":
-        from acoupipe.datasets.synthetic import DatasetSynthetic1 as Dataset
+    if dataset == "DatasetSynthetic":
+        from acoupipe.datasets.synthetic import DatasetSynthetic as Dataset
     elif dataset == "DatasetMIRACLE":
         from acoupipe.datasets.experimental import DatasetMIRACLE as Dataset
 
@@ -64,8 +64,8 @@ if __name__ == "__main__":
 
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, default="DatasetSynthetic1", choices=["DatasetSynthetic1", "DatasetMIRACLE"],
-                        help="Which dataset to compute. Default is 'DatasetSynthetic1'")
+    parser.add_argument("--dataset", type=str, default="DatasetSynthetic", choices=["DatasetSynthetic", "DatasetMIRACLE"],
+                        help="Which dataset to compute. Default is 'DatasetSynthetic'")
     parser.add_argument("--name", type=str, default=None,
                         help="filename of simulated data. If 'None' a filename is given and the file is stored under './datasets'")
     parser.add_argument("--features", nargs="+", default=[], choices=[

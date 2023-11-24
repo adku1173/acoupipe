@@ -14,10 +14,10 @@ The following code snippet shows how to create a dataset generator:
 
 .. code-block:: python
 
-    from acoupipe.datasets.synthetic import DatasetSynthetic1
+    from acoupipe.datasets.synthetic import DatasetSynthetic
     
     # instantiate dataset class
-    dataset = DatasetSynthetic1()
+    dataset = DatasetSynthetic()
 
     # create data generator for frequency 2000 Hz (single frequency)
     data_generator = dataset.generate(
@@ -57,7 +57,7 @@ The sampling rate and the FFT parameters can be adjusted the following way:
 
     fs = 44100
     block_size = 4096
-    dataset = DatasetSynthetic1(fs=fs)
+    dataset = DatasetSynthetic(fs=fs)
     dataset.config.fft_params['block_size'] = block_size
 
 
@@ -129,9 +129,9 @@ The following code snippet shows how to store the data in HDF5 format:
 
 .. code-block:: python
 
-    from acoupipe.datasets.synthetic import DatasetSynthetic1
+    from acoupipe.datasets.synthetic import DatasetSynthetic
     
-    dataset = DatasetSynthetic1()
+    dataset = DatasetSynthetic()
     dataset.save_h5(features=['sourcemap','loc', 'f'], 
                     split='training', size=10, f=[2000], num=0, 
                     name='/tmp/training_dataset.h5')
@@ -150,9 +150,9 @@ The following code snippet shows how to store the data in TFRecord format:
 
 .. code-block:: python
 
-    from acoupipe.datasets.synthetic import DatasetSynthetic1
+    from acoupipe.datasets.synthetic import DatasetSynthetic
     
-    dataset = DatasetSynthetic1()
+    dataset = DatasetSynthetic()
     dataset.save_tfrecord(features=['sourcemap','loc', 'f'], 
                           split='training', size=10, f=[2000], num=0, 
                           name='/tmp/training_dataset.tfrecord')

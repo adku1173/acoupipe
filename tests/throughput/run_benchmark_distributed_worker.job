@@ -15,7 +15,7 @@ export TF_CPP_MIN_LOG_LEVEL=3
 
 #module load singularity
 
-IMGNAME=../environment/acoupipe_test.sif
+IMGNAME=../environment/acoupipe.sif
 
 let "worker_num=(${SLURM_NTASKS}-1)" ### The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)
 let "cpu_num=(${SLURM_NTASKS})"
@@ -42,6 +42,6 @@ sleep 10
 srun --nodes=${worker_num} --ntasks=${worker_num} --cpus-per-task=${SLURM_CPUS_PER_TASK} --exclude=`hostname` singularity exec -B $(pwd) $IMGNAME ray start --address $ip_head --block --num-cpus ${SLURM_CPUS_PER_TASK} &
 sleep 10
 
-singularity exec -B $(pwd) $IMGNAME python -u $(pwd)/main.py --head=${ip_head} --task_list ${total_cores}
+singularity exec -B $(pwd) $IMGNAME python -u $(pwd)/main.py --head=${ip_head} --task_list ${total_cores} --srirdir=$(pwd) --datasets DatasetMIRACLE DatasetSynthetic
 
 

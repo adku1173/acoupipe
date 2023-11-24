@@ -2,7 +2,7 @@
 
     Currently, the following dataset generators are available:
 
-    * :class:`DatasetSynthetic1`: A simple and fast method that relies on synthetic white noise signals and spatially stationary sources radiating under anechoic conditions.
+    * :class:`DatasetSynthetic`: A simple and fast method that relies on synthetic white noise signals and spatially stationary sources radiating under anechoic conditions.
 
 .. _default measurement setup:
 
@@ -45,10 +45,10 @@ from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import get_uncorrelated_noise_source_recursively
 
 
-class DatasetSynthetic1(DatasetBase):
-    r"""`DatasetSynthetic1` is a purely synthetic microphone array source case generator.
+class DatasetSynthetic(DatasetBase):
+    r"""`DatasetSynthetic` is a purely synthetic microphone array source case generator.
 
-    DatasetSynthetic1 relies on synthetic source signals from which the features are extracted and has been used in different publications,
+    DatasetSynthetic relies on synthetic source signals from which the features are extracted and has been used in different publications,
     e.g. :cite:`Kujawski2019`, :cite:`Kujawski2022`, :cite:`Feng2022`. The default virtual simulation setup consideres a 64 channel microphone
     array and a planar observation area, as shown in the `default measurement setup`_ figure.
 
@@ -103,9 +103,9 @@ class DatasetSynthetic1(DatasetBase):
 
     .. code-block:: python
 
-        from acoupipe.datasets.synthetic import DatasetSynthetic1
+        from acoupipe.datasets.synthetic import DatasetSynthetic
 
-        dataset = DatasetSynthetic1()
+        dataset = DatasetSynthetic()
         dataset_generator = dataset.generate_dataset(
             features=["sourcemap", "loc", "f", "num"], # choose the features to extract
             f=[1000,2000,3000], # choose the frequencies to extract
@@ -126,9 +126,9 @@ class DatasetSynthetic1(DatasetBase):
     def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
                 snap_to_grid=False, signal_length=5, fs=13720., min_nsources=1,
                 max_nsources=10, tasks=1, logger=None, config=None):
-        """Initialize the DatasetSynthetic1 object.
+        """Initialize the DatasetSynthetic object.
 
-        The input parameters are passed to the DatasetSynthetic1Config object, which creates
+        The input parameters are passed to the DatasetSyntheticConfig object, which creates
         all necessary objects for the simulation of microphone array data.
 
         Parameters
@@ -155,12 +155,12 @@ class DatasetSynthetic1(DatasetBase):
             Number of parallel tasks. Defaults to 1.
         logger : logging.Logger
             Logger object. Defaults to None.
-        config : DatasetSynthetic1Config
+        config : DatasetSyntheticConfig
             Configuration object. Defaults to None. If None, a default configuration
             object is created.
         """
         if config is None:
-            config = Dataset1Config(
+            config = DatasetSyntheticConfig(
                 mode=mode, signal_length=signal_length, fs=fs,
                 min_nsources=min_nsources, max_nsources=max_nsources,
                 mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
@@ -183,7 +183,7 @@ class DatasetSynthetic1(DatasetBase):
         else:
             fdim = 1
 
-        builder = Dataset1FeatureCollectionBuilder(
+        builder = DatasetSyntheticFeatureCollectionBuilder(
             feature_collection = BaseFeatureCollection(),
             tdim = int(self.config.signal_length*self.config.fs),
             mdim = self.config.mics.num_mics,
@@ -249,9 +249,9 @@ def sample_mic_noise_variance(rng):
 def signal_seed(rng):
     return int(rng.uniform(1,1e9))
 
-class Dataset1Config(ConfigBase):
+class DatasetSyntheticConfig(ConfigBase):
     """
-    Dataset1 default Configuration class.
+    Default Configuration class.
 
     Attributes
     ----------
@@ -679,7 +679,7 @@ class Dataset1Config(ConfigBase):
         return prepare_func
 
 
-class Dataset1FeatureCollectionBuilder(BaseFeatureCollectionBuilder):
+class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
 
     tdim = Int(desc="time dimension")
     fdim = Int(desc="frequency dimension")
@@ -888,7 +888,7 @@ class Dataset1FeatureCollectionBuilder(BaseFeatureCollectionBuilder):
                                             {"num" : "int64"})
 
 
-class Dataset1TestConfig(Dataset1Config):
+class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
 
     def create_mics(self):
         return ac.MicGeom(mpos_tot=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],

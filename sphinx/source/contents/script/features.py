@@ -6,8 +6,6 @@ import acoular as ac
 import matplotlib.pyplot as plt
 import numpy as np
 
-from acoupipe.datasets.synthetic import DatasetSynthetic1
-
 #%% sourcemap_example
 
 fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True, sharex=True)
@@ -16,7 +14,7 @@ fig.suptitle("Sourcemap ($f=2000$ Hz, $J=5$)", fontsize=12)
 
 for i, mode in enumerate(["welch", "analytic", "wishart"]):
 
-    dataset = DatasetSynthetic1(mode=mode)
+    dataset = DatasetSynthetic(mode=mode)
     # generate data for frequency 2000 Hz (single frequency)
     data_generator = dataset.generate(features=["sourcemap","loc", "f"],
                                         split="training", size=1, f=[2000], num=0, start_idx=1)
@@ -51,7 +49,7 @@ fig.suptitle("CSM ($f=2000$ Hz, $J=5$)", fontsize=12)
 for i, mode in enumerate(["welch", "analytic", "wishart"]):
     for j in range(2):
 
-        dataset = DatasetSynthetic1(mode=mode)
+        dataset = DatasetSynthetic(mode=mode)
         # generate data for frequency 2000 Hz (single frequency)
         data_generator = dataset.generate(features=["csm","loc", "f"],
                                             split="training", size=1, f=[2000], num=0, start_idx=1)
@@ -87,7 +85,7 @@ fig.suptitle("compressed CSM ($f=2000$ Hz, $J=5$)", fontsize=12)
 
 for i, mode in enumerate(["welch", "analytic", "wishart"]):
 
-    dataset = DatasetSynthetic1(mode=mode)
+    dataset = DatasetSynthetic(mode=mode)
     # generate data for frequency 2000 Hz (single frequency)
     data_generator = dataset.generate(features=["csmtriu","loc", "f"],
                                         split="training", size=1, f=[2000], num=0, start_idx=1)
@@ -113,7 +111,7 @@ fig.suptitle("CSM Eigenvalues ($f=2000$ Hz, $J=5$)", fontsize=12)
 
 for mode in ["welch", "analytic", "wishart"]:
 
-    dataset = DatasetSynthetic1(mode=mode)
+    dataset = DatasetSynthetic(mode=mode)
     # generate data for frequency 2000 Hz (single frequency)
     data_generator = dataset.generate(features=["eigmode","loc", "f"],
                                         split="training", size=1, f=[2000], num=0, start_idx=1)
@@ -139,7 +137,7 @@ fig.savefig(dpath / "eigval_example.png", dpi=300)
 fig, axs = plt.subplots(1, 1, figsize=(4, 4), sharey=True, sharex=True)
 fig.suptitle("Analytic Source Strength ($J=5$, idx=1)", fontsize=12)
 
-dataset = DatasetSynthetic1(mode="analytic")
+dataset = DatasetSynthetic(mode="analytic")
 # generate data for frequency 2000 Hz (single frequency)
 data_generator = dataset.generate(features=["source_strength_analytic","f"],
                                     split="training", size=1, num=0, start_idx=1)
@@ -162,7 +160,7 @@ fig.savefig(dpath / "source_strength_analytic_example.png", dpi=300)
 fig, axs = plt.subplots(1, 1, figsize=(4, 4), sharey=True, sharex=True)
 fig.suptitle("Estimated Source Strength ($J=5$, idx=1)", fontsize=12)
 
-dataset = DatasetSynthetic1(mode="wishart")
+dataset = DatasetSynthetic(mode="wishart")
 # generate data for frequency 2000 Hz (single frequency)
 data_generator = dataset.generate(features=["source_strength_estimated","f"],
                                     split="training", size=1, num=0, start_idx=1)

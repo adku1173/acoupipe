@@ -180,13 +180,13 @@ class DatasetBase(HasPrivateTraits):
         --------
         Generate features iteratively.
 
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic1
+        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
         >>> # define the features
         >>> features = ["csm", "source_strength_analytic", "loc"]
         >>> f = 1000
         >>> num = 3
         >>> # generate the dataset
-        >>> generator = DatasetSynthetic1().generate(
+        >>> generator = DatasetSynthetic().generate(
                 f=f, num=num, split="training", size=2, features=features)
         >>> # iterate over the dataset
         >>> for data in generator:
@@ -240,13 +240,13 @@ class DatasetBase(HasPrivateTraits):
         --------
         Save features to a HDF5 file.
 
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic1
+        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
         >>> # define the features
         >>> features = ["csm", "source_strength_analytic", "loc"]
         >>> f = 1000
         >>> num = 3
         >>> # save the dataset
-        >>> dataset = DatasetSynthetic1().save_h5(
+        >>> dataset = DatasetSynthetic().save_h5(
                 f=f, num=num, split="training", size=10, features=features,name="/tmp/example.h5")
         """
         pipeline = self.pipeline
@@ -305,13 +305,13 @@ if TF_FLAG:
         --------
         Save features to a TFRecord file.
 
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic1
+        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
         >>> # define the features
         >>> features = ["csm", "source_strength_analytic", "loc"]
         >>> f = 1000
         >>> num = 3
         >>> # save the dataset
-        >>> dataset = DatasetSynthetic1().save_tfrecord(
+        >>> dataset = DatasetSynthetic().save_tfrecord(
                 f=f, num=num, split="training", size=10, features=features,name="/tmp/example.tfrecord")
         """
         pipeline = self.pipeline
@@ -446,13 +446,13 @@ if TF_FLAG:
 
         Examples
         --------
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic1
+        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
         >>> # define the features
         >>> features = ["csm", "source_strength_analytic", "loc"]
         >>> f = 1000
         >>> num = 3
         >>> # save the dataset
-        >>> dataset = DatasetSynthetic1().save_tfrecord(
+        >>> dataset = DatasetSynthetic().save_tfrecord(
                 f=f, num=num, split="training", size=10, features=features,name="/tmp/example.tfrecord")
         >>> # parse the dataset
         >>> parser = dataset.get_tfrecord_parser(features, f, num)

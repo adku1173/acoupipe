@@ -1,8 +1,8 @@
 
 #%%
-from acoupipe.datasets.synthetic import DatasetSynthetic1
+from acoupipe.datasets.synthetic import DatasetSynthetic
 
-dataset = DatasetSynthetic1()
+dataset = DatasetSynthetic()
 # generate data for frequency 2000 Hz (single frequency)
 data_generator = dataset.generate(features=["sourcemap","loc", "f"],
                                     split="training", size=10, f=[2000], num=0)

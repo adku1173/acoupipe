@@ -27,9 +27,9 @@ The configuration object holds all necessary objects needed to generate the data
 
 .. code-block:: python
 
-    from acoupipe.datasets.synthetic import DatasetSynthetic1
+    from acoupipe.datasets.synthetic import DatasetSynthetic
     
-    dataset = DatasetSynthetic1()
+    dataset = DatasetSynthetic()
     print(dataset.config)
 
     plt.figure()
@@ -42,9 +42,9 @@ A better way is to subclass a new configuration object and overwrite the method 
 
 .. code-block:: python
 
-    from acoupipe.datasets.synthetic import Dataset1Config
+    from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 
-    class ConfigUMA(Dataset1Config):
+    class ConfigUMA(DatasetSyntheticConfig):
         def _create_mics(self):
             uma_file = Path(acoular.__file__).parent / 'xml' / 'minidsp_uma16.xml'
             return acoular.MicGeom(from_file=uma_file)
@@ -55,7 +55,7 @@ With the new configuration object, we can create a new dataset that uses the UMA
 .. code-block:: python
 
     config = ConfigUMA()
-    dataset_uma = DatasetSynthetic1(config=config)
+    dataset_uma = DatasetSynthetic(config=config)
 
     plt.figure()
     plt.scatter(dataset.config.mics.mpos[0], dataset.config.mics.mpos[1])

@@ -26,7 +26,7 @@ from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.base import DatasetBase
 from acoupipe.datasets.features import BaseFeatureCollection
-from acoupipe.datasets.synthetic import Dataset1Config, Dataset1FeatureCollectionBuilder
+from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSyntheticFeatureCollectionBuilder
 from acoupipe.datasets.utils import blockwise_transfer, get_uncorrelated_noise_source_recursively
 
 link_address = {
@@ -46,13 +46,13 @@ file_hash = {
 class DatasetMIRACLE(DatasetBase):
     r"""A microphone array dataset generator using experimentally measured data.
 
-    DatasetSynthetic1 relies on measured spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset.
+    DatasetSynthetic relies on measured spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset.
 
     MIRACLE is a SRIR dataset explicitly designed for acoustic testing applications using a planar microphone array focused on a
     rectangular observation area. It consists of a total of 856, 128 captured spatial room impulse responses and dense spatial sampling of
     the observation area.
 
-    The data generation process is similar to :class:`acoupipe.datasets.synthetic.DatasetSynthetic1`, but uses measured
+    The data generation process is similar to :class:`acoupipe.datasets.synthetic.DatasetSynthetic`, but uses measured
     transfer functions / impulse responses instead of analytic ones. Multi-source scenarios with possibly closing neighboring sources are
     realized by superimposing signals that have been convolved with the provided SRIRs.
 
@@ -302,7 +302,7 @@ class DatasetMIRACLE(DatasetBase):
         return builder.build()
 
 
-class MIRACLEFeatureCollectionBuilder(Dataset1FeatureCollectionBuilder):
+class MIRACLEFeatureCollectionBuilder(DatasetSyntheticFeatureCollectionBuilder):
 
     def add_source_strength_analytic(self, freq_data, f, num, ref_mic):
         from acoupipe.datasets.features import AnalyticSourceStrengthFeature
@@ -333,7 +333,7 @@ class MIRACLEFeatureCollectionBuilder(Dataset1FeatureCollectionBuilder):
                 {"source_strength_estimated" : "float32"})
 
 
-class DatasetMIRACLEConfig(Dataset1Config):
+class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     srir_dir = Either(Instance(Path), Str, None)
     scenario = Either("A1","D1","A2","R2", desc="experimental configuration")

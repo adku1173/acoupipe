@@ -22,25 +22,25 @@ Data Generation
 
 Currently, AcouPipe provides two default classes to generate microphone array datasets:
 
-* **DatasetSynthetic1** is a simple and fast method that relies on synthetic white noise signals and spatially stationary sources in anechoic conditions. This dataset has been used in the following publications: :cite:`Kujawski2019`, :cite:`Kujawski2022`, :cite:`Feng2022`.
+* **DatasetSynthetic** is a simple and fast method that relies on synthetic white noise signals and spatially stationary sources in anechoic conditions. This dataset has been used in the following publications: :cite:`Kujawski2019`, :cite:`Kujawski2022`, :cite:`Feng2022`.
 
 * **DatasetMIRACLE** relies on a large-scale set of measured spatial room impulse responses, acquired at the TU Berlin anechoic chamber :cite:`Kujawski2023a`, and synthetic source signals resulting in a realistic and quasi-infinite dataset.
 
-See the latest performance benchmarks on `DatasetSynthetic1` for the most computational demanding features:
+See the latest performance benchmarks on `DatasetSynthetic` for the most computational demanding features:
 
-.. image:: _static/compute4_all_features-over-tasks_DatasetSynthetic1_f4000.png
+.. image:: _static/compute4_all_features-over-tasks_DatasetSynthetic_f4000.png
    :width: 100%
    :align: center
 
-.. image:: _static/compute4_all_features-over-tasks_DatasetSynthetic1_fNone.png
+.. image:: _static/compute4_all_features-over-tasks_DatasetSynthetic_fNone.png
    :width: 100%
    :align: center
 
 
 Depending on the computational complexity of the feature extraction task, dataset generation can be even distributed over multiple machines. Note that this is only useful if the extraction task is computationally demanding and the data that needs to be transferred between the nodes is not too large.
-The following figure shows the speedup of the dataset generation for the `DatasetSynthetic1` dataset on multiple compute nodes, each of which has 16 physical cores:
+The following figure shows the speedup of the dataset generation for the `DatasetSynthetic` dataset on multiple compute nodes, each of which has 16 physical cores:
 
-.. image:: _static/compute1_all_features-over-tasks_DatasetSynthetic1_f4000.png
+.. image:: _static/compute1_all_features-over-tasks_DatasetSynthetic_f4000.png
    :width: 100%
    :align: center
 

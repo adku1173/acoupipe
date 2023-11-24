@@ -49,7 +49,7 @@ The main.py script has some further command line options that can be used to inf
 .. code-block:: bash
     :caption: command line arguments of the main.py script
 
-    usage: main.py [-h] [--dataset {DatasetSynthetic1,DatasetMIRACLE}] [--name NAME]
+    usage: main.py [-h] [--dataset {DatasetSynthetic,DatasetMIRACLE}] [--name NAME]
                [--features {time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated} [{time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated} ...]]
                [--mode {welch,wishart,analytic}] [--format {tfrecord,h5}] [--f F [F ...]] [--num NUM]
                [--split {training,validation,test}] --size SIZE [--start_idx START_IDX] [--tasks TASKS]
@@ -57,8 +57,8 @@ The main.py script has some further command line options that can be used to inf
 
     options:
     -h, --help            show this help message and exit
-    --dataset {DatasetSynthetic1,DatasetMIRACLE}
-                            Which dataset to compute. Default is 'DatasetSynthetic1'
+    --dataset {DatasetSynthetic,DatasetMIRACLE}
+                            Which dataset to compute. Default is 'DatasetSynthetic'
     --name NAME           filename of simulated data. If 'None' a filename is given and the file is
                             stored under './datasets'
     --features {time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated} [{time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated} ...]

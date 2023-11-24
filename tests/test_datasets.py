@@ -1,7 +1,4 @@
-from os import environ
 
-environ["NUMBA_NUM_THREADS"] = "1" # set numba threads to 1
-environ["TF_CPP_MIN_LOG_LEVEL"] = "3" # change tensorflow log level for doc purposes
 import shutil
 import tempfile
 import unittest
@@ -13,7 +10,7 @@ import tensorflow as tf
 from parameterized import parameterized
 
 from acoupipe.datasets.experimental import DatasetMIRACLE
-from acoupipe.datasets.synthetic import Dataset1TestConfig, DatasetSynthetic1
+from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
 
 IMPLEMENTED_FEATURES = ["time_data","csm","csmtriu","sourcemap","eigmode", "spectrogram"] + [
     "seeds", "idx","loc","source_strength_analytic", "source_strength_estimated", "noise_strength_analytic",
@@ -27,7 +24,7 @@ tasks=2
 
 #TODO: speed up tests
 
-class TestDatasetSynthetic1(unittest.TestCase):
+class TestDatasetSynthetic(unittest.TestCase):
 
     def setUp(self):
         self.test_dir = Path(tempfile.mkdtemp())
@@ -36,9 +33,9 @@ class TestDatasetSynthetic1(unittest.TestCase):
     @staticmethod
     def create_dataset(full=False, tasks=1, **kwargs):
         if full:
-            return DatasetSynthetic1(tasks=tasks,**kwargs)
-        config = Dataset1TestConfig(**kwargs)
-        return DatasetSynthetic1(config=config,tasks=tasks,**kwargs)
+            return DatasetSynthetic(tasks=tasks,**kwargs)
+        config = DatasetSyntheticTestConfig(**kwargs)
+        return DatasetSynthetic(config=config,tasks=tasks,**kwargs)
 
     def tearDown(self):
         #print(f"Removing {self.test_dir}")
