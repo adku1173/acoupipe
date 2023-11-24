@@ -13,29 +13,34 @@
     Measurement setup `R2` from the `MIRACLE`_ dataset.
 
 """
-
 from copy import deepcopy
 from functools import partial
 from pathlib import Path
-from urllib.request import urlretrieve
 
 import acoular as ac
 import h5py as h5
 import numpy as np
-from tqdm import tqdm
-from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, on_trait_change
+import pooch
+from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.base import DatasetBase
 from acoupipe.datasets.features import BaseFeatureCollection
 from acoupipe.datasets.synthetic import Dataset1Config, Dataset1FeatureCollectionBuilder
-from acoupipe.datasets.utils import blockwise_transfer, get_uncorrelated_noise_source_recursively, tqdm_hook
+from acoupipe.datasets.utils import blockwise_transfer, get_uncorrelated_noise_source_recursively
 
 link_address = {
 "A1" : "https://depositonce.tu-berlin.de/bitstreams/76798c39-5ced-43f4-be09-7c0c30abdd81/download",
 "A2" : "https://depositonce.tu-berlin.de/bitstreams/27b81b48-24a7-4db8-acc0-5dc085c94caf/download",
 "D1" : "https://depositonce.tu-berlin.de/bitstreams/f812254f-185a-4e92-aff7-9daaebfe6976/download",
 "R2" : "https://depositonce.tu-berlin.de/bitstreams/2b016da5-073d-4bb1-a05d-d1337aba00a1/download",
+}
+
+file_hash = {
+"A1" : "841670db04abedb8da413af335ef62318396cd213ec2eeccb90e3f9d766fc369",
+"A2" : "92c70c9f81582e93f645ea13f2a9c67a75b4788d44b6e5ca2b701df37e5881c8",
+"D1" : "bcc0c35b31eb623e83f2246d7c3405515755cf2dacb803b1876bf77f6c747183",
+"R2" : "f7dd09cb5e55601c11fecc813bdd3aa91b781e1d0a94ca16014340814b5edfe9",
 }
 
 class DatasetMIRACLE(DatasetBase):
@@ -127,7 +132,8 @@ class DatasetMIRACLE(DatasetBase):
 
     This is a quick example on how to use the :class:`acoupipe.datasets.experimental.DatasetMIRACLE` dataset for generation of source cases
     with multiple sources. First, import the class and instantiate. One can either specify the path, where the SRIR files from the MIRACLE_
-    project are stored, or one can set `srir_dir=None`. The latter will download the corresponding SRIR dataset into Acoular's cache directory.
+    project are stored, or one can set `srir_dir=None`. The latter will download the corresponding SRIR dataset into a pre-defined cache directory determined
+    by the `pooch` library.
 
     .. code-block:: python
 
@@ -195,7 +201,7 @@ class DatasetMIRACLE(DatasetBase):
         ----------
         srir_dir : str, optional
             Path to the directory where the SRIR files are stored. Default is None, which
-            sets the path to the Acoular cache directory. The SRIR files are downloaded from the
+            sets the path to the `pooch.os_cache` directory. The SRIR files are downloaded from the
             `MIRACLE`_ dataset if they are not found in the directory.
         scenario : str, optional
             Scenario of the dataset. Possible values are "A1", "D1", "A2", "R2".
@@ -218,15 +224,10 @@ class DatasetMIRACLE(DatasetBase):
         config : DatasetMIRACLEConfig, optional
             DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
         """
-        if srir_dir is None:
-            srir_dir = Path(ac.config.cache_dir).absolute()
-        else:
-            srir_dir = Path(srir_dir).absolute()
         if config is None:
             config = DatasetMIRACLEConfig(
                 mode=mode, signal_length=signal_length,min_nsources=min_nsources, max_nsources=max_nsources,
                 srir_dir=srir_dir, scenario=scenario, ref_mic_index=ref_mic_index, mic_sig_noise=mic_sig_noise)
-        self.config = config
         super().__init__(tasks=tasks, config=config)
 
     def get_feature_collection(self, features, f, num):
@@ -334,8 +335,8 @@ class MIRACLEFeatureCollectionBuilder(Dataset1FeatureCollectionBuilder):
 
 class DatasetMIRACLEConfig(Dataset1Config):
 
-    srir_dir = Either(Instance(Path), Str)
-    scenario = Either("A1","D1","A2","R2", default="A1", desc="experimental configuration")
+    srir_dir = Either(Instance(Path), Str, None)
+    scenario = Either("A1","D1","A2","R2", desc="experimental configuration")
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc="reference microphone index (default: index of the centermost mic)")
@@ -352,47 +353,46 @@ class DatasetMIRACLEConfig(Dataset1Config):
     def _get_filename(self):
         return self._filename
 
-    @on_trait_change("srir_dir, scenario")
-    def set_filename(self):
-        if self.srir_dir is not None:
-            file = Path(self.srir_dir / f"{self.scenario}").with_suffix(".h5")
-            if not file.exists():
-                if not self.srir_dir.exists():
-                    self.srir_dir.mkdir(parents=True)
-                print(f"Downloading SRIR file {self.scenario+'.h5'} to {self.srir_dir}...")
-                with tqdm(unit = "B", unit_scale = True, unit_divisor = 1024, miniters = 1) as t:
-                    file, headers = urlretrieve(
-                        link_address[self.scenario], file, reporthook = tqdm_hook(t), data = None)
-                for name, value in headers.items():
-                    print(f"{name}: {value}")
-            self._filename = str(file)
+    @observe("srir_dir,scenario")
+    def set_filename(self, event):
+        """Set the filename of the SRIR file according to the scenario and srir_dir."""
+        if link_address.get(self.scenario) is not None:
+            self._filename = pooch.retrieve(
+                url=link_address[self.scenario],
+                fname=self.scenario+".h5",
+                path=self.srir_dir,
+                known_hash=file_hash[self.scenario],
+                progressbar=True,
+            )
 
-    @on_trait_change("mode, signal_length, max_nsources, mic_sig_noise, fft_params, scenario, ref_mic_index, filename")
+    @observe("mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, ref_mic_index, filename", post_init=True)
+    def recreate_acoular_pipeline(self, event):
+        self.create_acoular_pipeline()
+
     def create_acoular_pipeline(self):
-        if Path(self.filename).is_file():
-            self.env = self._create_env()
-            self.mics = self._create_mics()
-            self.noisy_mics = self.mics
-            self.grid = self._create_grid()
-            self.source_grid = self._create_source_grid()
-            self.steer = self._create_steer()
-            self.obs = self._create_obs()
-            self.signals = self._create_signals()
-            self.sources = self._create_sources()
-            self.source_steer = self._create_source_steer()
-            self.mic_noise_signal = self._create_mic_noise_signal()
-            self.mic_noise_source = self._create_mic_noise_source()
-            self.freq_data = self._create_freq_data()
-            self.fft_spectra = self._create_fft_spectra()
-            self.fft_obs_spectra = self._create_fft_obs_spectra()
-            self.beamformer = self._create_beamformer()
+        self.env = self.create_env()
+        self.mics = self.create_mics()
+        self.noisy_mics = self.mics
+        self.grid = self.create_grid()
+        self.source_grid = self.create_source_grid()
+        self.steer = self.create_steer()
+        self.obs = self.create_obs()
+        self.signals = self.create_signals()
+        self.sources = self.create_sources()
+        self.source_steer = self.create_source_steer()
+        self.mic_noise_signal = self.create_mic_noise_signal()
+        self.mic_noise_source = self.create_mic_noise_source()
+        self.freq_data = self.create_freq_data()
+        self.fft_spectra = self.create_fft_spectra()
+        self.fft_obs_spectra = self.create_fft_obs_spectra()
+        self.beamformer = self.create_beamformer()
 
     def create_sampler(self):
-        self.location_sampler = self._create_location_sampler()
-        self.signal_seed_sampler = self._create_signal_seed_sampler()
-        self.rms_sampler = self._create_rms_sampler()
-        self.nsources_sampler = self._create_nsources_sampler()
-        self.mic_noise_sampler = self._create_mic_noise_sampler()
+        self.location_sampler = self.create_location_sampler()
+        self.signal_seed_sampler = self.create_signal_seed_sampler()
+        self.rms_sampler = self.create_rms_sampler()
+        self.nsources_sampler = self.create_nsources_sampler()
+        self.mic_noise_sampler = self.create_mic_noise_sampler()
 
     def get_sampler(self):
         self.create_sampler()
@@ -408,17 +408,17 @@ class DatasetMIRACLEConfig(Dataset1Config):
             sampler[5] = self.mic_noise_sampler
         return sampler
 
-    def _create_mics(self):
+    def create_mics(self):
         with h5.File(self.filename, "r") as file:
             mpos_tot = file["data/location/receiver"][()].T
         return ac.MicGeom(mpos_tot = mpos_tot)
 
-    def _create_env(self):
+    def create_env(self):
         with h5.File(self.filename, "r") as file:
             c = np.mean(file["metadata/c0"][()])
         return ac.Environment(c=c)
 
-    def _create_sources(self):
+    def create_sources(self):
         sources = []
         for signal in self.signals:
             sources.append(
@@ -430,7 +430,7 @@ class DatasetMIRACLEConfig(Dataset1Config):
             )
         return sources
 
-    def _create_steer(self):
+    def create_steer(self):
         with h5.File(self.filename, "r") as file:
             return ac.SteeringVector(
                 steer_type="true level",
@@ -440,14 +440,14 @@ class DatasetMIRACLEConfig(Dataset1Config):
                 ref=file["data/location/receiver"][self.ref_mic_index],
                     )
 
-    def _create_grid(self):
+    def create_grid(self):
         ap = self.mics.aperture
         with h5.File(self.filename, "r") as file:
             z = file["data/location/source"][0,-1]
         return ac.RectGrid(y_min=-0.5*ap, y_max=0.5*ap, x_min=-0.5*ap, x_max=0.5*ap,
                                     z=z, increment=1/63*ap)
 
-    def _create_source_grid(self):
+    def create_source_grid(self):
         with h5.File(self.filename, "r") as file:
             gpos_file = file["data/location/source"][()].T
         return ac.ImportGrid(gpos_file=gpos_file)

@@ -72,7 +72,7 @@ from traits.api import (
     Trait,
     Tuple,
     cached_property,
-    on_trait_change,
+    observe,
 )
 
 
@@ -474,8 +474,8 @@ class PointSourceSampler(LocationSampler):
     ldir = CArray( dtype=float, shape=(3, (1, 3)),
         desc="(x,y,z)-directions of location sampling")
 
-    @on_trait_change("target")
-    def validate_target(self):
+    @observe("target")
+    def validate_target(self, event):
         for t in self.target:
             if not isinstance(t,ac.PointSource):
                 raise AttributeError("Elements in target must be instances of class acoular.PointSource")
@@ -683,8 +683,8 @@ class MicGeomSampler(BaseSampler):
 
 #     _random_state = Either(RandomState, Generator)
 
-#     @on_trait_change("random_state")
-#     def copy_random_state(self):
+#     @observe("random_state")
+#     def copy_random_state(self, event):
 #         state = get_state(self.random_state)
 #         if isinstance(self.random_state, RandomState):
 #             self._random_state = RandomState()

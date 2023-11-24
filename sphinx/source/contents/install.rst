@@ -10,6 +10,7 @@ The AcouPipe package depends on the following packages:
 * Ray_
 * h5py_
 * tqdm_
+* pooch_
 * Tensorflow_ (optional)
 * Pandas_ (optional)
 

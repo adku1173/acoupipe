@@ -1,5 +1,6 @@
 import unittest
 
+import numpy as np
 from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
 from numpy import array
 from numpy.random import RandomState, default_rng
@@ -249,7 +250,7 @@ class TestSampler(unittest.TestCase):
 class TestBasePipeline(unittest.TestCase):
 
     def setUp(self):
-        """Will be called for every single test."""
+        self.pipeline_cls = BasePipeline
         self.size = 1
         self.pipeline = get_pipeline(self.size)
         self.test_seeds = {
@@ -273,11 +274,60 @@ class TestBasePipeline(unittest.TestCase):
         self.pipeline.random_seeds = self.test_seeds
         self.assertRaises(ValueError,lambda: next(self.pipeline.get_data(progress_bar=False)))
 
+    def test_valid_pipeline_funcs(self):
+        """Test if BasePipeline can handle empty pipeline."""
+        # test valid inputs
+        for finput in [
+            lambda sampler: {"res":True},
+            (lambda sampler, x: {"res":x}, True)
+        ]:
+            with self.subTest(finput=finput):
+                pipeline = self.pipeline_cls(
+                    numsamples=2,
+                    features= finput)
+                data = next(pipeline.get_data(progress_bar=False))
+                self.assertTrue(data["res"])
+
+    def test_invalid_pipeline_funcs(self):
+        for finput in [
+            None,
+            lambda: {"res":True},
+            (lambda sampler, x: {"res":x}, True, True)
+        ]:
+            with self.subTest(finput=finput):
+                pipeline = self.pipeline_cls(
+                    numsamples=2,
+                    features= finput)
+                self.assertRaises(
+                    ValueError,lambda: next(pipeline.get_data(progress_bar=False)))
+
+    def test_sampler(self):
+        sampler1 = np.random.default_rng(1)
+        sampler2 = ContainerSampler(
+            random_func=lambda rng: rng.normal(),
+            )
+        sampler3 = np.random.RandomState(1)
+        def func(sampler):
+            print(sampler)
+            return {
+                "res0":sampler[0].normal(),
+                "res1":sampler[1].target,
+                "res2":sampler[2].random()}
+        pipeline = self.pipeline_cls(
+            sampler = [sampler1,sampler2,sampler3],
+            numsamples=2,
+            features= func,
+            random_seeds=[range(2),range(2),range(2)])
+        data = next(pipeline.get_data(progress_bar=False,start_idx=10))
+        self.assertEqual(data["res0"],data["res1"])
+        self.assertIsNotNone(data["res2"])
+
 
 class TestDistributedPipeline(TestBasePipeline):
 
     def setUp(self):
         """Will be called for every single test."""
+        self.pipeline_cls = DistributedPipeline
         #ray.shutdown()
         #ray.init(log_to_driver=False)
         self.size = 3

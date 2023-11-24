@@ -32,6 +32,7 @@ dependencies = [
 	'h5py',
 	'tqdm',
 	'parameterized',
+    'pooch',
 ]
 maintainers = [
     {name = "Adam Kujawski", email = "adam.kujawski@tu-berlin.de"},

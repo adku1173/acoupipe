@@ -19,3 +19,4 @@
 .. _SciPy: https://www.scipy.org/
 .. _matplotlib: https://matplotlib.org/
 .. _MIRACLE: https://depositonce.tu-berlin.de/items/b079fd1c-999f-42cb-afd2-bcd34de6180b
+.. _pooch: https://www.fatiando.org/pooch/latest/

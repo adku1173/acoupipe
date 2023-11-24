@@ -57,12 +57,14 @@ The example returns the following output:
     {'idx': 4, 'seeds': array([[0, 4]]), 'rms_sq': 0.454416774044029}
 """
 
+import inspect
 import logging
 import os
 from functools import wraps
 from time import time
 
 import ray
+import numpy as np
 from numpy import array
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
@@ -127,7 +129,7 @@ class BasePipeline(DataGenerator):
     sampler = Property(desc="Dictionary with instances of BaseSampler derived classes as values and their sample order indices as keys")
 
     #: feature method for the extraction/generation of features and labels.
-    #: one can either pass a callable (e.g. `features = `lambda sampler: {"feature_name" : sampeler.target}`).
+    #: one can either pass a callable (e.g. `features = `lambda sampler: {"feature_name" : sampler.target}`).
     #: Note that the callable must accept a list of :class:`acoupipe.sampler.BaseSampler` objects as first argument.
     #: Alternatively, if further arguments are necessary, one can pass a tuple containing the
     #: callable and their arguments (e.g.: `features = (some_func, arg1, arg2, ...)}`).
@@ -197,24 +199,31 @@ class BasePipeline(DataGenerator):
         """Calculate features."""
         if callable(self.features):
             return self.features(self.sampler)
-        else:
+        elif isinstance(self.features, tuple):
             return self.features[0](self.sampler, *list(self.features[1:]))
+        elif self.features is None:
+            return {}
+        else:
+            raise ValueError(
+                "features attribute must be a callable or a tuple containing a callable and its arguments!")
 
     def _update_sample_index_and_seeds(self, seed_iter=None):
         """Update seeds and running index of associated with the current data sample of the dataset."""
         self._idx += 1
-        if self.random_seeds:
+        if not self.random_seeds:
+            return
+        else :
             self._seeds = {k : next(seed_iter[k]) for k in seed_iter.keys()}
-        else:
-            self._seeds = {k : k+self._idx for k in self.sampler.keys()}
-        for k in self.sampler.keys():
-            if isinstance(self.sampler[k],BaseSampler):
-                self.sampler[k].random_state = default_rng(self._seeds[k])
-                #self.logger.error(f"update {self.sampler[k].__class__.__name__}, state: {self.sampler[k].random_state.__getstate__()}")
-            elif isinstance(self.sampler[k], RandomState):
-                self.sampler[k].seed(self._seeds[k])
-            else:
-                self.sampler[k].seed = self._seeds[k]
+            for k in self.sampler.keys():
+                if isinstance(self.sampler[k],BaseSampler):
+                    self.sampler[k].random_state = default_rng(self._seeds[k])
+                    #self.logger.error(f"update {self.sampler[k].__class__.__name__}, state: {self.sampler[k].random_state.__getstate__()}")
+                elif isinstance(self.sampler[k], RandomState):
+                    self.sampler[k].seed(self._seeds[k])
+                elif isinstance(self.sampler[k], np.random.Generator):
+                    self.sampler[k] = np.random.Generator(self.sampler[k].bit_generator.__class__(seed=self._seeds[k]))
+                else:
+                    self.sampler[k].seed = self._seeds[k]
 
     def _get_sampler(self):
         return self._sampler
@@ -234,6 +243,31 @@ class BasePipeline(DataGenerator):
         else:
             self._random_seeds = random_seeds
 
+    def _validate_feature_func(self):
+        if not callable(self.features):
+            if not isinstance(self.features, tuple):
+                raise ValueError(
+                    "features attribute must be a callable or a tuple containing a callable and its arguments!")
+            else:
+                nargs = len(inspect.signature(self.features[0]).parameters)
+                if nargs == 0:
+                    raise ValueError(
+                        "feature functions at must accept at least one argument in order to pass a list of sampler objects!" 
+                        " E.g. lambda sampler: {...}")
+                elif nargs > 1 and len(self.features[1:]) == nargs:
+                    raise ValueError(
+                        "Number of arguments of feature function matches the number of arguments in the tuple!"
+                        " An additional argument is missing to pass the sampler objects!"
+                        " E.g. lambda sampler, arg1, arg2: {...}"
+                        )
+        else:
+            nargs = len(inspect.signature(self.features).parameters)
+            if nargs == 0:
+                raise ValueError(
+                    "feature functions at must accept at least one argument in order to pass a list of sampler objects!" 
+                    " E.g. lambda sampler: {...}")
+
+
     def get_data(self, progress_bar=True, start_idx=1):
         """Provide the extracted features, sampler seeds and indices.
 
@@ -249,6 +283,7 @@ class BasePipeline(DataGenerator):
         dict
             a sample of the dataset containing the extracted feature data, seeds, and index
         """
+        self._validate_feature_func()
         self._idx = (start_idx-1)
         if self.random_seeds:
             self.validate_random_seeds()
@@ -265,7 +300,7 @@ class BasePipeline(DataGenerator):
             for i in sampler_order:
                 if isinstance(self.sampler[i], BaseSampler):
                     self.sampler[i].sample()
-            data = {"idx" : self._idx, "seeds": array(list(self._seeds.items()))}
+            data = {"idx" : self._idx, "seeds": np.array(list(self._seeds.items()))}
             data.update(self._extract_features())
             yield data
             pbar.update(1)
@@ -305,6 +340,9 @@ class SamplerActor(object):
                     self.sampler[k].random_state = default_rng(seeds[k])
                 elif isinstance(self.sampler[k], RandomState):
                     self.sampler[k].seed(seeds[k])
+                elif isinstance(self.sampler[k], np.random.Generator):
+                    self.sampler[k] = np.random.Generator(
+                        self.sampler[k].bit_generator.__class__(seed=seeds[k]))
                 else:
                     self.sampler[k].seed = seeds[k]
 
@@ -357,17 +395,20 @@ class DistributedPipeline(BasePipeline):
         times = [time(), None, None, None] # (schedule timestamp, execution timestamp, stop timestamp, get timestamp)
         if callable(self.features):
             result_id = actor.extract_features.remote(self._seeds, times) # calculation is started in new remote task
-        else:
+        elif isinstance(self.features, tuple):
             result_id = actor.extract_features.remote(self._seeds, times, *list(self.features[1:]))
-        task_dict[result_id] = (actor, {"idx" : self._idx, "seeds": array(list(self._seeds.items()))})  # add index, and seeds
+        else:
+            raise ValueError(
+                "features attribute must be a callable or a tuple containing a callable and its arguments!")
+        task_dict[result_id] = (actor, {"idx" : self._idx, "seeds": np.array(list(self._seeds.items()))})  # add index, and seeds
 
     def _update_sample_index_and_seeds(self, seed_iter=None):
         """Update seeds and running index of associated with the current data sample of the dataset."""
         self._idx += 1
-        if self.random_seeds:
-            self._seeds = {k : next(seed_iter[k]) for k in seed_iter.keys()}
+        if not self.random_seeds:
+            return
         else:
-            self._seeds = {k : k+self._idx for k in self.sampler.keys()}
+            self._seeds = {k : next(seed_iter[k]) for k in seed_iter.keys()}
 
     def get_data(self, progress_bar=True, start_idx=1):
         """Provide the extracted features, sampler seeds and indices.
@@ -390,6 +431,7 @@ class DistributedPipeline(BasePipeline):
         dict
             A sample of the dataset containing the extracted feature data, seeds, and index
         """
+        self._validate_feature_func()
         self._idx = (start_idx-1)
         if self.random_seeds:
             self.validate_random_seeds()

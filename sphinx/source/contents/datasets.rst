@@ -11,5 +11,6 @@ Datasets
     Synthetic Datasets <../autoapi/acoupipe/datasets/synthetic/index>
     Experimental Datasets <../autoapi/acoupipe/datasets/experimental/index>
     datasets/features
+    jupyter/modify
 
 

@@ -20,7 +20,7 @@ from functools import partial
 import acoular as ac
 import numpy as np
 from scipy.stats import norm, poisson
-from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, on_trait_change
+from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, observe
 
 import acoupipe.sampler as sp
 from acoupipe.config import TF_FLAG
@@ -165,7 +165,6 @@ class DatasetSynthetic1(DatasetBase):
                 min_nsources=min_nsources, max_nsources=max_nsources,
                 mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
                 snap_to_grid=snap_to_grid)
-        self.config = config
         super().__init__(config=config, tasks=tasks, logger=logger)
 
     def get_feature_collection(self, features, f, num):
@@ -374,32 +373,35 @@ class Dataset1Config(ConfigBase):
         super().__init__(**kwargs)
         self.create_acoular_pipeline()
 
-    @on_trait_change("mode, signal_length, fs, max_nsources, fft_params, mic_sig_noise")
+    @observe("mode, signal_length, fs, max_nsources, fft_params.items, mic_sig_noise")
+    def recreate_acoular_pipeline(self, event):
+        self.create_acoular_pipeline()
+
     def create_acoular_pipeline(self):
-        self.env = self._create_env()
-        self.mics = self._create_mics()
-        self.noisy_mics = self._create_mics()
-        self.grid = self._create_grid()
-        self.source_grid = self._create_source_grid()
-        self.steer = self._create_steer()
-        self.obs = self._create_obs()
-        self.signals = self._create_signals()
-        self.sources = self._create_sources()
-        self.source_steer = self._create_source_steer()
-        self.mic_noise_signal = self._create_mic_noise_signal()
-        self.mic_noise_source = self._create_mic_noise_source()
-        self.freq_data = self._create_freq_data()
-        self.fft_spectra = self._create_fft_spectra()
-        self.fft_obs_spectra = self._create_fft_obs_spectra()
-        self.beamformer = self._create_beamformer()
+        self.env = self.create_env()
+        self.mics = self.create_mics()
+        self.noisy_mics = self.create_mics()
+        self.grid = self.create_grid()
+        self.source_grid = self.create_source_grid()
+        self.steer = self.create_steer()
+        self.obs = self.create_obs()
+        self.signals = self.create_signals()
+        self.sources = self.create_sources()
+        self.source_steer = self.create_source_steer()
+        self.mic_noise_signal = self.create_mic_noise_signal()
+        self.mic_noise_source = self.create_mic_noise_source()
+        self.freq_data = self.create_freq_data()
+        self.fft_spectra = self.create_fft_spectra()
+        self.fft_obs_spectra = self.create_fft_obs_spectra()
+        self.beamformer = self.create_beamformer()
 
     def create_sampler(self):
-        self.micgeom_sampler = self._create_micgeom_sampler()
-        self.location_sampler = self._create_location_sampler()
-        self.signal_seed_sampler = self._create_signal_seed_sampler()
-        self.rms_sampler = self._create_rms_sampler()
-        self.nsources_sampler = self._create_nsources_sampler()
-        self.mic_noise_sampler = self._create_mic_noise_sampler()
+        self.micgeom_sampler = self.create_micgeom_sampler()
+        self.location_sampler = self.create_location_sampler()
+        self.signal_seed_sampler = self.create_signal_seed_sampler()
+        self.rms_sampler = self.create_rms_sampler()
+        self.nsources_sampler = self.create_nsources_sampler()
+        self.mic_noise_sampler = self.create_mic_noise_sampler()
 
     def get_sampler(self):
         self.create_sampler()
@@ -417,21 +419,21 @@ class Dataset1Config(ConfigBase):
             sampler[5] = self.mic_noise_sampler
         return sampler
 
-    def _create_env(self):
+    def create_env(self):
         return ac.Environment(c=343.0)
 
-    def _create_mics(self):
+    def create_mics(self):
         return ac.MicGeom(mpos_tot = tub_vogel64_ap1)
 
-    def _create_grid(self):
+    def create_grid(self):
         ap = self.mics.aperture
         return ac.RectGrid(y_min=-0.5*ap, y_max=0.5*ap, x_min=-0.5*ap, x_max=0.5*ap,
                                     z=0.5*ap, increment=1/63*ap)
 
-    def _create_source_grid(self):
-        return self._create_grid()
+    def create_source_grid(self):
+        return self.create_grid()
 
-    def _create_steer(self):
+    def create_steer(self):
         return ac.SteeringVector(
             steer_type="true level",
             ref=tub_vogel64_ap1[:,63], # centermost mic,
@@ -439,11 +441,11 @@ class Dataset1Config(ConfigBase):
             grid=self.grid,
             env=self.env)
 
-    def _create_obs(self):
+    def create_obs(self):
         return ac.MicGeom(
             mpos_tot=self.steer.ref[:,np.newaxis])
 
-    def _create_beamformer(self):
+    def create_beamformer(self):
         return ac.BeamformerBase(
             r_diag=False,
             precision="float32",
@@ -452,7 +454,7 @@ class Dataset1Config(ConfigBase):
             steer = self.steer,
             )
 
-    def _create_signals(self):
+    def create_signals(self):
         signals = []
         for i in range(self.max_nsources):
             signals.append(ac.WNoiseGenerator(
@@ -463,7 +465,7 @@ class Dataset1Config(ConfigBase):
             )
         return signals
 
-    def _create_sources(self):
+    def create_sources(self):
         sources = []
         for signal in self.signals:
             sources.append(
@@ -475,7 +477,7 @@ class Dataset1Config(ConfigBase):
             )
         return sources
 
-    def _create_fft_spectra(self):
+    def create_fft_spectra(self):
         if self.mic_sig_noise:
             source = ac.Mixer(source=self.mic_noise_source,
                             sources=self.sources,)
@@ -486,14 +488,14 @@ class Dataset1Config(ConfigBase):
             **self.fft_params,
             )
 
-    def _create_fft_obs_spectra(self):
+    def create_fft_obs_spectra(self):
         return ac.PowerSpectra(
             source = ac.SourceMixer(sources=self.sources),
             cached = False,
             **self.fft_params,
             )
 
-    def _create_freq_data(self):
+    def create_freq_data(self):
         if self.mode == "welch":
             if self.mic_sig_noise:
                 source = ac.Mixer(source=self.mic_noise_source,
@@ -517,20 +519,20 @@ class Dataset1Config(ConfigBase):
                 **fft_params
                 )
 
-    def _create_mic_noise_signal(self):
+    def create_mic_noise_signal(self):
         return ac.WNoiseGenerator(
                 seed = 1000,
                 sample_freq=self.fs,
                 numsamples=self.signal_length*self.fs,
                 )
 
-    def _create_mic_noise_source(self):
+    def create_mic_noise_source(self):
         return ac.UncorrelatedNoiseSource(
                 signal=self.mic_noise_signal,
                 mics=self.noisy_mics,
                 )
 
-    def _create_source_steer(self):
+    def create_source_steer(self):
         return ac.SteeringVector(
             steer_type="true level",
             ref=self.obs.mpos.squeeze(),
@@ -539,14 +541,14 @@ class Dataset1Config(ConfigBase):
             env=self.env
             )
 
-    def _create_micgeom_sampler(self):
+    def create_micgeom_sampler(self):
         return sp.MicGeomSampler(
             random_var = norm(loc=0, scale=0.001),
             ddir = np.array([[1.0], [1.0], [0]]),
             target = self.noisy_mics,
             mpos_init = self.mics.mpos_tot,)
 
-    def _create_location_sampler(self):
+    def create_location_sampler(self):
         ap = self.mics.aperture
         z = self.grid.z
         location_sampler = sp.LocationSampler(
@@ -559,16 +561,16 @@ class Dataset1Config(ConfigBase):
             location_sampler.grid = self.source_grid
         return location_sampler
 
-    def _create_rms_sampler(self):
+    def create_rms_sampler(self):
         random_func = partial(sample_rms, self.max_nsources)
         return sp.ContainerSampler(
             random_func = random_func)
 
-    def _create_signal_seed_sampler(self):
+    def create_signal_seed_sampler(self):
         return sp.ContainerSampler(
             random_func = signal_seed)
 
-    def _create_nsources_sampler(self):
+    def create_nsources_sampler(self):
         return sp.NumericAttributeSampler(
             random_var = poisson(mu=3, loc=1),
             attribute = "nsources",
@@ -577,7 +579,7 @@ class Dataset1Config(ConfigBase):
             filter=lambda x: (x <= self.max_nsources) and (
                 x >= self.min_nsources))
 
-    def _create_mic_noise_sampler(self):
+    def create_mic_noise_sampler(self):
         return sp.ContainerSampler(
             random_func = sample_mic_noise_variance)
 
@@ -888,12 +890,12 @@ class Dataset1FeatureCollectionBuilder(BaseFeatureCollectionBuilder):
 
 class Dataset1TestConfig(Dataset1Config):
 
-    def _create_mics(self):
+    def create_mics(self):
         return ac.MicGeom(mpos_tot=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
         [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
         [ 0.32909911,  0.56201909, -0.24697204, -0.68677001]]))
 
-    def _create_grid(self):
+    def create_grid(self):
         ap = self.mics.aperture
         return ac.RectGrid(y_min=-0.5*ap, y_max=0.5*ap, x_min=-0.5*ap, x_max=0.5*ap,
                                     z=0.5*ap, increment=1/5*ap)
