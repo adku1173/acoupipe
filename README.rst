@@ -17,13 +17,13 @@ Currently, AcouPipe provides two default classes to generate microphone array da
 
 * **DatasetSynthetic** is a simple and fast method that relies on synthetic white noise signals and spatially stationary sources in anechoic conditions. 
 
-.. figure:: sphinx/source/_static/msm_layout.png
+.. figure:: docs/source/_static/msm_layout.png
    :width: 600
    :align: center
 
 * **DatasetMIRACLE** relies on a large-scale set of measured spatial room impulse responses from the `MIRACLE dataset <https://depositonce.tu-berlin.de/items/b079fd1c-999f-42cb-afd2-bcd34de6180b>`_, acquired at the TU Berlin anechoic chamber, and synthetic source signals resulting in a realistic and quasi-infinite dataset.
 
-.. figure:: sphinx/source/_static/msm_miracle.png
+.. figure:: docs/source/_static/msm_miracle.png
    :width: 600
    :align: center
 
@@ -37,11 +37,11 @@ This allows the user to create data sets of manageable size that are portable, o
 
 See the latest performance benchmarks on `DatasetSynthetic` for the most computational demanding features:
 
-.. image:: sphinx/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_f4000.png
+.. image:: docs/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_f4000.png
    :width: 100%
    :align: center
 
-.. image:: sphinx/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_fNone.png
+.. image:: docs/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_fNone.png
    :width: 100%
    :align: center
 
