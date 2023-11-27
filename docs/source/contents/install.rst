@@ -53,15 +53,15 @@ If you are familiar with Docker_, the easiest way to use AcouPipe is by using an
 
 The following images are available:
 
-* ``adku1173/acoupipe:latest`` 
+* ``adku1173/acoupipe:latest-base`` 
 * ``adku1173/acoupipe:latest-full`` 
 * ``adku1173/acoupipe:latest-dev`` 
-* ``adku1173/acoupipe:latest-jupyter`` 
+* ``adku1173/acoupipe:latest-jupyter-gpu`` 
 
 If  Docker_ is allready installed, simply pull the latest image with the command
 
 .. code-block:: bash
 
-    docker pull adku1173/acoupipe:latest
+    docker pull adku1173/acoupipe:latest-full
 
 

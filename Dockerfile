@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:2.13.0-gpu-jupyter AS jupyter
+FROM tensorflow/tensorflow:latest-gpu-jupyter AS jupyter-gpu
 
 #https://github.com/numba/numba/issues/4032 -> the numba cache directory
 # should be at a writable location when using no 
@@ -18,7 +18,7 @@ RUN pip install /tmp/acoupipe
 
 ############################################ base builds ###########################################################
 
-FROM python:3.10 AS base
+FROM python:3.11 AS base
 
 #https://github.com/numba/numba/issues/4032 -> the numba cache directory
 # should be at a writable location when using no 
