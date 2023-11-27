@@ -3,6 +3,7 @@
 Dockerfile
 ./examples
 ./sphinx
+./docs
 build_docker.sh
 
 #------- same as git ignore ----------------
