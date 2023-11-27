@@ -1,24 +1,73 @@
-|python-version| |DOI|
-
 ================================================================================
 AcouPipe
 ================================================================================
 
-**AcouPipe** is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with Acoular_ that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:
 
-* Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix (e.g. in [Cas21]_)
-* Conventional Beamforming Map (e.g. in [Kuj19]_)
+**AcouPipe** is a Python toolbox for generating unique acoustical source localization and characterization datasets with Acoular_ that can be used for training of deep neural networks and machine learning. 
 
-This allows the user to create data sets of manageable size that are portable and facilitate reproducible research.
+AcouPipe supports distributed computation with Ray_ and comes with two default datasets, which enables to create data for machine learning on the fly! A pre-built Docker container can be downloaded from DockerHub_.
 
-AcouPipe supports distributed computation with Ray_ and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from DockerHub_.
+The toolbox **documentation** can be found `here <https://adku1173.github.io/acoupipe/>`_.
 
-Documentation can be found `here <https://adku1173.github.io/acoupipe/>`_.
 
-.. figure:: _static/msm_layout.png
-    :width: 780
+Datasets 
+===============
 
-    Virtual Measurement Setup of Example Dataset
+Currently, AcouPipe provides two default classes to generate microphone array datasets:
+
+* **DatasetSynthetic** is a simple and fast method that relies on synthetic white noise signals and spatially stationary sources in anechoic conditions. 
+
+.. figure:: docs/source/_static/msm_layout.png
+   :width: 600
+   :align: center
+
+* **DatasetMIRACLE** relies on a large-scale set of measured spatial room impulse responses from the `MIRACLE dataset <https://depositonce.tu-berlin.de/items/b079fd1c-999f-42cb-afd2-bcd34de6180b>`_, acquired at the TU Berlin anechoic chamber, and synthetic source signals resulting in a realistic and quasi-infinite dataset.
+
+.. figure:: docs/source/_static/msm_miracle.png
+   :width: 600
+   :align: center
+
+
+Data Generation 
+===============
+
+Instead of raw time-data, only the necessary input features for machine learning are stored.
+
+This allows the user to create data sets of manageable size that are portable, or even to create data on the fly, and facilitate reproducible research.
+
+See the latest performance benchmarks on `DatasetSynthetic` for the most computational demanding features:
+
+.. image:: docs/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_f4000.png
+   :width: 100%
+   :align: center
+
+.. image:: docs/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_fNone.png
+   :width: 100%
+   :align: center
+
+
+
+
+Citation 
+========
+
+Users can cite the package in their contributions by referring to `Kujawski and Sarradj, (2023) <https://doi.org/10.1007/s11042-023-16947-w>`_:
+
+.. code-block:: 
+
+   @article{Kujawski2023,
+   author = {Kujawski,Adam and Pelling, Art J. R. and Jekosch, Simon and Sarradj,Ennes},
+   title = {A framework for generating large-scale microphone array data for machine learning},
+   journal = {Multimedia Tools and Applications},
+   year = {2023},
+   doi = {10.1007/s11042-023-16947-w}
+   }
+
+License
+=======
+
+AcouPipe is licensed under the terms of the BSD license. See the file "LICENSE" for more information.
+
 
 
 .. Links:
@@ -36,15 +85,4 @@ Documentation can be found `here <https://adku1173.github.io/acoupipe/>`_.
 .. _h5py: https://docs.h5py.org/en/stable/
 .. _tqdm: https://github.com/tqdm/tqdm
 
-.. Badges:
-.. |python-version| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8-blue
-   :target: https://www.python.org/
-.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.5176234.svg
-   :target: https://doi.org/10.5281/zenodo.5176234
-    
-Literature
-==========================
 
-.. [Sar12] Sarradj, Ennes: Three-dimensional acoustic source mapping with different beamforming steering vector formulations. Advances in Acoustics and Vibration, pages 1–12, 2012.
-.. [Cas21] Paolo Castellini, Nicola Giulietti, Nicola Falcionelli, Aldo Franco Dragoni, Paolo Chiariotti, A neural network based microphone array approach to grid-less noise source localization, Applied Acoustics, Volume 177, 2021, 107947, ISSN 0003-682X, https://doi.org/10.1016/j.apacoust.2021.107947.
-.. [Kuj19] Adam Kujawski, Gert Herold, and Ennes Sarradj , "A deep learning method for grid-free localization and quantification of sound sources", The Journal of the Acoustical Society of America 146, EL225-EL231 (2019) https://doi.org/10.1121/1.5126020

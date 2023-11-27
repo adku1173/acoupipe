@@ -1,4 +1,0 @@
-﻿writer
-===============
-
-.. automodule:: acoupipe.writer

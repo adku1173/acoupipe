@@ -1,8 +1,11 @@
-name: DockerHub Continous Integration
+name: DockerHub CD
 
 on:
   push:
-    branches: [ master] 
+    branches: [master, dev]
+
+env:
+  TAG: ${{ github.ref == 'refs/heads/master' && 'latest' || 'dev' }}
 
 jobs:
 
@@ -11,14 +14,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Login to docker 
       env:
         DOCKER_PWD: ${{secrets.DOCKER_PASSWORD}}
+        ACOULAR_TOKEN: ${{secrets.ACOULAR_READ_ACCESS_TOKEN}}
       run: 
         docker login -u adku1173 -p $DOCKER_PWD 
-    - name: Build image
-      run: docker build . --file Dockerfile --tag adku1173/acoupipe:latest
+    - name: Build images
+      run: |
+        DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target jupyter-gpu --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag "adku1173/acoupipe:${{env.TAG}}-jupyter-gpu"
+        DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target base --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag "adku1173/acoupipe:${{env.TAG}}-base"
+        DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target full --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag "adku1173/acoupipe:${{env.TAG}}-full"
+        DOCKER_BUILDKIT=1 docker build . --file Dockerfile --target dev --build-arg TOKEN=${{secrets.ACOULAR_READ_ACCESS_TOKEN}} --tag "adku1173/acoupipe:${{env.TAG}}-dev"
     
-    - name: Push to DockerHub
-      run: docker push adku1173/acoupipe:latest
+    - name: Push images to DockerHub
+      run: |
+        docker push "adku1173/acoupipe:${{env.TAG}}-jupyter-gpu"
+        docker push "adku1173/acoupipe:${{env.TAG}}-base"
+        docker push "adku1173/acoupipe:${{env.TAG}}-full"
+        docker push "adku1173/acoupipe:${{env.TAG}}-dev"
+     

@@ -1,0 +1,35 @@
+#
+.git
+Dockerfile
+./examples
+./sphinx
+./docs
+build_docker.sh
+
+#------- same as git ignore ----------------
+
+# files and file types to ignore
+*.pyc
+*.pyd
+*.so
+*~
+
+# ignore the build directories
+*.egg-info/
+.eggs/
+build/
+__pycache__/
+dist/
+cache/
+td/
+**/cache/
+**/td/
+__pycache__/
+*.nbc
+*.nbi
+*.pyd
+.vscode/
+*/__pycache__/*
+*.sif
+tests/throughput/results/*.png
+.venv/*

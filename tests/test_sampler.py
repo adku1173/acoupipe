@@ -1,15 +1,24 @@
 import unittest
-from parameterized import parameterized
-import pandas as pd
-from scipy.stats import norm
-import ray
+
+import numpy as np
+from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
 from numpy import array
-from numpy.random import RandomState, default_rng, seed
+from numpy.random import RandomState, default_rng
 from numpy.testing import assert_almost_equal
-from acoupipe import * 
-from pipeline_value_test import get_pipeline, get_distributed_pipeline
-from acoular import WNoiseGenerator, PointSource, SourceMixer, MicGeom
 from parameterized import parameterized
+from pipeline_value_test import get_distributed_pipeline, get_pipeline
+from scipy.stats import norm
+
+from acoupipe.pipeline import BasePipeline, DistributedPipeline
+from acoupipe.sampler import (
+    BaseSampler,
+    ContainerSampler,
+    MicGeomSampler,
+    NumericAttributeSampler,
+    PointSourceSampler,
+    SetSampler,
+    SourceSetSampler,
+)
 
 SAMPLER_CLASSES = [BaseSampler, NumericAttributeSampler,
            SetSampler, SourceSetSampler, PointSourceSampler,ContainerSampler, MicGeomSampler]
@@ -18,13 +27,15 @@ STATES = [1, RandomState(1), default_rng(1)]
 
 class LinkedTarget:
     """class that is used in Sampler tests."""
+
     linked_attribute = 0
 class Target:
     """class that is used in Sampler tests."""
+
     attribute = 0
 
 def create_test_method(target_instance):
-    """method used to test ContainerSampler class"""
+    """Method used to test ContainerSampler class."""
     def sample_method(random_state):
         target_instance.attribute = random_state.random()
     return sample_method
@@ -32,7 +43,7 @@ def create_test_method(target_instance):
 FLOAT_SET = [0.1,0.2,0.3,0.4] # a set with floats for testing
 
 
-class Test_SetSampler(unittest.TestCase):
+class TestSetSampler(unittest.TestCase):
 
     def setUp(self):
         self.sampler = SetSampler(random_state=RandomState(1),
@@ -42,21 +53,21 @@ class Test_SetSampler(unittest.TestCase):
         self.sampler.target = [Target() for i in range(3)]
 
     @parameterized.expand([
-        ["single_value_False",False],
-        ["single_value_True",True],
+        ["equal_value_False",False],
+        ["equal_value_True",True],
     ])
-    def test_single_value(self, name, single_value):
-        """test single_value capabilities"""
-        self.sampler.single_value = single_value
+    def test_equal_value(self, name, equal_value):
+        """Test equal_value capabilities."""
+        self.sampler.equal_value = equal_value
         self.sampler.sample()
         samples = [tr.attribute for tr in self.sampler.target]
-        if single_value:
+        if equal_value:
             self.assertEqual(len(set(samples)),1)
-        if not single_value:
+        if not equal_value:
             self.assertTrue(len(set(samples))>1)
 
     def test_sampling_linked_attributes(self):
-        """test assignment to linked attributes"""
+        """Test assignment to linked attributes."""
         linkedTarget = LinkedTarget()
         target = Target()
         target.attribute = linkedTarget
@@ -66,7 +77,7 @@ class Test_SetSampler(unittest.TestCase):
         self.assertNotEqual(linkedTarget.linked_attribute,0)
 
 
-class Test_SourceSetSampler(unittest.TestCase):
+class TestSourceSetSampler(unittest.TestCase):
 
     def setUp(self):
         ps_set = [PointSource(signal=WNoiseGenerator(sample_freq=10),mics=MicGeom()) for i in range(4)]
@@ -80,21 +91,21 @@ class Test_SourceSetSampler(unittest.TestCase):
         ["case3",False,2,2],
         ["case4",False,2,2],
     ])
-    def test_source_set_sampling(self,name,single_value,numsamples,expected_setsize):
+    def test_source_set_sampling(self,name,equal_value,nsources,expected_setsize):
         self.sampler.random_state = RandomState(1)
-        self.sampler.numsamples=numsamples
-        self.sampler.single_value=single_value
+        self.sampler.nsources=nsources
+        self.sampler.equal_value=equal_value
         self.sampler.sample()
         l1 = len(self.sampler.target[0].sources)
         l2 = len(self.sampler.target[1].sources)
         self.assertEqual((l1,l2),(expected_setsize,expected_setsize))
-        if single_value: # assert that same sources at every target
+        if equal_value: # assert that same sources at every target
             self.assertTrue(self.sampler.target[0].sources==self.sampler.target[1].sources)
         else:
             self.assertTrue(self.sampler.target[0].sources!=self.sampler.target[1].sources)
 
 
-class Test_NumericAttributeSampler(Test_SetSampler):
+class TestNumericAttributeSampler(TestSetSampler):
 
     def setUp(self):
         self.sampler = NumericAttributeSampler(random_var=norm(loc=0,scale=0.1688),random_state=5,
@@ -102,7 +113,7 @@ class Test_NumericAttributeSampler(Test_SetSampler):
         self.sampler.target = [Target() for i in range(10)]
 
     def test_order(self):
-        """ assert that ordering of numeric samples works """
+        """Assert that ordering of numeric samples works."""
         # proof random order is default
         self.sampler.sample()
         l = [t.attribute for t in self.sampler.target]
@@ -113,24 +124,24 @@ class Test_NumericAttributeSampler(Test_SetSampler):
         self.sampler.sample()
         l = [t.attribute for t in self.sampler.target]
         self.assertEqual(l[0],min(l))
-        self.assertEqual(l[-1],max(l))        
+        self.assertEqual(l[-1],max(l))
         # proof descending ordering
         self.sampler.order = "descending"
         self.sampler.sample()
         l = [t.attribute for t in self.sampler.target]
         self.assertEqual(l[0],max(l))
-        self.assertEqual(l[-1],min(l))   
+        self.assertEqual(l[-1],min(l))
 
     def test_normalization(self):
-        """ verifies that normalization works """
+        """Verifies that normalization works."""
         self.sampler.normalize = True
-        self.sampler.sample() 
+        self.sampler.sample()
         l = [t.attribute for t in self.sampler.target]
         self.assertEqual(max(l),1.0)
 
 
 
-class Test_ContainerSampler(unittest.TestCase):
+class TestContainerSampler(unittest.TestCase):
 
     def setUp(self):
         self.target = Target()
@@ -144,38 +155,38 @@ class Test_ContainerSampler(unittest.TestCase):
             self.containerSampler.random_state = rng1
             self.containerSampler.sample() # should change the target attribute
             self.assertEqual(self.target.attribute,rng2.random())
-    
+
     def test_pipelining_with_seeds(self):
-        """test if BasePipeline can handle ContainerSampler with given random_seeds"""
+        """Test if BasePipeline can handle ContainerSampler with given random_seeds."""
         pipeline = BasePipeline(
-            sampler = [self.containerSampler],
-            random_seeds=[range(1,10)],
-            features={"random_values": lambda: self.target.attribute})
-        data = list(pipeline.get_data())
+            sampler = {1:self.containerSampler},
+            random_seeds={1:range(1,10)},
+            features=lambda sm: {"random_values": self.target.attribute})
+        data = list(pipeline.get_data(progress_bar=False))
         for j,d in enumerate(data):
             self.assertEqual(d["random_values"],default_rng(j+1).random())
 
     def test_pipelining_without_seeds(self):
-        """test if BasePipeline can handle ContainerSampler without given random_seeds"""
+        """Test if BasePipeline can handle ContainerSampler without given random_seeds."""
         rng1 = RandomState(100)
         rng2 = RandomState(100)
         self.containerSampler.random_state = rng1
         pipeline = BasePipeline(
-            sampler = [self.containerSampler],
-            random_seeds=[],
-            features={"random_values": lambda: self.target.attribute})
-        data = list(pipeline.get_data())
-        for j,d in enumerate(data):
+            sampler = {1:self.containerSampler},
+            #random_seeds={},
+            features=lambda sm: {"random_values": self.target.attribute})
+        data = list(pipeline.get_data(progress_bar=False))
+        for _j,d in enumerate(data):
             self.assertEqual(d["random_values"],rng2.random())
 
     def test_error_handling(self):
-        """tests if ValueError is thrown for wrong random_func input"""
+        """Tests if ValueError is thrown for wrong random_func input."""
         def random_func(rng,x):
             pass
         self.containerSampler.random_func = random_func
         self.assertRaises(ValueError,self.containerSampler.sample)
 
-class Test_MicGeomSampler(unittest.TestCase):
+class TestMicGeomSampler(unittest.TestCase):
 
     def get_micgeom(self):
         rng = RandomState(1)
@@ -183,27 +194,30 @@ class Test_MicGeomSampler(unittest.TestCase):
         return mics
 
     def get_sampler(self,stype="deviate"):
-        rng = RandomState(2) 
-        normal_distribution = norm(loc=0, scale= 0.1) 
-        if stype == 'deviate':
+        rng = RandomState(2)
+        normal_distribution = norm(loc=0, scale= 0.1)
+        if stype == "deviate":
             sampler = MicGeomSampler(random_var=normal_distribution,
                                 random_state=rng,
                                 ddir = array([[1.],[1.],[1.]]))
-        elif stype == 'rotate':
+        elif stype == "rotate":
             sampler = MicGeomSampler(random_var=normal_distribution,
                                 random_state=rng,
-                                rvec = array([[1.],[1.],[1.]])) 
-        elif stype == 'translate':
+                                rvec = array([[1.],[1.],[1.]]))
+        elif stype == "translate":
             sampler = MicGeomSampler(random_var=normal_distribution,
                                 random_state=rng,
-                                tdir = array([[1.],[1.],[1.]])) 
+                                tdir = array([[1.],[1.],[1.]]))
         return sampler
 
     def test_mpos_init(self):
-        """1. test that mpos_init has not changed after sampling. 
-           2. test that mpos changed due to sampling.
-           3. test that digest of MicGeom object has changed after sampling. """
-        for mode in ['deviate','rotate','translate']:
+        """Mpos init should be the same as the target mpos_tot.
+
+        1. test that mpos_init has not changed after sampling.
+        2. test that mpos changed due to sampling.
+        3. test that digest of MicGeom object has changed after sampling.
+        """
+        for mode in ["deviate","rotate","translate"]:
             with self.subTest(mode):
                 micgeom = self.get_micgeom()
                 digest1 = micgeom.digest
@@ -217,81 +231,114 @@ class Test_MicGeomSampler(unittest.TestCase):
                 self.assertNotEqual(digest1,digest2)
 
 
-class Test_Sampler(unittest.TestCase):
+class TestSampler(unittest.TestCase):
 
     def test_instancing(self):
-        """create an instance of each class defined in module"""
+        """Create an instance of each class defined in module."""
         for c in SAMPLER_CLASSES:
             c()
 
     def test_seeding(self):
-        """tests if different random states can be assigned to sampler objects"""
+        """Tests if different random states can be assigned to sampler objects."""
         for c in SAMPLER_CLASSES:
             for state in STATES:
-                if not (c in [SetSampler,SourceSetSampler,ContainerSampler]):
+                if c not in [SetSampler, SourceSetSampler, ContainerSampler]:
                     c(random_state=state)
 
 
 
-class Test_BasePipeline(unittest.TestCase):
+class TestBasePipeline(unittest.TestCase):
 
     def setUp(self):
-        """will be called for every single test"""
-        self.pipeline = get_pipeline(100, mfile="array64_d0o686.xml")
-        self.test_seeds = [range(1,1+100),range(2,2+100),range(3,3+100),range(4,4+100)]
+        self.pipeline_cls = BasePipeline
+        self.size = 1
+        self.pipeline = get_pipeline(self.size)
+        self.test_seeds = {
+            1:range(1,1+self.size), 2:range(2,2+self.size), 3:range(3,3+self.size), 4:range(4,4+self.size)}
 
-    def tearDown(self):
-        """will be called after every single test"""
-        pass
-
-    def compare_values(self,df,data):
-        """compares reference values saved in csv file with samples values one by one"""
-        for d in data:
-            for key in d.keys(): # "num_sources" etc.
-                idx = d["idx"]
-                desired = str(df[key][idx-1])
-                actual = str(d[key])
-                self.assertEqual(actual,desired)
+    def test_pipeline_without_explicit_seeds(self):
+        """Test if BasePipeline can handle samplers without given random_seeds."""
+        data = next(self.pipeline.get_data(progress_bar=False))
+        self.assertTrue(data["data"])
 
     def test_too_short_random_seeds_input(self):
-        """test that exceptions are raised on too short random_seeds input"""
-        self.pipeline.random_seeds = self.test_seeds[:1]
-        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data()))
-    
+        """Test that exceptions are raised on too short random_seeds input."""
+        seeds = {
+            1:range(1,1+self.size)}
+        self.pipeline.random_seeds = seeds
+        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data(progress_bar=False)))
+
     def test_non_equal_length_random_seeds_input(self):
-        """test that exceptions are raised on random_seeds input of non-equal length"""
+        """Test that exceptions are raised on random_seeds input of non-equal length."""
         self.test_seeds[0] = range(0,10)
         self.pipeline.random_seeds = self.test_seeds
-        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data()))
+        self.assertRaises(ValueError,lambda: next(self.pipeline.get_data(progress_bar=False)))
 
-    def test_sampled_values_without_seeds(self):
-        """verifies that sampled values do not change across versions of code without using the seeds argument"""
-        df = pd.read_csv("test_data.csv") # reference values
-        data = list(self.pipeline.get_data())
-        self.assertEqual(len(data),100) # assure correct dataset size TODO: write extra test
-        self.compare_values(df,data) # compare all values
+    def test_valid_pipeline_funcs(self):
+        """Test if BasePipeline can handle empty pipeline."""
+        # test valid inputs
+        for finput in [
+            lambda sampler: {"res":True},
+            (lambda sampler, x: {"res":x}, True)
+        ]:
+            with self.subTest(finput=finput):
+                pipeline = self.pipeline_cls(
+                    numsamples=2,
+                    features= finput)
+                data = next(pipeline.get_data(progress_bar=False))
+                self.assertTrue(data["res"])
 
-    def test_sampled_values_with_seeds(self):
-        """verifies that sampled values do not change across versions of code with using the random_seeds argument"""
-        self.pipeline.random_seeds = self.test_seeds
-        df = pd.read_csv("test_data_seeds.csv") # reference values
-        data = list(self.pipeline.get_data())
-        self.assertEqual(len(data),100) # assure correct dataset size TODO: write extra test
-        self.compare_values(df,data) # compare all values
+    def test_invalid_pipeline_funcs(self):
+        for finput in [
+            None,
+            lambda: {"res":True},
+            (lambda sampler, x: {"res":x}, True, True)
+        ]:
+            with self.subTest(finput=finput):
+                pipeline = self.pipeline_cls(
+                    numsamples=2,
+                    features= finput)
+                self.assertRaises(
+                    ValueError,lambda: next(pipeline.get_data(progress_bar=False)))
+
+    def test_sampler(self):
+        sampler1 = np.random.default_rng(1)
+        sampler2 = ContainerSampler(
+            random_func=lambda rng: rng.normal(),
+            )
+        sampler3 = np.random.RandomState(1)
+        def func(sampler):
+            print(sampler)
+            return {
+                "res0":sampler[0].normal(),
+                "res1":sampler[1].target,
+                "res2":sampler[2].random()}
+        pipeline = self.pipeline_cls(
+            sampler = [sampler1,sampler2,sampler3],
+            numsamples=2,
+            features= func,
+            random_seeds=[range(2),range(2),range(2)])
+        data = next(pipeline.get_data(progress_bar=False,start_idx=10))
+        self.assertEqual(data["res0"],data["res1"])
+        self.assertIsNotNone(data["res2"])
 
 
-class Test_DistributedPipeline(Test_BasePipeline):
+class TestDistributedPipeline(TestBasePipeline):
 
     def setUp(self):
-        """will be called for every single test"""
-        ray.init()
-        self.pipeline = get_distributed_pipeline(100,2, mfile="array64_d0o686.xml") # two workers
-        self.test_seeds = [range(1,1+100),range(2,2+100),range(3,3+100),range(4,4+100)]
+        """Will be called for every single test."""
+        self.pipeline_cls = DistributedPipeline
+        #ray.shutdown()
+        #ray.init(log_to_driver=False)
+        self.size = 3
+        self.pipeline = get_distributed_pipeline(self.size,2) # two workers
+        self.test_seeds = {
+            1:range(1,1+self.size), 2:range(2,2+self.size), 3:range(3,3+self.size), 4:range(4,4+self.size)}
 
     def tearDown(self):
-        """will be called after every single test"""
-        ray.shutdown()
+        """Will be called after every single test."""
+        #ray.shutdown()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

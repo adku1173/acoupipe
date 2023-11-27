@@ -1,0 +1,30 @@
+Bootstrap: docker
+From: python:3.10
+
+%post
+apt-get update && apt-get install -y --no-install-recommends libtbb-dev
+pip install --upgrade pip
+cd ~
+git clone https://git.tu-berlin.de/acoular-dev/kujawski/acoular.git
+cd acoular
+git pull
+pip install ~/acoular/.
+
+cd ~
+git clone https://github.com/adku1173/acoupipe.git
+cd acoupipe
+git checkout dev
+git branch --set-upstream-to=origin/dev
+git pull
+pip install ~/acoupipe/.
+
+pip install tbb
+pip install pandas
+
+#%environment
+NUMBA_CACHE_DIR="/tmp/numba_cache"
+
+
+%labels
+Author "Adam Kujawski adam.kujawski@tu-berlin.de"
+

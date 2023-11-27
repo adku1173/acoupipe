@@ -20,4 +20,6 @@ __pycache__/
 *.pyd
 .vscode/
 */__pycache__/*
-venv
+tests/throughput/results/*.png
+.venv/*
+*.sif

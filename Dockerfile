@@ -1,26 +1,67 @@
-FROM python:3.8
-MAINTAINER Adam Kujawski <adam.kujawski@tu-berlin.de>
-
-# set the working directory in the container
-WORKDIR /data
-
-# copy the dependencies file to the working directory
-COPY requirements.txt .
-COPY README.rst .
-##COPY setup.py .
-
-# copy needed scripts to workingdir
-COPY acoupipe ./acoupipe
-COPY dataset .  
+FROM tensorflow/tensorflow:latest-gpu-jupyter AS jupyter-gpu
 
 #https://github.com/numba/numba/issues/4032 -> the numba cache directory
 # should be at a writable location when using no 
 # root priviliges
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# custom acoular version
+RUN pip install acoular>=23.11
+
+# copy needed scripts to workingdir
+COPY . /tmp/acoupipe
+RUN cd /tmp/acoupipe
+
+# install
+RUN pip install /tmp/acoupipe
+
+############################################ base builds ###########################################################
+
+FROM python:3.11 AS base
+
+#https://github.com/numba/numba/issues/4032 -> the numba cache directory
+# should be at a writable location when using no 
+# root priviliges
+ENV NUMBA_CACHE_DIR=/tmp/numba_cache
+ENV PIP_ROOT_USER_ACTION=ignore
+
+# set the working directory in the container
+WORKDIR /src
 
 # install dependencies
 RUN /usr/local/bin/python -m pip install --upgrade pip
-RUN pip install -r requirements.txt
+# echoing pip manager version
+RUN bash -c 'echo "$(pip --version)"'
 
-# run the main.py script
-CMD ["main.py"]
+# custom acoular version
+#ARG TOKEN
+#RUN git clone https://kujawski:${TOKEN}@git.tu-berlin.de/acoular-dev/kujawski/acoular.git /tmp/acoular
+#RUN pip install /tmp/acoular
+#RUN rm -r /tmp/acoular
+
+RUN pip install acoular>=23.11
+
+# copy needed scripts to workingdir
+COPY . /tmp/acoupipe
+RUN cd /tmp/acoupipe
+
+# copy app 
+RUN mkdir /app
+COPY ./app /app
+
+# install
+RUN pip install /tmp/acoupipe
+
+# run the main.py script to save data to file
+CMD [ "python", "/app/main.py" ]
+
+# second stage
+FROM base AS full
+RUN cd /tmp/acoupipe
+RUN pip install "/tmp/acoupipe[full]"
+
+# third stage
+FROM full AS dev
+RUN cd /tmp/acoupipe
+RUN pip install "/tmp/acoupipe[dev]"

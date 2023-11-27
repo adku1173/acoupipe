@@ -1,0 +1,85 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "acoupipe"
+version = "23.11" # Date based release versioning
+description = "Library for the generation of large-scale microphone array data for machine learning"
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+requires-python = ">=3.8,<=11"
+authors = [
+    {name = "Acoular Development Team", email = "info@acoular.org"},
+]
+keywords = [
+    "deep learning",
+    "beamforming",
+    "microphone array",
+    "sound source localization",
+    "sound source characterization",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3 :: Only"    
+]
+dependencies = [
+	'acoular>=23.11',
+	'ray',
+	'h5py',
+	'tqdm',
+	'parameterized',
+    'pooch',
+]
+maintainers = [
+    {name = "Adam Kujawski", email = "adam.kujawski@tu-berlin.de"},
+    {name = "Art Pelling", email = "a.pelling@tu-berlin.de"},
+    {name = "Ennes Sarradj", email = "ennes.sarradj@tu-berlin.de"},
+    {name = "Simon Jekosch", email = "s.jekosch@tu-berlin.de"},
+]
+
+[project.optional-dependencies]
+dev = [
+    "tensorflow",
+    "ipython",
+    "ipykernel",
+    "nb-clean",
+    "pre-commit",
+    "ruff==0.0.260",
+    "sphinx",
+    "sphinx-autoapi",
+    "nbsphinx",
+    "sphinx-rtd-theme",
+    "sphinx-gallery",
+    "sphinxcontrib.bibtex",
+    "pandas",   
+    "pandoc",
+]
+
+full = [
+    "tensorflow",
+]
+
+
+[project.urls]
+documentation = "https://adku1173.github.io/acoupipe/"
+repository = "https://github.com/adku1173/acoupipe"
+source = "https://github.com/adku1173/acoupipe"
+tracker = "https://github.com/adku1173/acoupipe/issues"
+
+[tool.ruff]
+src = ["src"]
+ignore = [
+    "D100", "D101", "D102", "D103", "D105", "D107",
+    "D203", "D213", "D206",
+    "B905",
+    "N806", "N803",
+    "E741"]
+line-length = 140
+select = ["B", "D", "E", "F", "I", "N", "Q", "W"]
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
