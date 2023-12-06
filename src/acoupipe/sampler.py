@@ -378,6 +378,10 @@ class LocationSampler(BaseSampler):
     z_bounds = Tuple(None, None,
         desc="limits of the allowed drawn locations along the x-axis (lower,upper)")
 
+    #: minimum distance between any two sources
+    mindist = Either(None, Float, default=None,
+        desc="minimum distance between any two sources. Default is None, meaning that any distance is allowed.")
+
     #: optional grid object to which the drawn locations are snapped to
     grid = Instance(ac.Grid)
 
@@ -404,6 +408,14 @@ class LocationSampler(BaseSampler):
         else:
             return False
 
+    def _mindist_violated(self,loc,loc_array):
+        """Validate minimum distance between any two sources."""
+        if self.mindist:
+            if loc_array.size > 0:
+                if np.min(np.linalg.norm(loc_array-loc[:,np.newaxis],axis=0)) < self.mindist:
+                    return True
+        return False
+
     def rvs(self):
         """Random variable sampling (for internal use)."""
         return np.array([
@@ -425,7 +437,7 @@ class LocationSampler(BaseSampler):
         loc_array = np.empty((3,self.nsources))
         for i in range(self.nsources):
             new_loc = self.rvs()
-            while self._bounds_violated(new_loc):
+            while self._bounds_violated(new_loc) or self._mindist_violated(new_loc,loc_array[:,:i]):
                 new_loc = self.rvs()
             else:
                 loc_array[:,i] = new_loc
@@ -448,6 +460,8 @@ class LocationSampler(BaseSampler):
         elif self.x_bounds[0] or self.x_bounds[1] or \
             self.y_bounds[0] or self.y_bounds[1] or \
             self.z_bounds[0] or self.z_bounds[1]:
+            self._sample_with_bounds()
+        elif self.mindist:
             self._sample_with_bounds()
         else:
             self._sample_no_bounds()

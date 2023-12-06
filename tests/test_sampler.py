@@ -7,12 +7,14 @@ from numpy.random import RandomState, default_rng
 from numpy.testing import assert_almost_equal
 from parameterized import parameterized
 from pipeline_value_test import get_distributed_pipeline, get_pipeline
+from scipy.spatial.distance import cdist
 from scipy.stats import norm
 
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.sampler import (
     BaseSampler,
     ContainerSampler,
+    LocationSampler,
     MicGeomSampler,
     NumericAttributeSampler,
     PointSourceSampler,
@@ -41,6 +43,32 @@ def create_test_method(target_instance):
     return sample_method
 
 FLOAT_SET = [0.1,0.2,0.3,0.4] # a set with floats for testing
+
+class TestLocationSampler(unittest.TestCase):
+
+    def setUp(self):
+        self.sampler = LocationSampler(
+            random_var = (norm(0,0.1688),norm(0,0.1688),norm(0.5,0)),
+            x_bounds = (-0.5,0.5),
+            y_bounds = (-0.5,0.5),
+            z_bounds = (0.5,0.5),
+            nsources = 3,
+            random_state = np.random.RandomState(1))
+
+    def test_mindist(self):
+        """Test if minimum distance is respected."""
+        #self.sampler.mindist = 0.05
+        self.sampler.sample()
+        # calc distance matrix
+        dist = cdist(self.sampler.target.T,self.sampler.target.T).max()
+        self.assertTrue(np.min(dist)<0.4)
+
+        # now test if mindist is respected
+        self.sampler.mindist = 0.4
+        self.sampler.sample()
+        # calc distance matrix
+        dist = cdist(self.sampler.target.T,self.sampler.target.T).max()
+        self.assertTrue(np.min(dist)>0.4)
 
 
 class TestSetSampler(unittest.TestCase):
