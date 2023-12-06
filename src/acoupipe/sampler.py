@@ -448,9 +448,12 @@ class LocationSampler(BaseSampler):
         loc_array = np.empty((3,self.nsources))
         gpos = self.grid.gpos
         for i in range(self.nsources):
-            new_loc = self.rvs()
-            index = np.argmin(np.linalg.norm(gpos-new_loc[:,np.newaxis],axis=0))
-            loc_array[:,i] = gpos[:,index]
+            index = np.argmin(np.linalg.norm(gpos-self.rvs()[:,np.newaxis],axis=0))
+            new_loc = gpos[:,index]
+            while self._mindist_violated(new_loc,loc_array[:,:i]):
+                index = np.argmin(np.linalg.norm(gpos-self.rvs()[:,np.newaxis],axis=0))
+                new_loc = gpos[:,index]
+            loc_array[:,i] = new_loc
         self.target = loc_array
 
     def sample(self):
