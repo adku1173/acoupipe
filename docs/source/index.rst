@@ -26,7 +26,7 @@ Currently, AcouPipe provides two default classes to generate microphone array da
 
 * **DatasetMIRACLE** relies on a large-scale set of measured spatial room impulse responses, acquired at the TU Berlin anechoic chamber :cite:`Kujawski2023a`, and synthetic source signals resulting in a realistic and quasi-infinite dataset.
 
-See the latest performance benchmarks on `DatasetSynthetic` for the most computational demanding features:
+See the latest performance benchmarks on `DatasetSynthetic` for the most computational demanding features. A description of the features can be found :ref:`here <features>`.
 
 .. image:: _static/compute4_all_features-over-tasks_DatasetSynthetic_f4000.png
    :width: 100%

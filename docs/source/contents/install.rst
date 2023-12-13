@@ -21,7 +21,11 @@ Download or clone the AcouPipe repository and enter the directory, e.g. change `
 
 .. code-block:: bash
 
-   DIR=</path/to/dir> && git clone git@github.com:adku1173/acoupipe.git $DIR && cd $DIR && unset DIR
+   DIR=</path/to/dir> && 
+   git clone https://github.com/adku1173/acoupipe.git 
+   $DIR && 
+   cd $DIR && 
+   unset DIR
 
 
 Next, install module with pip. This will install all necessary `dependencies`_.
