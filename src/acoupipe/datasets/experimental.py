@@ -64,33 +64,38 @@ class DatasetMIRACLE(DatasetBase):
 
     .. list-table:: Available scenarios
         :header-rows: 1
-        :widths: 5 10 10 10 10 10
+        :widths: 5 10 10 10 10 10 10
 
         *   - Scenario
+            - Download Size
             - Environment
             - c0
             - # SRIRs
             - Source-plane dist.
             - Spatial sampling
         *   - A1
+            - 1.1 GB
             - Anechoic
             - 344.7 m/s
             - 4096
             - 73.4 cm
             - 23.3 mm
         *   - D1
+            - 300 MB
             - Anechoic
             - 344.8 m/s
             - 4096
             - 73.4 cm
             - 5.0 mm
         *   - A2
+            - 1.1 GB
             - Anechoic
             - 345.0 m/s
             - 4096
             - 146.7 cm
             - 23.3 mm
         *   - R2
+            - 1.1 GB
             - Reflective Ground
             - 345.2 m/s
             - 4096

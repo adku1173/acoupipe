@@ -161,7 +161,7 @@ class TestDatasetSynthetic(unittest.TestCase):
         """
         for feature in IMPLEMENTED_FEATURES:
             for num in [0,3]:
-                for f in [None, 1000]:
+                for f in [None, 1000, [1000,2000]]:
                     if num == 3 and f is None:
                         continue
                     with self.subTest(f"feature={feature}, f={f}, num={num}"):

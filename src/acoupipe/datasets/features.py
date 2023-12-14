@@ -582,7 +582,7 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
             csm = freq_data.csm[:]
             strength[:,j] = np.real(np.array(
                 [csm[indices[0]:indices[1]].sum(0).diagonal() for indices in fidx],
-                dtype=complex))
+                dtype=complex)).reshape((-1,))
         return {name: strength}
 
     @staticmethod

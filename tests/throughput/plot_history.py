@@ -22,6 +22,7 @@ def plot_all_features_over_tasks(name, device):
         file = Path(__file__).parent.absolute() / "results" / name
         df = pd.read_pickle(file)
     dataset_names = df.dataset.unique()
+    print(dataset_names)
     frequencies = df.f.unique()
     modes = df["mode"].unique()
     ncols = modes.shape[0]
@@ -51,14 +52,12 @@ def plot_all_features_over_tasks(name, device):
                         axes[n].set_xlabel("compute nodes")
                         axes[n].set_xticklabels(["2","4","8"])
             fig.tight_layout()
-            fig.savefig(Path(__file__).parent.parent.parent.absolute() / "sphinx" / "source" / "_static" / f"{device}_all_features-over-tasks_{dataset_name}_f{f}.png")
+            fig.savefig(Path(__file__).parent.parent.parent.absolute() / "docs" / "source" / "_static" / f"{device}_all_features-over-tasks_{dataset_name}_f{f}.png")
 
 
 if __name__ == "__main__":
 
-    name = ["throughput_97028e1eef7b_16-Nov-2023.pkl",
-    		"throughput_3facbf3ec212_16-Nov-2023.pkl",
-            "throughput_f296ebdfcabd_17-Nov-2023.pkl"]
+    name = ["throughput_b0f7f4cef27e_28-Nov-2023.pkl"]
     plot_all_features_over_tasks(name, device="compute4")
 
     name = [
