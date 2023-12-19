@@ -52,12 +52,9 @@ class DatasetBase(HasPrivateTraits):
         Configuration object for dataset generation.
     tasks : int
         Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
-    pipeline : BasePipeline
-        Pipeline object for dataset generation (is determined automatically).
     """
 
     config = Instance(ConfigBase, desc="configuration object")
-    pipeline = Property(desc="pipeline object")
     tasks = Property(desc="number of parallel tasks for data generation")
     #: logger instance to log calculation times for each data sample
     logger = Property(desc="Logger instance to log timing statistics")
@@ -101,7 +98,7 @@ class DatasetBase(HasPrivateTraits):
     def _set_tasks(self, tasks):
         self._tasks = tasks
 
-    def _get_pipeline(self):
+    def get_pipeline_instance(self):
         if self.tasks > 1:
             return DistributedPipeline(
                 numworkers=self.tasks,)
@@ -192,7 +189,7 @@ class DatasetBase(HasPrivateTraits):
         >>> for data in generator:
                 print(data)
         """
-        pipeline = self.pipeline
+        pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
         pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
         set_pipeline_seeds(pipeline, start_idx, size, split)
@@ -249,7 +246,7 @@ class DatasetBase(HasPrivateTraits):
         >>> dataset = DatasetSynthetic().save_h5(
                 f=f, num=num, split="training", size=10, features=features,name="/tmp/example.h5")
         """
-        pipeline = self.pipeline
+        pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
@@ -314,7 +311,7 @@ if TF_FLAG:
         >>> dataset = DatasetSynthetic().save_tfrecord(
                 f=f, num=num, split="training", size=10, features=features,name="/tmp/example.tfrecord")
         """
-        pipeline = self.pipeline
+        pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         feature_collection = self.get_feature_collection(features, f, num)
@@ -396,7 +393,7 @@ if TF_FLAG:
             TensorFlow dataset containing the generated data. The dataset elements have the structure defined
             by the output_signature, which is based on the shapes of dataset features.
         """
-        pipeline = self.pipeline
+        pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         feature_collection = self.get_feature_collection(features, f, num)
