@@ -38,6 +38,7 @@ from acoupipe.datasets.features import (
     LocFeature,
     SourcemapFeature,
     SpectrogramFeature,
+    TargetmapFeature,
     TimeDataFeature,
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
@@ -231,6 +232,16 @@ class DatasetSynthetic(DatasetBase):
             else:
                 freq_data = self.config.freq_data
             builder.add_noise_strength_estimated(freq_data, f, num)
+        if "targetmap_analytic" in features:
+            builder.add_targetmap(self.config.freq_data, f, num, self.config.source_steer,
+                ref_mic=None, strength_type="analytic", grid=self.config.grid)
+        if "targetmap_estimated" in features:
+            if self.config.mode == "welch":
+                freq_data = self.config.fft_obs_spectra
+            else:
+                freq_data = self.config.freq_data
+            builder.add_targetmap(freq_data, f, num, self.config.source_steer,
+                ref_mic=None, strength_type="estimated", grid=self.config.grid)
         if "f" in features:
             builder.add_f(self.config.freq_data.fftfreq(), f, num)
         if "num" in features:
@@ -286,7 +297,7 @@ class DatasetSyntheticConfig(ConfigBase):
         reference position when calculating the source strength.
     grid : ac.RectGrid
         Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
-        the source map.
+        the source map and on which the targetmap feature is calculated.
     source_grid : ac.Grid
         Instance of acoular.Grid. Only relevant if :attr:`snap_to_grid` is :code:`True`.
         Then, the source locations are snapped to this grid. Default is a copy of :attr:`grid`.
@@ -829,6 +840,21 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
                 {"noise_strength_estimated" : (self.fdim, self.mdim)})
             self.feature_collection.feature_tf_dtype_mapper.update(
                 {"noise_strength_estimated" : "float32"})
+
+    def add_targetmap(self, freq_data, f, num, steer, ref_mic, strength_type, grid):
+        name = f"targetmap_{strength_type}"
+        calc_targetmap = TargetmapFeature(
+            freq_data=freq_data, f=f, num=num, steer=steer, ref_mic=ref_mic,
+            strength_type=strength_type, grid=grid, name=name).get_feature_func()
+        self.feature_collection.add_feature_func(calc_targetmap)
+        if TF_FLAG:
+            from acoupipe.writer import float_list_feature
+            self.feature_collection.feature_tf_encoder_mapper.update(
+                {name : float_list_feature})
+            self.feature_collection.feature_tf_shape_mapper.update(
+                {name : (self.fdim,) + grid.shape})
+            self.feature_collection.feature_tf_dtype_mapper.update(
+                {name : "float32"})
 
     def add_seeds(self, nsampler):
         if TF_FLAG:

@@ -300,6 +300,16 @@ class DatasetMIRACLE(DatasetBase):
             else:
                 freq_data = self.config.freq_data
             builder.add_noise_strength_estimated(freq_data, f, num)
+        if "targetmap_analytic" in features:
+            builder.add_targetmap(self.config.freq_data, f, num, self.config.source_steer,
+                ref_mic=self.config.ref_mic_index, strength_type="analytic", grid=self.config.grid)
+        if "targetmap_estimated" in features:
+            if self.config.mode == "welch":
+                freq_data = self.config.fft_obs_spectra
+            else:
+                freq_data = self.config.freq_data
+            builder.add_targetmap(freq_data, f, num, self.config.source_steer,
+                ref_mic=self.config.ref_mic_index, strength_type="estimated", grid=self.config.grid)
         if "f" in features:
             builder.add_f(self.config.freq_data.fftfreq(), f, num)
         if "num" in features:
