@@ -82,7 +82,7 @@ class TargetmapFeature(BaseFeatureCatalog):
         target_map = np.zeros((strength.shape[0],)+grid.shape)
         for j in range(loc.shape[1]):
             index = grid.index(*loc[:, j])
-            target_map[:,*index] += strength[:,j]
+            target_map[(slice(None),) + index] += strength[:,j]
         return {name: target_map}
 
     def get_feature_func(self):
