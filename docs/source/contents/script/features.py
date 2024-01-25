@@ -6,6 +6,36 @@ import acoular as ac
 import matplotlib.pyplot as plt
 import numpy as np
 
+from acoupipe.datasets.synthetic import DatasetSynthetic
+
+#%% targetmap example
+
+fig, axs = plt.subplots(1, 2, figsize=(6, 3), sharey=True, sharex=True)
+fig.suptitle("Target Sourcemap ($f=2000$ Hz, $J=5$)", fontsize=12)
+
+mode = "analytic"
+for i, feature in enumerate(["targetmap_analytic", "targetmap_estimated"]):
+
+    dataset = DatasetSynthetic(mode=mode)
+    # generate data for frequency 2000 Hz (single frequency)
+    data_generator = dataset.generate(features=[feature, "f"],
+                                        split="training", size=1, f=[2000], num=0, start_idx=1)
+    data_sample = next(data_generator)
+
+    extent = dataset.config.grid.extend()
+
+    # sound pressure level
+    Lm = ac.L_p(data_sample[feature]).T
+    Lm_max = Lm.max()
+    Lm_min = Lm.max() - 20
+
+    axs[i].set_title(f"{feature}")
+    axs[i].imshow(Lm, vmax=Lm_max, vmin=Lm_min, extent=extent, origin="lower")
+
+dpath = Path(__file__).parent.parent.parent / "_static"
+fig.savefig(dpath / "targetmap_example.png", dpi=300)
+
+
 #%% sourcemap_example
 
 fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True, sharex=True)
