@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 
 from acoupipe.datasets.experimental import DatasetMIRACLE
 
-srir_dir = "/home/kujawski/compute4/IR_AKAP/published"
 f = 4000
 
 fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True, sharex=True)
@@ -13,7 +12,7 @@ fig.suptitle(f"Sourcemap ($f={f}$ Hz)", fontsize=12)
 
 for i, scenario in enumerate(["A1", "A2", "R2"]):
 
-    dataset = DatasetMIRACLE(srir_dir=srir_dir, scenario=scenario, mode="wishart")
+    dataset = DatasetMIRACLE(scenario=scenario, mode="wishart")
     data_generator = dataset.generate(features=["sourcemap","loc", "f"],
                                         split="training", size=1, f=[f], num=0, start_idx=1)
     data_sample = next(data_generator)
