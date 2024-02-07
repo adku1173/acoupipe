@@ -252,39 +252,39 @@ class TestDatasetSynthetic(unittest.TestCase):
     def test_sourcemap_max(self, mode):
         """A plausability test_."""
         features = ["sourcemap","source_strength_estimated","source_strength_analytic"]
+        f = 4000
         for num in [0,3]:
-            for f in [4000]:
-                with self.subTest(f"f={f}, num={num}"):
-                    dataset = self.create_dataset(full=False, mode=mode,
-                            mic_sig_noise=False,mic_pos_noise=False,
-                            max_nsources=1, snap_to_grid=True)
-                    dataset.config.fft_params["block_size"] = 512
-                    gen = dataset.generate(
-                        f=f, num=num, features=features,
-                        split="training", size=1, progress_bar=False)
-                    data = next(gen)
-                    sourcemap_max = ac.L_p(data["sourcemap"].max())
-                    source_stength_estimated = ac.L_p(data["source_strength_estimated"].max())
-                    np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=1e-1)
+            with self.subTest(f"f={f}, num={num}"):
+                dataset = self.create_dataset(full=False, mode=mode,
+                        mic_sig_noise=False,mic_pos_noise=False,
+                        max_nsources=1, snap_to_grid=True)
+                dataset.config.fft_params["block_size"] = 512
+                gen = dataset.generate(
+                    f=f, num=num, features=features,
+                    split="training", size=1, progress_bar=False)
+                data = next(gen)
+                sourcemap_max = ac.L_p(data["sourcemap"].max())
+                source_stength_estimated = ac.L_p(data["source_strength_estimated"].max())
+                np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=1e-1)
 
     @parameterized.expand(modes)
     def test_eigvalsum_equal_csm(self, mode):
         """A plausability test_."""
         features = ["csm","eigmode"]
-        for num in [0]:
-            for f in [4000]:
-                with self.subTest(f"f={f}, num={num}"):
-                    dataset = self.create_dataset(full=True, mode=mode,
-                            mic_sig_noise=False,mic_pos_noise=False,
-                            max_nsources=1, snap_to_grid=True)
-                    dataset.config.fft_params["block_size"] = 512
-                    gen = dataset.generate(
-                        f=f, num=num, features=features,
-                        split="training", size=1, progress_bar=False)
-                    data = next(gen)
-                    eig, eigvec = np.linalg.eigh(data["csm"][0])
-                    eig_eig = np.linalg.norm(data["eigmode"][0],axis=0)
-                    np.testing.assert_allclose(eig_eig,eig,rtol=1e-5, atol=1e-7)
+        num=0
+        f = 4000
+        with self.subTest(f"f={f}, num={num}"):
+            dataset = self.create_dataset(full=True, mode=mode,
+                    mic_sig_noise=False,mic_pos_noise=False,
+                    max_nsources=1, snap_to_grid=True)
+            dataset.config.fft_params["block_size"] = 512
+            gen = dataset.generate(
+                f=f, num=num, features=features,
+                split="training", size=1, progress_bar=False)
+            data = next(gen)
+            eig, eigvec = np.linalg.eigh(data["csm"][0])
+            eig_eig = np.linalg.norm(data["eigmode"][0],axis=0)
+            np.testing.assert_allclose(eig_eig,np.abs(eig),rtol=1e-5, atol=1e-7)
 
 
 
