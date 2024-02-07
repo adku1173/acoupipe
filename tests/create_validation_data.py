@@ -1,20 +1,32 @@
-
+import argparse
 
 import numpy as np
-from test_datasets import IMPLEMENTED_FEATURES, TestMIRACLEDataset, start_idx, validation_data_path
+from test_datasets import (
+    IMPLEMENTED_FEATURES,
+    TEST_SIGNAL_LENGTH,
+    TestDatasetSynthetic,
+    TestMIRACLEDataset,
+    start_idx,
+    validation_data_path,
+)
 
 if __name__ == "__main__":
 
-    signal_length = 0.5
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--features", type=str, nargs="+", default=IMPLEMENTED_FEATURES)
+    parser.add_argument("--mode", type=str, nargs="+", default=["analytic","welch","wishart"])
+    args = parser.parse_args()
 
-    for mode in ["analytic","welch","wishart"]:
+    print(f"Creating validation data for features {args.features} and modes {args.mode}")
+
+    for mode in args.mode:
         dataset = TestDatasetSynthetic.create_dataset(
             mode=mode,)
         for f in [None,1000]:
             for num in [0,3]:
                 if f is None and num != 0:
                     continue
-                for feature in IMPLEMENTED_FEATURES:
+                for feature in args.features:
                     if feature in ["time_data","spectrogram"] and mode != "welch":
                         continue
                     # Dataset Synthetic
@@ -25,12 +37,12 @@ if __name__ == "__main__":
                     np.save(
                         validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy",data[feature])
 
-    for mode in ["analytic","welch","wishart"]:
+    for mode in args.mode:
         dataset = TestMIRACLEDataset.create_dataset(
-            mode=mode,signal_length=signal_length)
+            mode=mode,signal_length=TEST_SIGNAL_LENGTH)
         for f in [1000]:
             for num in [0]:
-                for feature in IMPLEMENTED_FEATURES:
+                for feature in args.features:
                     if feature in ["time_data","spectrogram"] and mode != "welch":
                         continue
                     data = next(dataset.generate(

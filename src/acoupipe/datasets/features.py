@@ -56,8 +56,48 @@ class TimeDataFeature(BaseFeatureCatalog):
         return partial(_calc_time_data,time_data=self.time_data, name=self.name, dtype=self.dtype)
 
 
+class TargetmapFeature(BaseFeatureCatalog):
+
+    name = Str("targetmap")
+    freq_data = Instance(ac.BaseSpectra, desc="cross spectral matrix calculation class")
+    f = Either(None, Float, List(Float), desc="frequency")
+    num = Int
+    steer = Instance(ac.SteeringVector, desc="steering vector object defining the path between the sources and the microphones")
+    ref_mic = Either(Int, None, default=None, desc="reference microphone index")
+    strength_type = Either("analytic", "estimated", desc="source strength type")
+    grid = Instance(ac.Grid, desc="grid")
+
+    @staticmethod
+    def get_targetmap(sampler, grid, loc_callable, strength_callable, name):
+        loc = list(loc_callable(sampler=None).values())[0]
+        strength = list(strength_callable(sampler=None).values())[0]
+        # create target map
+        if type(grid) is ac.RectGrid:
+            loc = loc[:2]
+        elif type(grid) is ac.RectGrid3D:
+            loc = loc[:3]
+        else:
+            raise NotImplementedError(f"Unknown grid type {type(grid)}.")
+            # other grid types in Acoular do not provide an index method!
+        target_map = np.zeros((strength.shape[0],)+grid.shape)
+        for j in range(loc.shape[1]):
+            index = grid.index(*loc[:, j])
+            target_map[(slice(None),) + index] += strength[:,j]
+        return {name: target_map}
+
+    def get_feature_func(self):
+        loc_callable = LocFeature(freq_data=self.freq_data).get_feature_func()
+        if self.strength_type == "analytic":
+            strength_callable = AnalyticSourceStrengthFeature(
+                freq_data=self.freq_data, f=self.f, num=self.num, steer=self.steer, ref_mic=self.ref_mic).get_feature_func()
+        else:
+            strength_callable = EstimatedSourceStrengthFeature(
+                freq_data=self.freq_data, f=self.f, num=self.num, ref_mic=self.ref_mic).get_feature_func()
+        return partial(self.get_targetmap, grid=self.grid, loc_callable=loc_callable, strength_callable=strength_callable, name=self.name)
+
+
 class SourcemapFeature(BaseFeatureCatalog):
-    """SourcemapFeature class for handling sourcemap features.
+    """SourcemapFeature class for handling the generation of sourcemaps obtained with microphone array methods.
 
     Attributes
     ----------
@@ -420,7 +460,7 @@ class EigmodeFeature(SpectraFeature):
 class LocFeature(BaseFeatureCatalog):
 
     name = Str("loc")
-    freq_data = Instance(ac.PowerSpectra, desc="cross spectral matrix calculation class")
+    freq_data = Instance(ac.BaseSpectra, desc="cross spectral matrix calculation class")
 
     @staticmethod
     def calc_loc1(sampler, freq_data, name):
@@ -533,23 +573,27 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
 
     @staticmethod
     def calc_source_strength_estimated1_fullfreq(sampler,freq_data, name):
-        sources = get_point_sources_recursively(freq_data.source)
+        init_source = freq_data.source
+        sources = get_point_sources_recursively(init_source)
         nfft = freq_data.fftfreq().shape[0]
         strength = np.zeros((nfft, len(sources)))
         for j, src in enumerate(sources):
             freq_data.source = src
             spectrogram = SpectrogramFeature.calc_spectrogram1(sampler,freq_data, name="spectrogram")["spectrogram"]
             strength[:,j] = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0).squeeze()
+        freq_data.source = init_source # reset source in case of subsequent feature calculation
         return {name: strength}
 
     @staticmethod
     def calc_source_strength_estimated1_partfreq(sampler, freq_data, fidx, name):
-        sources = get_point_sources_recursively(freq_data.source)
+        init_source = freq_data.source
+        sources = get_point_sources_recursively(init_source)
         strength = np.zeros((len(fidx), len(sources)))
         for j, src in enumerate(sources):
             freq_data.source = src
             spectrogram = SpectrogramFeature.calc_spectrogram2(sampler,freq_data,fidx, name="spectrogram")["spectrogram"]
             strength[:,j] = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0).squeeze()
+        freq_data.source = init_source # reset source in case of subsequent feature calculation
         return {name: strength}
 
     @staticmethod
@@ -565,17 +609,20 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
 
     @staticmethod
     def calc_source_strength_estimated3_fullfreq(sampler,freq_data, name):
-        sources = get_point_sources_recursively(freq_data.source)
+        init_source = freq_data.source
+        sources = get_point_sources_recursively(init_source)
         nfft = freq_data.fftfreq().shape[0]
         strength = np.zeros((nfft, len(sources)))
         for j, src in enumerate(sources):
             freq_data.source = src
             strength[:,j] = np.real(freq_data.csm[:,0,0])
+        freq_data.source = init_source # reset source in case of subsequent feature calculation
         return {name: strength}
 
     @staticmethod
     def calc_source_strength_estimated3_partfreq(sampler,freq_data, fidx, name):
-        sources = get_point_sources_recursively(freq_data.source)
+        init_source = freq_data.source
+        sources = get_point_sources_recursively(init_source)
         strength = np.zeros((len(fidx), len(sources)))
         for j, src in enumerate(sources):
             freq_data.source = src
@@ -583,6 +630,7 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
             strength[:,j] = np.real(np.array(
                 [csm[indices[0]:indices[1]].sum(0).diagonal() for indices in fidx],
                 dtype=complex)).reshape((-1,))
+        freq_data.source = init_source # reset source in case of subsequent feature calculation
         return {name: strength}
 
     @staticmethod

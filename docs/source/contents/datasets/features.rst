@@ -190,6 +190,24 @@ The representation slightly differs, depending on the choosen CSM calculation mo
     :width: 800
 
 
+Target Sourcemap (:code:`'targetmap_analytic'`, :code:`'targetmap_estimated'`)
+------------------------------------------------------------------------------
+
+The target sourcemap provides a sparse mapping of the true source strength on a pre-defined grid. The mapped strength can be either the analytic source strength (:code:`'targetmap_analytic'`) or an estimate of the source strength (:code:`'targetmap_estimated'`). The representation slightly differs as can be seen for the following example extracted from `DatasetSynthetic`:
+
+.. image:: ../../_static/targetmap_example.png
+    :align: center
+    :width: 600
+
+
+The underlying grid is defined by the :code:`dataset.config.grid` attribute of the dataset. Since the true locations of the sources do not necessarily coincide with the grid points, the source strength is attributed to the closest grid points when generating the targetmap. If it is desired to only sample source locations that coincide with the grid points, the attribute :code:`dataset.snap_to_grid` can be set to :code:`True` when creating the dataset e.g. with: 
+
+.. code-block:: python
+
+    dataset = DatasetSynthetic(snap_to_grid=True)
+
+
+
 Analytic source strength (:code:`'source_strength_analytic'`)
 -------------------------------------------------------------
 

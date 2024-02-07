@@ -14,7 +14,9 @@ from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestCo
 
 IMPLEMENTED_FEATURES = ["time_data","csm","csmtriu","sourcemap","eigmode", "spectrogram"] + [
     "seeds", "idx","loc","source_strength_analytic", "source_strength_estimated", "noise_strength_analytic",
-    "noise_strength_estimated","f","num"]
+    "noise_strength_estimated","f","num","targetmap_analytic", "targetmap_estimated"]
+TEST_SIGNAL_LENGTH = 0.5
+
 
 dirpath = Path(__file__).parent.absolute()
 modes = [["welch"], ["analytic"], ["wishart"]]
@@ -358,7 +360,7 @@ class TestMIRACLEDataset(unittest.TestCase):
                     if f is None and num != 0:
                         continue
                     with self.subTest(f"feature={feature}, f={f}, num={num}"):
-                        dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=0.5)
+                        dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=TEST_SIGNAL_LENGTH)
                         gen = dataset.generate(split="training",progress_bar=False, size=10000,start_idx=start_idx,
                         f=f,num=num,features=[feature])
                         while True:
@@ -387,7 +389,7 @@ class TestMIRACLEDataset(unittest.TestCase):
                     with self.subTest(f"feature={feature}, f={f}, num={num}"):
                         #ray.shutdown()
                         #ray.init(log_to_driver=False)
-                        dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=0.5, tasks=tasks)
+                        dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=TEST_SIGNAL_LENGTH, tasks=tasks)
                         gen = dataset.generate(
                             split="training",progress_bar=False, size=100,start_idx=1,f=f,num=num,features=[feature],)
                         while True:
