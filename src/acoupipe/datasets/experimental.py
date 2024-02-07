@@ -496,7 +496,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
             freq_data.seed=seed_sampler.target
             # change source strength
-            prms_sq = rms_sampler.target[:nsources] # squared sound pressure RMS at reference position
+            prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
             prms_sq_per_freq = prms_sq / nfft #prms_sq_per_freq
             freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
             # add noise to freq_data
@@ -523,7 +523,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             # sample parameters
             loc = loc_sampler.target
             nsources = loc.shape[1]
-            prms_sq = rms_sampler.target[:nsources] # squared sound pressure RMS at reference position
+            prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
             # apply parameters
             mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
             if mic_noise:
