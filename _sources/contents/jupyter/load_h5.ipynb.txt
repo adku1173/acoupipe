@@ -1,0 +1,237 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "\n",
+    "Save and load datasets stored in HDF5 file format\n",
+    "================================================\n",
+    "\n",
+    "This example demonstrates how to load the data from a stored .h5 file and to build a \n",
+    "data input Pipeline in TensorFlow / Keras."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Save Dataset to HDF5\n",
+    "\n",
+    "At first, we create a small temporary dataset by utilizing the default synthetic dataset, compounding 5 source cases and the Cross-spectral matrix as input feature.    "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stderr",
+     "output_type": "stream",
+     "text": [
+      "100%|\u001b[38;2;31;119;180m██████████\u001b[0m| 5/5 [00:02<00:00,  2.05it/s]\n"
+     ]
+    }
+   ],
+   "source": [
+    "import tensorflow as tf\n",
+    "from acoupipe.datasets.synthetic import DatasetSynthetic\n",
+    "\n",
+    "# training dataset\n",
+    "d1 = DatasetSynthetic()\n",
+    "\n",
+    "# save to .h5 file\n",
+    "d1.save_h5(features=[\"csm\"], split=\"training\", size=5, name=\"/tmp/tmp_dataset.h5\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Load Dataset from HDF5 File \n",
+    "\n",
+    "The AcouPipe toolbox provides the `LoadH5Dataset` class to load the datasets stored into HDF5 format.\n",
+    "One can access each individual sample/source case by the h5f attribute of the class. To extract the first input feature ('csm' in this case) of the dataset:\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "['0', '1', '2', '3', '4']\n"
+     ]
+    }
+   ],
+   "source": [
+    "from acoupipe.loader import LoadH5Dataset\n",
+    "\n",
+    "dataset_h5 = LoadH5Dataset(name=\"/tmp/tmp_dataset.h5\")\n",
+    "\n",
+    "print(list(dataset_h5.h5f.keys())) # sample indices are the keys of the dataset file"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Similarly as with the `generate` method, the `get_data` method can be used to retrieve the stored data iteratively"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "index 0 includes features: ['csm', 'idx', 'seeds']\n",
+      "index 1 includes features: ['csm', 'idx', 'seeds']\n",
+      "index 2 includes features: ['csm', 'idx', 'seeds']\n",
+      "index 3 includes features: ['csm', 'idx', 'seeds']\n",
+      "index 4 includes features: ['csm', 'idx', 'seeds']\n"
+     ]
+    }
+   ],
+   "source": [
+    "for data in dataset_h5.get_data():\n",
+    "    print(f\"index {data['idx']} includes features:\", list(data.keys())) # keys are the names of the features"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Building a TensorFlow/Keras Dataset \n",
+    "\n",
+    "With these definitions, a Python generator can be created which can be consumed by the Tensorflow Dataset API. Here, the dataset comprises the CSM, idx and seeds features. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "data_generator = dataset_h5.get_dataset_generator()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "To build a TensorFlow Dataset, the output signature corresponding to the data must be known, which would be something like:"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "index 0 includes features: ['csm', 'seeds', 'idx']\n",
+      "key: csm, shape: (65, 64, 64)\n",
+      "key: seeds, shape: (6, 2)\n",
+      "key: idx, shape: ()\n"
+     ]
+    }
+   ],
+   "source": [
+    "# provide the signature of the features\n",
+    "output_signature = {\n",
+    "            'csm':  tf.TensorSpec(shape=(None,64,64), dtype=tf.complex64),\n",
+    "            'seeds' : tf.TensorSpec(shape=(None,2), dtype=tf.float32),\n",
+    "            'idx' : tf.TensorSpec(shape=(), dtype=tf.int64)\n",
+    "            }\n",
+    "\n",
+    "tf_dataset = tf.data.Dataset.from_generator(\n",
+    "            generator=data_generator,\n",
+    "            output_signature=output_signature\n",
+    "            )\n",
+    "\n",
+    "data = next(iter(tf_dataset))\n",
+    "\n",
+    "print(f\"index {data['idx']} includes features:\", list(data.keys()))\n",
+    "for key, value in data.items():\n",
+    "    print(f\"key: {key}, shape: {value.shape}\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "Alternatively, the output signature can be retrieved from the dataset by using the `get_output_signature` method of the corresponding Dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "index 0 includes features: ['csm', 'idx', 'seeds']\n",
+      "key: csm, shape: (65, 64, 64)\n",
+      "key: idx, shape: ()\n",
+      "key: seeds, shape: (6, 2)\n"
+     ]
+    }
+   ],
+   "source": [
+    "d1 = DatasetSynthetic()\n",
+    "\n",
+    "signature = d1.get_output_signature(features=[\"csm\",\"idx\",\"seeds\"])\n",
+    "\n",
+    "tf_dataset = tf.data.Dataset.from_generator(\n",
+    "            generator=data_generator,\n",
+    "            output_signature=signature\n",
+    "            )\n",
+    "\n",
+    "data = next(iter(tf_dataset))\n",
+    "\n",
+    "print(f\"index {data['idx']} includes features:\", list(data.keys()))\n",
+    "for key, value in data.items():\n",
+    "    print(f\"key: {key}, shape: {value.shape}\")\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "py39",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.15"
+  },
+  "orig_nbformat": 4,
+  "vscode": {
+   "interpreter": {
+    "hash": "8b84133aa5d27198834684dc5cf37286f31547fcb562f18c04d9e25d99e7281e"
+   }
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 2
+}

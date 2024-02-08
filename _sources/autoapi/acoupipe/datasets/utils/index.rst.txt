@@ -1,0 +1,122 @@
+:orphan:
+
+:py:mod:`acoupipe.datasets.utils`
+=================================
+
+.. py:module:: acoupipe.datasets.utils
+
+
+Module Contents
+---------------
+
+.. py:function:: tqdm_hook(t)
+
+   Wrap tqdm instance according to https://github.com/tqdm/tqdm/blob/master/examples/tqdm_wget.py.
+
+
+.. py:function:: _handle_log(fname)
+
+
+.. py:function:: generate_uniform_parametric_eq(num_points, max_order, rng)
+
+   Generate a random parametric EQ cascase.
+
+   Method according to [Nercessian 2020](https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf).
+   This method is part of the `IIRNet project <https://github.com/csteinmetz1/IIRNet>`_.
+   License: Apache License 2.0
+
+   :returns: * *coef*
+             * *mag*
+             * *phs*
+
+
+.. py:function:: get_frequency_index_range(freq, f, num)
+
+   Return the left and right indices that define the frequency range to integrate over.
+
+   :param freq: frequency vector (can be determined by evaluating `freqdata()` method at a `acoular.PowerSpectra` instance)
+   :type freq: numpy.array
+   :param f: the frequency (or center frequency) of interest
+   :type f: float
+   :param num: the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+   :type num: int
+
+   :returns: left and right index that belongs to the frequency of interest
+   :rtype: tuple
+
+
+.. py:function:: set_pipeline_seeds(pipeline, start_idx, size, dataset='training')
+
+   Create the random seed list for each of the sampler objects that is held by the pipeline object.
+
+   :param pipeline: the pipeline object holding the sampler classes
+   :type pipeline: instance of class BasePipeline
+   :param start_idx: start index to be calculated by the pipeline
+   :type start_idx: int
+   :param size: number of samples to be yielded by the pipeline
+   :type size: int
+   :param dataset: the data set type, by default "training". Choose from ["training","validation"]
+   :type dataset: str, optional
+
+
+.. py:function:: set_filename(writer, path='.', *args)
+
+   Set the filename of the dataset.
+
+   :param writer: the writer object holding the filename
+   :type writer: instance of class BaseWriteDataset
+   :param path: the path to the dataset, current directory by default
+   :type path: str, optional
+   :param \*args: concatenated strings to be used as the filename
+   :type \*args: str
+
+
+.. py:function:: complex_to_real(func)
+
+
+.. py:function:: get_point_sources_recursively(source)
+
+   Recursively get all point sources from a `acoular.TimeInOut` object.
+
+   :param source: the source object
+   :type source: instance of class `acoular.TimeInOut`
+
+   :returns: list of all sources
+   :rtype: list
+
+
+.. py:function:: get_signals_recursively(source)
+
+   Recursively get all signals from a `acoular.PointSource` object.
+
+   :param source: the source object
+   :type source: instance of class `acoular.TimeInOut`
+
+   :returns: list of all signals
+   :rtype: list
+
+
+.. py:function:: get_uncorrelated_noise_source_recursively(source)
+
+   Recursively get all uncorrelated noise sources from a `acoular.TimeInOut` object.
+
+   :param source: the source object
+   :type source: instance of class `acoular.TimeInOut`
+
+   :returns: list of all uncorrelated noise sources
+   :rtype: list
+
+
+.. py:function:: blockwise_transfer(ir, blocksize)
+
+   Calculate the transfer function of an impulse response in a blockwise manner.
+
+   :param ir: Impulse response.
+   :type ir: ndarray, shape (n_channels,n_samples)
+   :param blocksize: Block size for the FFT. The default is 256.
+   :type blocksize: int, optional
+
+   :returns: **tf** -- Power spectrum of the impulse response.
+   :rtype: ndarray, shape (n_channels, n_samples)
+
+

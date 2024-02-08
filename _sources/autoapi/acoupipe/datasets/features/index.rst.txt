@@ -1,0 +1,683 @@
+:orphan:
+
+:py:mod:`acoupipe.datasets.features`
+====================================
+
+.. py:module:: acoupipe.datasets.features
+
+
+Module Contents
+---------------
+
+.. py:class:: BaseFeatureCatalog
+
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+   BaseFeatureCatalog base class for handling feature funcs.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: TimeDataFeature
+
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+   TimeDataFeature class for handling time data.
+
+   .. attribute:: name
+
+      Name of the feature (default='time_data').
+
+      :type: str
+
+   .. attribute:: time_data
+
+      The source delivering the time data.
+
+      :type: instance of class acoular.SamplesGenerator
+
+   .. py:method:: get_feature_func()
+
+      Return the callable for calculating the time data.
+
+
+
+.. py:class:: TargetmapFeature
+
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+   BaseFeatureCatalog base class for handling feature funcs.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: SourcemapFeature
+
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+   SourcemapFeature class for handling the generation of sourcemaps obtained with microphone array methods.
+
+   .. attribute:: name
+
+      Name of the feature (default='sourcemap').
+
+      :type: str
+
+   .. attribute:: beamformer
+
+      The beamformer to calculate the sourcemap.
+
+      :type: instance of class acoular.BeamformerBase
+
+   .. attribute:: f
+
+      The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+
+      :type: float
+
+   .. attribute:: num
+
+      Controls the width of the frequency bands considered; defaults to
+      0 (single frequency line).
+
+      ===  =====================
+      num  frequency band width
+      ===  =====================
+      0    single frequency line
+      1    octave band
+      3    third-octave band
+      n    1/n-octave band
+      ===  =====================
+
+      :type: integer
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered. Is determined
+      automatically from attr:`f` and attr:`num`.
+
+      :type: list of tuples
+
+   .. py:method:: set_freq_limits()
+
+      Set the frequency limits of the beamformer so that the result is only calculated for necessary frequencies.
+
+
+   .. py:method:: get_feature_func()
+
+      Return the callable for calculating the sourcemap.
+
+
+
+.. py:class:: SpectraFeature
+
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: set_freq_limits()
+
+      Set the frequency limits of the spectra object so that the result is only calculated for necessary frequencies.
+
+
+
+.. py:class:: SpectrogramFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   SpectrogramFeature class for handling spectrogram features.
+
+   .. attribute:: name
+
+      Name of the feature (default='spectrogram').
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The object which calculates the spectrogram data.
+
+      :type: instance of class acoular.FFTSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: CSMFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   CSMFeature class for handling cross-spectral matrix calculation.
+
+   .. attribute:: name
+
+      Name of the feature (default='csm').
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The object which calculates the cross-spectral matrix.
+
+      :type: instance of class acoular.PowerSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: calc_csm1(sampler, freq_data, name)
+      :staticmethod:
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+
+      :returns: The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+      :rtype: numpy.array
+
+
+   .. py:method:: calc_csm2(sampler, freq_data, fidx, name)
+      :staticmethod:
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+      :param fidx: list of tuples containing the start and end indices of the frequency bands to be considered,
+                   by default None
+      :type fidx: list of tuples, optional
+
+      :returns: The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+                depending on the number of frequencies in fidx.
+      :rtype: numpy.array
+
+
+   .. py:method:: get_feature_func()
+
+      Return the callable for calculating the cross-spectral matrix.
+
+
+
+.. py:class:: CSMtriuFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: calc_csmtriu1(sampler, freq_data, name)
+      :staticmethod:
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+
+      :returns: The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+      :rtype: numpy.array
+
+
+   .. py:method:: calc_csmtriu2(sampler, freq_data, fidx, name)
+      :staticmethod:
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+      :param fidx: list of tuples containing the start and end indices of the frequency bands to be considered,
+                   by default None
+      :type fidx: list of tuples, optional
+
+      :returns: The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+                depending on the number of frequencies in fidx.
+      :rtype: numpy.array
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: EigmodeFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: calc_eigmode1(sampler, freq_data, name)
+      :staticmethod:
+
+      Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+
+      :returns: The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics).
+      :rtype: numpy.array
+
+
+   .. py:method:: calc_eigmode2(sampler, freq_data, fidx, name)
+      :staticmethod:
+
+      Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+      :param fidx: list of tuples containing the start and end indices of the frequency bands to be considered,
+                   by default None
+      :type fidx: list of tuples, optional
+
+      :returns: The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics) with numfreq
+                depending on the number of frequencies in fidx.
+      :rtype: numpy.array
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: LocFeature
+
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+   BaseFeatureCatalog base class for handling feature funcs.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: AnalyticSourceStrengthFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: EstimatedSourceStrengthFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: AnalyticNoiseStrengthFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: EstimatedNoiseStrengthFeature
+
+
+   Bases: :py:obj:`SpectraFeature`
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: BaseFeatureCollection
+
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+   BaseFeatureCollection base class for handling feature funcs.
+
+   .. attribute:: feature_funcs
+
+      List of feature_funcs.
+
+      :type: list
+
+   .. py:method:: add_feature_func(feature_func)
+
+      Add a feature_func to the BaseFeatureCollection.
+
+      :param feature_func: Feature to be added.
+      :type feature_func: str
+
+
+   .. py:method:: get_feature_funcs()
+
+      Get all feature_funcs of the BaseFeatureCollection.
+
+      :returns: List of feature_funcs.
+      :rtype: list
+
+
+
+.. py:class:: BaseFeatureCollectionBuilder
+
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+   BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.
+
+   .. attribute:: feature_collection
+
+      BaseFeatureCollection object.
+
+      :type: BaseFeatureCollection
+
+   .. py:method:: add_custom(feature_func)
+
+      Add a custom feature to the BaseFeatureCollection.
+
+      :param feature_func: Feature to be added.
+      :type feature_func: str
+
+
+   .. py:method:: build()
+
+      Build a BaseFeatureCollection.
+
+      :returns: BaseFeatureCollection object.
+      :rtype: BaseFeatureCollection
+
+
+

@@ -1,0 +1,354 @@
+:py:mod:`acoupipe.datasets.synthetic`
+=====================================
+
+.. py:module:: acoupipe.datasets.synthetic
+
+.. autoapi-nested-parse::
+
+   Contains classes for the generation of microphone array data from synthesized signals for acoustic testing applications.
+
+       Currently, the following dataset generators are available:
+
+       * :class:`DatasetSynthetic`: A simple and fast method that relies on synthetic white noise signals and spatially stationary sources radiating under anechoic conditions.
+
+   .. _default measurement setup:
+
+   .. figure:: ../../../../_static/msm_layout.png
+       :width: 750
+       :align: center
+
+       Default measurement setup used in the :py:mod:`acoupipe.datasets.synthetic` module.
+
+
+
+Module Contents
+---------------
+
+.. py:class:: DatasetSynthetic(mode='welch', mic_pos_noise=True, mic_sig_noise=True, snap_to_grid=False, signal_length=5, fs=13720.0, min_nsources=1, max_nsources=10, tasks=1, logger=None, config=None)
+
+
+   Bases: :py:obj:`acoupipe.datasets.base.DatasetBase`
+
+   `DatasetSynthetic` is a purely synthetic microphone array source case generator.
+
+   DatasetSynthetic relies on synthetic source signals from which the features are extracted and has been used in different publications,
+   e.g. :cite:`Kujawski2019`, :cite:`Kujawski2022`, :cite:`Feng2022`. The default virtual simulation setup consideres a 64 channel microphone
+   array and a planar observation area, as shown in the `default measurement setup`_ figure.
+
+   **Default environmental properties**
+
+   .. _Environmental Characteristics:
+
+   .. table:: Default Environmental Characteristics
+
+       ===================== ========================================
+       Environment           Anechoic, Resting, Homogeneous Fluid
+       Speed of sound        343 m/s
+       Microphone Array      Vogel's spiral, :math:`M=64`, Aperture Size 1 m
+       Observation Area      x,y in [-0.5,0.5], z=0.5
+       Source Type           Monopole
+       Source Signals        Uncorrelated White Noise (:math:`T=5\,s`)
+       ===================== ========================================
+
+   **Default FFT parameters**
+
+   The underlying default FFT parameters are:
+
+   .. table:: FFT Parameters
+
+       ===================== ========================================
+       Sampling Rate         He = 40, fs=13720 Hz
+       Block size            128 Samples
+       Block overlap         50 %
+       Windowing             von Hann / Hanning
+       ===================== ========================================
+
+
+   **Default randomized properties**
+
+   Several properties of the dataset are randomized for each source case when generating the data. Their respective distributions,
+   are closely related to :cite:`Herold2017`. As such, the the microphone positions are spatially disturbed
+   to account for uncertainties in the microphone placement. The number of sources, their positions, and strength is randomly chosen.
+   Uncorrelated white noise is added to the microphone channels by default.
+
+   .. table:: Randomized properties
+
+       ==================================================================   ===================================================
+       Sensor Position Deviation [m]                                        Bivariate normal distributed (:math:`\sigma = 0.001)`
+       No. of Sources                                                       Poisson distributed (:math:`\lambda=3`)
+       Source Positions [m]                                                 Bivariate normal distributed (:math:`\sigma = 0.1688`)
+       Source Strength (:math:`[{Pa}^2]` at reference position)               Rayleigh distributed (:math:`\sigma_{R}=5`)
+       Relative Noise Variance                                              Uniform distributed (:math:`10^{-6}`, :math:`0.1`)
+       ==================================================================   ===================================================
+
+   .. rubric:: Example
+
+   .. code-block:: python
+
+       from acoupipe.datasets.synthetic import DatasetSynthetic
+
+       dataset = DatasetSynthetic()
+       dataset_generator = dataset.generate_dataset(
+           features=["sourcemap", "loc", "f", "num"], # choose the features to extract
+           f=[1000,2000,3000], # choose the frequencies to extract
+           split='training', # choose the split of the dataset
+           size=10, # choose the size of the dataset
+           )
+
+       # get the first data sample
+       data = next(dataset_generator)
+
+       # print the keys of the dataset
+       print(data.keys())
+
+   **Initialization Parameters**
+
+   Initialize the DatasetSynthetic object.
+
+   The input parameters are passed to the DatasetSyntheticConfig object, which creates
+   all necessary objects for the simulation of microphone array data.
+
+   :param mode: Type of calculation method. Can be either :code:`welch`, :code:`analytic` or :code:`wishart`.
+                Defaults to :code:`welch`.
+   :type mode: str
+   :param mic_pos_noise: Apply positional noise to microphone geometry. Defaults to True.
+   :type mic_pos_noise: bool
+   :param mic_sig_noise: Apply additional uncorrelated white noise to microphone signals. Defaults to True.
+   :type mic_sig_noise: bool
+   :param snap_to_grid: Snap source locations to grid. The grid is defined in the config object as
+                        config.grid. Defaults to False.
+   :type snap_to_grid: bool
+   :param signal_length: Length of the signal in seconds. Defaults to 5 seconds.
+   :type signal_length: float
+   :param fs: Sampling frequency in Hz. Defaults to 13720 Hz.
+   :type fs: float
+   :param min_nsources: Minimum number of sources in the dataset. Defaults to 1.
+   :type min_nsources: int
+   :param max_nsources: Maximum number of sources in the dataset. Defaults to 10.
+   :type max_nsources: int
+   :param tasks: Number of parallel tasks. Defaults to 1.
+   :type tasks: int
+   :param logger: Logger object. Defaults to None.
+   :type logger: logging.Logger
+   :param config: Configuration object. Defaults to None. If None, a default configuration
+                  object is created.
+   :type config: DatasetSyntheticConfig
+
+   .. py:method:: get_feature_collection(features, f, num)
+
+      Get the feature collection of the dataset.
+
+      :returns: BaseFeatureCollection object.
+      :rtype: BaseFeatureCollection
+
+
+
+.. py:class:: DatasetSyntheticConfig(**kwargs)
+
+
+   Bases: :py:obj:`acoupipe.datasets.base.ConfigBase`
+
+   Default Configuration class.
+
+   .. attribute:: fs
+
+      Sampling frequency in Hz.
+
+      :type: float
+
+   .. attribute:: signal_length
+
+      Length of the source signals in seconds.
+
+      :type: float
+
+   .. attribute:: max_nsources
+
+      Maximum number of sources.
+
+      :type: int
+
+   .. attribute:: min_nsources
+
+      Minimum number of sources.
+
+      :type: int
+
+   .. attribute:: mode
+
+      Type of CSM calculation method.
+
+      :type: str
+
+   .. attribute:: mic_pos_noise
+
+      Apply positional noise to microphone geometry.
+
+      :type: bool
+
+   .. attribute:: mic_sig_noise
+
+      Apply signal noise to microphone signals.
+
+      :type: bool
+
+   .. attribute:: snap_to_grid
+
+      Snap source locations to grid.
+
+      :type: bool
+
+   .. attribute:: fft_params
+
+      FFT parameters with default items :code:`block_size=128`,
+      :code:`overlap="50%"`, :code:`window="Hanning"` and :code:`precision="complex64"`.
+
+      :type: dict
+
+   .. attribute:: env
+
+      Instance of acoular.Environment defining the environmental coditions,
+      i.e. the speed of sound.
+
+      :type: ac.Environment
+
+   .. attribute:: mics
+
+      Instance of acoular.MicGeom defining the microphone array geometry.
+
+      :type: ac.MicGeom
+
+   .. attribute:: noisy_mics
+
+      a second instance of acoular.MicGeom defining the noisy microphone array geometry.
+
+      :type: ac.MicGeom
+
+   .. attribute:: obs
+
+      Instance of acoular.MicGeom defining the observation point which is used as the
+      reference position when calculating the source strength.
+
+      :type: ac.MicGeom
+
+   .. attribute:: grid
+
+      Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
+      the source map and on which the targetmap feature is calculated.
+
+      :type: ac.RectGrid
+
+   .. attribute:: source_grid
+
+      Instance of acoular.Grid. Only relevant if :attr:`snap_to_grid` is :code:`True`.
+      Then, the source locations are snapped to this grid. Default is a copy of :attr:`grid`.
+
+      :type: ac.Grid
+
+   .. attribute:: beamformer
+
+      Instance of acoular.BeamformerBase defining the beamformer used to calculate the sourcemap.
+
+      :type: ac.BeamformerBase
+
+   .. attribute:: steer
+
+      Instance of acoular.SteeringVector defining the steering vector used to calculate the sourcemap.
+
+      :type: ac.SteeringVector
+
+   .. attribute:: freq_data
+
+      Instance of acoular.PowerSpectra defining the frequency domain data. Only used if :attr:`mode` is
+      :code:`welch`. Otherwise, an instance of :class:`acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic`
+      is used.
+
+      :type: ac.PowerSpectra
+
+   .. attribute:: fft_spectra
+
+      Instance of acoular.FFTSpectra used to calculate the spectrogram data. Only used if :attr:`mode` is
+      :code:`welch`.
+
+      :type: ac.FFTSpectra
+
+   .. attribute:: fft_obs_spectra
+
+      Instance of acoular.PowerSpectra used to calculate the source strength at the observation point given in
+      :attr:`obs`.
+
+      :type: ac.PowerSpectra
+
+   .. attribute:: signals
+
+      List of signals.
+
+      :type: list
+
+   .. attribute:: sources
+
+      List of sources.
+
+      :type: list
+
+   .. attribute:: mic_noise_signal
+
+      Noise signal configuration object.
+
+      :type: ac.SignalGenerator
+
+   .. attribute:: mic_noise_source
+
+      Noise source configuration object.
+
+      :type: ac.UncorrelatedNoiseSource
+
+   .. attribute:: micgeom_sampler
+
+      Sampler that applies positional noise to the microphone geometry.
+
+      :type: sp.MicGeomSampler
+
+   .. attribute:: location_sampler
+
+      Source location sampler that samples the locations of the sound sources.
+
+      :type: sp.LocationSampler
+
+   .. attribute:: rms_sampler
+
+      Signal RMS sampler that samples the RMS values of the source signals.
+
+      :type: sp.ContainerSampler
+
+   .. attribute:: nsources_sampler
+
+      Number of sources sampler.
+
+      :type: sp.NumericAttributeSampler
+
+   .. attribute:: mic_noise_sampler
+
+      Microphone noise sampler that creates random uncorrelated noise at the microphones.
+
+      :type: sp.ContainerSampler
+
+   .. py:method:: get_sampler()
+
+      Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
+
+      this function has to be manually defined in a dataset subclass.
+      It includes the sampler objects as values. The key defines the idx in the sample order.
+
+      e.g.:
+      >>> sampler = {
+      >>>     0 : BaseSampler(...),
+      >>>     1 : BaseSampler(...),
+      >>>     ...
+      >>> }
+
+      :returns: dictionary containing the sampler objects
+      :rtype: dict
+
+
+

@@ -1,0 +1,41 @@
+:orphan:
+
+:py:mod:`acoupipe.datasets.spectra_analytic`
+============================================
+
+.. py:module:: acoupipe.datasets.spectra_analytic
+
+
+Module Contents
+---------------
+
+.. py:class:: PowerSpectraAnalytic
+
+
+   Bases: :py:obj:`acoular.PowerSpectraImport`
+
+   Provides a dummy class for using pre-calculated cross-spectral
+   matrices.
+
+   This class does not calculate the cross-spectral matrix. Instead,
+   the user can inject one or multiple existing CSMs by setting the
+   :attr:`csm` attribute. This can be useful when algorithms shall be
+   evaluated with existing CSM matrices.
+   The frequency or frequencies contained by the CSM must be set via the
+   attr:`frequencies` attribute. The attr:`numchannels` attributes
+   is determined on the basis of the CSM shape.
+   In contrast to the PowerSpectra object, the attributes
+   :attr:`sample_freq`, :attr:`time_data`, :attr:`source`,
+   :attr:`block_size`, :attr:`calib`, :attr:`window`,
+   :attr:`overlap`, :attr:`cached`, and :attr:`num_blocks`
+   have no functionality.
+
+   .. py:method:: fftfreq()
+
+      Return the Discrete Fourier Transform sample frequencies.
+
+      :returns: **f** -- Array of length *block_size/2+1* containing the sample frequencies.
+      :rtype: ndarray
+
+
+

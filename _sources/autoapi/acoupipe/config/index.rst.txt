@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`acoupipe.config`
+=========================
+
+.. py:module:: acoupipe.config
+
+

@@ -1,0 +1,8 @@
+:orphan:
+
+:py:mod:`acoupipe.datasets.micgeom`
+===================================
+
+.. py:module:: acoupipe.datasets.micgeom
+
+

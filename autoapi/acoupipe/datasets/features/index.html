@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>acoupipe.datasets.features &mdash; AcouPipe 23.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=eafc0fe6" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=f5aee49a"></script>
+        <script src="../../../../_static/doctools.js?v=888ff710"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active"><code class="xref py py-mod docutils literal notranslate"><span class="pre">acoupipe.datasets.features</span></code></li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/acoupipe/datasets/features/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-acoupipe.datasets.features">
+<span id="acoupipe-datasets-features"></span><h1><a class="reference internal" href="#module-acoupipe.datasets.features" title="acoupipe.datasets.features"><code class="xref py py-mod docutils literal notranslate"><span class="pre">acoupipe.datasets.features</span></code></a><a class="headerlink" href="#module-acoupipe.datasets.features" title="Link to this heading"></a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCatalog">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">BaseFeatureCatalog</span></span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCatalog" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>BaseFeatureCatalog base class for handling feature funcs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCatalog.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCatalog.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCatalog.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCatalog.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.TimeDataFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">TimeDataFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.TimeDataFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.BaseFeatureCatalog" title="acoupipe.datasets.features.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>TimeDataFeature class for handling time data.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.TimeDataFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.TimeDataFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature (default=’time_data’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.TimeDataFeature.time_data">
+<span class="sig-name descname"><span class="pre">time_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.TimeDataFeature.time_data" title="Link to this definition"></a></dt>
+<dd><p>The source delivering the time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.SamplesGenerator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.TimeDataFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.TimeDataFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Return the callable for calculating the time data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.TargetmapFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">TargetmapFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.TargetmapFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.BaseFeatureCatalog" title="acoupipe.datasets.features.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>BaseFeatureCatalog base class for handling feature funcs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.TargetmapFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.TargetmapFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.TargetmapFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.TargetmapFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">SourcemapFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.BaseFeatureCatalog" title="acoupipe.datasets.features.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>SourcemapFeature class for handling the generation of sourcemaps obtained with microphone array methods.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature (default=’sourcemap’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature.beamformer">
+<span class="sig-name descname"><span class="pre">beamformer</span></span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature.beamformer" title="Link to this definition"></a></dt>
+<dd><p>The beamformer to calculate the sourcemap.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BeamformerBase</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature.f" title="Link to this definition"></a></dt>
+<dd><p>The center frequency or list of frequencies of the dataset. If None, all frequencies are included.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature.num" title="Link to this definition"></a></dt>
+<dd><p>Controls the width of the frequency bands considered; defaults to
+0 (single frequency line).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>num</p></th>
+<th class="head"><p>frequency band width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>single frequency line</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>octave band</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>third-octave band</p></td>
+</tr>
+<tr class="row-odd"><td><p>n</p></td>
+<td><p>1/n-octave band</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered. Is determined
+automatically from attr:<cite>f</cite> and attr:<cite>num</cite>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature.set_freq_limits">
+<span class="sig-name descname"><span class="pre">set_freq_limits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature.set_freq_limits" title="Link to this definition"></a></dt>
+<dd><p>Set the frequency limits of the beamformer so that the result is only calculated for necessary frequencies.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SourcemapFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.SourcemapFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Return the callable for calculating the sourcemap.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectraFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">SpectraFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectraFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.BaseFeatureCatalog" title="acoupipe.datasets.features.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectraFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectraFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectraFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectraFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The frequency data to calculate the feature for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BaseSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectraFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectraFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectraFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectraFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectraFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectraFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectraFeature.set_freq_limits">
+<span class="sig-name descname"><span class="pre">set_freq_limits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.SpectraFeature.set_freq_limits" title="Link to this definition"></a></dt>
+<dd><p>Set the frequency limits of the spectra object so that the result is only calculated for necessary frequencies.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectrogramFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">SpectrogramFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectrogramFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>SpectrogramFeature class for handling spectrogram features.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectrogramFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectrogramFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature (default=’spectrogram’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectrogramFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectrogramFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The object which calculates the spectrogram data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.FFTSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectrogramFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectrogramFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectrogramFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectrogramFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectrogramFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.SpectrogramFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.SpectrogramFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.SpectrogramFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">CSMFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>CSMFeature class for handling cross-spectral matrix calculation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature (default=’csm’).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The object which calculates the cross-spectral matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.PowerSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.calc_csm1">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calc_csm1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.calc_csm1" title="Link to this definition"></a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>freq_data</strong> (<em>instance</em><em> of </em><em>class acoular.PowerSpectra</em>) – power spectra to calculate the csm feature</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.calc_csm2">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calc_csm2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.calc_csm2" title="Link to this definition"></a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq_data</strong> (<em>instance</em><em> of </em><em>class acoular.PowerSpectra</em>) – power spectra to calculate the csm feature</p></li>
+<li><p><strong>fidx</strong> (<em>list</em><em> of </em><em>tuples</em><em>, </em><em>optional</em>) – list of tuples containing the start and end indices of the frequency bands to be considered,
+by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+depending on the number of frequencies in fidx.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.CSMFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Return the callable for calculating the cross-spectral matrix.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">CSMtriuFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The frequency data to calculate the feature for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BaseSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.calc_csmtriu1">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calc_csmtriu1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.calc_csmtriu1" title="Link to this definition"></a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>freq_data</strong> (<em>instance</em><em> of </em><em>class acoular.PowerSpectra</em>) – power spectra to calculate the csm feature</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.calc_csmtriu2">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calc_csmtriu2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.calc_csmtriu2" title="Link to this definition"></a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq_data</strong> (<em>instance</em><em> of </em><em>class acoular.PowerSpectra</em>) – power spectra to calculate the csm feature</p></li>
+<li><p><strong>fidx</strong> (<em>list</em><em> of </em><em>tuples</em><em>, </em><em>optional</em>) – list of tuples containing the start and end indices of the frequency bands to be considered,
+by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+depending on the number of frequencies in fidx.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.CSMtriuFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.CSMtriuFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">EigmodeFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The frequency data to calculate the feature for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BaseSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.calc_eigmode1">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calc_eigmode1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.calc_eigmode1" title="Link to this definition"></a></dt>
+<dd><p>Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>freq_data</strong> (<em>instance</em><em> of </em><em>class acoular.PowerSpectra</em>) – power spectra to calculate the csm feature</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.calc_eigmode2">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">calc_eigmode2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.calc_eigmode2" title="Link to this definition"></a></dt>
+<dd><p>Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>freq_data</strong> (<em>instance</em><em> of </em><em>class acoular.PowerSpectra</em>) – power spectra to calculate the csm feature</p></li>
+<li><p><strong>fidx</strong> (<em>list</em><em> of </em><em>tuples</em><em>, </em><em>optional</em>) – list of tuples containing the start and end indices of the frequency bands to be considered,
+by default None</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics) with numfreq
+depending on the number of frequencies in fidx.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EigmodeFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.EigmodeFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.LocFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">LocFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.LocFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.BaseFeatureCatalog" title="acoupipe.datasets.features.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>BaseFeatureCatalog base class for handling feature funcs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.LocFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.LocFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.LocFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.LocFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticSourceStrengthFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">AnalyticSourceStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticSourceStrengthFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticSourceStrengthFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticSourceStrengthFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticSourceStrengthFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticSourceStrengthFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The frequency data to calculate the feature for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BaseSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticSourceStrengthFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticSourceStrengthFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticSourceStrengthFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticSourceStrengthFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticSourceStrengthFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticSourceStrengthFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticSourceStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticSourceStrengthFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedSourceStrengthFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">EstimatedSourceStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedSourceStrengthFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedSourceStrengthFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedSourceStrengthFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedSourceStrengthFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedSourceStrengthFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The frequency data to calculate the feature for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BaseSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedSourceStrengthFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedSourceStrengthFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedSourceStrengthFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedSourceStrengthFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedSourceStrengthFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedSourceStrengthFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedSourceStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedSourceStrengthFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticNoiseStrengthFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">AnalyticNoiseStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticNoiseStrengthFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticNoiseStrengthFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticNoiseStrengthFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticNoiseStrengthFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticNoiseStrengthFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The frequency data to calculate the feature for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BaseSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticNoiseStrengthFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticNoiseStrengthFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticNoiseStrengthFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticNoiseStrengthFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticNoiseStrengthFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticNoiseStrengthFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.AnalyticNoiseStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.AnalyticNoiseStrengthFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedNoiseStrengthFeature">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">EstimatedNoiseStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedNoiseStrengthFeature" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.features.SpectraFeature" title="acoupipe.datasets.features.SpectraFeature"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></a></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedNoiseStrengthFeature.name">
+<span class="sig-name descname"><span class="pre">name</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedNoiseStrengthFeature.name" title="Link to this definition"></a></dt>
+<dd><p>Name of the feature.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedNoiseStrengthFeature.freq_data">
+<span class="sig-name descname"><span class="pre">freq_data</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedNoiseStrengthFeature.freq_data" title="Link to this definition"></a></dt>
+<dd><p>The frequency data to calculate the feature for.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>instance of class acoular.BaseSpectra</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedNoiseStrengthFeature.f">
+<span class="sig-name descname"><span class="pre">f</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedNoiseStrengthFeature.f" title="Link to this definition"></a></dt>
+<dd><p>the frequency (or center frequency) of interest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedNoiseStrengthFeature.num">
+<span class="sig-name descname"><span class="pre">num</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedNoiseStrengthFeature.num" title="Link to this definition"></a></dt>
+<dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedNoiseStrengthFeature.fidx">
+<span class="sig-name descname"><span class="pre">fidx</span></span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedNoiseStrengthFeature.fidx" title="Link to this definition"></a></dt>
+<dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of tuples</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.EstimatedNoiseStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.EstimatedNoiseStrengthFeature.get_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollection">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">BaseFeatureCollection</span></span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollection" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>BaseFeatureCollection base class for handling feature funcs.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollection.feature_funcs">
+<span class="sig-name descname"><span class="pre">feature_funcs</span></span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollection.feature_funcs" title="Link to this definition"></a></dt>
+<dd><p>List of feature_funcs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollection.add_feature_func">
+<span class="sig-name descname"><span class="pre">add_feature_func</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollection.add_feature_func" title="Link to this definition"></a></dt>
+<dd><p>Add a feature_func to the BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>feature_func</strong> (<em>str</em>) – Feature to be added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollection.get_feature_funcs">
+<span class="sig-name descname"><span class="pre">get_feature_funcs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollection.get_feature_funcs" title="Link to this definition"></a></dt>
+<dd><p>Get all feature_funcs of the BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of feature_funcs.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollectionBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.features.</span></span><span class="sig-name descname"><span class="pre">BaseFeatureCollectionBuilder</span></span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollectionBuilder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollectionBuilder.feature_collection">
+<span class="sig-name descname"><span class="pre">feature_collection</span></span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollectionBuilder.feature_collection" title="Link to this definition"></a></dt>
+<dd><p>BaseFeatureCollection object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#acoupipe.datasets.features.BaseFeatureCollection" title="acoupipe.datasets.features.BaseFeatureCollection">BaseFeatureCollection</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollectionBuilder.add_custom">
+<span class="sig-name descname"><span class="pre">add_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollectionBuilder.add_custom" title="Link to this definition"></a></dt>
+<dd><p>Add a custom feature to the BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>feature_func</strong> (<em>str</em>) – Feature to be added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.features.BaseFeatureCollectionBuilder.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.features.BaseFeatureCollectionBuilder.build" title="Link to this definition"></a></dt>
+<dd><p>Build a BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>BaseFeatureCollection object.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#acoupipe.datasets.features.BaseFeatureCollection" title="acoupipe.datasets.features.BaseFeatureCollection">BaseFeatureCollection</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

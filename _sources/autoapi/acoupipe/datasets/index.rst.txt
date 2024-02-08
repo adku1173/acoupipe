@@ -1,0 +1,22 @@
+:py:mod:`acoupipe.datasets`
+===========================
+
+.. py:module:: acoupipe.datasets
+
+.. autoapi-nested-parse::
+
+   The datasets subpackage contains default classes to create acoustical datasets with microphone array data.
+
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   base/index.rst
+   experimental/index.rst
+   synthetic/index.rst
+
+

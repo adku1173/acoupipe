@@ -1,0 +1,32 @@
+:py:mod:`acoupipe`
+==================
+
+.. py:module:: acoupipe
+
+.. autoapi-nested-parse::
+
+   The AcouPipe module extends the computational pipeline-based concept of Acoular_ and provides additional tools that can be helpful to generate realizations of features in a predefined random process.
+
+
+
+Subpackages
+-----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 3
+
+   datasets/index.rst
+
+
+Submodules
+----------
+.. toctree::
+   :titlesonly:
+   :maxdepth: 1
+
+   loader/index.rst
+   pipeline/index.rst
+   sampler/index.rst
+   writer/index.rst
+
+
