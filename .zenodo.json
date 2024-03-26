@@ -1,5 +1,5 @@
 {
-  "title": "Acoular – Acoustic testing and source mapping software",
+  "title": "Acoupipe – A framework for generating large-scale microphone array data for machine learning",
   "license": "BSD",
   "keywords": [
     "acoustics",
