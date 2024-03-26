@@ -13,8 +13,10 @@ authors = [
     {name = "Acoular Development Team", email = "info@acoular.org"},
 ]
 keywords = [
-    "deep learning",
+    "acoustics",
     "beamforming",
+    "deep learning",
+    "machine learning",
     "microphone array",
     "sound source localization",
     "sound source characterization",
