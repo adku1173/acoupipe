@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "acoupipe"
-version = "23.11" # Date based release versioning
+version = "24.04" # Date based release versioning
 description = "Library for the generation of large-scale microphone array data for machine learning"
 readme = "README.rst"
 license = {file = "LICENSE.txt"}
@@ -29,7 +29,7 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only"    
 ]
 dependencies = [
-	'acoular>=23.11',
+	'acoular>=24.03',
 	'ray',
 	'h5py',
 	'tqdm',
