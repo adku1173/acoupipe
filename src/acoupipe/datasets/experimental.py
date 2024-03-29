@@ -30,10 +30,10 @@ from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSynthetic
 from acoupipe.datasets.utils import blockwise_transfer, get_uncorrelated_noise_source_recursively
 
 link_address = {
-"A1" : "https://depositonce.tu-berlin.de/bitstreams/76798c39-5ced-43f4-be09-7c0c30abdd81/download",
-"A2" : "https://depositonce.tu-berlin.de/bitstreams/27b81b48-24a7-4db8-acc0-5dc085c94caf/download",
-"D1" : "https://depositonce.tu-berlin.de/bitstreams/f812254f-185a-4e92-aff7-9daaebfe6976/download",
-"R2" : "https://depositonce.tu-berlin.de/bitstreams/2b016da5-073d-4bb1-a05d-d1337aba00a1/download",
+"A1" : "https://depositonce.tu-berlin.de/bitstreams/67156d9c-224d-4d07-b923-be0240e7b48d/download",
+"A2" : "https://depositonce.tu-berlin.de/bitstreams/cbb462d7-cb28-4803-98d8-84b03aad0d5f/download",
+"D1" : "https://depositonce.tu-berlin.de/bitstreams/86680ee5-ae0c-4b38-8ef8-805652a21ded/download",
+"R2" : "https://depositonce.tu-berlin.de/bitstreams/0fc5f5a4-a2f7-4eb7-b796-7114260e5e86/download",
 }
 
 file_hash = {
