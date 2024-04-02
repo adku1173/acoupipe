@@ -7,7 +7,7 @@ ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 ENV PIP_ROOT_USER_ACTION=ignore
 
 # custom acoular version
-RUN pip install acoular>=23.11
+RUN pip install acoular>=24.03
 
 # copy needed scripts to workingdir
 COPY . /tmp/acoupipe
@@ -40,7 +40,7 @@ RUN bash -c 'echo "$(pip --version)"'
 #RUN pip install /tmp/acoular
 #RUN rm -r /tmp/acoular
 
-RUN pip install acoular>=23.11
+RUN pip install acoular>=24.03
 
 # copy needed scripts to workingdir
 COPY . /tmp/acoupipe
