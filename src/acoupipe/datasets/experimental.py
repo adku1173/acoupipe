@@ -351,7 +351,7 @@ class MIRACLEFeatureCollectionBuilder(DatasetSyntheticFeatureCollectionBuilder):
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     srir_dir = Either(Instance(Path), Str, None)
-    scenario = Either("A1","D1","A2","R2", desc="experimental configuration")
+    scenario = Either("A1","D1","A2","R2", default="A2", desc="experimental configuration")
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc="reference microphone index (default: index of the centermost mic)")
@@ -368,8 +368,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     def _get_filename(self):
         return self._filename
 
-    @observe("srir_dir,scenario")
-    def set_filename(self, event):
+    def set_filename(self):
         """Set the filename of the SRIR file according to the scenario and srir_dir."""
         if link_address.get(self.scenario) is not None:
             self._filename = pooch.retrieve(
@@ -379,12 +378,16 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 known_hash=file_hash[self.scenario],
                 progressbar=True,
             )
+            print(f"Downloaded {self.scenario} dataset to {self._filename}.")
+        else:
+            raise ValueError(f"Invalid scenario {self.scenario}.")
 
     @observe("mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, ref_mic_index, filename", post_init=True)
     def recreate_acoular_pipeline(self, event):
         self.create_acoular_pipeline()
 
     def create_acoular_pipeline(self):
+        self.set_filename()
         self.env = self.create_env()
         self.mics = self.create_mics()
         self.noisy_mics = self.mics
