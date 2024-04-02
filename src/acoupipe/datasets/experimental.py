@@ -30,17 +30,17 @@ from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSynthetic
 from acoupipe.datasets.utils import blockwise_transfer, get_uncorrelated_noise_source_recursively
 
 link_address = {
-"A1" : "https://depositonce.tu-berlin.de/bitstreams/76798c39-5ced-43f4-be09-7c0c30abdd81/download",
-"A2" : "https://depositonce.tu-berlin.de/bitstreams/27b81b48-24a7-4db8-acc0-5dc085c94caf/download",
-"D1" : "https://depositonce.tu-berlin.de/bitstreams/f812254f-185a-4e92-aff7-9daaebfe6976/download",
-"R2" : "https://depositonce.tu-berlin.de/bitstreams/2b016da5-073d-4bb1-a05d-d1337aba00a1/download",
+"A1" : "https://depositonce.tu-berlin.de/bitstreams/67156d9c-224d-4d07-b923-be0240e7b48d/download",
+"A2" : "https://depositonce.tu-berlin.de/bitstreams/cbb462d7-cb28-4803-98d8-84b03aad0d5f/download",
+"D1" : "https://depositonce.tu-berlin.de/bitstreams/86680ee5-ae0c-4b38-8ef8-805652a21ded/download",
+"R2" : "https://depositonce.tu-berlin.de/bitstreams/0fc5f5a4-a2f7-4eb7-b796-7114260e5e86/download",
 }
 
 file_hash = {
-"A1" : "841670db04abedb8da413af335ef62318396cd213ec2eeccb90e3f9d766fc369",
-"A2" : "92c70c9f81582e93f645ea13f2a9c67a75b4788d44b6e5ca2b701df37e5881c8",
-"D1" : "bcc0c35b31eb623e83f2246d7c3405515755cf2dacb803b1876bf77f6c747183",
-"R2" : "f7dd09cb5e55601c11fecc813bdd3aa91b781e1d0a94ca16014340814b5edfe9",
+"A1" : "b0e053319fabad6964e2275f4bcd2dcfc6f0dc5f463e0324b7ad107e76612f88",
+"A2" : "c021cc57bb51237283c5303e235495edfea75b1f0eaba4a8f988942b9913e7ff",
+"D1" : "d888201065a43f436080da470f025c245b1a8030e08ea7a9dce1dc6b160761ee",
+"R2" : "479af6bfdd403c855d53304b291c4878c1f8d4a4482836de77677c03ffb6bbaa",
 }
 
 class DatasetMIRACLE(DatasetBase):
