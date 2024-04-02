@@ -351,7 +351,7 @@ class MIRACLEFeatureCollectionBuilder(DatasetSyntheticFeatureCollectionBuilder):
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     srir_dir = Either(Instance(Path), Str, None)
-    scenario = Either("A1","D1","A2","R2", desc="experimental configuration")
+    scenario = Either("A1","D1","A2","R2", default="A1", desc="experimental configuration")
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc="reference microphone index (default: index of the centermost mic)")
@@ -366,6 +366,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 desc="FFT parameters")
 
     def _get_filename(self):
+        if self._filename == "":
+            self.set_filename(None)
         return self._filename
 
     @observe("srir_dir,scenario")
@@ -379,6 +381,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 known_hash=file_hash[self.scenario],
                 progressbar=True,
             )
+        else:
+            raise ValueError(f"Invalid scenario {self.scenario}.")
 
     @observe("mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, ref_mic_index, filename", post_init=True)
     def recreate_acoular_pipeline(self, event):
