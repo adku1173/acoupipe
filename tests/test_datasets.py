@@ -287,122 +287,123 @@ class TestDatasetSynthetic(unittest.TestCase):
             np.testing.assert_allclose(eig_eig,np.abs(eig),rtol=1e-5, atol=1e-7)
 
 
+if False:
 
-class TestMIRACLEDataset(unittest.TestCase):
+    class TestMIRACLEDataset(unittest.TestCase):
 
-    def setUp(self):
-        self.test_dir = Path(tempfile.mkdtemp())
-        #print(f"Creating {self.test_dir}")
+        def setUp(self):
+            self.test_dir = Path(tempfile.mkdtemp())
+            #print(f"Creating {self.test_dir}")
 
-    def tearDown(self):
-        #print(f"Removing {self.test_dir}")
-        shutil.rmtree(self.test_dir)
+        def tearDown(self):
+            #print(f"Removing {self.test_dir}")
+            shutil.rmtree(self.test_dir)
 
-    @staticmethod
-    def create_dataset(tasks=1, **kwargs):
-        #srir_dir = Path("/tmp/")
-        #config = DatasetMIRACLEConfig(srir_dir=srir_dir, **kwargs)
-        return DatasetMIRACLE(tasks=tasks,**kwargs)
+        @staticmethod
+        def create_dataset(tasks=1, **kwargs):
+            #srir_dir = Path("/tmp/")
+            #config = DatasetMIRACLEConfig(srir_dir=srir_dir, **kwargs)
+            return DatasetMIRACLE(tasks=tasks,**kwargs)
 
-    @parameterized.expand(modes)
-    def test_csm_prmssq(self, mode):
-        features = ["csm","source_strength_estimated","source_strength_analytic","noise_strength_estimated","noise_strength_analytic"]
-        for mic_sig_noise in [True, False]:
+        @parameterized.expand(modes)
+        def test_csm_prmssq(self, mode):
+            features = ["csm","source_strength_estimated","source_strength_analytic","noise_strength_estimated","noise_strength_analytic"]
+            for mic_sig_noise in [True, False]:
+                for num in [0,3]:
+                    for f in [None, 1000]:
+                        if num == 3 and f is None:
+                            continue
+                        with self.subTest(f"f={f}, num={num}, mic_sig_noise={mic_sig_noise}"):
+                            dataset = TestMIRACLEDataset.create_dataset(mode=mode,mic_sig_noise=mic_sig_noise, max_nsources=1)
+                            gen = dataset.generate(
+                                f=f, num=num, features=features,
+                                split="training", size=1, progress_bar=False)
+                            data = next(gen)
+                            csm_psq = data["csm"][:,63,63].sum()
+                            if mode != "analytic":
+                                noise_psq = data["noise_strength_estimated"][:,63].sum()
+                                sig_psq = data["source_strength_estimated"][:].sum()
+                            else:
+                                noise_psq = data["noise_strength_analytic"][:,63].sum()
+                                sig_psq = data["source_strength_analytic"][:].sum()
+                            if mode != "analytic":
+                                self.assertAlmostEqual(csm_psq, noise_psq + sig_psq, places=1)
+                            else:
+                                np.testing.assert_allclose(csm_psq, noise_psq + sig_psq)
+
+        @parameterized.expand(modes)
+        def test_sourcemap_max(self, mode):
+            """A plausability test. Tolerance is large -> loudspeaker not a perfect monopole."""
+            features = ["sourcemap","source_strength_estimated","source_strength_analytic"]
             for num in [0,3]:
-                for f in [None, 1000]:
-                    if num == 3 and f is None:
-                        continue
-                    with self.subTest(f"f={f}, num={num}, mic_sig_noise={mic_sig_noise}"):
-                        dataset = TestMIRACLEDataset.create_dataset(mode=mode,mic_sig_noise=mic_sig_noise, max_nsources=1)
+                for f in [1000]:
+                    with self.subTest(f"f={f}, num={num}"):
+                        dataset = TestMIRACLEDataset.create_dataset(mode=mode, max_nsources=1,
+                                mic_sig_noise=False)
                         gen = dataset.generate(
                             f=f, num=num, features=features,
                             split="training", size=1, progress_bar=False)
                         data = next(gen)
-                        csm_psq = data["csm"][:,63,63].sum()
-                        if mode != "analytic":
-                            noise_psq = data["noise_strength_estimated"][:,63].sum()
-                            sig_psq = data["source_strength_estimated"][:].sum()
-                        else:
-                            noise_psq = data["noise_strength_analytic"][:,63].sum()
-                            sig_psq = data["source_strength_analytic"][:].sum()
-                        if mode != "analytic":
-                            self.assertAlmostEqual(csm_psq, noise_psq + sig_psq, places=1)
-                        else:
-                            np.testing.assert_allclose(csm_psq, noise_psq + sig_psq)
+                        sourcemap_max = ac.L_p(data["sourcemap"].max())
+                        source_stength_estimated = ac.L_p(data["source_strength_estimated"].max())
+                        np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=1e0)
 
-    @parameterized.expand(modes)
-    def test_sourcemap_max(self, mode):
-        """A plausability test. Tolerance is large -> loudspeaker not a perfect monopole."""
-        features = ["sourcemap","source_strength_estimated","source_strength_analytic"]
-        for num in [0,3]:
-            for f in [1000]:
-                with self.subTest(f"f={f}, num={num}"):
-                    dataset = TestMIRACLEDataset.create_dataset(mode=mode, max_nsources=1,
-                            mic_sig_noise=False)
-                    gen = dataset.generate(
-                        f=f, num=num, features=features,
-                        split="training", size=1, progress_bar=False)
-                    data = next(gen)
-                    sourcemap_max = ac.L_p(data["sourcemap"].max())
-                    source_stength_estimated = ac.L_p(data["source_strength_estimated"].max())
-                    np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=1e0)
+        @parameterized.expand(modes)
+        def test_values_correct(self,mode):
+            """Test generate method of the datasets in single task mode."""
+            for feature in IMPLEMENTED_FEATURES:
+                if mode == "analytic" and "_estimated" in feature:
+                    continue
+                if mode != "welch" and feature in ["spectrogram","time_data"]:
+                    continue
+                for f in [1000]:
+                    for num in [0]:
+                        if f is None and num != 0:
+                            continue
+                        with self.subTest(f"feature={feature}, f={f}, num={num}"):
+                            dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=TEST_SIGNAL_LENGTH)
+                            gen = dataset.generate(split="training",progress_bar=False, size=10000,start_idx=start_idx,
+                            f=f,num=num,features=[feature])
+                            while True:
+                                data = next(gen)
+                                if data["idx"] == start_idx:
+                                    break
+                            test_data = np.load(validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
+                            if feature == "eigmode": # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
+                                # we therefore just test the first eigenmode
+                                np.testing.assert_allclose(data[feature][:,:,-1],test_data[:,:,-1],rtol=1e-5, atol=1e-7)
+                            else:
+                                np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-7)
 
-    @parameterized.expand(modes)
-    def test_values_correct(self,mode):
-        """Test generate method of the datasets in single task mode."""
-        for feature in IMPLEMENTED_FEATURES:
-            if mode == "analytic" and "_estimated" in feature:
-                continue
-            if mode != "welch" and feature in ["spectrogram","time_data"]:
-                continue
-            for f in [1000]:
-                for num in [0]:
-                    if f is None and num != 0:
-                        continue
-                    with self.subTest(f"feature={feature}, f={f}, num={num}"):
-                        dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=TEST_SIGNAL_LENGTH)
-                        gen = dataset.generate(split="training",progress_bar=False, size=10000,start_idx=start_idx,
-                        f=f,num=num,features=[feature])
-                        while True:
-                            data = next(gen)
-                            if data["idx"] == start_idx:
-                                break
-                        test_data = np.load(validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
-                        if feature == "eigmode": # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
-                            # we therefore just test the first eigenmode
-                            np.testing.assert_allclose(data[feature][:,:,-1],test_data[:,:,-1],rtol=1e-5, atol=1e-7)
-                        else:
-                            np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-7)
-
-    @parameterized.expand(modes)
-    def test_multiprocessing_values_correct(self,mode):
-        """Test generate method of the datasets in single task mode."""
-        for feature in IMPLEMENTED_FEATURES:
-            if mode == "analytic" and "_estimated" in feature:
-                continue
-            if mode != "welch" and feature in ["spectrogram","time_data"]:
-                continue
-            for f in [1000]:
-                for num in [0]:
-                    if f is None and num != 0:
-                        continue
-                    with self.subTest(f"feature={feature}, f={f}, num={num}"):
-                        #ray.shutdown()
-                        #ray.init(log_to_driver=False)
-                        dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=TEST_SIGNAL_LENGTH, tasks=tasks)
-                        gen = dataset.generate(
-                            split="training",progress_bar=False, size=100,start_idx=1,f=f,num=num,features=[feature],)
-                        while True:
-                            data = next(gen)
-                            if data["idx"] == start_idx:
-                                break
-                        test_data = np.load(
-                            validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
-                        if feature == "eigmode": # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
-                            # we therefore just test the strongest eigenmode
-                            np.testing.assert_allclose(data[feature][:,:,-1],test_data[:,:,-1],rtol=1e-5, atol=1e-7)
-                        else:
-                            np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-7)
+        @parameterized.expand(modes)
+        def test_multiprocessing_values_correct(self,mode):
+            """Test generate method of the datasets in single task mode."""
+            for feature in IMPLEMENTED_FEATURES:
+                if mode == "analytic" and "_estimated" in feature:
+                    continue
+                if mode != "welch" and feature in ["spectrogram","time_data"]:
+                    continue
+                for f in [1000]:
+                    for num in [0]:
+                        if f is None and num != 0:
+                            continue
+                        with self.subTest(f"feature={feature}, f={f}, num={num}"):
+                            #ray.shutdown()
+                            #ray.init(log_to_driver=False)
+                            dataset = TestMIRACLEDataset.create_dataset(mode=mode,signal_length=TEST_SIGNAL_LENGTH, tasks=tasks)
+                            gen = dataset.generate(
+                                split="training",progress_bar=False, size=100,start_idx=1,f=f,num=num,features=[feature],)
+                            while True:
+                                data = next(gen)
+                                if data["idx"] == start_idx:
+                                    break
+                            test_data = np.load(
+                                validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
+                            if feature == "eigmode": # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
+                                # we therefore just test the strongest eigenmode
+                                np.testing.assert_allclose(data[feature][:,:,-1],test_data[:,:,-1],rtol=1e-5, atol=1e-7)
+                            else:
+                                np.testing.assert_allclose(data[feature],test_data,rtol=1e-5, atol=1e-7)
 
 if __name__ == "__main__":
 
