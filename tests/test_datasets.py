@@ -333,7 +333,7 @@ if False:
 
         @parameterized.expand(modes)
         def test_sourcemap_max(self, mode):
-            """A plausability test. Tolerance is large -> loudspeaker not a perfect monopole."""
+            """A plausibility test. Tolerance is large -> loudspeaker not a perfect monopole."""
             features = ["sourcemap","source_strength_estimated","source_strength_analytic"]
             for num in [0,3]:
                 for f in [1000]:
