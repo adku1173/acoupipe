@@ -351,7 +351,7 @@ class MIRACLEFeatureCollectionBuilder(DatasetSyntheticFeatureCollectionBuilder):
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     srir_dir = Either(Instance(Path), Str, None)
-    scenario = Either("A1","D1","A2","R2", default="A2", desc="experimental configuration")
+    scenario = Either("A1","D1","A2","R2", default="A1", desc="experimental configuration")
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc="reference microphone index (default: index of the centermost mic)")
