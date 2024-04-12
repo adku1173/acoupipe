@@ -1,0 +1,40 @@
+{
+    "title": "Acoupipe - A framework for generating large-scale microphone array data for machine learning",
+    "upload_type": "software",
+    "description": "<p><strong>AcouPipe</strong>&nbsp;is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with&nbsp;<a href=\"http://www.acoular.org/\">Acoular</a>&nbsp;that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:</p><ul><li>Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix&nbsp;</li><li>Conventional Beamforming Map&nbsp;</li></ul><p>This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.</p><p>AcouPipe supports distributed computation with&nbsp;<a href=\"https://docs.ray.io/en/master/\">Ray</a>&nbsp;and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from&nbsp;<a href=\"https://hub.docker.com/r/adku1173/acoupipe/tags?page=1&amp;ordering=last_updated\">DockerHub</a>.</p>",
+    "access_right": "open",
+    "license": "BSD-3-Clause",
+    "keywords": [
+      "acoustics",
+      "beamforming",
+      "microphone array"
+    ],
+    "creators": [
+        {
+            "affiliation": "Department of Engineering Acoustics, TU Berlin",
+            "name": "Kujawski, Adam",
+            "orcid": "0000-0003-4579-8813"
+          },
+          {
+            "affiliation": "Department of Engineering Acoustics, TU Berlin",
+            "name": "Pelling, Art J. R.",
+            "orcid": "0000-0003-3228-6069"
+          },
+          {
+            "affiliation": "Department of Engineering Acoustics, TU Berlin",
+            "name": "Jekosch, Simon"
+          },
+          {
+            "affiliation": "Department of Engineering Acoustics, TU Berlin",
+            "name": "Sarradj, Ennes",
+            "orcid": "0000-0002-0274-8456"
+          }    
+    ],
+    "contributors": [
+        {
+            "name": "Kayser, Can",
+            "type": "Other"
+        }
+    ],
+    "references": ["Kujawski,Adam and Pelling, Art J. R. and Jekosch, Simon and Sarradj,Ennes, A framework for generating large-scale microphone array data for machine learning, Multimedia Tools and Applications, 2023, DOI: 10.1007/s11042-023-16947-w"]
+  }
