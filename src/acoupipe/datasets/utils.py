@@ -277,35 +277,35 @@ def get_point_sources_recursively(source):
         return []
     return sources
 
+def _get_signals_recursively(source, signals):
+    if hasattr(source,"signal") and isinstance(source.signal,ac.SignalGenerator):
+        signals.append(source.signal)
+    elif hasattr(source,"sources") or hasattr(source,"sources") and isinstance(source, ac.SamplesGenerator):
+        if hasattr(source,"sources"):
+            for s in source.sources:
+                signals = _get_signals_recursively(s, signals)
+        if hasattr(source,"source"):
+            signals = _get_signals_recursively(source.source, signals)
+    return signals
 
-def get_signals_recursively(source):
-    """Recursively get all signals from a `acoular.PointSource` object.
-
+def get_all_source_signals(source_list):
+    """Get all signals from a list of `acoular.SamplesGenerator` derived objects.
+    
     Parameters
     ----------
-    source : instance of class `acoular.TimeInOut`
-        the source object
-
+    source_list : list
+        list of `acoular.SamplesGenerator` derived objects
+    
     Returns
     -------
     list
-        list of all signals
+        list of all `acoular.SignalGenerator` derived objects
     """
     signals = []
-    if isinstance(source, ac.PointSource):
-        signal = source.Signal
-        if not isinstance(signal, ac.SignalGenerator):
-            raise ValueError("Signal must be of type `acoular.SignalGenerator`")
-        return [signal]
-    elif isinstance(source, ac.SourceMixer):
-        for s in source.sources:
-            signals += get_signals_recursively(s)
-    elif isinstance(source, ac.Mixer):
-        signals += get_signals_recursively(source.source)
-        for s in source.sources:
-            signals += get_signals_recursively(s)
-    elif isinstance(source, ac.UncorrelatedNoiseSource):
-        return []
+    for source in source_list:
+        if not isinstance(source, ac.SamplesGenerator):
+            raise ValueError("source must be of type `acoular.SamplesGenerator`")
+        signals = _get_signals_recursively(source, signals)
     return signals
 
 def get_uncorrelated_noise_source_recursively(source):

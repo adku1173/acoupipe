@@ -27,7 +27,7 @@ from acoupipe.config import TF_FLAG
 from acoupipe.datasets.base import DatasetBase
 from acoupipe.datasets.features import BaseFeatureCollection
 from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSyntheticFeatureCollectionBuilder
-from acoupipe.datasets.utils import blockwise_transfer, get_uncorrelated_noise_source_recursively
+from acoupipe.datasets.utils import blockwise_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
 
 link_address = {
 "A1" : "https://depositonce.tu-berlin.de/bitstreams/67156d9c-224d-4d07-b923-be0240e7b48d/download",
@@ -194,8 +194,8 @@ class DatasetMIRACLE(DatasetBase):
     **Initialization Parameters**
     """
 
-    def __init__(self, srir_dir=None, scenario="A1", ref_mic_index=63,
-                mode="welch", mic_sig_noise=True, signal_length=5, min_nsources=1, max_nsources=10,
+    def __init__(self, srir_dir=None, scenario="A1", ref_mic_index=63, mode="welch", mic_sig_noise=True,
+                random_signal_length=False, signal_length=5, min_nsources=1, max_nsources=10,
                 tasks=1, config=None):
         """Initialize the DatasetMIRACLE object.
 
@@ -231,8 +231,8 @@ class DatasetMIRACLE(DatasetBase):
         """
         if config is None:
             config = DatasetMIRACLEConfig(
-                mode=mode, signal_length=signal_length,min_nsources=min_nsources, max_nsources=max_nsources,
-                srir_dir=srir_dir, scenario=scenario, ref_mic_index=ref_mic_index, mic_sig_noise=mic_sig_noise)
+                mode=mode, random_signal_length=random_signal_length, signal_length=signal_length,min_nsources=min_nsources,
+                max_nsources=max_nsources,srir_dir=srir_dir, scenario=scenario, ref_mic_index=ref_mic_index, mic_sig_noise=mic_sig_noise)
         super().__init__(tasks=tasks, config=config)
 
     def get_feature_collection(self, features, f, num):
@@ -349,6 +349,7 @@ class MIRACLEFeatureCollectionBuilder(DatasetSyntheticFeatureCollectionBuilder):
 
 
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
+    """Configuration class for the DatasetMIRACLE dataset."""
 
     srir_dir = Either(Instance(Path), Str, None)
     scenario = Either("A1","D1","A2","R2", default="A1", desc="experimental configuration")
@@ -411,6 +412,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         self.rms_sampler = self.create_rms_sampler()
         self.nsources_sampler = self.create_nsources_sampler()
         self.mic_noise_sampler = self.create_mic_noise_sampler()
+        self.signal_length_sampler = self.create_signal_length_sampler()
 
     def get_sampler(self):
         self.create_sampler()
@@ -424,6 +426,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             sampler[0] = self.nsources_sampler
         if self.mic_sig_noise:
             sampler[5] = self.mic_noise_sampler
+        if self.random_signal_length:
+            sampler[6] = self.signal_length_sampler
         return sampler
 
     def create_mics(self):
@@ -478,7 +482,13 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             rms_sampler = sampler.get(3)
             loc_sampler = sampler.get(4)
             noise_sampler = sampler.get(5)
+            signal_length_sampler = sampler.get(6)
+
             freq_data = beamformer.freq_data
+
+            if signal_length_sampler is not None:
+                freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
+
             nfft = freq_data.fftfreq().shape[0]
             # sample parameters
             loc = loc_sampler.target
@@ -522,7 +532,15 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             rms_sampler = sampler.get(3)
             loc_sampler = sampler.get(4)
             noise_sampler = sampler.get(5)
+            signal_length_sampler = sampler.get(6)
+
             freq_data = beamformer.freq_data
+
+            if signal_length_sampler is not None:
+                # adjust source signals, noise signal length
+                signals = get_all_source_signals(sources)
+                for signal in signals:
+                    signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
             # sample parameters
             loc = loc_sampler.target
             nsources = loc.shape[1]
@@ -531,6 +549,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
             if mic_noise:
                 mic_noise_signal = mic_noise[0].signal
+                if signal_length_sampler is not None:
+                    mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
                 if noise_sampler is not None:
                     noise_signal_ratio = noise_sampler.target # normalized noise variance
                     noise_prms_sq = prms_sq.sum()*noise_signal_ratio
