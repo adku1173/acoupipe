@@ -493,17 +493,15 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             # sample parameters
             loc = loc_sampler.target
             nsources = loc.shape[1]
+            nummics = beamformer.steer.mics.num_mics
             # finding the SRIR matching the location
-            transfer = np.empty((nfft, beamformer.steer.mics.num_mics,nsources), dtype=complex)
+            transfer = np.empty((nfft,nummics,nsources), dtype=complex)
             for i in range(nsources):
                 ir_idx = np.where( np.sum(loc_sampler.grid.gpos - loc[:,i][:,np.newaxis],axis=0) == 0)
                 assert len(ir_idx) == 1
                 tf = blockwise_transfer(
                     file["data/impulse_response"][ir_idx[0][0]], freq_data.block_size).T
-                # normalize the transfer functions to match the prms at reference mic
-                tf_pow = np.real(tf[:,ref_mic]*tf[:,ref_mic].conjugate()).sum(0) / nfft
-                tf = tf / np.sqrt(tf_pow)
-                transfer[:,:,i] = tf
+                transfer[:,:,i] = tf / tf[:,ref_mic][:,np.newaxis] # reference mic based normalization
             # adjust freq_data
             freq_data.custom_transfer = transfer
             freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
@@ -517,7 +515,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 noise_signal_ratio = noise_sampler.target # normalized noise variance
                 noise_prms_sq = prms_sq.sum()*noise_signal_ratio
                 noise_prms_sq_per_freq = noise_prms_sq / nfft
-                nperf = np.diag(np.array([noise_prms_sq_per_freq]*beamformer.steer.mics.num_mics))
+                nperf = np.diag(np.array([noise_prms_sq_per_freq]*nummics))
                 freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
             else:
                 freq_data.noise = None
@@ -560,10 +558,11 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             for i,src in enumerate(subset_sources):
                 ir_idx = np.where( np.sum(loc_sampler.grid.gpos - loc[:,i][:,np.newaxis],axis=0) == 0)
                 assert len(ir_idx) == 1
-                kernel = np.copy(file["data/impulse_response"][ir_idx[0][0]].T) # copy, otherwise ray will raise read only error
-                # normalize energy
-                kernel /=  np.sqrt(np.sum(kernel[:,ref_mic]**2))
-                src.kernel = kernel
+                tf = blockwise_transfer(
+                    file["data/impulse_response"][ir_idx[0][0]]).T
+                tf /= tf[:,ref_mic][:,np.newaxis] # reference mic based normalization
+                # ifft to get kernel
+                src.kernel = np.fft.irfft(tf,axis=0)
                 src.signal.seed = seed_sampler.target+i
                 src.signal.rms = np.sqrt(prms_sq[i])
                 src.loc = (loc[0,i],loc[1,i],loc[2,i] )

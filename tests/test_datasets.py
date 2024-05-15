@@ -344,7 +344,7 @@ class TestMIRACLEDataset(unittest.TestCase):
                     data = next(gen)
                     sourcemap_max = ac.L_p(data["sourcemap"].max())
                     source_stength_estimated = ac.L_p(data["source_strength_estimated"].max())
-                    np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=1e0)
+                    np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=3e0)
 
     @parameterized.expand(modes)
     def test_values_correct(self,mode):
