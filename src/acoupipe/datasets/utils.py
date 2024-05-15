@@ -290,12 +290,13 @@ def _get_signals_recursively(source, signals):
 
 def get_all_source_signals(source_list):
     """Get all signals from a list of `acoular.SamplesGenerator` derived objects.
-    
+
     Parameters
     ----------
     source_list : list
         list of `acoular.SamplesGenerator` derived objects
-    
+
+
     Returns
     -------
     list
@@ -335,7 +336,7 @@ def get_uncorrelated_noise_source_recursively(source):
         return [source]
     return sources
 
-def blockwise_transfer(ir,blocksize):
+def blockwise_transfer(ir,blocksize=None):
     """Calculate the transfer function of an impulse response in a blockwise manner.
 
     Parameters
@@ -343,7 +344,8 @@ def blockwise_transfer(ir,blocksize):
     ir : ndarray, shape (n_channels,n_samples)
         Impulse response.
     blocksize : int, optional
-        Block size for the FFT. The default is 256.
+        Block size for the FFT. The default is None which means that the blocksize is equal
+        to the length of the impulse response.
 
     Returns
     -------
@@ -351,6 +353,8 @@ def blockwise_transfer(ir,blocksize):
         Power spectrum of the impulse response.
     """
     n_channels, n_samples = ir.shape
+    if blocksize is None:
+        blocksize = n_samples
     if n_samples % blocksize != 0:
         pad = blocksize - n_samples % blocksize
         ir = np.pad(ir,((0,0),(0,pad)))
