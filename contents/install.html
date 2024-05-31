@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Install &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Datasets" href="datasets.html" />
+    <link rel="prev" title="AcouPipe" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-to-install-acoupipe-locally">How to install AcouPipe locally</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-a-pre-build-docker-image">Using a pre-build Docker image</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../autoapi/acoupipe/index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Install</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/contents/install.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="install">
+<h1>Install<a class="headerlink" href="#install" title="Link to this heading"></a></h1>
+<section id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h2>
+<p>The AcouPipe package depends on the following packages:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="http://www.acoular.org">Acoular</a></p></li>
+<li><p><a class="reference external" href="https://docs.ray.io/en/master/">Ray</a></p></li>
+<li><p><a class="reference external" href="https://docs.h5py.org/en/stable/">h5py</a></p></li>
+<li><p><a class="reference external" href="https://github.com/tqdm/tqdm">tqdm</a></p></li>
+<li><p><a class="reference external" href="https://www.fatiando.org/pooch/latest/">pooch</a></p></li>
+<li><p><a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a> (optional)</p></li>
+<li><p><a class="reference external" href="https://pandas.pydata.org/docs/">Pandas</a> (optional)</p></li>
+</ul>
+</section>
+<section id="how-to-install-acoupipe-locally">
+<h2>How to install AcouPipe locally<a class="headerlink" href="#how-to-install-acoupipe-locally" title="Link to this heading"></a></h2>
+<p>Download or clone the AcouPipe repository and enter the directory, e.g. change <code class="docutils literal notranslate"><span class="pre">&lt;/path/to/dir&gt;</span></code> to the desired path and execute:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">DIR</span><span class="o">=</span>&lt;/path/to/dir&gt;<span class="w"> </span><span class="o">&amp;&amp;</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/adku1173/acoupipe.git
+<span class="nv">$DIR</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$DIR</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="nb">unset</span><span class="w"> </span>DIR
+</pre></div>
+</div>
+<p>Next, install module with pip. This will install all necessary <a class="reference internal" href="#dependencies">dependencies</a>.</p>
+<p>Depending on the purpose of the installation, different options are available. A minimal installation can be done with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+<p>If you would like to include optional dependencies, install with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;.[full]&quot;</span>
+</pre></div>
+</div>
+<p>If you are interested in the development version, install with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="using-a-pre-build-docker-image">
+<h2>Using a pre-build Docker image<a class="headerlink" href="#using-a-pre-build-docker-image" title="Link to this heading"></a></h2>
+<p>If you are familiar with <a class="reference external" href="https://www.docker.com/">Docker</a>, the easiest way to use AcouPipe is by using an existing Docker image from <a class="reference external" href="https://hub.docker.com/repository/docker/adku1173/acoupipe/general">DockerHub</a>. There are several images available, each tagged with the version of AcouPipe that is installed. The latest version is tagged as <code class="docutils literal notranslate"><span class="pre">latest</span></code>.</p>
+<p>The following images are available:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">adku1173/acoupipe:latest-base</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adku1173/acoupipe:latest-full</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adku1173/acoupipe:latest-dev</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">adku1173/acoupipe:latest-jupyter-gpu</span></code></p></li>
+</ul>
+<p>If  <a class="reference external" href="https://www.docker.com/">Docker</a> is allready installed, simply pull the latest image with the command</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>pull<span class="w"> </span>adku1173/acoupipe:latest-full
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="AcouPipe" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="datasets.html" class="btn btn-neutral float-right" title="Datasets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,181 @@
+acoupipe.pipeline
+=================
+
+.. py:module:: acoupipe.pipeline
+
+.. autoapi-nested-parse::
+
+   All classes in this module can be used to calculate and provide data.
+
+   Purpose of the Pipeline Module
+   ------------------------------
+
+   Classes defined in the :code:`pipeline.py` module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset.
+   The results of these tasks are the features (and labels) associated with a specific sample of the dataset.
+   Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the :code:`BasePipeline`'s :code:`get_data()` generator method.
+   It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file, as common machine learning frameworks, such as Tensorflow_, offer the possibility to consume data from Python generators.
+   Control of the state of the sampling process is maintained via the :code:`sampler` attribute holding a list of :code:`BaseSampler` derived instances.
+
+   .. code-block:: python
+
+       import acoular as ac
+       from acoupipe.sampler import NumericAttributeSampler
+       from acoupipe.pipeline import BasePipeline, DistributedPipeline
+       from scipy.stats import norm
+
+       random_var = norm(loc=1.,scale=.5)
+
+       n1 = ac.WNoiseGenerator( sample_freq=24000,
+                       numsamples=24000*5,
+                       rms=1.0,
+                       seed=1 )
+
+       rms_sampler = NumericAttributeSampler(
+                       target=[n1],
+                       attribute='rms',
+                       random_var=random_var,
+                       random_state=10)
+
+
+       def calculate_squared_rms(sampler):
+           n1 = sampler[0].target[0]
+           return {'rms_sq' : n1.rms**2 }
+
+       pipeline = BasePipeline(
+           numsamples = 5,
+           #random_seeds = [range(5)],
+           sampler=[rms_sampler],
+           features=calculate_squared_rms,
+           )
+
+       for data in pipeline.get_data():
+           print(data)
+
+
+   The example returns the following output:
+
+   .. code-block:: bash
+
+       100%|██████████| 5/5 [00:00<00:00, 2250.65it/s]
+       {'idx': 0, 'seeds': array([[0, 0]]), 'rms_sq': 1.1296822432174416}
+       {'idx': 1, 'seeds': array([[0, 1]]), 'rms_sq': 1.3754413005160537}
+       {'idx': 2, 'seeds': array([[0, 2]]), 'rms_sq': 1.197988677085426}
+       {'idx': 3, 'seeds': array([[0, 3]]), 'rms_sq': 4.082256836394099}
+       {'idx': 4, 'seeds': array([[0, 4]]), 'rms_sq': 0.454416774044029}
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: BaseSampler
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Base class that represents a random process.
+
+   This class has no functionality and should not be used in practice.
+   Manipulates attributes of an instance or a list of instances according to a specified random distribution.
+
+
+   .. py:method:: rvs(size=1)
+
+      Random variable sampling (for internal use).
+
+
+
+   .. py:method:: sample()
+
+      Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` (no functionality in this class).
+
+
+
+.. py:class:: DataGenerator
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Abstract base class that serves as a data generator.
+
+   This class should not be used.
+
+
+   .. py:method:: get_data()
+
+      Python generator that iteratively yields data set samples as a dictionary.
+
+      :rtype: Dictionary containing a sample of the data set {feature_name[key],feature[values]}.
+
+
+
+.. py:class:: BasePipeline
+
+   Bases: :py:obj:`DataGenerator`
+
+
+   Class to control the random process and iteratively extract and pass a specified amount of data.
+
+   This class can be used to calculate data (extract features)
+   by assigning a name and a callable function to :attr:`features`.
+   Furthermore this class automatically controles the sampling of instances
+   of type :class:`BaseSampler` specified to the :attr:`sampler` list.
+   Re-seeding is performed at each iteration if :attr:`random_seeds` are
+   given.
+
+
+   .. py:method:: validate_random_seeds()
+
+      Validate specified random seeds.
+
+
+
+   .. py:method:: get_data(progress_bar=True, start_idx=1)
+
+      Provide the extracted features, sampler seeds and indices.
+
+      :param progress_bar: if True, a progress bar is displayed, by default True
+      :type progress_bar: bool, optional
+      :param start_idx: the index of the first data sample to be calculated, by default 1
+      :type start_idx: int, optional
+
+      :Yields: *dict* -- a sample of the dataset containing the extracted feature data, seeds, and index
+
+
+
+.. py:class:: DistributedPipeline
+
+   Bases: :py:obj:`BasePipeline`
+
+
+   Class to calculate data (extract features) in parallel to build large datasets.
+
+   This class can be used to calculate data (extract various features)
+   by assigning a name and a callable function to :attr:`features`.
+   Furthermore this class automatically controles the sampling of instances
+   of type :class:`BaseSampler` specified to the :attr:`sampler` list.
+   Re-seeding is performed at each iteration if :attr:`random_seeds` are
+   given.
+
+
+   .. py:method:: get_data(progress_bar=True, start_idx=1)
+
+      Provide the extracted features, sampler seeds and indices.
+
+      The calculation of all data samples is performed in parallel and asynchronously.
+      In case of specifying more than one worker in the :attr:`numworker` attribute,
+      the output of this generator yields non-ordered features/data samples.
+      However, the exact order can be recovered via the "idx" item (or "seeds" item)
+      provided in the output dictionary.
+
+      :param progress_bar: if True, a progress bar is displayed, by default True
+      :type progress_bar: bool, optional
+      :param start_idx: the index of the first data sample to be calculated, by default 1
+      :type start_idx: int, optional
+
+      :Yields: *dict* -- A sample of the dataset containing the extracted feature data, seeds, and index
+
+
+

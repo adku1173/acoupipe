@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model training with training data generated on the fly &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Save and load datasets stored in HDF5 file format" href="load_h5.html" />
+    <link rel="prev" title="Examples" href="../examples.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Datasets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../examples.html">Examples</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Model training with training data generated on the fly</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Build-the-dataset-generator">Build the dataset generator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Train-the-model">Train the model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html#sampling-microphone-array-geometries">Sampling Microphone Array Geometries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../examples.html">Examples</a></li>
+      <li class="breadcrumb-item active">Model training with training data generated on the fly</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contents/jupyter/generate.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Model-training-with-training-data-generated-on-the-fly">
+<h1>Model training with training data generated on the fly<a class="headerlink" href="#Model-training-with-training-data-generated-on-the-fly" title="Link to this heading"></a></h1>
+<p>Depending on the concrete usecase, data generation speed with AcouPipe can be fast enough to directly incorporate the generated data for model training without the need of intermediate file saving.</p>
+<p>This example demonstrates how to <strong>generate training data on the fly</strong> for the most simple <strong>supervised source localization</strong> tasks.</p>
+<p>Here, the example demonstrates <strong>single source localization</strong> model training similar to [KHS19], but without predicting the source strength. For demonstration, the <strong>Beamforming map</strong> is created with calculation <code class="docutils literal notranslate"><span class="pre">mode=&quot;wishart&quot;</span></code> (no time data is simulated).</p>
+<p>To prevent thread overloading due to parallel data generation, the number of parallel numba threads was limited by exporting the variable <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">NUMBA_NUM_THREADS=1</span></code> before running the script.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import os
+os.environ[&#39;TF_CPP_MIN_LOG_LEVEL&#39;] = &#39;3&#39;
+import multiprocessing
+import numba
+import tensorflow as tf
+import ray
+ray.shutdown() # shutdown existing tasks
+ray.init(log_to_driver=False) # start a ray server (without logging the details for clean documentation)
+physical_devices = tf.config.list_physical_devices(&#39;GPU&#39;)
+
+print(&quot;Num GPUs:&quot;, len(physical_devices))
+print(&quot;Num CPUs:&quot;, multiprocessing.cpu_count())
+print(&quot;Numba number of concurrent threads:&quot;, numba.config.NUMBA_NUM_THREADS)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2023-11-14 14:28:06,089 INFO worker.py:1673 -- Started a local Ray instance.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Num GPUs: 1
+Num CPUs: 48
+Numba number of concurrent threads: 1
+</pre></div></div>
+</div>
+<section id="Build-the-dataset-generator">
+<h2>Build the dataset generator<a class="headerlink" href="#Build-the-dataset-generator" title="Link to this heading"></a></h2>
+<p>At first, we manipulate the dataset config to only create single source examples on a coarser grid of size <span class="math notranslate nohighlight">\(32 \times 32\)</span></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import numpy as np
+from acoupipe.datasets.synthetic import DatasetSynthetic
+
+# create dataset (calculated on a GPU Workstation with several cpus)
+dataset = DatasetSynthetic(max_nsources=1, tasks=multiprocessing.cpu_count(), mode=&#39;wishart&#39;)
+
+# we manipulate the grid to have a coarser resolution
+dataset.config.grid.increment = 1/31 # 32 x 32 grid
+
+# build TensorFlow datasets for training and validation
+training_dataset = dataset.get_tf_dataset(
+    features=[&quot;sourcemap&quot;,&quot;loc&quot;], f=1000, split=&quot;training&quot;,size=100000000) # quasi infinite
+validation_dataset = dataset.get_tf_dataset(
+    features=[&quot;sourcemap&quot;,&quot;loc&quot;], f=1000, split=&quot;validation&quot;,size=100)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/usr/local/lib/python3.8/dist-packages/acoupipe/datasets/features.py:104: Warning: Queried frequency (1000 Hz) not in set of discrete FFT sample frequencies. Using frequency 1071.88 Hz instead.
+  fidx = [get_frequency_index_range(
+</pre></div></div>
+</div>
+<p>The TensorFlow dataset API can be used to build a data pipeline from the data generator. Here, batches with 16 source cases are used. We use the <code class="docutils literal notranslate"><span class="pre">prefetch</span></code> method to generate data when during training steps on the GPU, where the CPUs are usually idle. For the validation_dataset, the <code class="docutils literal notranslate"><span class="pre">cache</span></code> method prevents recalculation of the validation data</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import tensorflow as tf
+
+def yield_features_and_labels(data):
+    feature = data[&#39;sourcemap&#39;][0]
+    f_max = tf.reduce_max(feature)
+    feature /= f_max
+    label = data[&#39;loc&#39;][:2]
+    return (feature,label)
+
+training_dataset = training_dataset.map(yield_features_and_labels).batch(16).prefetch(tf.data.AUTOTUNE)
+validation_dataset = validation_dataset.map(yield_features_and_labels).batch(16).cache()
+<br/></pre></div>
+</div>
+</div>
+</section>
+<section id="Train-the-model">
+<h2>Train the model<a class="headerlink" href="#Train-the-model" title="Link to this heading"></a></h2>
+<p>Now, one can build the ResNet50V2 model and use the data to fit the model. This may take up to a few hours, depending on the computational infrastructure.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span># build model architecture
+model = tf.keras.Sequential(
+    tf.keras.applications.resnet_v2.ResNet50V2(
+    include_top=False,
+    weights=None,
+    input_shape=(32,32,1),
+    ))
+model.add(tf.keras.layers.Flatten())
+model.add(tf.keras.layers.Dense(2, activation=None))
+
+# compile and fit
+model.compile(optimizer=tf.optimizers.Adam(),loss=&#39;mse&#39;)
+model.fit(training_dataset,validation_data=validation_dataset, epochs=5,steps_per_epoch=10000, verbose=2)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Epoch 1/5
+10000/10000 - 493s - loss: 0.0167 - val_loss: 0.7074 - 493s/epoch - 49ms/step
+Epoch 2/5
+10000/10000 - 443s - loss: 0.0062 - val_loss: 0.0046 - 443s/epoch - 44ms/step
+Epoch 3/5
+10000/10000 - 443s - loss: 0.0042 - val_loss: 0.0403 - 443s/epoch - 44ms/step
+Epoch 4/5
+10000/10000 - 433s - loss: 0.0019 - val_loss: 0.0104 - 433s/epoch - 43ms/step
+Epoch 5/5
+10000/10000 - 432s - loss: 0.0011 - val_loss: 0.0133 - 432s/epoch - 43ms/step
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;keras.src.callbacks.History at 0x7f58804836a0&gt;
+</pre></div></div>
+</div>
+<p>After successfully training, the model can be used for source localization.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>dataset.tasks=1
+test_dataset = dataset.get_tf_dataset(
+    features=[&quot;sourcemap&quot;,&quot;loc&quot;], f=1000, split=&quot;validation&quot;,size=1, start_idx=2)
+test_dataset = test_dataset.map(yield_features_and_labels).batch(1)
+sourcemap, labels = next(iter(test_dataset))
+
+prediction = model.predict(sourcemap)[0]
+print(prediction)
+
+sourcemap = sourcemap.numpy().squeeze()
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+1/1 [==============================] - 0s 40ms/step
+[ 0.23072581 -0.0644986 ]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import matplotlib.pyplot as plt
+from acoular import L_p
+
+extent = dataset.config.grid.extend()
+loc = labels[0]
+
+plt.figure()
+plt.imshow(L_p(sourcemap).T,
+            vmax=L_p(sourcemap.max()),
+            vmin=L_p(sourcemap.max())-15,
+            extent=extent,
+            origin=&quot;lower&quot;)
+plt.plot(prediction[0],prediction[1],&#39;x&#39;,label=&quot;prediction&quot;)
+plt.plot(loc[0],loc[1],&#39;x&#39;,label=&quot;label&quot;)
+plt.colorbar()
+plt.legend()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/contents_jupyter_generate_10_0.png" src="../../_images/contents_jupyter_generate_10_0.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../examples.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="load_h5.html" class="btn btn-neutral float-right" title="Save and load datasets stored in HDF5 file format" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

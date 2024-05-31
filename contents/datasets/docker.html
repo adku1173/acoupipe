@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulation with Docker &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Simulation with Singularity on a High-Performance Cluster (HPC)" href="singularity.html" />
+    <link rel="prev" title="Save and load datasets stored in TFRecord file format" href="../jupyter/load_tfrecord.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Datasets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../examples.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/generate.html">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html#sampling-microphone-array-geometries">Sampling Microphone Array Geometries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../examples.html">Examples</a></li>
+      <li class="breadcrumb-item active">Simulation with Docker</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contents/datasets/docker.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="simulation-with-docker">
+<h1>Simulation with Docker<a class="headerlink" href="#simulation-with-docker" title="Link to this heading"></a></h1>
+<p>Creating and saving the dataset as a file is made simple by utilizing an existing Docker image available on <a class="reference external" href="https://hub.docker.com/repository/docker/adku1173/acoupipe/general">DockerHub</a>. Begin by pulling one of the existing images using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>pull<span class="w"> </span>adku1173/acoupipe:latest-full
+</pre></div>
+</div>
+<p>This image encompasses the simulation source code along with an up-to-date version of <a class="reference external" href="http://www.acoular.org">Acoular</a>, <strong>AcouPipe</strong>, and <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.</p>
+<p>To initiate the dataset generation, run a Docker container with the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SPLIT</span><span class="o">=</span><span class="s1">&#39;training&#39;</span>
+<span class="c1">#SIZE=&lt;enter desired size of the dataset&gt;</span>
+<span class="nv">NTASKS</span><span class="o">=</span>&lt;enter<span class="w"> </span>the<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>parallel<span class="w"> </span>tasks&gt;<span class="w"> </span><span class="c1"># should match the number of CPUs on the host</span>
+
+docker<span class="w"> </span>run<span class="w"> </span>-e<span class="w"> </span><span class="nv">NUMBA_NUM_THREADS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>-it<span class="w"> </span>--user<span class="w"> </span><span class="s2">&quot;</span><span class="k">$(</span>id<span class="w"> </span>-u<span class="k">)</span><span class="s2">&quot;</span>:<span class="s2">&quot;</span><span class="k">$(</span>id<span class="w"> </span>-g<span class="k">)</span><span class="s2">&quot;</span><span class="w"> </span>-v<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>:/app<span class="w"> </span>adku1173/acoupipe:latest-full<span class="w"> </span>python<span class="w"> </span>/app/main.py<span class="w"> </span>--tasks<span class="o">=</span><span class="nv">$NTASKS</span><span class="w"> </span>--size<span class="o">=</span><span class="nv">$SIZE</span><span class="w"> </span>--split<span class="o">=</span><span class="nv">$SPLIT</span><span class="w"> </span>--features<span class="w"> </span><span class="s1">&#39;csm&#39;</span>
+</pre></div>
+</div>
+<p>Take note that the current user on the host is specified as the user of the Docker environment using the additional argument <code class="code docutils literal notranslate"><span class="pre">--user</span> <span class="pre">&quot;$(id</span> <span class="pre">-u)&quot;:&quot;$(id</span> <span class="pre">-g)&quot;</span></code>. Running the container as a root user is not recommended. It’s essential to bind a directory where the dataset files are stored to the container. With the command <code class="code docutils literal notranslate"><span class="pre">-v</span> <span class="pre">$(pwd):/app</span></code>, the current working directory on Linux or macOS hosts is bound.</p>
+<p>The simulation is capable of running on multiple CPU threads concurrently, enhancing computation speed. Users can specify the exact number of threads using the <code class="code docutils literal notranslate"><span class="pre">--tasks`</span></code> argument. To prevent thread overloading caused by multiple parallel processes, we enforce Numba to use only one thread by passing the environment variable <code class="code docutils literal notranslate"><span class="pre">NUMBA_NUM_THREADS=1</span></code>. For demonstration purposes, the script calculates the training split.
+After starting the main script, a progress bar should appear that logs the current simulation status:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">1</span>%<span class="p">|</span>█▍<span class="w">                           </span><span class="p">|</span><span class="w"> </span><span class="m">83</span>/10000<span class="w"> </span><span class="o">[</span><span class="m">01</span>:04&lt;<span class="m">1</span>:40:35,<span class="w">  </span><span class="m">1</span>.64it/s<span class="o">]</span>
+</pre></div>
+</div>
+<p>It is possible to view the CPU usage in a dashboard application served by the <a class="reference external" href="https://docs.ray.io/en/master/">Ray</a> API. One should find the following output at the beginning
+of the simulation process when running the simulation on multiple CPU threads</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">2021</span>-05-14<span class="w"> </span><span class="m">08</span>:50:16,533<span class="w">     </span>INFO<span class="w"> </span>services.py:1267<span class="w"> </span>--<span class="w"> </span>View<span class="w"> </span>the<span class="w"> </span>Ray<span class="w"> </span>dashboard<span class="w"> </span>at<span class="w"> </span>http://0.0.0.0:8265
+</pre></div>
+</div>
+<p>It is necessary to forward the corresponding TCP port with <code class="code docutils literal notranslate"><span class="pre">docker</span> <span class="pre">run</span> <span class="pre">-p</span> <span class="pre">8265:8265</span> <span class="pre">...</span></code> at the start-up of the container to access the server serving the dashboard.
+One can open the dashboard by accessing the web address <a class="reference external" href="http://0.0.0.0:8265">http://0.0.0.0:8265</a> which should display the following web interface</p>
+<figure class="align-default">
+<a class="reference internal image-reference" href="../../_images/dashboard.png"><img alt="../../_images/dashboard.png" src="../../_images/dashboard.png" style="width: 780px;" /></a>
+</figure>
+<p>The main.py script has some further command line options that can be used to influence the simulation process:</p>
+<div class="literal-block-wrapper docutils container" id="id1">
+<div class="code-block-caption"><span class="caption-text">command line arguments of the main.py script</span><a class="headerlink" href="#id1" title="Link to this code"></a></div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>usage:<span class="w"> </span>main.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--dataset<span class="w"> </span><span class="o">{</span>DatasetSynthetic,DatasetMIRACLE<span class="o">}]</span><span class="w"> </span><span class="o">[</span>--name<span class="w"> </span>NAME<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--features<span class="w"> </span><span class="o">{</span>time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated<span class="o">}</span><span class="w"> </span><span class="o">[{</span>time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated<span class="o">}</span><span class="w"> </span>...<span class="o">]]</span>
+<span class="w">           </span><span class="o">[</span>--mode<span class="w"> </span><span class="o">{</span>welch,wishart,analytic<span class="o">}]</span><span class="w"> </span><span class="o">[</span>--format<span class="w"> </span><span class="o">{</span>tfrecord,h5<span class="o">}]</span><span class="w"> </span><span class="o">[</span>--f<span class="w"> </span>F<span class="w"> </span><span class="o">[</span>F<span class="w"> </span>...<span class="o">]]</span><span class="w"> </span><span class="o">[</span>--num<span class="w"> </span>NUM<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--split<span class="w"> </span><span class="o">{</span>training,validation,test<span class="o">}]</span><span class="w"> </span>--size<span class="w"> </span>SIZE<span class="w"> </span><span class="o">[</span>--start_idx<span class="w"> </span>START_IDX<span class="o">]</span><span class="w"> </span><span class="o">[</span>--tasks<span class="w"> </span>TASKS<span class="o">]</span>
+<span class="w">           </span><span class="o">[</span>--head<span class="w"> </span>HEAD<span class="o">]</span><span class="w"> </span><span class="o">[</span>--log<span class="o">]</span>
+
+options:
+-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+--dataset<span class="w"> </span><span class="o">{</span>DatasetSynthetic,DatasetMIRACLE<span class="o">}</span>
+<span class="w">                        </span>Which<span class="w"> </span>dataset<span class="w"> </span>to<span class="w"> </span>compute.<span class="w"> </span>Default<span class="w"> </span>is<span class="w"> </span><span class="s1">&#39;DatasetSynthetic&#39;</span>
+--name<span class="w"> </span>NAME<span class="w">           </span>filename<span class="w"> </span>of<span class="w"> </span>simulated<span class="w"> </span>data.<span class="w"> </span>If<span class="w"> </span><span class="s1">&#39;None&#39;</span><span class="w"> </span>a<span class="w"> </span>filename<span class="w"> </span>is<span class="w"> </span>given<span class="w"> </span>and<span class="w"> </span>the<span class="w"> </span>file<span class="w"> </span>is
+<span class="w">                        </span>stored<span class="w"> </span>under<span class="w"> </span><span class="s1">&#39;./datasets&#39;</span>
+--features<span class="w"> </span><span class="o">{</span>time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated<span class="o">}</span><span class="w"> </span><span class="o">[{</span>time_data,csm,csmtriu,sourcemap,eigmode,spectrogram,loc,source_strength_analytic,source_strength_estimated,noise_strength_analytic,noise_strength_estimated<span class="o">}</span><span class="w"> </span>...<span class="o">]</span>
+<span class="w">                        </span>Features<span class="w"> </span>included<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>dataset.<span class="w"> </span>Default<span class="w"> </span>is<span class="w"> </span>the<span class="w"> </span>cross-spectral<span class="w"> </span>matrix<span class="w"> </span><span class="s1">&#39;csm&#39;</span>
+--mode<span class="w"> </span><span class="o">{</span>welch,wishart,analytic<span class="o">}</span>
+<span class="w">                        </span>Calculation<span class="w"> </span>mode<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>underlying<span class="w"> </span>Cross-spectral<span class="w"> </span>matrix.<span class="w"> </span>Default<span class="w"> </span>is<span class="w"> </span><span class="s1">&#39;welch&#39;</span>
+--format<span class="w"> </span><span class="o">{</span>tfrecord,h5<span class="o">}</span>
+<span class="w">                        </span>Desired<span class="w"> </span>file<span class="w"> </span>format<span class="w"> </span>to<span class="w"> </span>store<span class="w"> </span>the<span class="w"> </span>datasets.<span class="w"> </span>Defaults<span class="w"> </span>to<span class="w"> </span><span class="s1">&#39;.h5&#39;</span><span class="w"> </span>format
+--f<span class="w"> </span>F<span class="w"> </span><span class="o">[</span>F<span class="w"> </span>...<span class="o">]</span><span class="w">         </span>frequency<span class="w"> </span>or<span class="w"> </span>frequencies<span class="w"> </span>included<span class="w"> </span>by<span class="w"> </span>the<span class="w"> </span>features<span class="w"> </span>and<span class="w"> </span>labels.<span class="w"> </span>Default<span class="w"> </span>is<span class="w"> </span><span class="s1">&#39;None&#39;</span>
+<span class="w">                        </span><span class="o">(</span>all<span class="w"> </span>frequencies<span class="w"> </span>included<span class="o">)</span>
+--num<span class="w"> </span>NUM<span class="w">             </span>bandwidth<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>considered<span class="w"> </span>frequencies.<span class="w"> </span>Default<span class="w"> </span>is<span class="w"> </span>single<span class="w"> </span>frequency<span class="w"> </span>line<span class="o">(</span>s<span class="o">)</span>
+--split<span class="w"> </span><span class="o">{</span>training,validation,test<span class="o">}</span>
+<span class="w">                        </span>Which<span class="w"> </span>dataset<span class="w"> </span>split<span class="w"> </span>to<span class="w"> </span>compute<span class="w"> </span><span class="o">(</span><span class="s1">&#39;training&#39;</span><span class="w"> </span>or<span class="w"> </span><span class="s1">&#39;validation&#39;</span><span class="w"> </span>or<span class="w"> </span><span class="s1">&#39;test&#39;</span><span class="o">)</span>
+--size<span class="w"> </span>SIZE<span class="w">           </span>Total<span class="w"> </span>number<span class="w"> </span>of<span class="w"> </span>samples<span class="w"> </span>to<span class="w"> </span>simulate
+--start_idx<span class="w"> </span>START_IDX
+<span class="w">                        </span>Start<span class="w"> </span>simulation<span class="w"> </span>at<span class="w"> </span>a<span class="w"> </span>specific<span class="w"> </span>sample<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>dataset.<span class="w"> </span>Default:<span class="w"> </span><span class="m">0</span>
+--tasks<span class="w"> </span>TASKS<span class="w">         </span>Number<span class="w"> </span>of<span class="w"> </span>asynchronous<span class="w"> </span>tasks.<span class="w"> </span>Defaults<span class="w"> </span>to<span class="w"> </span><span class="s1">&#39;1&#39;</span><span class="w"> </span><span class="o">(</span>non-distributed<span class="o">)</span>
+--head<span class="w"> </span>HEAD<span class="w">           </span>IP<span class="w"> </span>address<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>head<span class="w"> </span>node<span class="w"> </span><span class="k">in</span><span class="w"> </span>the<span class="w"> </span>ray<span class="w"> </span>cluster.<span class="w"> </span>Only<span class="w"> </span>necessary<span class="w"> </span>when<span class="w"> </span>running<span class="w"> </span><span class="k">in</span>
+<span class="w">                        </span>distributed<span class="w"> </span>mode.
+--log<span class="w">                 </span>Whether<span class="w"> </span>to<span class="w"> </span>log<span class="w"> </span>timing<span class="w"> </span>statistics.<span class="w"> </span>Only<span class="w"> </span><span class="k">for</span><span class="w"> </span>internal<span class="w"> </span>use.
+</pre></div>
+</div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../jupyter/load_tfrecord.html" class="btn btn-neutral float-left" title="Save and load datasets stored in TFRecord file format" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="singularity.html" class="btn btn-neutral float-right" title="Simulation with Singularity on a High-Performance Cluster (HPC)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

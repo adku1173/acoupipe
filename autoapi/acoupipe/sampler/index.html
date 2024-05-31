@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>acoupipe.sampler &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="acoupipe.writer" href="../writer/index.html" />
+    <link rel="prev" title="acoupipe.pipeline" href="../pipeline/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/lit.html">Literature</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">AcouPipe API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../loader/index.html">acoupipe.loader</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pipeline/index.html">acoupipe.pipeline</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">acoupipe.sampler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#sampler-module-purpose">Sampler Module Purpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-contents">Module Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../writer/index.html">acoupipe.writer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">acoupipe</a></li>
+      <li class="breadcrumb-item active">acoupipe.sampler</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/acoupipe/sampler/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-acoupipe.sampler">
+<span id="acoupipe-sampler"></span><h1>acoupipe.sampler<a class="headerlink" href="#module-acoupipe.sampler" title="Link to this heading"></a></h1>
+<p>Random processes to sample values according to a specified random distribution (random variable).</p>
+<section id="sampler-module-purpose">
+<h2>Sampler Module Purpose<a class="headerlink" href="#sampler-module-purpose" title="Link to this heading"></a></h2>
+<p>A manipulation of object characteristics according to a certain
+random distribution can be achieved by using the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes included in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
+All <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes represent random processes that can be used to manipulate the attributes of Acoular’s objects according to a specified distribution.
+A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived classes.
+AcouPipe offers a variety of different types of samplers in the <code class="code docutils literal notranslate"><span class="pre">sampler.py</span></code> module.
+The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the <code class="code docutils literal notranslate"><span class="pre">scipy.stats</span></code> module.</p>
+<p>This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code>
+derived <code class="code docutils literal notranslate"><span class="pre">NumericAttributeSampler</span></code> class is used. The two <code class="code docutils literal notranslate"><span class="pre">WNoiseGenerator</span></code> objects are given as targets to the sampler object.
+New RMS values following a normal distribution are assigned to the <code class="code docutils literal notranslate"><span class="pre">WNoiseGenerator</span></code> objects each time the sample method of the <code class="code docutils literal notranslate"><span class="pre">NumericAttributeSampler</span></code> object is evaluated.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">acoular</span> <span class="k">as</span> <span class="nn">ac</span>
+<span class="kn">from</span> <span class="nn">acoupipe.sampler</span> <span class="kn">import</span> <span class="n">NumericAttributeSampler</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="n">random_var</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span><span class="n">scale</span><span class="o">=</span><span class="mf">.5</span><span class="p">)</span>
+
+<span class="n">n1</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">WNoiseGenerator</span><span class="p">(</span> <span class="n">sample_freq</span><span class="o">=</span><span class="mi">24000</span><span class="p">,</span>
+                <span class="n">numsamples</span><span class="o">=</span><span class="mi">24000</span><span class="o">*</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">rms</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">seed</span><span class="o">=</span><span class="mi">1</span> <span class="p">)</span>
+
+<span class="n">n2</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">WNoiseGenerator</span><span class="p">(</span> <span class="n">sample_freq</span><span class="o">=</span><span class="mi">24000</span><span class="p">,</span>
+                <span class="n">numsamples</span><span class="o">=</span><span class="mi">24000</span><span class="o">*</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">rms</span><span class="o">=</span><span class="mf">.5</span><span class="p">,</span>
+                <span class="n">seed</span><span class="o">=</span><span class="mi">2</span> <span class="p">)</span>
+
+<span class="n">rms_sampler</span> <span class="o">=</span> <span class="n">NumericAttributeSampler</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="p">[</span><span class="n">n1</span><span class="p">,</span><span class="n">n2</span><span class="p">],</span>
+                <span class="n">attribute</span><span class="o">=</span><span class="s1">&#39;rms&#39;</span><span class="p">,</span>
+                <span class="n">random_var</span><span class="o">=</span><span class="n">random_var</span><span class="p">,</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+<span class="n">rms_sampler</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">n1</span><span class="o">.</span><span class="n">rms</span><span class="p">,</span> <span class="n">n2</span><span class="o">.</span><span class="n">rms</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The output of the example is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="mf">1.6657932520647591</span> <span class="mf">1.3576394871992028</span>
+</pre></div>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">BaseSampler</span></span><a class="headerlink" href="#acoupipe.sampler.BaseSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>Base class that represents a random process.</p>
+<p>This class has no functionality and should not be used in practice.
+Manipulates attributes of an instance or a list of instances according to a specified random distribution.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.BaseSampler.rvs" title="Link to this definition"></a></dt>
+<dd><p>Random variable sampling (for internal use).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.BaseSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.BaseSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Utilizes <a class="reference internal" href="#acoupipe.sampler.BaseSampler.rvs" title="acoupipe.sampler.BaseSampler.rvs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code></a> function to draw random values from <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_var</span></code> (no functionality in this class).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.NumericAttributeSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">NumericAttributeSampler</span></span><a class="headerlink" href="#acoupipe.sampler.NumericAttributeSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Samples attributes of numeric type (e.g. int, float).</p>
+<p>This class samples attributes of numeric type (e.g. int, float) of an instance or a list of instances according
+to a specified random distribution.
+The attribute to be sampled is specified by <code class="xref py py-attr docutils literal notranslate"><span class="pre">attribute</span></code>.
+The sampled values are normalized to the range [0,1] if <code class="xref py py-attr docutils literal notranslate"><span class="pre">normalize</span></code> is set to True.
+The sampled values are ordered in ascending or descending order for all objects in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">target</span></code> list if <code class="xref py py-attr docutils literal notranslate"><span class="pre">order</span></code>
+is set to “ascending” or “descending”. If no value is set (<code class="xref py py-attr docutils literal notranslate"><span class="pre">order</span></code> <cite>=None</cite>), no ordering is performed.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.NumericAttributeSampler.order_samples">
+<span class="sig-name descname"><span class="pre">order_samples</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">samples</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.NumericAttributeSampler.order_samples" title="Link to this definition"></a></dt>
+<dd><p>Order drawn values (Internal function).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.NumericAttributeSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.NumericAttributeSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Random sampling of the target instance attribute.</p>
+<p>Utilizes <code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code> function to draw random values from <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_var</span></code> that are going to be assigned
+to the target instance attribute via internal <code class="xref py py-meth docutils literal notranslate"><span class="pre">set_value()</span></code> method.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.SetSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">SetSampler</span></span><a class="headerlink" href="#acoupipe.sampler.SetSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Draws one or multiple values from a given set of values.</p>
+<p>This class draws one or multiple values from a given set of values.
+The set of values is specified by <code class="xref py py-attr docutils literal notranslate"><span class="pre">set</span></code>.
+The number of samples to be drawn is specified by <code class="xref py py-attr docutils literal notranslate"><span class="pre">numsamples</span></code>.
+The attribute to be sampled is specified by <code class="xref py py-attr docutils literal notranslate"><span class="pre">attribute</span></code>.
+A list with sample probabilities can be specified by <code class="xref py py-attr docutils literal notranslate"><span class="pre">probabilities</span></code>.
+The attribute <code class="xref py py-attr docutils literal notranslate"><span class="pre">replace</span></code> specifies if the same object in <code class="xref py py-attr docutils literal notranslate"><span class="pre">set</span></code>
+can be drawn multiple times.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.SetSampler.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.SetSampler.rvs" title="Link to this definition"></a></dt>
+<dd><p>Random variable sampling (for internal use).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.SetSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.SetSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Random sampling of the target instance attribute.</p>
+<p>Utilizes <a class="reference internal" href="#acoupipe.sampler.SetSampler.rvs" title="acoupipe.sampler.SetSampler.rvs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code></a> function to draw random values from <code class="xref py py-attr docutils literal notranslate"><span class="pre">set</span></code> that are going to be assigned
+to the target instance attribute <code class="xref py py-attr docutils literal notranslate"><span class="pre">attribute</span></code> via internal <code class="xref py py-meth docutils literal notranslate"><span class="pre">set_value()</span></code> method.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">SourceSetSampler</span></span><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.sampler.SetSampler" title="acoupipe.sampler.SetSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SetSampler</span></code></a></p>
+<p>Draws one or multiple sources of type <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.SamplesGenerator</span></code> from a given set of sources.</p>
+<p>From a given set of sources (type <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.SamplesGenerator</span></code>),
+<a class="reference internal" href="#acoupipe.sampler.SourceSetSampler" title="acoupipe.sampler.SourceSetSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">SourceSetSampler</span></code></a> draws one or multiple sources from this set
+and assigns those to one or more SourceMixer instances. The number of sources to be drawn is specified by
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">nsources</span></code>. The attribute to be sampled is specified by <code class="xref py py-attr docutils literal notranslate"><span class="pre">attribute</span></code>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.SourceSetSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.SourceSetSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Random sampling of sources.</p>
+<p>Utilizes <code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code> function to draw sources from <code class="xref py py-attr docutils literal notranslate"><span class="pre">set</span></code> that are going to be assigned
+to the <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.SourceMixer</span></code> instance.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.ContainerSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">ContainerSampler</span></span><a class="headerlink" href="#acoupipe.sampler.ContainerSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Special case of a Sampler to enable the use of an arbitrary sampling function.</p>
+<p>Takes an arbitrary callable with the signature ‘&lt;Signature (numpy.random.RandomState)&gt;’ or
+‘&lt;Signature (numpy.random.Generator)&gt;’.
+The callable is evoked via the <a class="reference internal" href="#acoupipe.sampler.ContainerSampler.sample" title="acoupipe.sampler.ContainerSampler.sample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">sample()</span></code></a> method of this class.
+The output of the callable is assigned to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">target</span></code> attribute.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.ContainerSampler.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.ContainerSampler.rvs" title="Link to this definition"></a></dt>
+<dd><p>Evokes the <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_func</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.ContainerSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.ContainerSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Random sampling.</p>
+<p>this function utilizes <a class="reference internal" href="#acoupipe.sampler.ContainerSampler.rvs" title="acoupipe.sampler.ContainerSampler.rvs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code></a> function to evaluate the <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_func</span></code>.
+The output of the <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_func</span></code> can be accessed with the <code class="xref py py-attr docutils literal notranslate"><span class="pre">target</span></code> attribute.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.LocationSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">LocationSampler</span></span><a class="headerlink" href="#acoupipe.sampler.LocationSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Base class that represents a random process.</p>
+<p>This class has no functionality and should not be used in practice.
+Manipulates attributes of an instance or a list of instances according to a specified random distribution.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.LocationSampler.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.LocationSampler.rvs" title="Link to this definition"></a></dt>
+<dd><p>Random variable sampling (for internal use).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.LocationSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.LocationSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Random sampling of locations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">PointSourceSampler</span></span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.sampler.LocationSampler" title="acoupipe.sampler.LocationSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LocationSampler</span></code></a></p>
+<p>Random process that samples the locations of one or more instances of type <code class="xref py py-class docutils literal notranslate"><span class="pre">PointSource</span></code>.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.sample_loc">
+<span class="sig-name descname"><span class="pre">sample_loc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.sample_loc" title="Link to this definition"></a></dt>
+<dd><p>Sample a single target location (internal use).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.rvs" title="Link to this definition"></a></dt>
+<dd><p>Random variable sampling (for internal use).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.PointSourceSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.PointSourceSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Random sampling of <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.PointSource</span></code> locations.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.sampler.MicGeomSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.sampler.</span></span><span class="sig-name descname"><span class="pre">MicGeomSampler</span></span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseSampler</span></code></a></p>
+<p>Random disturbance of microphone positions of a <code class="xref py py-class docutils literal notranslate"><span class="pre">acoular.MicGeom</span></code> object.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.MicGeomSampler.rotate">
+<span class="sig-name descname"><span class="pre">rotate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.rotate" title="Link to this definition"></a></dt>
+<dd><p>Rotates the microphone array.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.MicGeomSampler.translate">
+<span class="sig-name descname"><span class="pre">translate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.translate" title="Link to this definition"></a></dt>
+<dd><p>Translate the microphone array.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.MicGeomSampler.deviate">
+<span class="sig-name descname"><span class="pre">deviate</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.deviate" title="Link to this definition"></a></dt>
+<dd><p>Deviates the individual microphone positions.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.sampler.MicGeomSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.sampler.MicGeomSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Random sampling of microphone positions.</p>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../pipeline/index.html" class="btn btn-neutral float-left" title="acoupipe.pipeline" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../writer/index.html" class="btn btn-neutral float-right" title="acoupipe.writer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

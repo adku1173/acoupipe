@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>acoupipe.pipeline &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="acoupipe.sampler" href="../sampler/index.html" />
+    <link rel="prev" title="acoupipe.loader" href="../loader/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../contents/lit.html">Literature</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">AcouPipe API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../index.html#subpackages">Subpackages</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#submodules">Submodules</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../loader/index.html">acoupipe.loader</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">acoupipe.pipeline</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#purpose-of-the-pipeline-module">Purpose of the Pipeline Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-contents">Module Contents</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../sampler/index.html">acoupipe.sampler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../writer/index.html">acoupipe.writer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">acoupipe</a></li>
+      <li class="breadcrumb-item active">acoupipe.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/autoapi/acoupipe/pipeline/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-acoupipe.pipeline">
+<span id="acoupipe-pipeline"></span><h1>acoupipe.pipeline<a class="headerlink" href="#module-acoupipe.pipeline" title="Link to this heading"></a></h1>
+<p>All classes in this module can be used to calculate and provide data.</p>
+<section id="purpose-of-the-pipeline-module">
+<h2>Purpose of the Pipeline Module<a class="headerlink" href="#purpose-of-the-pipeline-module" title="Link to this heading"></a></h2>
+<p>Classes defined in the <code class="code docutils literal notranslate"><span class="pre">pipeline.py</span></code> module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset.
+The results of these tasks are the features (and labels) associated with a specific sample of the dataset.
+Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the <code class="code docutils literal notranslate"><span class="pre">BasePipeline</span></code>’s <code class="code docutils literal notranslate"><span class="pre">get_data()</span></code> generator method.
+It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file, as common machine learning frameworks, such as <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>, offer the possibility to consume data from Python generators.
+Control of the state of the sampling process is maintained via the <code class="code docutils literal notranslate"><span class="pre">sampler</span></code> attribute holding a list of <code class="code docutils literal notranslate"><span class="pre">BaseSampler</span></code> derived instances.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">acoular</span> <span class="k">as</span> <span class="nn">ac</span>
+<span class="kn">from</span> <span class="nn">acoupipe.sampler</span> <span class="kn">import</span> <span class="n">NumericAttributeSampler</span>
+<span class="kn">from</span> <span class="nn">acoupipe.pipeline</span> <span class="kn">import</span> <span class="n">BasePipeline</span><span class="p">,</span> <span class="n">DistributedPipeline</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">norm</span>
+
+<span class="n">random_var</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span><span class="n">scale</span><span class="o">=</span><span class="mf">.5</span><span class="p">)</span>
+
+<span class="n">n1</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">WNoiseGenerator</span><span class="p">(</span> <span class="n">sample_freq</span><span class="o">=</span><span class="mi">24000</span><span class="p">,</span>
+                <span class="n">numsamples</span><span class="o">=</span><span class="mi">24000</span><span class="o">*</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">rms</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                <span class="n">seed</span><span class="o">=</span><span class="mi">1</span> <span class="p">)</span>
+
+<span class="n">rms_sampler</span> <span class="o">=</span> <span class="n">NumericAttributeSampler</span><span class="p">(</span>
+                <span class="n">target</span><span class="o">=</span><span class="p">[</span><span class="n">n1</span><span class="p">],</span>
+                <span class="n">attribute</span><span class="o">=</span><span class="s1">&#39;rms&#39;</span><span class="p">,</span>
+                <span class="n">random_var</span><span class="o">=</span><span class="n">random_var</span><span class="p">,</span>
+                <span class="n">random_state</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">calculate_squared_rms</span><span class="p">(</span><span class="n">sampler</span><span class="p">):</span>
+    <span class="n">n1</span> <span class="o">=</span> <span class="n">sampler</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">target</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;rms_sq&#39;</span> <span class="p">:</span> <span class="n">n1</span><span class="o">.</span><span class="n">rms</span><span class="o">**</span><span class="mi">2</span> <span class="p">}</span>
+
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">BasePipeline</span><span class="p">(</span>
+    <span class="n">numsamples</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="c1">#random_seeds = [range(5)],</span>
+    <span class="n">sampler</span><span class="o">=</span><span class="p">[</span><span class="n">rms_sampler</span><span class="p">],</span>
+    <span class="n">features</span><span class="o">=</span><span class="n">calculate_squared_rms</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">get_data</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The example returns the following output:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="m">100</span>%<span class="p">|</span>██████████<span class="p">|</span><span class="w"> </span><span class="m">5</span>/5<span class="w"> </span><span class="o">[</span><span class="m">00</span>:00&lt;<span class="m">00</span>:00,<span class="w"> </span><span class="m">2250</span>.65it/s<span class="o">]</span>
+<span class="o">{</span><span class="s1">&#39;idx&#39;</span>:<span class="w"> </span><span class="m">0</span>,<span class="w"> </span><span class="s1">&#39;seeds&#39;</span>:<span class="w"> </span>array<span class="o">([[</span><span class="m">0</span>,<span class="w"> </span><span class="m">0</span><span class="o">]])</span>,<span class="w"> </span><span class="s1">&#39;rms_sq&#39;</span>:<span class="w"> </span><span class="m">1</span>.1296822432174416<span class="o">}</span>
+<span class="o">{</span><span class="s1">&#39;idx&#39;</span>:<span class="w"> </span><span class="m">1</span>,<span class="w"> </span><span class="s1">&#39;seeds&#39;</span>:<span class="w"> </span>array<span class="o">([[</span><span class="m">0</span>,<span class="w"> </span><span class="m">1</span><span class="o">]])</span>,<span class="w"> </span><span class="s1">&#39;rms_sq&#39;</span>:<span class="w"> </span><span class="m">1</span>.3754413005160537<span class="o">}</span>
+<span class="o">{</span><span class="s1">&#39;idx&#39;</span>:<span class="w"> </span><span class="m">2</span>,<span class="w"> </span><span class="s1">&#39;seeds&#39;</span>:<span class="w"> </span>array<span class="o">([[</span><span class="m">0</span>,<span class="w"> </span><span class="m">2</span><span class="o">]])</span>,<span class="w"> </span><span class="s1">&#39;rms_sq&#39;</span>:<span class="w"> </span><span class="m">1</span>.197988677085426<span class="o">}</span>
+<span class="o">{</span><span class="s1">&#39;idx&#39;</span>:<span class="w"> </span><span class="m">3</span>,<span class="w"> </span><span class="s1">&#39;seeds&#39;</span>:<span class="w"> </span>array<span class="o">([[</span><span class="m">0</span>,<span class="w"> </span><span class="m">3</span><span class="o">]])</span>,<span class="w"> </span><span class="s1">&#39;rms_sq&#39;</span>:<span class="w"> </span><span class="m">4</span>.082256836394099<span class="o">}</span>
+<span class="o">{</span><span class="s1">&#39;idx&#39;</span>:<span class="w"> </span><span class="m">4</span>,<span class="w"> </span><span class="s1">&#39;seeds&#39;</span>:<span class="w"> </span>array<span class="o">([[</span><span class="m">0</span>,<span class="w"> </span><span class="m">4</span><span class="o">]])</span>,<span class="w"> </span><span class="s1">&#39;rms_sq&#39;</span>:<span class="w"> </span><span class="m">0</span>.454416774044029<span class="o">}</span>
+</pre></div>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.pipeline.BaseSampler">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></span><span class="sig-name descname"><span class="pre">BaseSampler</span></span><a class="headerlink" href="#acoupipe.pipeline.BaseSampler" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>Base class that represents a random process.</p>
+<p>This class has no functionality and should not be used in practice.
+Manipulates attributes of an instance or a list of instances according to a specified random distribution.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.pipeline.BaseSampler.rvs">
+<span class="sig-name descname"><span class="pre">rvs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BaseSampler.rvs" title="Link to this definition"></a></dt>
+<dd><p>Random variable sampling (for internal use).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.pipeline.BaseSampler.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BaseSampler.sample" title="Link to this definition"></a></dt>
+<dd><p>Utilizes <a class="reference internal" href="#acoupipe.pipeline.BaseSampler.rvs" title="acoupipe.pipeline.BaseSampler.rvs"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rvs()</span></code></a> function to draw random values from <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_var</span></code> (no functionality in this class).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.pipeline.DataGenerator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></span><span class="sig-name descname"><span class="pre">DataGenerator</span></span><a class="headerlink" href="#acoupipe.pipeline.DataGenerator" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>Abstract base class that serves as a data generator.</p>
+<p>This class should not be used.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.pipeline.DataGenerator.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.DataGenerator.get_data" title="Link to this definition"></a></dt>
+<dd><p>Python generator that iteratively yields data set samples as a dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing a sample of the data set {feature_name[key],feature[values]}.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></span><span class="sig-name descname"><span class="pre">BasePipeline</span></span><a class="headerlink" href="#acoupipe.pipeline.BasePipeline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.pipeline.DataGenerator" title="acoupipe.pipeline.DataGenerator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DataGenerator</span></code></a></p>
+<p>Class to control the random process and iteratively extract and pass a specified amount of data.</p>
+<p>This class can be used to calculate data (extract features)
+by assigning a name and a callable function to <code class="xref py py-attr docutils literal notranslate"><span class="pre">features</span></code>.
+Furthermore this class automatically controles the sampling of instances
+of type <a class="reference internal" href="#acoupipe.pipeline.BaseSampler" title="acoupipe.pipeline.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a> specified to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">sampler</span></code> list.
+Re-seeding is performed at each iteration if <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seeds</span></code> are
+given.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.validate_random_seeds">
+<span class="sig-name descname"><span class="pre">validate_random_seeds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.validate_random_seeds" title="Link to this definition"></a></dt>
+<dd><p>Validate specified random seeds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.pipeline.BasePipeline.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.BasePipeline.get_data" title="Link to this definition"></a></dt>
+<dd><p>Provide the extracted features, sampler seeds and indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, a progress bar is displayed, by default True</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – the index of the first data sample to be calculated, by default 1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict</em> – a sample of the dataset containing the extracted feature data, seeds, and index</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.pipeline.DistributedPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.pipeline.</span></span><span class="sig-name descname"><span class="pre">DistributedPipeline</span></span><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BasePipeline</span></code></a></p>
+<p>Class to calculate data (extract features) in parallel to build large datasets.</p>
+<p>This class can be used to calculate data (extract various features)
+by assigning a name and a callable function to <code class="xref py py-attr docutils literal notranslate"><span class="pre">features</span></code>.
+Furthermore this class automatically controles the sampling of instances
+of type <a class="reference internal" href="#acoupipe.pipeline.BaseSampler" title="acoupipe.pipeline.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code></a> specified to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">sampler</span></code> list.
+Re-seeding is performed at each iteration if <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seeds</span></code> are
+given.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.pipeline.DistributedPipeline.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.pipeline.DistributedPipeline.get_data" title="Link to this definition"></a></dt>
+<dd><p>Provide the extracted features, sampler seeds and indices.</p>
+<p>The calculation of all data samples is performed in parallel and asynchronously.
+In case of specifying more than one worker in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">numworker</span></code> attribute,
+the output of this generator yields non-ordered features/data samples.
+However, the exact order can be recovered via the “idx” item (or “seeds” item)
+provided in the output dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, a progress bar is displayed, by default True</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – the index of the first data sample to be calculated, by default 1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict</em> – A sample of the dataset containing the extracted feature data, seeds, and index</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../loader/index.html" class="btn btn-neutral float-left" title="acoupipe.loader" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../sampler/index.html" class="btn btn-neutral float-right" title="acoupipe.sampler" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

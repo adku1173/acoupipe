@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulation with Singularity on a High-Performance Cluster (HPC) &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Prerequisites" href="../module/examples.html" />
+    <link rel="prev" title="Simulation with Docker" href="docker.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Datasets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../examples.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/generate.html">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html#sampling-microphone-array-geometries">Sampling Microphone Array Geometries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../examples.html">Examples</a></li>
+      <li class="breadcrumb-item active">Simulation with Singularity on a High-Performance Cluster (HPC)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contents/datasets/singularity.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="simulation-with-singularity-on-a-high-performance-cluster-hpc">
+<h1>Simulation with Singularity on a High-Performance Cluster (HPC)<a class="headerlink" href="#simulation-with-singularity-on-a-high-performance-cluster-hpc" title="Link to this heading"></a></h1>
+<p>If you plan to simulate the data by means of multiple machines (e.g. on a high-performance cluster (HPC))
+you can use the <a class="reference external" href="https://docs.ray.io/en/latest/cluster/getting-started.html">Ray Cluster</a> interface.</p>
+<p>If your HPC supports <a class="reference external" href="https://sylabs.io/guides/3.0/user-guide/quick_start.html">Singularity</a> you can easily create a singularity image named <cite>acoupipe.sif</cite> by bootstrapping from an existing docker image from <a class="reference external" href="https://hub.docker.com/repository/docker/adku1173/acoupipe/general">DockerHub</a>. E.g.:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>singularity<span class="w"> </span>build<span class="w"> </span>acoupipe.sif<span class="w"> </span>docker://adku1173/acoupipe:latest-full
+</pre></div>
+</div>
+<p>The following code snippet gives an example of a job script that can
+be scheduled with the <a class="reference external" href="https://slurm.schedmd.com/quickstart.html">SLURM</a> job manager and by using a <a class="reference external" href="https://sylabs.io/guides/3.0/user-guide/quick_start.html">Singularity</a> image.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
+<span class="c1">#SBATCH --job-name=&lt;your job name&gt;</span>
+<span class="c1">#SBATCH --cpus-per-task=16</span>
+<span class="c1">#SBATCH --nodes=2 # two computational nodes</span>
+<span class="c1">#SBATCH --tasks-per-node=1 # Give all resources to a single Ray task, ray can manage the resources internally</span>
+
+<span class="c1"># limit the number of threads. Ideally, this should be set</span>
+<span class="c1"># such that the number of threads is equal to the total number of threads devided by the</span>
+<span class="c1"># number of parallel executing AcouPipe tasks</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">NUMBA_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">MKL_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OPENBLAS_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">BLIS_NUM_THREADS</span><span class="o">=</span><span class="m">1</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">TF_CPP_MIN_LOG_LEVEL</span><span class="o">=</span><span class="m">3</span><span class="w"> </span><span class="c1"># silence TensorFlow if used</span>
+
+<span class="nv">IMGNAME</span><span class="o">=</span>&lt;path<span class="w"> </span>to<span class="w"> </span>your<span class="w"> </span>image&gt;/acoupipe.sif
+
+<span class="nb">let</span><span class="w"> </span><span class="s2">&quot;worker_num=(</span><span class="si">${</span><span class="nv">SLURM_NTASKS</span><span class="si">}</span><span class="s2">-1)&quot;</span><span class="w"> </span><span class="c1"># The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)</span>
+<span class="nb">let</span><span class="w"> </span><span class="s2">&quot;cpu_num=(</span><span class="si">${</span><span class="nv">SLURM_NTASKS</span><span class="si">}</span><span class="s2">)&quot;</span>
+<span class="nb">echo</span><span class="w"> </span><span class="s2">&quot;Number of workers&quot;</span><span class="w"> </span><span class="nv">$worker_num</span>
+
+<span class="c1"># Define the total number of CPU cores available to ray</span>
+<span class="nb">let</span><span class="w"> </span><span class="s2">&quot;total_cores=</span><span class="si">${</span><span class="nv">cpu_num</span><span class="si">}</span><span class="s2"> * </span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<span class="nv">port</span><span class="o">=</span><span class="m">6379</span>
+<span class="nv">hname</span><span class="o">=</span><span class="k">$(</span>hostname<span class="w"> </span>-I<span class="w"> </span><span class="p">|</span><span class="w"> </span>awk<span class="w"> </span><span class="s1">&#39;{print $1}&#39;</span><span class="k">)</span><span class="w"> </span><span class="c1"># first IP address given</span>
+<span class="nv">ip_head</span><span class="o">=</span><span class="nv">$hname</span>:<span class="nv">$port</span>
+<span class="nb">export</span><span class="w"> </span>ip_head<span class="w"> </span><span class="c1"># Exporting for latter access by trainer.py</span>
+<span class="nb">echo</span><span class="w"> </span><span class="nv">$ip_head</span>
+
+<span class="c1"># Start the ray head node on the node that executes this script by specifying --nodes=1 and --nodelist=`hostname`</span>
+<span class="c1"># We are using 1 task on this node and 5 CPUs (Threads). Have the dashboard listen to 0.0.0.0 to bind it to all</span>
+<span class="c1"># network interfaces. This allows to access the dashboard via port-forwarding.</span>
+srun<span class="w"> </span>--nodes<span class="o">=</span><span class="m">1</span><span class="w"> </span>--ntasks<span class="o">=</span><span class="m">1</span><span class="w"> </span>--cpus-per-task<span class="o">=</span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span><span class="w"> </span>--nodelist<span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span><span class="w"> </span>singularity<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-B<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="w"> </span><span class="nv">$IMGNAME</span><span class="w"> </span>ray<span class="w"> </span>start<span class="w"> </span>--head<span class="w"> </span>--block<span class="w"> </span>--port<span class="o">=</span><span class="nv">$port</span><span class="w"> </span>--num-cpus<span class="w"> </span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span><span class="w"> </span><span class="p">&amp;</span>
+sleep<span class="w"> </span><span class="m">10</span>
+
+<span class="c1"># Now we execute worker_num worker nodes on all nodes in the allocation except hostname by</span>
+<span class="c1"># specifying --nodes=${worker_num} and --exclude=`hostname`. Use 1 task per node, so worker_num tasks in total</span>
+<span class="c1"># (--ntasks=${worker_num}) and 5 CPUs per task (--cps-per-task=${SLURM_CPUS_PER_TASK}).</span>
+srun<span class="w"> </span>--nodes<span class="o">=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span><span class="w"> </span>--ntasks<span class="o">=</span><span class="si">${</span><span class="nv">worker_num</span><span class="si">}</span><span class="w"> </span>--cpus-per-task<span class="o">=</span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span><span class="w"> </span>--exclude<span class="o">=</span><span class="sb">`</span>hostname<span class="sb">`</span><span class="w"> </span>singularity<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-B<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="w"> </span><span class="nv">$IMGNAME</span><span class="w"> </span>ray<span class="w"> </span>start<span class="w"> </span>--address<span class="w"> </span><span class="nv">$ip_head</span><span class="w"> </span>--block<span class="w"> </span>--num-cpus<span class="w"> </span><span class="si">${</span><span class="nv">SLURM_CPUS_PER_TASK</span><span class="si">}</span><span class="w"> </span><span class="p">&amp;</span>
+sleep<span class="w"> </span><span class="m">10</span>
+
+singularity<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-B<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span><span class="w"> </span><span class="nv">$IMGNAME</span><span class="w"> </span>python<span class="w"> </span>-u<span class="w"> </span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>/main.py<span class="w"> </span>--head<span class="o">=</span><span class="si">${</span><span class="nv">ip_head</span><span class="si">}</span><span class="w"> </span>--task_list<span class="w"> </span><span class="si">${</span><span class="nv">total_cores</span><span class="si">}</span>
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="docker.html" class="btn btn-neutral float-left" title="Simulation with Docker" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../module/examples.html" class="btn btn-neutral float-right" title="Prerequisites" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

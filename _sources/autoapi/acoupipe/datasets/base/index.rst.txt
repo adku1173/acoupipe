@@ -1,0 +1,356 @@
+acoupipe.datasets.base
+======================
+
+.. py:module:: acoupipe.datasets.base
+
+.. autoapi-nested-parse::
+
+   Base classes for generating microphone array datasets.
+
+
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: BaseFeatureCollectionBuilder
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.
+
+   .. attribute:: feature_collection
+
+      BaseFeatureCollection object.
+
+      :type: BaseFeatureCollection
+
+
+   .. py:method:: add_custom(feature_func)
+
+      Add a custom feature to the BaseFeatureCollection.
+
+      :param feature_func: Feature to be added.
+      :type feature_func: str
+
+
+
+   .. py:method:: build()
+
+      Build a BaseFeatureCollection.
+
+      :returns: BaseFeatureCollection object.
+      :rtype: BaseFeatureCollection
+
+
+
+.. py:function:: set_pipeline_seeds(pipeline, start_idx, size, dataset='training')
+
+   Create the random seed list for each of the sampler objects that is held by the pipeline object.
+
+   :param pipeline: the pipeline object holding the sampler classes
+   :type pipeline: instance of class BasePipeline
+   :param start_idx: start index to be calculated by the pipeline
+   :type start_idx: int
+   :param size: number of samples to be yielded by the pipeline
+   :type size: int
+   :param dataset: the data set type, by default "training". Choose from ["training","validation"]
+   :type dataset: str, optional
+
+
+.. py:class:: BasePipeline
+
+   Bases: :py:obj:`DataGenerator`
+
+
+   Class to control the random process and iteratively extract and pass a specified amount of data.
+
+   This class can be used to calculate data (extract features)
+   by assigning a name and a callable function to :attr:`features`.
+   Furthermore this class automatically controles the sampling of instances
+   of type :class:`BaseSampler` specified to the :attr:`sampler` list.
+   Re-seeding is performed at each iteration if :attr:`random_seeds` are
+   given.
+
+
+   .. py:method:: validate_random_seeds()
+
+      Validate specified random seeds.
+
+
+
+   .. py:method:: get_data(progress_bar=True, start_idx=1)
+
+      Provide the extracted features, sampler seeds and indices.
+
+      :param progress_bar: if True, a progress bar is displayed, by default True
+      :type progress_bar: bool, optional
+      :param start_idx: the index of the first data sample to be calculated, by default 1
+      :type start_idx: int, optional
+
+      :Yields: *dict* -- a sample of the dataset containing the extracted feature data, seeds, and index
+
+
+
+.. py:class:: DistributedPipeline
+
+   Bases: :py:obj:`BasePipeline`
+
+
+   Class to calculate data (extract features) in parallel to build large datasets.
+
+   This class can be used to calculate data (extract various features)
+   by assigning a name and a callable function to :attr:`features`.
+   Furthermore this class automatically controles the sampling of instances
+   of type :class:`BaseSampler` specified to the :attr:`sampler` list.
+   Re-seeding is performed at each iteration if :attr:`random_seeds` are
+   given.
+
+
+   .. py:method:: get_data(progress_bar=True, start_idx=1)
+
+      Provide the extracted features, sampler seeds and indices.
+
+      The calculation of all data samples is performed in parallel and asynchronously.
+      In case of specifying more than one worker in the :attr:`numworker` attribute,
+      the output of this generator yields non-ordered features/data samples.
+      However, the exact order can be recovered via the "idx" item (or "seeds" item)
+      provided in the output dictionary.
+
+      :param progress_bar: if True, a progress bar is displayed, by default True
+      :type progress_bar: bool, optional
+      :param start_idx: the index of the first data sample to be calculated, by default 1
+      :type start_idx: int, optional
+
+      :Yields: *dict* -- A sample of the dataset containing the extracted feature data, seeds, and index
+
+
+
+.. py:class:: WriteH5Dataset
+
+   Bases: :py:obj:`BaseWriteDataset`
+
+
+   Class intended to write data to a `.h5` file.
+
+
+   .. py:method:: save(progress_bar=True, start_idx=1)
+
+      Save the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format.
+
+
+
+   .. py:method:: get_data(progress_bar=True, start_idx=1)
+
+      Python generator that saves the data passed by the source to a `*.h5` file and yields the data to the next object.
+
+      :returns: Dictionary containing a sample of the data set
+                {feature_name[key] : feature[values]}.
+      :rtype: dict
+
+
+
+.. py:class:: ConfigBase
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Configuration base class for generating microphone array datasets.
+
+
+   .. py:method:: get_sampler()
+
+      Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
+
+      this function has to be manually defined in a dataset subclass.
+      It includes the sampler objects as values. The key defines the idx in the sample order.
+
+      e.g.:
+      >>> sampler = {
+      >>>     0 : BaseSampler(...),
+      >>>     1 : BaseSampler(...),
+      >>>     ...
+      >>> }
+
+      :returns: dictionary containing the sampler objects
+      :rtype: dict
+
+
+
+.. py:class:: DatasetBase(config=None, tasks=1, logger=None)
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Base class for generating microphone array datasets with specified features and labels.
+
+   .. attribute:: config
+
+      Configuration object for dataset generation.
+
+      :type: ConfigBase
+
+   .. attribute:: tasks
+
+      Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
+
+      :type: int
+
+
+   .. py:method:: get_feature_collection(features, f, num)
+
+      Get the feature collection of the dataset.
+
+      :returns: BaseFeatureCollection object.
+      :rtype: BaseFeatureCollection
+
+
+
+   .. py:method:: generate(features, split, size, f=None, num=0, start_idx=0, progress_bar=True)
+
+      Generate dataset samples iteratively.
+
+      :param features: List of features included in the dataset. The features "seeds" and "idx" are always included.
+      :type features: list
+      :param split: Split name for the dataset ('training', 'validation' or 'test').
+      :type split: str
+      :param size: Size of the dataset (number of source cases).
+      :type size: int
+      :param f: The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+      :type f: float
+      :param num: Controls the width of the frequency bands considered; defaults to
+                  0 (single frequency line).
+
+                  ===  =====================
+                  num  frequency band width
+                  ===  =====================
+                  0    single frequency line
+                  1    octave band
+                  3    third-octave band
+                  n    1/n-octave band
+                  ===  =====================
+      :type num: integer
+      :param start_idx: Starting sample index (default is 0).
+      :type start_idx: int, optional
+      :param progress_bar: Whether to show a progress bar (default is True).
+      :type progress_bar: bool, optional
+
+      :Yields: **data** (*dict*) -- Generator that yields dataset samples as dictionaries containing the feature names as keys.
+
+      .. rubric:: Examples
+
+      Generate features iteratively.
+
+      >>> from acoupipe.datasets.synthetic import DatasetSynthetic
+      >>> # define the features
+      >>> features = ["csm", "source_strength_analytic", "loc"]
+      >>> f = 1000
+      >>> num = 3
+      >>> # generate the dataset
+      >>> generator = DatasetSynthetic().generate(
+              f=f, num=num, split="training", size=2, features=features)
+      >>> # iterate over the dataset
+      >>> for data in generator:
+              print(data)
+
+
+
+   .. py:method:: save_h5(features, split, size, name, f=None, num=0, start_idx=0, progress_bar=True)
+
+      Save dataset to a HDF5 file.
+
+      :param features: List of features included in the dataset. The features "seeds" and "idx" are always included.
+      :type features: list
+      :param split: Split name for the dataset ('training', 'validation' or 'test').
+      :type split: str
+      :param size: Size of the dataset (number of source cases).
+      :type size: int
+      :param name: Name of the HDF5 file.
+      :type name: str
+      :param f: The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+      :type f: float
+      :param num: Controls the width of the frequency bands considered; defaults to
+                  0 (single frequency line).
+
+                  ===  =====================
+                  num  frequency band width
+                  ===  =====================
+                  0    single frequency line
+                  1    octave band
+                  3    third-octave band
+                  n    1/n-octave band
+                  ===  =====================
+      :type num: integer
+      :param start_idx: Starting sample index (default is 0).
+      :type start_idx: int, optional
+      :param progress_bar: Whether to show a progress bar (default is True).
+      :type progress_bar: bool, optional
+
+      :rtype: None
+
+      .. rubric:: Examples
+
+      Save features to a HDF5 file.
+
+      >>> from acoupipe.datasets.synthetic import DatasetSynthetic
+      >>> # define the features
+      >>> features = ["csm", "source_strength_analytic", "loc"]
+      >>> f = 1000
+      >>> num = 3
+      >>> # save the dataset
+      >>> dataset = DatasetSynthetic().save_h5(
+              f=f, num=num, split="training", size=10, features=features,name="/tmp/example.h5")
+
+
+
+.. py:function:: save_tfrecord(self, features, split, size, name, f=None, num=0, start_idx=0, progress_bar=True)
+
+   Save dataset to a .tfrecord file.
+
+   :param features: List of features included in the dataset. The features "seeds" and "idx" are always included.
+   :type features: list
+   :param split: Split name for the dataset ('training', 'validation' or 'test').
+   :type split: str
+   :param size: Size of the dataset (number of source cases).
+   :type size: int
+   :param name: Name of the TFRecord file.
+   :type name: str
+   :param f: The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+   :type f: float
+   :param num: Controls the width of the frequency bands considered; defaults to
+               0 (single frequency line).
+
+               ===  =====================
+               num  frequency band width
+               ===  =====================
+               0    single frequency line
+               1    octave band
+               3    third-octave band
+               n    1/n-octave band
+               ===  =====================
+   :type num: integer
+   :param start_idx: Starting sample index (default is 0).
+   :type start_idx: int, optional
+   :param progress_bar: Whether to show a progress bar (default is True).
+   :type progress_bar: bool, optional
+
+   :rtype: None
+
+   .. rubric:: Examples
+
+   Save features to a TFRecord file.
+
+   >>> from acoupipe.datasets.synthetic import DatasetSynthetic
+   >>> # define the features
+   >>> features = ["csm", "source_strength_analytic", "loc"]
+   >>> f = 1000
+   >>> num = 3
+   >>> # save the dataset
+   >>> dataset = DatasetSynthetic().save_tfrecord(
+           f=f, num=num, split="training", size=10, features=features,name="/tmp/example.tfrecord")
+
+

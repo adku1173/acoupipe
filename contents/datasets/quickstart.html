@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="acoupipe.datasets.synthetic" href="../../autoapi/acoupipe/datasets/synthetic/index.html" />
+    <link rel="prev" title="Datasets" href="../datasets.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../datasets.html">Datasets</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Quickstart</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#generate-datasets">Generate Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#store-datasets">Store Datasets</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#hdf5-format">HDF5 format</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tfrecord-format">TFRecord format</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/datasets/synthetic/index.html">Synthetic Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/datasets/experimental/index.html">Experimental Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/modify.html">Modifying a Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../datasets.html">Datasets</a></li>
+      <li class="breadcrumb-item active">Quickstart</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contents/datasets/quickstart.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quickstart">
+<span id="id1"></span><h1>Quickstart<a class="headerlink" href="#quickstart" title="Link to this heading"></a></h1>
+<section id="generate-datasets">
+<h2>Generate Datasets<a class="headerlink" href="#generate-datasets" title="Link to this heading"></a></h2>
+<p>To generate microphone array data with one of the available dataset generation methods, the user needs to import and instantiate the respective class and call the method <code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code> with the desired parameters. The <code class="xref py py-meth docutils literal notranslate"><span class="pre">generate()</span></code> method returns a Python generator, which can be used to extract the desired features.</p>
+<p>The following code snippet shows how to create a dataset generator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">acoupipe.datasets.synthetic</span> <span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+
+<span class="c1"># instantiate dataset class</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span>
+
+<span class="c1"># create data generator for frequency 2000 Hz (single frequency)</span>
+<span class="n">data_generator</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">split</span><span class="o">=</span><span class="s1">&#39;training&#39;</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sourcemap&#39;</span><span class="p">,</span><span class="s1">&#39;loc&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">],</span> <span class="n">f</span><span class="o">=</span><span class="p">[</span><span class="mi">2000</span><span class="p">],</span> <span class="n">num</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The user has to specify the <code class="code docutils literal notranslate"><span class="pre">size</span></code> of the dataset, the dataset split <code class="code docutils literal notranslate"><span class="pre">split</span></code> and the <code class="code docutils literal notranslate"><span class="pre">features</span></code> to be extracted. A full list of available features can be found in the <a class="reference internal" href="features.html#features"><span class="std std-ref">Features section</span></a>. Optionally, the user can specify certain frequencies <code class="code docutils literal notranslate"><span class="pre">f</span></code> and the desired bandwidth <code class="code docutils literal notranslate"><span class="pre">num</span></code>. If no frequencies are given, the features will be extracted for all frequencies in the range <span class="math notranslate nohighlight">\([0, fs/2]\)</span> Hz.</p>
+<div class="admonition-dataset-splits admonition">
+<p class="admonition-title">Dataset Splits</p>
+<p>All datasets comprise the following independent splits:</p>
+<ul class="simple">
+<li><p><code class="code docutils literal notranslate"><span class="pre">training</span></code> dataset</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">validation</span></code> dataset</p></li>
+<li><p><code class="code docutils literal notranslate"><span class="pre">test</span></code> dataset</p></li>
+</ul>
+<p>The size of each split can be freely chosen.</p>
+</div>
+<p>In this example, we choose the <code class="code docutils literal notranslate"><span class="pre">sourcemap</span></code> feature, which is a 2D beamforming map with the squared sound pressure amplitudes at a reference position as values. Furthermore, we include the source locations <code class="code docutils literal notranslate"><span class="pre">loc</span></code> and frequencies <code class="code docutils literal notranslate"><span class="pre">f</span></code> as potential labels of the dataset.</p>
+<p>There are a few things to note when extracting features with the data generator:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_sample</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">data_generator</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>First, the data generator returns a single sample at a time, consisting of a dictionary with the feature names as keys and the corresponding data as values. Second, the <code class="code docutils literal notranslate"><span class="pre">data_sample</span></code> dictionary includes two additional items, namely the <code class="code docutils literal notranslate"><span class="pre">idx</span></code> and <code class="code docutils literal notranslate"><span class="pre">seeds</span></code> of the sample. The <code class="code docutils literal notranslate"><span class="pre">idx</span></code> is the sample index and the <code class="code docutils literal notranslate"><span class="pre">seeds</span></code> are the random seeds used to generate the sample. Both are included for reproducible data generation, especially in multi-processing scenarios where the sample order may not be maintained.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The frequency included in the data might be slightly different from the specified frequency. This is usually indicated by a warning and is due to the fact that the frequency is chosen from a discrete set of frequencies, which depends on the parameters of the FFT and the sampling rate <code class="code docutils literal notranslate"><span class="pre">fs</span></code> of the dataset.</p>
+</div>
+<p>The sampling rate and the FFT parameters can be adjusted the following way:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fs</span> <span class="o">=</span> <span class="mi">44100</span>
+<span class="n">block_size</span> <span class="o">=</span> <span class="mi">4096</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">(</span><span class="n">fs</span><span class="o">=</span><span class="n">fs</span><span class="p">)</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fft_params</span><span class="p">[</span><span class="s1">&#39;block_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">block_size</span>
+</pre></div>
+</div>
+<p>Now, the data can be plotted, e.g. by using the <a class="reference external" href="https://matplotlib.org/">matplotlib</a> library:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">acoular</span> <span class="k">as</span> <span class="nn">ac</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">extent</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">extend</span><span class="p">()</span>
+
+<span class="c1"># sound pressure level</span>
+<span class="n">Lm</span> <span class="o">=</span> <span class="n">ac</span><span class="o">.</span><span class="n">L_p</span><span class="p">(</span><span class="n">data_sample</span><span class="p">[</span><span class="s1">&#39;sourcemap&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+<span class="n">Lm_max</span> <span class="o">=</span> <span class="n">Lm</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">Lm_min</span> <span class="o">=</span> <span class="n">Lm</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="mi">20</span>
+
+<span class="c1"># plot sourcemap</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Beamforming Map (f=</span><span class="si">{</span><span class="n">data_sample</span><span class="p">[</span><span class="s2">&quot;f&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> Hz)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">Lm</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">Lm_max</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">Lm_min</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">extent</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s1">&#39;Sound Pressure Level (dB)&#39;</span><span class="p">)</span>
+<span class="c1"># plot source locations</span>
+<span class="k">for</span> <span class="n">loc</span> <span class="ow">in</span> <span class="n">data_sample</span><span class="p">[</span><span class="s1">&#39;loc&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">:</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">loc</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">loc</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span><span class="p">(</span><span class="s1">&#39;x (m)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;y (m)&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The resulting plot should look like this:</p>
+<a class="reference internal image-reference" href="../../_images/quickstart_sourcemap.png"><img alt="../../_images/quickstart_sourcemap.png" src="../../_images/quickstart_sourcemap.png" style="width: 600px;" /></a>
+<p>A more in-depth example on how to generate the data, and how to create a TensorFlow-ready pipeline that produces data on the fly can be found in the <a class="reference internal" href="../examples.html#examples"><span class="std std-ref">Model training with training data generated on the fly</span></a> example.</p>
+</section>
+<section id="store-datasets">
+<h2>Store Datasets<a class="headerlink" href="#store-datasets" title="Link to this heading"></a></h2>
+<p>The user can also save the datasets in two different file formats (<a class="reference external" href="https://docs.hdfgroup.org/hdf5/develop/_h5_g__u_g.html">HDF5</a> or <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a>).</p>
+<section id="hdf5-format">
+<h3>HDF5 format<a class="headerlink" href="#hdf5-format" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://docs.hdfgroup.org/hdf5/develop/_h5_g__u_g.html">HDF5</a> is a container-like format storing data in hierarchical order.
+Each case and the corresponding data is stored into a separate group of the file.
+The sample index acts as the group header.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>└──<span class="s1">&#39;0&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;sourcemap&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;loc&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;f&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;seeds&#39;</span>
+└──<span class="s1">&#39;1&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;sourcemap&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;loc&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;f&#39;</span>
+<span class="w">    </span><span class="p">|</span>──<span class="w"> </span><span class="s1">&#39;seeds&#39;</span>
+└──...
+<span class="w">    </span><span class="p">|</span><span class="w">   </span>...
+</pre></div>
+</div>
+<p>The correct order is always maintained, which is important when multiple source cases are simulated in parallel tasks.</p>
+<p>The following code snippet shows how to store the data in HDF5 format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">acoupipe.datasets.synthetic</span> <span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">save_h5</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sourcemap&#39;</span><span class="p">,</span><span class="s1">&#39;loc&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">],</span>
+                <span class="n">split</span><span class="o">=</span><span class="s1">&#39;training&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="p">[</span><span class="mi">2000</span><span class="p">],</span> <span class="n">num</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;/tmp/training_dataset.h5&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A more in-depth example on how to save and load the data, and how to create a TensorFlow-ready pipeline from file can be found in the <a class="reference internal" href="../examples.html#examples"><span class="std std-ref">Save and load datasets stored in HDF5 file format</span></a> example.</p>
+</section>
+<section id="tfrecord-format">
+<h3>TFRecord format<a class="headerlink" href="#tfrecord-format" title="Link to this heading"></a></h3>
+<p>The <a class="reference external" href="https://www.tensorflow.org/tutorials/load_data/tfrecord">TFRecord</a> file format is a binary file format to store sequences of data developed by <a class="reference external" href="https://www.tensorflow.org/">Tensorflow</a>.
+In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file.
+However, the exact source case number can be figured out with the <code class="code docutils literal notranslate"><span class="pre">idx</span></code> and <code class="code docutils literal notranslate"><span class="pre">seeds</span></code> features when the file is parsed.</p>
+<p>The following code snippet shows how to store the data in TFRecord format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">acoupipe.datasets.synthetic</span> <span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">save_tfrecord</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sourcemap&#39;</span><span class="p">,</span><span class="s1">&#39;loc&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">],</span>
+                      <span class="n">split</span><span class="o">=</span><span class="s1">&#39;training&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="p">[</span><span class="mi">2000</span><span class="p">],</span> <span class="n">num</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                      <span class="n">name</span><span class="o">=</span><span class="s1">&#39;/tmp/training_dataset.tfrecord&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A more in-depth example on how to save and load the data, and how to create a TensorFlow-ready pipeline from file can be found in the <a class="reference internal" href="../examples.html#examples"><span class="std std-ref">Save and load datasets stored in TFRecord file format</span></a> example.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../datasets.html" class="btn btn-neutral float-left" title="Datasets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../autoapi/acoupipe/datasets/synthetic/index.html" class="btn btn-neutral float-right" title="acoupipe.datasets.synthetic" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

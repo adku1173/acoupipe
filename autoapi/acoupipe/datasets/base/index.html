@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>acoupipe.datasets.base &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="acoupipe.loader" href="../../loader/index.html" />
+    <link rel="prev" title="acoupipe.datasets" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/datasets.html">Datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/lit.html">Literature</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">AcouPipe API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../index.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="../index.html">acoupipe.datasets</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="../index.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../index.html#submodules">Submodules</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">acoupipe</a></li>
+          <li class="breadcrumb-item"><a href="../index.html">acoupipe.datasets</a></li>
+      <li class="breadcrumb-item active">acoupipe.datasets.base</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../_sources/autoapi/acoupipe/datasets/base/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-acoupipe.datasets.base">
+<span id="acoupipe-datasets-base"></span><h1>acoupipe.datasets.base<a class="headerlink" href="#module-acoupipe.datasets.base" title="Link to this heading"></a></h1>
+<p>Base classes for generating microphone array datasets.</p>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.BaseFeatureCollectionBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">BaseFeatureCollectionBuilder</span></span><a class="headerlink" href="#acoupipe.datasets.base.BaseFeatureCollectionBuilder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.BaseFeatureCollectionBuilder.feature_collection">
+<span class="sig-name descname"><span class="pre">feature_collection</span></span><a class="headerlink" href="#acoupipe.datasets.base.BaseFeatureCollectionBuilder.feature_collection" title="Link to this definition"></a></dt>
+<dd><p>BaseFeatureCollection object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../experimental/index.html#acoupipe.datasets.experimental.BaseFeatureCollection" title="acoupipe.datasets.experimental.BaseFeatureCollection">BaseFeatureCollection</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.BaseFeatureCollectionBuilder.add_custom">
+<span class="sig-name descname"><span class="pre">add_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.BaseFeatureCollectionBuilder.add_custom" title="Link to this definition"></a></dt>
+<dd><p>Add a custom feature to the BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>feature_func</strong> (<em>str</em>) – Feature to be added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.BaseFeatureCollectionBuilder.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.BaseFeatureCollectionBuilder.build" title="Link to this definition"></a></dt>
+<dd><p>Build a BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>BaseFeatureCollection object.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../experimental/index.html#acoupipe.datasets.experimental.BaseFeatureCollection" title="acoupipe.datasets.experimental.BaseFeatureCollection">BaseFeatureCollection</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.set_pipeline_seeds">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">set_pipeline_seeds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pipeline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'training'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.set_pipeline_seeds" title="Link to this definition"></a></dt>
+<dd><p>Create the random seed list for each of the sampler objects that is held by the pipeline object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pipeline</strong> (<em>instance</em><em> of </em><em>class BasePipeline</em>) – the pipeline object holding the sampler classes</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em>) – start index to be calculated by the pipeline</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – number of samples to be yielded by the pipeline</p></li>
+<li><p><strong>dataset</strong> (<em>str</em><em>, </em><em>optional</em>) – the data set type, by default “training”. Choose from [“training”,”validation”]</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.BasePipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">BasePipeline</span></span><a class="headerlink" href="#acoupipe.datasets.base.BasePipeline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">DataGenerator</span></code></p>
+<p>Class to control the random process and iteratively extract and pass a specified amount of data.</p>
+<p>This class can be used to calculate data (extract features)
+by assigning a name and a callable function to <code class="xref py py-attr docutils literal notranslate"><span class="pre">features</span></code>.
+Furthermore this class automatically controles the sampling of instances
+of type <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code> specified to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">sampler</span></code> list.
+Re-seeding is performed at each iteration if <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seeds</span></code> are
+given.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.BasePipeline.validate_random_seeds">
+<span class="sig-name descname"><span class="pre">validate_random_seeds</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.BasePipeline.validate_random_seeds" title="Link to this definition"></a></dt>
+<dd><p>Validate specified random seeds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.BasePipeline.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.BasePipeline.get_data" title="Link to this definition"></a></dt>
+<dd><p>Provide the extracted features, sampler seeds and indices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, a progress bar is displayed, by default True</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – the index of the first data sample to be calculated, by default 1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict</em> – a sample of the dataset containing the extracted feature data, seeds, and index</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DistributedPipeline">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">DistributedPipeline</span></span><a class="headerlink" href="#acoupipe.datasets.base.DistributedPipeline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.base.BasePipeline" title="acoupipe.datasets.base.BasePipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BasePipeline</span></code></a></p>
+<p>Class to calculate data (extract features) in parallel to build large datasets.</p>
+<p>This class can be used to calculate data (extract various features)
+by assigning a name and a callable function to <code class="xref py py-attr docutils literal notranslate"><span class="pre">features</span></code>.
+Furthermore this class automatically controles the sampling of instances
+of type <code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSampler</span></code> specified to the <code class="xref py py-attr docutils literal notranslate"><span class="pre">sampler</span></code> list.
+Re-seeding is performed at each iteration if <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_seeds</span></code> are
+given.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DistributedPipeline.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.DistributedPipeline.get_data" title="Link to this definition"></a></dt>
+<dd><p>Provide the extracted features, sampler seeds and indices.</p>
+<p>The calculation of all data samples is performed in parallel and asynchronously.
+In case of specifying more than one worker in the <code class="xref py py-attr docutils literal notranslate"><span class="pre">numworker</span></code> attribute,
+the output of this generator yields non-ordered features/data samples.
+However, the exact order can be recovered via the “idx” item (or “seeds” item)
+provided in the output dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>optional</em>) – if True, a progress bar is displayed, by default True</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – the index of the first data sample to be calculated, by default 1</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>dict</em> – A sample of the dataset containing the extracted feature data, seeds, and index</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.WriteH5Dataset">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">WriteH5Dataset</span></span><a class="headerlink" href="#acoupipe.datasets.base.WriteH5Dataset" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseWriteDataset</span></code></p>
+<p>Class intended to write data to a <cite>.h5</cite> file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.WriteH5Dataset.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.WriteH5Dataset.save" title="Link to this definition"></a></dt>
+<dd><p>Save the output of the <a class="reference internal" href="#acoupipe.datasets.base.WriteH5Dataset.get_data" title="acoupipe.datasets.base.WriteH5Dataset.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a> method of <a class="reference internal" href="../../pipeline/index.html#acoupipe.pipeline.BasePipeline" title="acoupipe.pipeline.BasePipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">BasePipeline</span></code></a> to .h5 file format.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.WriteH5Dataset.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.WriteH5Dataset.get_data" title="Link to this definition"></a></dt>
+<dd><p>Python generator that saves the data passed by the source to a <cite>*.h5</cite> file and yields the data to the next object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dictionary containing a sample of the data set
+{feature_name[key] : feature[values]}.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.ConfigBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">ConfigBase</span></span><a class="headerlink" href="#acoupipe.datasets.base.ConfigBase" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>Configuration base class for generating microphone array datasets.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.ConfigBase.get_sampler">
+<span class="sig-name descname"><span class="pre">get_sampler</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.ConfigBase.get_sampler" title="Link to this definition"></a></dt>
+<dd><p>Return dictionary containing the sampler objects of type <a class="reference internal" href="../../sampler/index.html#acoupipe.sampler.BaseSampler" title="acoupipe.sampler.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.sampler.BaseSampler</span></code></a>.</p>
+<p>this function has to be manually defined in a dataset subclass.
+It includes the sampler objects as values. The key defines the idx in the sample order.</p>
+<p>e.g.:
+&gt;&gt;&gt; sampler = {
+&gt;&gt;&gt;     0 : BaseSampler(…),
+&gt;&gt;&gt;     1 : BaseSampler(…),
+&gt;&gt;&gt;     …
+&gt;&gt;&gt; }</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dictionary containing the sampler objects</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DatasetBase">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">DatasetBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.DatasetBase" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>Base class for generating microphone array datasets with specified features and labels.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DatasetBase.config">
+<span class="sig-name descname"><span class="pre">config</span></span><a class="headerlink" href="#acoupipe.datasets.base.DatasetBase.config" title="Link to this definition"></a></dt>
+<dd><p>Configuration object for dataset generation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#acoupipe.datasets.base.ConfigBase" title="acoupipe.datasets.base.ConfigBase">ConfigBase</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DatasetBase.tasks">
+<span class="sig-name descname"><span class="pre">tasks</span></span><a class="headerlink" href="#acoupipe.datasets.base.DatasetBase.tasks" title="Link to this definition"></a></dt>
+<dd><p>Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DatasetBase.get_feature_collection">
+<span class="sig-name descname"><span class="pre">get_feature_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.DatasetBase.get_feature_collection" title="Link to this definition"></a></dt>
+<dd><p>Get the feature collection of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>BaseFeatureCollection object.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="../experimental/index.html#acoupipe.datasets.experimental.BaseFeatureCollection" title="acoupipe.datasets.experimental.BaseFeatureCollection">BaseFeatureCollection</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DatasetBase.generate">
+<span class="sig-name descname"><span class="pre">generate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.DatasetBase.generate" title="Link to this definition"></a></dt>
+<dd><p>Generate dataset samples iteratively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>list</em>) – List of features included in the dataset. The features “seeds” and “idx” are always included.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Split name for the dataset (‘training’, ‘validation’ or ‘test’).</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – Size of the dataset (number of source cases).</p></li>
+<li><p><strong>f</strong> (<em>float</em>) – The center frequency or list of frequencies of the dataset. If None, all frequencies are included.</p></li>
+<li><p><strong>num</strong> (<em>integer</em>) – <p>Controls the width of the frequency bands considered; defaults to
+0 (single frequency line).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>num</p></th>
+<th class="head"><p>frequency band width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>single frequency line</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>octave band</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>third-octave band</p></td>
+</tr>
+<tr class="row-odd"><td><p>n</p></td>
+<td><p>1/n-octave band</p></td>
+</tr>
+</tbody>
+</table>
+</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Starting sample index (default is 0).</p></li>
+<li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to show a progress bar (default is True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>data</strong> (<em>dict</em>) – Generator that yields dataset samples as dictionaries containing the feature names as keys.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Generate features iteratively.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">acoupipe.datasets.synthetic</span> <span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># define the features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;csm&quot;</span><span class="p">,</span> <span class="s2">&quot;source_strength_analytic&quot;</span><span class="p">,</span> <span class="s2">&quot;loc&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">num</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># generate the dataset</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">generator</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+<span class="go">        f=f, num=num, split=&quot;training&quot;, size=2, features=features)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># iterate over the dataset</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">generator</span><span class="p">:</span>
+<span class="go">        print(data)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.DatasetBase.save_h5">
+<span class="sig-name descname"><span class="pre">save_h5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.DatasetBase.save_h5" title="Link to this definition"></a></dt>
+<dd><p>Save dataset to a HDF5 file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>list</em>) – List of features included in the dataset. The features “seeds” and “idx” are always included.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Split name for the dataset (‘training’, ‘validation’ or ‘test’).</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – Size of the dataset (number of source cases).</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of the HDF5 file.</p></li>
+<li><p><strong>f</strong> (<em>float</em>) – The center frequency or list of frequencies of the dataset. If None, all frequencies are included.</p></li>
+<li><p><strong>num</strong> (<em>integer</em>) – <p>Controls the width of the frequency bands considered; defaults to
+0 (single frequency line).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>num</p></th>
+<th class="head"><p>frequency band width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>single frequency line</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>octave band</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>third-octave band</p></td>
+</tr>
+<tr class="row-odd"><td><p>n</p></td>
+<td><p>1/n-octave band</p></td>
+</tr>
+</tbody>
+</table>
+</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Starting sample index (default is 0).</p></li>
+<li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to show a progress bar (default is True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Save features to a HDF5 file.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">acoupipe.datasets.synthetic</span> <span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># define the features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;csm&quot;</span><span class="p">,</span> <span class="s2">&quot;source_strength_analytic&quot;</span><span class="p">,</span> <span class="s2">&quot;loc&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">num</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># save the dataset</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span><span class="o">.</span><span class="n">save_h5</span><span class="p">(</span>
+<span class="go">        f=f, num=num, split=&quot;training&quot;, size=10, features=features,name=&quot;/tmp/example.h5&quot;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.base.save_tfrecord">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.base.</span></span><span class="sig-name descname"><span class="pre">save_tfrecord</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.base.save_tfrecord" title="Link to this definition"></a></dt>
+<dd><p>Save dataset to a .tfrecord file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>features</strong> (<em>list</em>) – List of features included in the dataset. The features “seeds” and “idx” are always included.</p></li>
+<li><p><strong>split</strong> (<em>str</em>) – Split name for the dataset (‘training’, ‘validation’ or ‘test’).</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – Size of the dataset (number of source cases).</p></li>
+<li><p><strong>name</strong> (<em>str</em>) – Name of the TFRecord file.</p></li>
+<li><p><strong>f</strong> (<em>float</em>) – The center frequency or list of frequencies of the dataset. If None, all frequencies are included.</p></li>
+<li><p><strong>num</strong> (<em>integer</em>) – <p>Controls the width of the frequency bands considered; defaults to
+0 (single frequency line).</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>num</p></th>
+<th class="head"><p>frequency band width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>single frequency line</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>octave band</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>third-octave band</p></td>
+</tr>
+<tr class="row-odd"><td><p>n</p></td>
+<td><p>1/n-octave band</p></td>
+</tr>
+</tbody>
+</table>
+</p></li>
+<li><p><strong>start_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Starting sample index (default is 0).</p></li>
+<li><p><strong>progress_bar</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to show a progress bar (default is True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Save features to a TFRecord file.</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">acoupipe.datasets.synthetic</span> <span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># define the features</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;csm&quot;</span><span class="p">,</span> <span class="s2">&quot;source_strength_analytic&quot;</span><span class="p">,</span> <span class="s2">&quot;loc&quot;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">num</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="c1"># save the dataset</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span><span class="o">.</span><span class="n">save_tfrecord</span><span class="p">(</span>
+<span class="go">        f=f, num=num, split=&quot;training&quot;, size=10, features=features,name=&quot;/tmp/example.tfrecord&quot;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="acoupipe.datasets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../../loader/index.html" class="btn btn-neutral float-right" title="acoupipe.loader" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

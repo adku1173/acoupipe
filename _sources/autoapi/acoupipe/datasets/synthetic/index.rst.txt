@@ -1,0 +1,1222 @@
+acoupipe.datasets.synthetic
+===========================
+
+.. py:module:: acoupipe.datasets.synthetic
+
+.. autoapi-nested-parse::
+
+   Contains classes for the generation of microphone array data from synthesized signals for acoustic testing applications.
+
+       Currently, the following dataset generators are available:
+
+       * :class:`DatasetSynthetic`: A simple and fast method that relies on synthetic white noise signals and spatially stationary sources radiating under anechoic conditions.
+
+   .. _default measurement setup:
+
+   .. figure:: ../../../../_static/msm_layout.png
+       :width: 750
+       :align: center
+
+       Default measurement setup used in the :py:mod:`acoupipe.datasets.synthetic` module.
+
+
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: ConfigBase
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Configuration base class for generating microphone array datasets.
+
+
+   .. py:method:: get_sampler()
+
+      Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
+
+      this function has to be manually defined in a dataset subclass.
+      It includes the sampler objects as values. The key defines the idx in the sample order.
+
+      e.g.:
+      >>> sampler = {
+      >>>     0 : BaseSampler(...),
+      >>>     1 : BaseSampler(...),
+      >>>     ...
+      >>> }
+
+      :returns: dictionary containing the sampler objects
+      :rtype: dict
+
+
+
+.. py:class:: DatasetBase(config=None, tasks=1, logger=None)
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Base class for generating microphone array datasets with specified features and labels.
+
+   .. attribute:: config
+
+      Configuration object for dataset generation.
+
+      :type: ConfigBase
+
+   .. attribute:: tasks
+
+      Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
+
+      :type: int
+
+
+   .. py:method:: get_feature_collection(features, f, num)
+
+      Get the feature collection of the dataset.
+
+      :returns: BaseFeatureCollection object.
+      :rtype: BaseFeatureCollection
+
+
+
+   .. py:method:: generate(features, split, size, f=None, num=0, start_idx=0, progress_bar=True)
+
+      Generate dataset samples iteratively.
+
+      :param features: List of features included in the dataset. The features "seeds" and "idx" are always included.
+      :type features: list
+      :param split: Split name for the dataset ('training', 'validation' or 'test').
+      :type split: str
+      :param size: Size of the dataset (number of source cases).
+      :type size: int
+      :param f: The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+      :type f: float
+      :param num: Controls the width of the frequency bands considered; defaults to
+                  0 (single frequency line).
+
+                  ===  =====================
+                  num  frequency band width
+                  ===  =====================
+                  0    single frequency line
+                  1    octave band
+                  3    third-octave band
+                  n    1/n-octave band
+                  ===  =====================
+      :type num: integer
+      :param start_idx: Starting sample index (default is 0).
+      :type start_idx: int, optional
+      :param progress_bar: Whether to show a progress bar (default is True).
+      :type progress_bar: bool, optional
+
+      :Yields: **data** (*dict*) -- Generator that yields dataset samples as dictionaries containing the feature names as keys.
+
+      .. rubric:: Examples
+
+      Generate features iteratively.
+
+      >>> from acoupipe.datasets.synthetic import DatasetSynthetic
+      >>> # define the features
+      >>> features = ["csm", "source_strength_analytic", "loc"]
+      >>> f = 1000
+      >>> num = 3
+      >>> # generate the dataset
+      >>> generator = DatasetSynthetic().generate(
+              f=f, num=num, split="training", size=2, features=features)
+      >>> # iterate over the dataset
+      >>> for data in generator:
+              print(data)
+
+
+
+   .. py:method:: save_h5(features, split, size, name, f=None, num=0, start_idx=0, progress_bar=True)
+
+      Save dataset to a HDF5 file.
+
+      :param features: List of features included in the dataset. The features "seeds" and "idx" are always included.
+      :type features: list
+      :param split: Split name for the dataset ('training', 'validation' or 'test').
+      :type split: str
+      :param size: Size of the dataset (number of source cases).
+      :type size: int
+      :param name: Name of the HDF5 file.
+      :type name: str
+      :param f: The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+      :type f: float
+      :param num: Controls the width of the frequency bands considered; defaults to
+                  0 (single frequency line).
+
+                  ===  =====================
+                  num  frequency band width
+                  ===  =====================
+                  0    single frequency line
+                  1    octave band
+                  3    third-octave band
+                  n    1/n-octave band
+                  ===  =====================
+      :type num: integer
+      :param start_idx: Starting sample index (default is 0).
+      :type start_idx: int, optional
+      :param progress_bar: Whether to show a progress bar (default is True).
+      :type progress_bar: bool, optional
+
+      :rtype: None
+
+      .. rubric:: Examples
+
+      Save features to a HDF5 file.
+
+      >>> from acoupipe.datasets.synthetic import DatasetSynthetic
+      >>> # define the features
+      >>> features = ["csm", "source_strength_analytic", "loc"]
+      >>> f = 1000
+      >>> num = 3
+      >>> # save the dataset
+      >>> dataset = DatasetSynthetic().save_h5(
+              f=f, num=num, split="training", size=10, features=features,name="/tmp/example.h5")
+
+
+
+.. py:class:: AnalyticNoiseStrengthFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: AnalyticSourceStrengthFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: BaseFeatureCollection
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   BaseFeatureCollection base class for handling feature funcs.
+
+   .. attribute:: feature_funcs
+
+      List of feature_funcs.
+
+      :type: list
+
+
+   .. py:method:: add_feature_func(feature_func)
+
+      Add a feature_func to the BaseFeatureCollection.
+
+      :param feature_func: Feature to be added.
+      :type feature_func: str
+
+
+
+   .. py:method:: get_feature_funcs()
+
+      Get all feature_funcs of the BaseFeatureCollection.
+
+      :returns: List of feature_funcs.
+      :rtype: list
+
+
+
+.. py:class:: BaseFeatureCollectionBuilder
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.
+
+   .. attribute:: feature_collection
+
+      BaseFeatureCollection object.
+
+      :type: BaseFeatureCollection
+
+
+   .. py:method:: add_custom(feature_func)
+
+      Add a custom feature to the BaseFeatureCollection.
+
+      :param feature_func: Feature to be added.
+      :type feature_func: str
+
+
+
+   .. py:method:: build()
+
+      Build a BaseFeatureCollection.
+
+      :returns: BaseFeatureCollection object.
+      :rtype: BaseFeatureCollection
+
+
+
+.. py:class:: CSMFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   CSMFeature class for handling cross-spectral matrix calculation.
+
+   .. attribute:: name
+
+      Name of the feature (default='csm').
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The object which calculates the cross-spectral matrix.
+
+      :type: instance of class acoular.PowerSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: calc_csm1(sampler, freq_data, name)
+      :staticmethod:
+
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+
+      :returns: The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+      :rtype: numpy.array
+
+
+
+   .. py:method:: calc_csm2(sampler, freq_data, fidx, name)
+      :staticmethod:
+
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+      :param fidx: list of tuples containing the start and end indices of the frequency bands to be considered,
+                   by default None
+      :type fidx: list of tuples, optional
+
+      :returns: The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+                depending on the number of frequencies in fidx.
+      :rtype: numpy.array
+
+
+
+   .. py:method:: get_feature_func()
+
+      Return the callable for calculating the cross-spectral matrix.
+
+
+
+.. py:class:: CSMtriuFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: calc_csmtriu1(sampler, freq_data, name)
+      :staticmethod:
+
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+
+      :returns: The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+      :rtype: numpy.array
+
+
+
+   .. py:method:: calc_csmtriu2(sampler, freq_data, fidx, name)
+      :staticmethod:
+
+
+      Calculate the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+      :param fidx: list of tuples containing the start and end indices of the frequency bands to be considered,
+                   by default None
+      :type fidx: list of tuples, optional
+
+      :returns: The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
+                depending on the number of frequencies in fidx.
+      :rtype: numpy.array
+
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: EigmodeFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: calc_eigmode1(sampler, freq_data, name)
+      :staticmethod:
+
+
+      Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+
+      :returns: The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics).
+      :rtype: numpy.array
+
+
+
+   .. py:method:: calc_eigmode2(sampler, freq_data, fidx, name)
+      :staticmethod:
+
+
+      Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+
+      :param freq_data: power spectra to calculate the csm feature
+      :type freq_data: instance of class acoular.PowerSpectra
+      :param fidx: list of tuples containing the start and end indices of the frequency bands to be considered,
+                   by default None
+      :type fidx: list of tuples, optional
+
+      :returns: The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics) with numfreq
+                depending on the number of frequencies in fidx.
+      :rtype: numpy.array
+
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: EstimatedNoiseStrengthFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: EstimatedSourceStrengthFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   Handles the calculation of features in the frequency domain.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The frequency data to calculate the feature for.
+
+      :type: instance of class acoular.BaseSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: LocFeature
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+
+   BaseFeatureCatalog base class for handling feature funcs.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: SourcemapFeature
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+
+   SourcemapFeature class for handling the generation of sourcemaps obtained with microphone array methods.
+
+   .. attribute:: name
+
+      Name of the feature (default='sourcemap').
+
+      :type: str
+
+   .. attribute:: beamformer
+
+      The beamformer to calculate the sourcemap.
+
+      :type: instance of class acoular.BeamformerBase
+
+   .. attribute:: f
+
+      The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+
+      :type: float
+
+   .. attribute:: num
+
+      Controls the width of the frequency bands considered; defaults to
+      0 (single frequency line).
+
+      ===  =====================
+      num  frequency band width
+      ===  =====================
+      0    single frequency line
+      1    octave band
+      3    third-octave band
+      n    1/n-octave band
+      ===  =====================
+
+      :type: integer
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered. Is determined
+      automatically from attr:`f` and attr:`num`.
+
+      :type: list of tuples
+
+
+   .. py:method:: set_freq_limits()
+
+      Set the frequency limits of the beamformer so that the result is only calculated for necessary frequencies.
+
+
+
+   .. py:method:: get_feature_func()
+
+      Return the callable for calculating the sourcemap.
+
+
+
+.. py:class:: SpectrogramFeature
+
+   Bases: :py:obj:`SpectraFeature`
+
+
+   SpectrogramFeature class for handling spectrogram features.
+
+   .. attribute:: name
+
+      Name of the feature (default='spectrogram').
+
+      :type: str
+
+   .. attribute:: freq_data
+
+      The object which calculates the spectrogram data.
+
+      :type: instance of class acoular.FFTSpectra
+
+   .. attribute:: f
+
+      the frequency (or center frequency) of interest
+
+      :type: float
+
+   .. attribute:: num
+
+      the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+      :type: int
+
+   .. attribute:: fidx
+
+      List of tuples containing the start and end indices of the frequency bands to be considered.
+
+      :type: list of tuples
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: TargetmapFeature
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+
+   BaseFeatureCatalog base class for handling feature funcs.
+
+   .. attribute:: name
+
+      Name of the feature.
+
+      :type: str
+
+
+   .. py:method:: get_feature_func()
+
+      Will return a method depending on the class parameters.
+
+
+
+.. py:class:: TimeDataFeature
+
+   Bases: :py:obj:`BaseFeatureCatalog`
+
+
+   TimeDataFeature class for handling time data.
+
+   .. attribute:: name
+
+      Name of the feature (default='time_data').
+
+      :type: str
+
+   .. attribute:: time_data
+
+      The source delivering the time data.
+
+      :type: instance of class acoular.SamplesGenerator
+
+
+   .. py:method:: get_feature_func()
+
+      Return the callable for calculating the time data.
+
+
+
+.. py:class:: PowerSpectraAnalytic
+
+   Bases: :py:obj:`acoular.PowerSpectraImport`
+
+
+   Provides a dummy class for using pre-calculated cross-spectral
+   matrices.
+
+   This class does not calculate the cross-spectral matrix. Instead,
+   the user can inject one or multiple existing CSMs by setting the
+   :attr:`csm` attribute. This can be useful when algorithms shall be
+   evaluated with existing CSM matrices.
+   The frequency or frequencies contained by the CSM must be set via the
+   attr:`frequencies` attribute. The attr:`numchannels` attributes
+   is determined on the basis of the CSM shape.
+   In contrast to the PowerSpectra object, the attributes
+   :attr:`sample_freq`, :attr:`time_data`, :attr:`source`,
+   :attr:`block_size`, :attr:`calib`, :attr:`window`,
+   :attr:`overlap`, :attr:`cached`, and :attr:`num_blocks`
+   have no functionality.
+
+
+   .. py:method:: fftfreq()
+
+      Return the Discrete Fourier Transform sample frequencies.
+
+      :returns: **f** -- Array of length *block_size/2+1* containing the sample frequencies.
+      :rtype: ndarray
+
+
+
+.. py:function:: get_all_source_signals(source_list)
+
+   Get all signals from a list of `acoular.SamplesGenerator` derived objects.
+
+   :param source_list: list of `acoular.SamplesGenerator` derived objects
+   :type source_list: list
+
+   :returns: list of all `acoular.SignalGenerator` derived objects
+   :rtype: list
+
+
+.. py:function:: get_uncorrelated_noise_source_recursively(source)
+
+   Recursively get all uncorrelated noise sources from a `acoular.TimeInOut` object.
+
+   :param source: the source object
+   :type source: instance of class `acoular.TimeInOut`
+
+   :returns: list of all uncorrelated noise sources
+   :rtype: list
+
+
+.. py:class:: DatasetSynthetic(mode='welch', mic_pos_noise=True, mic_sig_noise=True, snap_to_grid=False, random_signal_length=False, signal_length=5, fs=13720.0, min_nsources=1, max_nsources=10, tasks=1, logger=None, config=None)
+
+   Bases: :py:obj:`acoupipe.datasets.base.DatasetBase`
+
+
+   `DatasetSynthetic` is a purely synthetic microphone array source case generator.
+
+   DatasetSynthetic relies on synthetic source signals from which the features are extracted and has been used in different publications,
+   e.g. :cite:`Kujawski2019`, :cite:`Kujawski2022`, :cite:`Feng2022`. The default virtual simulation setup consideres a 64 channel microphone
+   array and a planar observation area, as shown in the `default measurement setup`_ figure.
+
+   **Default environmental properties**
+
+   .. _Environmental Characteristics:
+
+   .. table:: Default Environmental Characteristics
+
+       ===================== ========================================
+       Environment           Anechoic, Resting, Homogeneous Fluid
+       Speed of sound        343 m/s
+       Microphone Array      Vogel's spiral, :math:`M=64`, Aperture Size 1 m
+       Observation Area      x,y in [-0.5,0.5], z=0.5
+       Source Type           Monopole
+       Source Signals        Uncorrelated White Noise (:math:`T=5\,s`)
+       ===================== ========================================
+
+   **Default FFT parameters**
+
+   The underlying default FFT parameters are:
+
+   .. table:: FFT Parameters
+
+       ===================== ========================================
+       Sampling Rate         He = 40, fs=13720 Hz
+       Block size            128 Samples
+       Block overlap         50 %
+       Windowing             von Hann / Hanning
+       ===================== ========================================
+
+
+   **Default randomized properties**
+
+   Several properties of the dataset are randomized for each source case when generating the data. Their respective distributions,
+   are closely related to :cite:`Herold2017`. As such, the the microphone positions are spatially disturbed
+   to account for uncertainties in the microphone placement. The number of sources, their positions, and strength is randomly chosen.
+   Uncorrelated white noise is added to the microphone channels by default.
+
+   .. table:: Randomized properties
+
+       ==================================================================   ===================================================
+       Sensor Position Deviation [m]                                        Bivariate normal distributed (:math:`\sigma = 0.001)`
+       No. of Sources                                                       Poisson distributed (:math:`\lambda=3`)
+       Source Positions [m]                                                 Bivariate normal distributed (:math:`\sigma = 0.1688`)
+       Source Strength (:math:`[{Pa}^2]` at reference position)               Rayleigh distributed (:math:`\sigma_{R}=5`)
+       Relative Noise Variance                                              Uniform distributed (:math:`10^{-6}`, :math:`0.1`)
+       ==================================================================   ===================================================
+
+   .. rubric:: Example
+
+   .. code-block:: python
+
+       from acoupipe.datasets.synthetic import DatasetSynthetic
+
+       dataset = DatasetSynthetic()
+       dataset_generator = dataset.generate_dataset(
+           features=["sourcemap", "loc", "f", "num"], # choose the features to extract
+           f=[1000,2000,3000], # choose the frequencies to extract
+           split='training', # choose the split of the dataset
+           size=10, # choose the size of the dataset
+           )
+
+       # get the first data sample
+       data = next(dataset_generator)
+
+       # print the keys of the dataset
+       print(data.keys())
+
+   **Initialization Parameters**
+
+   Initialize the DatasetSynthetic object.
+
+   The input parameters are passed to the DatasetSyntheticConfig object, which creates
+   all necessary objects for the simulation of microphone array data.
+
+   :param mode: Type of calculation method. Can be either :code:`welch`, :code:`analytic` or :code:`wishart`.
+                Defaults to :code:`welch`.
+   :type mode: str
+   :param mic_pos_noise: Apply positional noise to microphone geometry. Defaults to True.
+   :type mic_pos_noise: bool
+   :param mic_sig_noise: Apply additional uncorrelated white noise to microphone signals. Defaults to True.
+   :type mic_sig_noise: bool
+   :param snap_to_grid: Snap source locations to grid. The grid is defined in the config object as
+                        config.grid. Defaults to False.
+   :type snap_to_grid: bool
+   :param random_signal_length: Randomize signal length. Defaults to False. If True, the signal length is
+                                uniformly sampled from the interval [1s,10s].
+   :type random_signal_length: bool
+   :param signal_length: Length of the signal in seconds. Defaults to 5 seconds.
+   :type signal_length: float
+   :param fs: Sampling frequency in Hz. Defaults to 13720 Hz.
+   :type fs: float
+   :param min_nsources: Minimum number of sources in the dataset. Defaults to 1.
+   :type min_nsources: int
+   :param max_nsources: Maximum number of sources in the dataset. Defaults to 10.
+   :type max_nsources: int
+   :param tasks: Number of parallel tasks. Defaults to 1.
+   :type tasks: int
+   :param logger: Logger object. Defaults to None.
+   :type logger: logging.Logger
+   :param config: Configuration object. Defaults to None. If None, a default configuration
+                  object is created.
+   :type config: DatasetSyntheticConfig
+
+
+   .. py:method:: get_feature_collection(features, f, num)
+
+      Get the feature collection of the dataset.
+
+      :returns: BaseFeatureCollection object.
+      :rtype: BaseFeatureCollection
+
+
+
+.. py:function:: sample_signal_length(rng)
+
+.. py:class:: DatasetSyntheticConfig(**kwargs)
+
+   Bases: :py:obj:`acoupipe.datasets.base.ConfigBase`
+
+
+   Default Configuration class.
+
+   .. attribute:: fs
+
+      Sampling frequency in Hz.
+
+      :type: float
+
+   .. attribute:: signal_length
+
+      Length of the source signals in seconds.
+
+      :type: float
+
+   .. attribute:: max_nsources
+
+      Maximum number of sources.
+
+      :type: int
+
+   .. attribute:: min_nsources
+
+      Minimum number of sources.
+
+      :type: int
+
+   .. attribute:: mode
+
+      Type of CSM calculation method.
+
+      :type: str
+
+   .. attribute:: mic_pos_noise
+
+      Apply positional noise to microphone geometry.
+
+      :type: bool
+
+   .. attribute:: mic_sig_noise
+
+      Apply signal noise to microphone signals.
+
+      :type: bool
+
+   .. attribute:: snap_to_grid
+
+      Snap source locations to grid.
+
+      :type: bool
+
+   .. attribute:: random_signal_length
+
+      Randomize signal length (Default: uniformly sampled signal length [1s,10s]).
+
+      :type: bool
+
+   .. attribute:: fft_params
+
+      FFT parameters with default items :code:`block_size=128`,
+      :code:`overlap="50%"`, :code:`window="Hanning"` and :code:`precision="complex64"`.
+
+      :type: dict
+
+   .. attribute:: env
+
+      Instance of acoular.Environment defining the environmental coditions,
+      i.e. the speed of sound.
+
+      :type: ac.Environment
+
+   .. attribute:: mics
+
+      Instance of acoular.MicGeom defining the microphone array geometry.
+
+      :type: ac.MicGeom
+
+   .. attribute:: noisy_mics
+
+      a second instance of acoular.MicGeom defining the noisy microphone array geometry.
+
+      :type: ac.MicGeom
+
+   .. attribute:: obs
+
+      Instance of acoular.MicGeom defining the observation point which is used as the
+      reference position when calculating the source strength.
+
+      :type: ac.MicGeom
+
+   .. attribute:: grid
+
+      Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
+      the source map and on which the targetmap feature is calculated.
+
+      :type: ac.RectGrid
+
+   .. attribute:: source_grid
+
+      Instance of acoular.Grid. Only relevant if :attr:`snap_to_grid` is :code:`True`.
+      Then, the source locations are snapped to this grid. Default is a copy of :attr:`grid`.
+
+      :type: ac.Grid
+
+   .. attribute:: beamformer
+
+      Instance of acoular.BeamformerBase defining the beamformer used to calculate the sourcemap.
+
+      :type: ac.BeamformerBase
+
+   .. attribute:: steer
+
+      Instance of acoular.SteeringVector defining the steering vector used to calculate the sourcemap.
+
+      :type: ac.SteeringVector
+
+   .. attribute:: freq_data
+
+      Instance of acoular.PowerSpectra defining the frequency domain data. Only used if :attr:`mode` is
+      :code:`welch`. Otherwise, an instance of :class:`acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic`
+      is used.
+
+      :type: ac.PowerSpectra
+
+   .. attribute:: fft_spectra
+
+      Instance of acoular.FFTSpectra used to calculate the spectrogram data. Only used if :attr:`mode` is
+      :code:`welch`.
+
+      :type: ac.FFTSpectra
+
+   .. attribute:: fft_obs_spectra
+
+      Instance of acoular.PowerSpectra used to calculate the source strength at the observation point given in
+      :attr:`obs`.
+
+      :type: ac.PowerSpectra
+
+   .. attribute:: signals
+
+      List of signals.
+
+      :type: list
+
+   .. attribute:: sources
+
+      List of sources.
+
+      :type: list
+
+   .. attribute:: mic_noise_signal
+
+      Noise signal configuration object.
+
+      :type: ac.SignalGenerator
+
+   .. attribute:: mic_noise_source
+
+      Noise source configuration object.
+
+      :type: ac.UncorrelatedNoiseSource
+
+   .. attribute:: micgeom_sampler
+
+      Sampler that applies positional noise to the microphone geometry.
+
+      :type: sp.MicGeomSampler
+
+   .. attribute:: location_sampler
+
+      Source location sampler that samples the locations of the sound sources.
+
+      :type: sp.LocationSampler
+
+   .. attribute:: rms_sampler
+
+      Signal RMS sampler that samples the RMS values of the source signals.
+
+      :type: sp.ContainerSampler
+
+   .. attribute:: nsources_sampler
+
+      Number of sources sampler.
+
+      :type: sp.NumericAttributeSampler
+
+   .. attribute:: mic_noise_sampler
+
+      Microphone noise sampler that creates random uncorrelated noise at the microphones.
+
+      :type: sp.ContainerSampler
+
+   .. attribute:: signal_length_sampler
+
+      Signal length sampler that samples the length of the source signals. Only used if :attr:`random_signal_length` is :code:`True`.
+
+      :type: sp.ContainerSampler
+
+
+   .. py:method:: get_sampler()
+
+      Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
+
+      this function has to be manually defined in a dataset subclass.
+      It includes the sampler objects as values. The key defines the idx in the sample order.
+
+      e.g.:
+      >>> sampler = {
+      >>>     0 : BaseSampler(...),
+      >>>     1 : BaseSampler(...),
+      >>>     ...
+      >>> }
+
+      :returns: dictionary containing the sampler objects
+      :rtype: dict
+
+
+

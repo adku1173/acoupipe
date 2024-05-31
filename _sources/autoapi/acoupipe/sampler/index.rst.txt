@@ -1,0 +1,278 @@
+acoupipe.sampler
+================
+
+.. py:module:: acoupipe.sampler
+
+.. autoapi-nested-parse::
+
+   Random processes to sample values according to a specified random distribution (random variable).
+
+   Sampler Module Purpose
+   -----------------------
+
+   A manipulation of object characteristics according to a certain
+   random distribution can be achieved by using the :code:`BaseSampler` derived classes included in the :code:`sampler.py` module.
+   All :code:`BaseSampler` derived classes represent random processes that can be used to manipulate the attributes of Acoular's objects according to a specified distribution.
+   A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all :code:`BaseSampler` derived classes.
+   AcouPipe offers a variety of different types of samplers in the :code:`sampler.py` module.
+   The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the :code:`scipy.stats` module.
+
+   This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the :code:`BaseSampler`
+   derived :code:`NumericAttributeSampler` class is used. The two :code:`WNoiseGenerator` objects are given as targets to the sampler object.
+   New RMS values following a normal distribution are assigned to the :code:`WNoiseGenerator` objects each time the sample method of the :code:`NumericAttributeSampler` object is evaluated.
+
+   .. code-block:: python
+
+       import acoular as ac
+       from acoupipe.sampler import NumericAttributeSampler
+       from scipy.stats import norm
+
+       random_var = norm(loc=1.,scale=.5)
+
+       n1 = ac.WNoiseGenerator( sample_freq=24000,
+                       numsamples=24000*5,
+                       rms=1.0,
+                       seed=1 )
+
+       n2 = ac.WNoiseGenerator( sample_freq=24000,
+                       numsamples=24000*5,
+                       rms=.5,
+                       seed=2 )
+
+       rms_sampler = NumericAttributeSampler(
+                       target=[n1,n2],
+                       attribute='rms',
+                       random_var=random_var,
+                       random_state=10)
+
+       rms_sampler.sample()
+       print(n1.rms, n2.rms)
+
+   The output of the example is:
+
+   .. code-block:: python
+
+       1.6657932520647591 1.3576394871992028
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: BaseSampler
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Base class that represents a random process.
+
+   This class has no functionality and should not be used in practice.
+   Manipulates attributes of an instance or a list of instances according to a specified random distribution.
+
+
+   .. py:method:: rvs(size=1)
+
+      Random variable sampling (for internal use).
+
+
+
+   .. py:method:: sample()
+
+      Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` (no functionality in this class).
+
+
+
+.. py:class:: NumericAttributeSampler
+
+   Bases: :py:obj:`BaseSampler`
+
+
+   Samples attributes of numeric type (e.g. int, float).
+
+   This class samples attributes of numeric type (e.g. int, float) of an instance or a list of instances according
+   to a specified random distribution.
+   The attribute to be sampled is specified by :attr:`attribute`.
+   The sampled values are normalized to the range [0,1] if :attr:`normalize` is set to True.
+   The sampled values are ordered in ascending or descending order for all objects in the :attr:`target` list if :attr:`order`
+   is set to "ascending" or "descending". If no value is set (:attr:`order` `=None`), no ordering is performed.
+
+
+   .. py:method:: order_samples(samples)
+
+      Order drawn values (Internal function).
+
+
+
+   .. py:method:: sample()
+
+      Random sampling of the target instance attribute.
+
+      Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` that are going to be assigned
+      to the target instance attribute via internal :meth:`set_value` method.
+
+
+
+.. py:class:: SetSampler
+
+   Bases: :py:obj:`BaseSampler`
+
+
+   Draws one or multiple values from a given set of values.
+
+   This class draws one or multiple values from a given set of values.
+   The set of values is specified by :attr:`set`.
+   The number of samples to be drawn is specified by :attr:`numsamples`.
+   The attribute to be sampled is specified by :attr:`attribute`.
+   A list with sample probabilities can be specified by :attr:`probabilities`.
+   The attribute :attr:`replace` specifies if the same object in :attr:`set`
+   can be drawn multiple times.
+
+
+   .. py:method:: rvs(size=1)
+
+      Random variable sampling (for internal use).
+
+
+
+   .. py:method:: sample()
+
+      Random sampling of the target instance attribute.
+
+      Utilizes :meth:`rvs` function to draw random values from :attr:`set` that are going to be assigned
+      to the target instance attribute :attr:`attribute` via internal :meth:`set_value` method.
+
+
+
+.. py:class:: SourceSetSampler
+
+   Bases: :py:obj:`SetSampler`
+
+
+   Draws one or multiple sources of type :class:`acoular.SamplesGenerator` from a given set of sources.
+
+   From a given set of sources (type :class:`acoular.SamplesGenerator`),
+   :class:`SourceSetSampler` draws one or multiple sources from this set
+   and assigns those to one or more SourceMixer instances. The number of sources to be drawn is specified by
+   :attr:`nsources`. The attribute to be sampled is specified by :attr:`attribute`.
+
+
+   .. py:method:: sample()
+
+      Random sampling of sources.
+
+      Utilizes :meth:`rvs` function to draw sources from :attr:`set` that are going to be assigned
+      to the :class:`acoular.SourceMixer` instance.
+
+
+
+.. py:class:: ContainerSampler
+
+   Bases: :py:obj:`BaseSampler`
+
+
+   Special case of a Sampler to enable the use of an arbitrary sampling function.
+
+   Takes an arbitrary callable with the signature '<Signature (numpy.random.RandomState)>' or
+   '<Signature (numpy.random.Generator)>'.
+   The callable is evoked via the :meth:`sample` method of this class.
+   The output of the callable is assigned to the :attr:`target` attribute.
+
+
+   .. py:method:: rvs()
+
+      Evokes the :attr:`random_func`.
+
+
+
+   .. py:method:: sample()
+
+      Random sampling.
+
+      this function utilizes :meth:`rvs` function to evaluate the :attr:`random_func`.
+      The output of the :attr:`random_func` can be accessed with the :attr:`target` attribute.
+
+
+
+.. py:class:: LocationSampler
+
+   Bases: :py:obj:`BaseSampler`
+
+
+   Base class that represents a random process.
+
+   This class has no functionality and should not be used in practice.
+   Manipulates attributes of an instance or a list of instances according to a specified random distribution.
+
+
+   .. py:method:: rvs()
+
+      Random variable sampling (for internal use).
+
+
+
+   .. py:method:: sample()
+
+      Random sampling of locations.
+
+
+
+.. py:class:: PointSourceSampler
+
+   Bases: :py:obj:`LocationSampler`
+
+
+   Random process that samples the locations of one or more instances of type :class:`PointSource`.
+
+
+   .. py:method:: sample_loc(target)
+
+      Sample a single target location (internal use).
+
+
+
+   .. py:method:: rvs(size=1)
+
+      Random variable sampling (for internal use).
+
+
+
+   .. py:method:: sample()
+
+      Random sampling of :class:`acoular.PointSource` locations.
+
+
+
+.. py:class:: MicGeomSampler
+
+   Bases: :py:obj:`BaseSampler`
+
+
+   Random disturbance of microphone positions of a :class:`acoular.MicGeom` object.
+
+
+   .. py:method:: rotate()
+
+      Rotates the microphone array.
+
+
+
+   .. py:method:: translate()
+
+      Translate the microphone array.
+
+
+
+   .. py:method:: deviate()
+
+      Deviates the individual microphone positions.
+
+
+
+   .. py:method:: sample()
+
+      Random sampling of microphone positions.
+
+
+

@@ -1,0 +1,114 @@
+acoupipe.loader
+===============
+
+.. py:module:: acoupipe.loader
+
+.. autoapi-nested-parse::
+
+   Provides classes to load the datasets stored with :class:`~acoupipe.writer.BaseWriteDataset` derived classes.
+
+
+
+
+
+Module Contents
+---------------
+
+.. py:class:: DataGenerator
+
+   Bases: :py:obj:`traits.api.HasPrivateTraits`
+
+
+   Abstract base class that serves as a data generator.
+
+   This class should not be used.
+
+
+   .. py:method:: get_data()
+
+      Python generator that iteratively yields data set samples as a dictionary.
+
+      :rtype: Dictionary containing a sample of the data set {feature_name[key],feature[values]}.
+
+
+
+.. py:class:: BaseLoadDataset
+
+   Bases: :py:obj:`acoupipe.pipeline.DataGenerator`
+
+
+   Base class for all derived classes intended to load data stored by :class:`~acoupipe.writer.BaseWriteDataset`.
+
+   This class has no functionality and should not be used.
+
+
+   .. py:method:: load_data()
+
+      Open a dataset file and set attributes.
+
+
+
+.. py:class:: LoadH5Dataset
+
+   Bases: :py:obj:`BaseLoadDataset`
+
+
+   Loads data sets stored into `*.h5` file format.
+
+   This class loads data from `*.h5` files and
+   provides information like the number of
+   samples (:attr:`numsamples`).
+
+
+   .. py:method:: load_data()
+
+      Open the .h5 file and set attributes.
+
+
+
+   .. py:method:: load_metadata()
+
+      Load metadata from .h5 file. Only for internal use.
+
+
+
+   .. py:method:: get_dataset_generator(features=None)
+
+      Create a callable that returns a generator object.
+
+      This object can be used in conjunction with the Tensorflow `tf.data.Dataset` API to create
+      a data generator with the :meth:`from_generator` method of the `Tensorflow Dataset API`_
+      to feed machine learning models.
+
+      Example to create a repeatable data set with the Tensorflow `tf.data.Dataset` API is given in
+
+
+      >>> h5data = LoadH5Dataset(name="some_dataset.h5")
+      >>> generator = h5data.get_dataset_generator(features=['loc'])
+      >>> output_signature = {
+      ...    'loc' : tf.TensorSpec(shape=(3,None), dtype=tf.float32),
+      ... }
+      >>>
+      >>> dataset = tf.data.Dataset.from_generator(generator,
+      ...     output_signature=output_signature).repeat()
+      >>> loc = next(iter(dataset)) # return locations
+
+      :param features: a list with names of the features to be yielded by the generator, by default None,
+                       meaning that all features will be considered.
+      :type features: list, optional
+
+      :returns: A callable that returns a generator object
+      :rtype: callable
+
+
+
+   .. py:method:: get_data()
+
+      Python generator that iteratively yields the samples of the dataset in ascending sample index order (e.g. 1,2,...,N).
+
+      :returns: Dictionary containing a sample of the dataset
+                {feature_name[key] : feature[values]}
+      :rtype: dict
+
+
+

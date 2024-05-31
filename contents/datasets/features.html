@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Features &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Modifying a Dataset" href="../jupyter/modify.html" />
+    <link rel="prev" title="acoupipe.datasets.experimental" href="../../autoapi/acoupipe/datasets/experimental/index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../datasets.html">Datasets</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/datasets/synthetic/index.html">Synthetic Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/datasets/experimental/index.html">Experimental Datasets</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Features</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#microphone-array-sound-pressure-signals-time-data">Microphone array sound pressure signals (<code class="code docutils literal notranslate"><span class="pre">'time_data'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#microphone-array-spectrograms-spectrogram">Microphone array spectrograms (<code class="code docutils literal notranslate"><span class="pre">'spectrogram'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cross-spectral-matrix-csm">Cross-spectral matrix (<code class="code docutils literal notranslate"><span class="pre">'csm'</span></code>)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#estimated-csm-from-time-data-mode-welch">estimated CSM from time data (<code class="code docutils literal notranslate"><span class="pre">mode=&quot;welch&quot;</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#analytic-csm-mode-analytic">analytic CSM (<code class="code docutils literal notranslate"><span class="pre">mode=&quot;analytic&quot;</span></code>)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#wishart-distributed-csm-mode-wishart">Wishart-distributed CSM (<code class="code docutils literal notranslate"><span class="pre">mode=&quot;wishart&quot;</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#compressed-cross-spectral-matrix-csmtriu">Compressed Cross-spectral matrix (<code class="code docutils literal notranslate"><span class="pre">'csmtriu'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#eigenmodes-of-the-csm-eigmode">Eigenmodes of the CSM (<code class="code docutils literal notranslate"><span class="pre">'eigmode'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sourcemap-sourcemap">Sourcemap (<code class="code docutils literal notranslate"><span class="pre">'sourcemap'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#target-sourcemap-targetmap-analytic-targetmap-estimated">Target Sourcemap (<code class="code docutils literal notranslate"><span class="pre">'targetmap_analytic'</span></code>, <code class="code docutils literal notranslate"><span class="pre">'targetmap_estimated'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analytic-source-strength-source-strength-analytic">Analytic source strength (<code class="code docutils literal notranslate"><span class="pre">'source_strength_analytic'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#estimated-source-strength-source-strength-estimated">Estimated source strength (<code class="code docutils literal notranslate"><span class="pre">'source_strength_estimated'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#analytic-noise-power-noise-strength-analytic">Analytic noise power (<code class="code docutils literal notranslate"><span class="pre">'noise_strength_analytic'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#estimated-noise-power-noise-strength-estimated">Estimated noise power (<code class="code docutils literal notranslate"><span class="pre">'noise_strength_estimated'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#sound-source-locations-loc">Sound source locations (<code class="code docutils literal notranslate"><span class="pre">'loc'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#frequencies-of-interest-f">Frequencies of interest (<code class="code docutils literal notranslate"><span class="pre">'f'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#frequency-width-num">Frequency width (<code class="code docutils literal notranslate"><span class="pre">'num'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#source-case-index-idx">Source case index (<code class="code docutils literal notranslate"><span class="pre">'idx'</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#random-seeds-seeds">Random seeds (<code class="code docutils literal notranslate"><span class="pre">'seeds'</span></code>)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/modify.html">Modifying a Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../datasets.html">Datasets</a></li>
+      <li class="breadcrumb-item active">Features</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contents/datasets/features.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="features">
+<span id="id1"></span><h1>Features<a class="headerlink" href="#features" title="Link to this heading"></a></h1>
+<p>By specifying the desired features, only the necessary data is stored.
+This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.
+Depending on the users choice, the dataset comprises different features, explained the following.</p>
+<p><strong>Notation</strong></p>
+<p>Regarding the mathematical notation in this section, the following conventions are used:</p>
+<ul class="simple">
+<li><p>Boldface type for vectors and matrices, e.g., <span class="math notranslate nohighlight">\(\mathbf{p}\)</span> represents a vector, while <span class="math notranslate nohighlight">\(\mathbf{H}\)</span> denotes a matrix</p></li>
+<li><p>Blackboard Bold is used to indicate number spaces, e.g., <span class="math notranslate nohighlight">\(\mathbb{C}\)</span> represents the complex number space</p></li>
+</ul>
+<section id="microphone-array-sound-pressure-signals-time-data">
+<h2>Microphone array sound pressure signals (<code class="code docutils literal notranslate"><span class="pre">'time_data'</span></code>)<a class="headerlink" href="#microphone-array-sound-pressure-signals-time-data" title="Link to this heading"></a></h2>
+<p>The <code class="code docutils literal notranslate"><span class="pre">time_data</span></code> feature comprises the sound pressure signals <span class="math notranslate nohighlight">\(p(t,\mathbf{r}_m)\)</span> at each microphone position <span class="math notranslate nohighlight">\(\mathbf{r}_m\)</span>.
+The data is stored in a Numpy array of shape (N,M), where N is the number of samples and M is the number of microphones.
+The size of N depends on the signal length <code class="code docutils literal notranslate"><span class="pre">signal_length</span></code> and the sampling frequency <code class="code docutils literal notranslate"><span class="pre">fs</span></code>, which can both be set when creating a dataset e.g. with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">(</span><span class="n">signal_length</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="n">fs</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="code docutils literal notranslate"><span class="pre">time_data</span></code> feature is only available if the choosen calculation mode is <code class="code docutils literal notranslate"><span class="pre">mode=&quot;welch&quot;</span></code>. Otherwise, the time data is not simulated and can therefore not be used as a feature.</p>
+</div>
+</section>
+<section id="microphone-array-spectrograms-spectrogram">
+<h2>Microphone array spectrograms (<code class="code docutils literal notranslate"><span class="pre">'spectrogram'</span></code>)<a class="headerlink" href="#microphone-array-spectrograms-spectrogram" title="Link to this heading"></a></h2>
+<p>The <code class="code docutils literal notranslate"><span class="pre">spectrogram</span></code> feature comprises the complex-valued spectra <span class="math notranslate nohighlight">\(P(f,\mathbf{r}_m)\)</span> of the microphone signals <span class="math notranslate nohighlight">\(p(t,\mathbf{r}_m)\)</span> for several time data blocks. The data is stored in a Numpy array of shape (B,F,M), where B is the number of time data blocks, M is the number of microphones and F is the number of frequency bins.
+The number of time data blocks depends on the signal length <code class="code docutils literal notranslate"><span class="pre">signal_length</span></code>, FFT parameters and the sampling frequency <code class="code docutils literal notranslate"><span class="pre">fs</span></code>, which can all be set when creating a dataset e.g. with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">(</span><span class="n">signal_length</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span><span class="n">fs</span><span class="o">=</span><span class="mi">16000</span><span class="p">)</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fft_params</span><span class="p">[</span><span class="s1">&#39;block_size&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">512</span>
+<span class="n">dataset</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">fft_params</span><span class="p">[</span><span class="s1">&#39;overlap&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;50%&#39;&#39;</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="code docutils literal notranslate"><span class="pre">spectrogram</span></code> feature is only available if the choosen calculation mode is <code class="code docutils literal notranslate"><span class="pre">mode=&quot;welch&quot;</span></code>. Otherwise, the underlying time data from which the spectra are calculated is missing.</p>
+</div>
+</section>
+<section id="cross-spectral-matrix-csm">
+<h2>Cross-spectral matrix (<code class="code docutils literal notranslate"><span class="pre">'csm'</span></code>)<a class="headerlink" href="#cross-spectral-matrix-csm" title="Link to this heading"></a></h2>
+<p>The <code class="code docutils literal notranslate"><span class="pre">csm</span></code> feature corresponds to the cross-spectral matrix (CSM) <span class="math notranslate nohighlight">\(\mathbf{C}(f)\)</span>, which contains the auto-power and cross-power spectra of all sensors and is a complex-valued Hermitian matrix. The data is stored in a Numpy array of shape (F,M,M), where M is the number of microphones and F is the number of frequency bins. AcouPipe provides three different modes (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> and <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>) to obtain the CSM. The default mode is <code class="code docutils literal notranslate"><span class="pre">welch</span></code>. A different mode can be set when creating a dataset e.g. with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;analytic&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The representations only slightly differ, depending on the choosen CSM calculation mode (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>), as can be seen for the following example extracted from <cite>DatasetSynthetic</cite>:</p>
+<a class="reference internal image-reference" href="../../_images/csm_example.png"><img alt="../../_images/csm_example.png" src="../../_images/csm_example.png" style="width: 800px;" /></a>
+<section id="estimated-csm-from-time-data-mode-welch">
+<h3>estimated CSM from time data (<code class="code docutils literal notranslate"><span class="pre">mode=&quot;welch&quot;</span></code>)<a class="headerlink" href="#estimated-csm-from-time-data-mode-welch" title="Link to this heading"></a></h3>
+<p>Given <span class="math notranslate nohighlight">\(M\)</span> spatially distributed receivers, <span class="math notranslate nohighlight">\(J\)</span> uncorrelated and spatially stationary sources, and a linear propagation model, the complex sound pressure at the <span class="math notranslate nohighlight">\(m\)</span>-th sensor is described by:</p>
+<div class="math notranslate nohighlight">
+\[p(\mathbf{r}_{m}, \omega) = \sum_{j=1}^J h_{mj}(\omega) q(\mathbf{r}_{j}, \omega) + n(\boldsymbol{r}_{m}, \omega)\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\omega\)</span> is the angular frequency, <span class="math notranslate nohighlight">\(h_{mj}\)</span> is the transfer function, and <span class="math notranslate nohighlight">\(q(\mathbf{r}_{j}, \omega)\)</span> represents the complex-valued amplitude of the source. Independent noise is modeled as <span class="math notranslate nohighlight">\(n(\boldsymbol{r}_{m}, \omega)\)</span>.
+In practice, the CSM is estimated from a finite number of samples. One common method for estimating the CSM utilized by AcouPipe is Welch’s method:</p>
+<div class="math notranslate nohighlight">
+\[\hat{\mathbf{C}} = \frac{1}{B} \sum_{b=1}^{B} \mathbf{p} \mathbf{p}^{\text{H}}\]</div>
+<p>To obtain the CSM with Welch’s method requires to simulate the underlying microphone signals, which is computationally expensive. On the other hand it is the most realistic method to obtain the CSM.</p>
+</section>
+<section id="analytic-csm-mode-analytic">
+<h3>analytic CSM (<code class="code docutils literal notranslate"><span class="pre">mode=&quot;analytic&quot;</span></code>)<a class="headerlink" href="#analytic-csm-mode-analytic" title="Link to this heading"></a></h3>
+<p>The propagation equation can also be written in matrix form:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{p} = \mathbf{H}\mathbf{q} + \mathbf{n}\]</div>
+<p>with <span class="math notranslate nohighlight">\(\mathbf{p} \in \mathbb{C}^{M}\)</span>, <span class="math notranslate nohighlight">\(\mathbf{q} \in \mathbb{C}^{J}\)</span>, <span class="math notranslate nohighlight">\(\mathbf{n} \in \mathbb{C}^{M}\)</span>, and <span class="math notranslate nohighlight">\(\mathbf{H} \in \mathbb{C}^{M\times J}\)</span></p>
+<p>If the matrix <span class="math notranslate nohighlight">\(\mathbb{E}[\mathbf{q} \mathbf{q}^{\text{H}}] = \mathbf{Q} \in \mathbb{C}^{J \times J}\)</span> containing the sources’ auto- and cross-power spectra and the transfer matrix <span class="math notranslate nohighlight">\(\mathbf{H} \in \mathbb{C}^{M \times J}\)</span> are known, the CSM can be calculated analytically as:</p>
+<div class="math notranslate nohighlight">
+\[\mathbf{C} = \mathbb{E}[\mathbf{p}\mathbf{p}^{\text{H}}] = \mathbf{H} \mathbf{Q} \mathbf{H}^{\text{H}}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\mathbb{E}[\cdot]\)</span> denotes the expectation operator. This enables a fast calculation of the CSM but neglects uncertainties that stem from a limited number of snapshots.</p>
+</section>
+<section id="wishart-distributed-csm-mode-wishart">
+<h3>Wishart-distributed CSM (<code class="code docutils literal notranslate"><span class="pre">mode=&quot;wishart&quot;</span></code>)<a class="headerlink" href="#wishart-distributed-csm-mode-wishart" title="Link to this heading"></a></h3>
+<p>By assuming stationary sources with non-deterministic source signals, a snapshot deficient CSM can be sampled.
+Given the matrix <span class="math notranslate nohighlight">\(\mathbf{Q}\)</span>, it is possible to approximate <span class="math notranslate nohighlight">\(\mathbf{Q}\)</span> using the Cholesky decomposition <span class="math notranslate nohighlight">\(\mathbf{Q}(\omega) = \mathbf{U}\mathbf{U}^{\mathsf{H}}\)</span> and the Bartlett decomposition:</p>
+<div class="math notranslate nohighlight">
+\[\hat{\mathbf{Q}}  = \frac{1}{n} \mathbf{U} \mathbf{A} \mathbf{U}^{\mathsf{H}}\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\mathbf{A}\)</span> is generated for <span class="math notranslate nohighlight">\(n\)</span> different degrees of freedom, representing the number of snapshots. The distribution of <span class="math notranslate nohighlight">\(\mathbf{A}\)</span> follows a complex Wishart distribution <span class="math notranslate nohighlight">\(\mathcal{W}_{\mathbb{C}} (n,\mathrm{I})\)</span>.</p>
+<p>Sampling the cross-spectral matrix is then achieved by multiplying the Wishart-distributed source matrix with the transfer matrix <span class="math notranslate nohighlight">\(\mathbf{H}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\hat{\mathbf{C}}_{\mathcal{W}} = \mathbf{H} \hat{\mathbf{Q}} \mathbf{H}^{\mathsf{H}}.\]</div>
+<p>This method is computationally efficient and allows to sample the CSM for a varying number of snapshots with the same computational burden as with a single snapshot. However, the Wishart-distributed CSM is only an approximation of a snapshot deficient CSM.</p>
+</section>
+</section>
+<section id="compressed-cross-spectral-matrix-csmtriu">
+<h2>Compressed Cross-spectral matrix (<code class="code docutils literal notranslate"><span class="pre">'csmtriu'</span></code>)<a class="headerlink" href="#compressed-cross-spectral-matrix-csmtriu" title="Link to this heading"></a></h2>
+<p>The CSM is a complex Hermitian matrix and contains redundant information. By using <code class="code docutils literal notranslate"><span class="pre">features=['csmtriu']</span></code>, only the upper triangular part of the CSM is returned (the conjugate complex of the CSM is neglected; see <span id="id2">[<a class="reference internal" href="../lit.html#id4" title="Paolo Castellini, Nicola Giulietti, Nicola Falcionelli, Aldo Franco Dragoni, and Paolo Chiariotti. A neural network based microphone array approach to grid-less noise source localization. Applied Acoustics, 177:107947, 2021. doi:10.1016/j.apacoust.2021.107947.">CGF+21</a>]</span>). The data is stored in a real-valued Numpy array of shape (F,M,M), where M is the number of microphones and F is the number of frequency bins. Similarly as for the <code class="code docutils literal notranslate"><span class="pre">csm</span></code> feature, the representation depends on the choosen mode (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>).</p>
+<p>The representations only slightly differ, depending on the choosen CSM calculation mode (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>), as can be seen for the following example extracted from <cite>DatasetSynthetic</cite>:</p>
+<a class="reference internal image-reference" href="../../_images/csmtriu_example.png"><img alt="../../_images/csmtriu_example.png" src="../../_images/csmtriu_example.png" style="width: 800px;" /></a>
+</section>
+<section id="eigenmodes-of-the-csm-eigmode">
+<h2>Eigenmodes of the CSM (<code class="code docutils literal notranslate"><span class="pre">'eigmode'</span></code>)<a class="headerlink" href="#eigenmodes-of-the-csm-eigmode" title="Link to this heading"></a></h2>
+<p>The Eigenmodes of the cross-spectral matrix are the eigenvectors scaled by their corresponding eigenvalues and have been used in <span id="id3">[<a class="reference internal" href="../lit.html#id6" title="Adam Kujawski and Ennes Sarradj. Fast grid-free strength mapping of multiple sound sources from microphone array data using a transformer architecture. The Journal of the Acoustical Society of America, 152(5):2543–2556, 2022. doi:10.1121/10.0015005.">KS22</a>]</span> as input features for source characterization.</p>
+<a class="reference internal image-reference" href="../../_images/eigmode_example.png"><img alt="../../_images/eigmode_example.png" src="../../_images/eigmode_example.png" style="width: 800px;" /></a>
+<p>Eigen-decomposition is used to decompose the CSM into its eigenvalues and eigenvectors:</p>
+<div class="math notranslate nohighlight">
+\[\hat{\mathbf{C}} = \mathbf{V}\mathbf{\Lambda}\mathbf{V}^{\text{H}}\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(\mathbf{V}\)</span> contains the complex eigenvectors, and <span class="math notranslate nohighlight">\(\mathbf{\Lambda}\)</span> is a diagonal matrix of eigenvalues.
+The exact representation depends on the choosen CSM calculation mode (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>).</p>
+<p>As can be observed from the Eigenspectrum of the CSM, the choice of the CSM calculation mode has an impact on the feature representation, in particular the scaling of the eigenmodes.</p>
+<a class="reference internal image-reference" href="../../_images/eigval_example.png"><img alt="../../_images/eigval_example.png" class="align-center" src="../../_images/eigval_example.png" style="width: 200px;" /></a>
+</section>
+<section id="sourcemap-sourcemap">
+<h2>Sourcemap (<code class="code docutils literal notranslate"><span class="pre">'sourcemap'</span></code>)<a class="headerlink" href="#sourcemap-sourcemap" title="Link to this heading"></a></h2>
+<p>The conventional beamforming map is calculated by processing the CSM with the corresponding steering vector <span class="math notranslate nohighlight">\(h\)</span>, such that</p>
+<div class="math notranslate nohighlight">
+\[b(\mathbf{x}_t) = \mathbf{h}^{\mathrm{H}}(\mathbf{x}_t) \mathbf{C h}(\mathbf{x}_t), \quad t \in \{1, \ldots, G\}.\]</div>
+<p>The equation is evaluated for a spatial grid.</p>
+<p>The conventional beamforming map is a feature with AcouPipe when the features attribute is set to <code class="code docutils literal notranslate"><span class="pre">features=['sourcemap']</span></code>.
+For convenience, the sound radiation is assumed to come from a monopole.
+Different steering vector formulations exist in the literature, varying in terms of spatial precision and accuracy in determining the source strength.
+Formulation III according to <span id="id4">[<a class="reference internal" href="../lit.html#id3" title="E. Sarradj. Three-dimensional acoustic source mapping with different beamforming steering vector formulations. Advances in Acoustics and Vibration, 2012(292695):1–12, 2012. doi:10.1155/2012/292695.">Sar12</a>]</span> is used as the default, which is defined as:</p>
+<div class="math notranslate nohighlight">
+\[h_m = \frac{1}{r_{t, 0} r_{t, m} \sum_{l=1}^M r_{t, l}^{-2}} \exp^{-\jmath k\left(r_{t, m}-r_{t, 0}\right)}\]</div>
+<p>Here, <span class="math notranslate nohighlight">\(r_{t, m}\)</span> refers to the distance between the steered location and the respective <span class="math notranslate nohighlight">\(m\)</span>-th sensor, while <span class="math notranslate nohighlight">\(r_{t, 0}\)</span> specifies the distance from the focus point to the reference point where the sound pressure is evaluated.
+Sarradj demonstrated that using formulation III, the maximum sound pressure level depicted in a sound map may not precisely correspond to the true position of a single sound source.
+However, the study also revealed that the maximum does equal the true source strength for larger Helmholtz numbers.</p>
+<p>The representation slightly differs, depending on the choosen CSM calculation mode (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>), as can be seen for the following example extracted from <cite>DatasetSynthetic</cite>:</p>
+<a class="reference internal image-reference" href="../../_images/sourcemap_example.png"><img alt="../../_images/sourcemap_example.png" src="../../_images/sourcemap_example.png" style="width: 800px;" /></a>
+</section>
+<section id="target-sourcemap-targetmap-analytic-targetmap-estimated">
+<h2>Target Sourcemap (<code class="code docutils literal notranslate"><span class="pre">'targetmap_analytic'</span></code>, <code class="code docutils literal notranslate"><span class="pre">'targetmap_estimated'</span></code>)<a class="headerlink" href="#target-sourcemap-targetmap-analytic-targetmap-estimated" title="Link to this heading"></a></h2>
+<p>The target sourcemap provides a sparse mapping of the true source strength on a pre-defined grid. The mapped strength can be either the analytic source strength (<code class="code docutils literal notranslate"><span class="pre">'targetmap_analytic'</span></code>) or an estimate of the source strength (<code class="code docutils literal notranslate"><span class="pre">'targetmap_estimated'</span></code>). The representation slightly differs as can be seen for the following example extracted from <cite>DatasetSynthetic</cite>:</p>
+<a class="reference internal image-reference" href="../../_images/targetmap_example.png"><img alt="../../_images/targetmap_example.png" class="align-center" src="../../_images/targetmap_example.png" style="width: 600px;" /></a>
+<p>The underlying grid is defined by the <code class="code docutils literal notranslate"><span class="pre">dataset.config.grid</span></code> attribute of the dataset. Since the true locations of the sources do not necessarily coincide with the grid points, the source strength is attributed to the closest grid points when generating the targetmap. If it is desired to only sample source locations that coincide with the grid points, the attribute <code class="code docutils literal notranslate"><span class="pre">dataset.snap_to_grid</span></code> can be set to <code class="code docutils literal notranslate"><span class="pre">True</span></code> when creating the dataset e.g. with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">(</span><span class="n">snap_to_grid</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="analytic-source-strength-source-strength-analytic">
+<h2>Analytic source strength (<code class="code docutils literal notranslate"><span class="pre">'source_strength_analytic'</span></code>)<a class="headerlink" href="#analytic-source-strength-source-strength-analytic" title="Link to this heading"></a></h2>
+<p>The analytic source strength refers to the expectation value (infinite number of snapshots) of the squared sound pressure amplitude <span class="math notranslate nohighlight">\(\mathbb{E}[p^2_j(\mathbf{r}_0,f)]\)</span> with respect to a reference position <span class="math notranslate nohighlight">\(\mathbf{r}_0\)</span>.
+The data is stored in a Numpy array of shape (F,J), where F is the number of frequency bins and J is the number of sources.
+The reference position <span class="math notranslate nohighlight">\(\mathbf{r}_0\)</span> is set to the microphone closest to the origin of the coordinate system by default.</p>
+<a class="reference internal image-reference" href="../../_images/source_strength_analytic_example.png"><img alt="../../_images/source_strength_analytic_example.png" class="align-center" src="../../_images/source_strength_analytic_example.png" style="width: 300px;" /></a>
+</section>
+<section id="estimated-source-strength-source-strength-estimated">
+<h2>Estimated source strength (<code class="code docutils literal notranslate"><span class="pre">'source_strength_estimated'</span></code>)<a class="headerlink" href="#estimated-source-strength-source-strength-estimated" title="Link to this heading"></a></h2>
+<p>The estimated source strength is the block-wise averaged squared sound pressure amplitude <span class="math notranslate nohighlight">\(1/B p^2_j(\mathbf{r}_0,f)\)</span> with respect to a reference position <span class="math notranslate nohighlight">\(\mathbf{r}_0\)</span>, where B is the number of time data blocks. The data is stored in a Numpy array of shape (F,J) with F beeing the number of frequency bins and J is the number of sources.
+The reference position <span class="math notranslate nohighlight">\(\mathbf{r}_0\)</span> is set to the microphone closest to the origin of the coordinate system by default.</p>
+<p>The representation of the estimated source strength slightly differs, depending on the choosen calculation mode (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>). With <code class="code docutils literal notranslate"><span class="pre">mode='analytic'</span></code>, the estimated source strength equals the analytic source strength. With <code class="code docutils literal notranslate"><span class="pre">mode='welch'</span></code>, the estimated source strength is calculated according to Welch’s method. With <code class="code docutils literal notranslate"><span class="pre">mode='wishart'</span></code>, the estimated source strength is a snapshot deficient approximation of the analytic source strength.</p>
+<a class="reference internal image-reference" href="../../_images/source_strength_estimated_example.png"><img alt="../../_images/source_strength_estimated_example.png" class="align-center" src="../../_images/source_strength_estimated_example.png" style="width: 300px;" /></a>
+</section>
+<section id="analytic-noise-power-noise-strength-analytic">
+<h2>Analytic noise power (<code class="code docutils literal notranslate"><span class="pre">'noise_strength_analytic'</span></code>)<a class="headerlink" href="#analytic-noise-power-noise-strength-analytic" title="Link to this heading"></a></h2>
+<p>The analytic noise power refers to the expectation value (infinite number of snapshots) of the squared sound pressure amplitude <span class="math notranslate nohighlight">\(\mathbb{E}[p^2(\mathbf{r}_m,f)]\)</span> at each m-th microphone. The data is stored in a Numpy array of shape (F,M), where F is the number of frequency bins and M is the number of microphones.</p>
+</section>
+<section id="estimated-noise-power-noise-strength-estimated">
+<h2>Estimated noise power (<code class="code docutils literal notranslate"><span class="pre">'noise_strength_estimated'</span></code>)<a class="headerlink" href="#estimated-noise-power-noise-strength-estimated" title="Link to this heading"></a></h2>
+<p>The estimated noise power is the block-wise averaged squared sound pressure amplitude <span class="math notranslate nohighlight">\(1/B p^2(\mathbf{r}_m,f)\)</span> at each m-th microphone, where B is the number of time data blocks. The data is stored in a Numpy array of shape (F,M), where F is the number of frequency bins and M is the number of microphones.</p>
+<p>The representation of the estimated noise power slightly differs, depending on the choosen calculation mode (<code class="code docutils literal notranslate"><span class="pre">analytic</span></code>, <code class="code docutils literal notranslate"><span class="pre">welch</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>). With <code class="code docutils literal notranslate"><span class="pre">mode='analytic'</span></code>, the estimated noise power equals the analytic noise power. With <code class="code docutils literal notranslate"><span class="pre">mode='welch'</span></code>, the estimated noise power is calculated according to Welch’s method. With <code class="code docutils literal notranslate"><span class="pre">mode='wishart'</span></code>, the estimated noise power is a snapshot deficient approximation of the analytic noise power.</p>
+</section>
+<section id="sound-source-locations-loc">
+<h2>Sound source locations (<code class="code docutils literal notranslate"><span class="pre">'loc'</span></code>)<a class="headerlink" href="#sound-source-locations-loc" title="Link to this heading"></a></h2>
+<p>The spatial locations of the involved sound sources. The data is stored in a Numpy array of shape (3,J), where J is the number of sources.</p>
+</section>
+<section id="frequencies-of-interest-f">
+<h2>Frequencies of interest (<code class="code docutils literal notranslate"><span class="pre">'f'</span></code>)<a class="headerlink" href="#frequencies-of-interest-f" title="Link to this heading"></a></h2>
+<p>The frequencies of interest given by the user when calling the <code class="code docutils literal notranslate"><span class="pre">generate(f=[...])</span></code> method. The data is stored in a Numpy array of shape (F,), where F is the number of frequency bins.
+The frequency included in the data might be slightly different from the specified frequency. This is due to the fact that the frequency is chosen from a discrete set of frequencies, which depends on the parameters of the FFT and the sampling rate <code class="code docutils literal notranslate"><span class="pre">fs</span></code> of the dataset.</p>
+</section>
+<section id="frequency-width-num">
+<h2>Frequency width (<code class="code docutils literal notranslate"><span class="pre">'num'</span></code>)<a class="headerlink" href="#frequency-width-num" title="Link to this heading"></a></h2>
+<p>The width of the frequency bands considered calling the <code class="code docutils literal notranslate"><span class="pre">generate(num=&lt;num&gt;)</span></code>.</p>
+</section>
+<section id="source-case-index-idx">
+<h2>Source case index (<code class="code docutils literal notranslate"><span class="pre">'idx'</span></code>)<a class="headerlink" href="#source-case-index-idx" title="Link to this heading"></a></h2>
+<p>The index referencing the sampled case in the dataset (default: starts at 0). A different start index can be set with the <code class="code docutils literal notranslate"><span class="pre">start_idx</span></code> argument when generating data, e.g. with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ntasks</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">number</span> <span class="n">of</span> <span class="n">parallel</span> <span class="n">tasks</span><span class="o">&gt;</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">(</span><span class="n">tasks</span><span class="o">=</span><span class="n">ntasks</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">start_idx</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="o">...</span><span class="p">):</span>
+      <span class="o">...</span>
+</pre></div>
+</div>
+<p>When using multiple parallel tasks, the sample order may not be preserved. The <code class="code docutils literal notranslate"><span class="pre">idx</span></code> feature allows then to identify the source case in the dataset.</p>
+</section>
+<section id="random-seeds-seeds">
+<h2>Random seeds (<code class="code docutils literal notranslate"><span class="pre">'seeds'</span></code>)<a class="headerlink" href="#random-seeds-seeds" title="Link to this heading"></a></h2>
+<p>A list with random seeds used by the Sampler objects involved.
+The combination is unique for each source case in the dataset. Primarily for internal use.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../../autoapi/acoupipe/datasets/experimental/index.html" class="btn btn-neutral float-left" title="acoupipe.datasets.experimental" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../jupyter/modify.html" class="btn btn-neutral float-right" title="Modifying a Dataset" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

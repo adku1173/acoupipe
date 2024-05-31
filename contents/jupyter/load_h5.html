@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Save and load datasets stored in HDF5 file format &mdash; AcouPipe 24.04 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=80d5e7a1" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=fd3f3429" />
+      <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=b53a1e26"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Save and load datasets stored in TFRecord file format" href="load_tfrecord.html" />
+    <link rel="prev" title="Model training with training data generated on the fly" href="generate.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            AcouPipe
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../datasets.html">Datasets</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../examples.html">Examples</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="generate.html">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Save and load datasets stored in HDF5 file format</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Save-Dataset-to-HDF5">Save Dataset to HDF5</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-Dataset-from-HDF5-File">Load Dataset from HDF5 File</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Building-a-TensorFlow/Keras-Dataset">Building a TensorFlow/Keras Dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html#sampling-microphone-array-geometries">Sampling Microphone Array Geometries</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">AcouPipe</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../examples.html">Examples</a></li>
+      <li class="breadcrumb-item active">Save and load datasets stored in HDF5 file format</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/contents/jupyter/load_h5.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="Save-and-load-datasets-stored-in-HDF5-file-format">
+<h1>Save and load datasets stored in HDF5 file format<a class="headerlink" href="#Save-and-load-datasets-stored-in-HDF5-file-format" title="Link to this heading"></a></h1>
+<p>This example demonstrates how to load the data from a stored .h5 file and to build a data input Pipeline in TensorFlow / Keras.</p>
+<section id="Save-Dataset-to-HDF5">
+<h2>Save Dataset to HDF5<a class="headerlink" href="#Save-Dataset-to-HDF5" title="Link to this heading"></a></h2>
+<p>At first, we create a small temporary dataset by utilizing the default synthetic dataset, compounding 5 source cases and the Cross-spectral matrix as input feature.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">acoupipe.datasets.synthetic</span> <span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+
+<span class="c1"># training dataset</span>
+<span class="n">d1</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span>
+
+<span class="c1"># save to .h5 file</span>
+<span class="n">d1</span><span class="o">.</span><span class="n">save_h5</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;csm&quot;</span><span class="p">],</span> <span class="n">split</span><span class="o">=</span><span class="s2">&quot;training&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;/tmp/tmp_dataset.h5&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+100%|<span style="color: rgb(31,119,180)">██████████</span>| 5/5 [00:02&lt;00:00,  2.05it/s]
+</pre></div></div>
+</div>
+</section>
+<section id="Load-Dataset-from-HDF5-File">
+<h2>Load Dataset from HDF5 File<a class="headerlink" href="#Load-Dataset-from-HDF5-File" title="Link to this heading"></a></h2>
+<p>The AcouPipe toolbox provides the <code class="docutils literal notranslate"><span class="pre">LoadH5Dataset</span></code> class to load the datasets stored into HDF5 format. One can access each individual sample/source case by the h5f attribute of the class. To extract the first input feature (‘csm’ in this case) of the dataset:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">acoupipe.loader</span> <span class="kn">import</span> <span class="n">LoadH5Dataset</span>
+
+<span class="n">dataset_h5</span> <span class="o">=</span> <span class="n">LoadH5Dataset</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;/tmp/tmp_dataset.h5&quot;</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">dataset_h5</span><span class="o">.</span><span class="n">h5f</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span> <span class="c1"># sample indices are the keys of the dataset file</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+[&#39;0&#39;, &#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;]
+</pre></div></div>
+</div>
+<p>Similarly as with the <code class="docutils literal notranslate"><span class="pre">generate</span></code> method, the <code class="docutils literal notranslate"><span class="pre">get_data</span></code> method can be used to retrieve the stored data iteratively</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">dataset_h5</span><span class="o">.</span><span class="n">get_data</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;index </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;idx&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> includes features:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span> <span class="c1"># keys are the names of the features</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+index 0 includes features: [&#39;csm&#39;, &#39;idx&#39;, &#39;seeds&#39;]
+index 1 includes features: [&#39;csm&#39;, &#39;idx&#39;, &#39;seeds&#39;]
+index 2 includes features: [&#39;csm&#39;, &#39;idx&#39;, &#39;seeds&#39;]
+index 3 includes features: [&#39;csm&#39;, &#39;idx&#39;, &#39;seeds&#39;]
+index 4 includes features: [&#39;csm&#39;, &#39;idx&#39;, &#39;seeds&#39;]
+</pre></div></div>
+</div>
+</section>
+<section id="Building-a-TensorFlow/Keras-Dataset">
+<h2>Building a TensorFlow/Keras Dataset<a class="headerlink" href="#Building-a-TensorFlow/Keras-Dataset" title="Link to this heading"></a></h2>
+<p>With these definitions, a Python generator can be created which can be consumed by the Tensorflow Dataset API. Here, the dataset comprises the CSM, idx and seeds features.</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_generator</span> <span class="o">=</span> <span class="n">dataset_h5</span><span class="o">.</span><span class="n">get_dataset_generator</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<p>To build a TensorFlow Dataset, the output signature corresponding to the data must be known, which would be something like:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># provide the signature of the features</span>
+<span class="n">output_signature</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;csm&#39;</span><span class="p">:</span>  <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="mi">64</span><span class="p">,</span><span class="mi">64</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">complex64</span><span class="p">),</span>
+            <span class="s1">&#39;seeds&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="s1">&#39;idx&#39;</span> <span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">TensorSpec</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+            <span class="p">}</span>
+
+<span class="n">tf_dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+            <span class="n">generator</span><span class="o">=</span><span class="n">data_generator</span><span class="p">,</span>
+            <span class="n">output_signature</span><span class="o">=</span><span class="n">output_signature</span>
+            <span class="p">)</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">tf_dataset</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;index </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;idx&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> includes features:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">, shape: </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+index 0 includes features: [&#39;csm&#39;, &#39;seeds&#39;, &#39;idx&#39;]
+key: csm, shape: (65, 64, 64)
+key: seeds, shape: (6, 2)
+key: idx, shape: ()
+</pre></div></div>
+</div>
+<p>Alternatively, the output signature can be retrieved from the dataset by using the <code class="docutils literal notranslate"><span class="pre">get_output_signature</span></code> method of the corresponding Dataset</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">d1</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span>
+
+<span class="n">signature</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">get_output_signature</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;csm&quot;</span><span class="p">,</span><span class="s2">&quot;idx&quot;</span><span class="p">,</span><span class="s2">&quot;seeds&quot;</span><span class="p">])</span>
+
+<span class="n">tf_dataset</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_generator</span><span class="p">(</span>
+            <span class="n">generator</span><span class="o">=</span><span class="n">data_generator</span><span class="p">,</span>
+            <span class="n">output_signature</span><span class="o">=</span><span class="n">signature</span>
+            <span class="p">)</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">tf_dataset</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;index </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;idx&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> includes features:&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;key: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">, shape: </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+index 0 includes features: [&#39;csm&#39;, &#39;idx&#39;, &#39;seeds&#39;]
+key: csm, shape: (65, 64, 64)
+key: idx, shape: ()
+key: seeds, shape: (6, 2)
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="generate.html" class="btn btn-neutral float-left" title="Model training with training data generated on the fly" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="load_tfrecord.html" class="btn btn-neutral float-right" title="Save and load datasets stored in TFRecord file format" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
