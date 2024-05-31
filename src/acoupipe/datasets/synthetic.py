@@ -20,7 +20,7 @@ from functools import partial
 import acoular as ac
 import numpy as np
 from scipy.stats import norm, poisson
-from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, observe
+from traits.api import Bool, Dict, Either, Enum, Float, Instance, Int, List, observe
 
 import acoupipe.sampler as sp
 from acoupipe.config import TF_FLAG
@@ -43,7 +43,7 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.utils import get_uncorrelated_noise_source_recursively
+from acoupipe.datasets.utils import get_all_source_signals, get_uncorrelated_noise_source_recursively
 
 
 class DatasetSynthetic(DatasetBase):
@@ -125,7 +125,7 @@ class DatasetSynthetic(DatasetBase):
     """
 
     def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
-                snap_to_grid=False, signal_length=5, fs=13720., min_nsources=1,
+                snap_to_grid=False, random_signal_length=False, signal_length=5, fs=13720., min_nsources=1,
                 max_nsources=10, tasks=1, logger=None, config=None):
         """Initialize the DatasetSynthetic object.
 
@@ -144,6 +144,9 @@ class DatasetSynthetic(DatasetBase):
         snap_to_grid : bool
             Snap source locations to grid. The grid is defined in the config object as
             config.grid. Defaults to False.
+        random_signal_length : bool
+            Randomize signal length. Defaults to False. If True, the signal length is
+            uniformly sampled from the interval [1s,10s].
         signal_length : float
             Length of the signal in seconds. Defaults to 5 seconds.
         fs : float
@@ -165,7 +168,7 @@ class DatasetSynthetic(DatasetBase):
                 mode=mode, signal_length=signal_length, fs=fs,
                 min_nsources=min_nsources, max_nsources=max_nsources,
                 mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
-                snap_to_grid=snap_to_grid)
+                snap_to_grid=snap_to_grid, random_signal_length=random_signal_length)
         super().__init__(config=config, tasks=tasks, logger=logger)
 
     def get_feature_collection(self, features, f, num):
@@ -184,10 +187,15 @@ class DatasetSynthetic(DatasetBase):
         else:
             fdim = 1
 
+        if self.config.random_signal_length:
+            tdim = None
+        else:
+            tdim = int(self.config.signal_length*self.config.fs)
+
         builder = DatasetSyntheticFeatureCollectionBuilder(
             feature_collection = BaseFeatureCollection(),
-            tdim = int(self.config.signal_length*self.config.fs),
             mdim = self.config.mics.num_mics,
+            tdim = tdim,
             fdim = fdim,
         )
         # add prepare function
@@ -257,8 +265,11 @@ def sample_mic_noise_variance(rng):
     """Draw microphone noise variance, uniform distribution."""
     return rng.uniform(10e-6,0.1)
 
-def signal_seed(rng):
+def sample_signal_seed(rng):
     return int(rng.uniform(1,1e9))
+
+def sample_signal_length(rng):
+    return rng.uniform(1,10)
 
 class DatasetSyntheticConfig(ConfigBase):
     """
@@ -282,6 +293,8 @@ class DatasetSyntheticConfig(ConfigBase):
         Apply signal noise to microphone signals.
     snap_to_grid : bool
         Snap source locations to grid.
+    random_signal_length : bool
+        Randomize signal length (Default: uniformly sampled signal length [1s,10s]).
     fft_params : dict
         FFT parameters with default items :code:`block_size=128`,
         :code:`overlap="50%"`, :code:`window="Hanning"` and :code:`precision="complex64"`.
@@ -333,6 +346,8 @@ class DatasetSyntheticConfig(ConfigBase):
         Number of sources sampler.
     mic_noise_sampler : sp.ContainerSampler
         Microphone noise sampler that creates random uncorrelated noise at the microphones.
+    signal_length_sampler : sp.ContainerSampler
+        Signal length sampler that samples the length of the source signals. Only used if :attr:`random_signal_length` is :code:`True`.
     """
 
     # public traits
@@ -345,6 +360,7 @@ class DatasetSyntheticConfig(ConfigBase):
     mic_pos_noise = Bool(True, desc="apply positional noise to microphone geometry")
     mic_sig_noise = Bool(True, desc="apply signal noise to microphone signals")
     snap_to_grid = Bool(False, desc="snap source locations to grid")
+    random_signal_length = Bool(False, desc="randomize signal length")
     fft_params = Dict({
                     "block_size" : 128,
                     "overlap" : "50%",
@@ -379,6 +395,8 @@ class DatasetSyntheticConfig(ConfigBase):
                     desc="number of sources sampler")
     mic_noise_sampler = Instance(sp.ContainerSampler,
                     desc="microphone noise sampler")
+    signal_length_sampler = Instance(sp.ContainerSampler,
+                    desc="signal length sampler (only if random_signal_length=True)")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -413,6 +431,7 @@ class DatasetSyntheticConfig(ConfigBase):
         self.rms_sampler = self.create_rms_sampler()
         self.nsources_sampler = self.create_nsources_sampler()
         self.mic_noise_sampler = self.create_mic_noise_sampler()
+        self.signal_length_sampler = self.create_signal_length_sampler()
 
     def get_sampler(self):
         self.create_sampler()
@@ -428,6 +447,8 @@ class DatasetSyntheticConfig(ConfigBase):
             sampler[1] = self.micgeom_sampler
         if self.mic_sig_noise:
             sampler[5] = self.mic_noise_sampler
+        if self.random_signal_length:
+            sampler[6] = self.signal_length_sampler
         return sampler
 
     def create_env(self):
@@ -579,7 +600,7 @@ class DatasetSyntheticConfig(ConfigBase):
 
     def create_signal_seed_sampler(self):
         return sp.ContainerSampler(
-            random_func = signal_seed)
+            random_func = sample_signal_seed)
 
     def create_nsources_sampler(self):
         return sp.NumericAttributeSampler(
@@ -594,6 +615,10 @@ class DatasetSyntheticConfig(ConfigBase):
         return sp.ContainerSampler(
             random_func = sample_mic_noise_variance)
 
+    def create_signal_length_sampler(self):
+        return sp.ContainerSampler(
+            random_func = sample_signal_length)
+
     @staticmethod
     def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
         # restore sampler and acoular objects
@@ -602,11 +627,20 @@ class DatasetSyntheticConfig(ConfigBase):
         rms_sampler = sampler.get(3)
         loc_sampler = sampler.get(4)
         noise_sampler = sampler.get(5)
+        signal_length_sampler = sampler.get(6)
+
+        freq_data = beamformer.freq_data
+
         if micgeom_sampler is not None:
             noisy_mics = micgeom_sampler.target
         else:
             noisy_mics = beamformer.steer.mics # use the original mics (without noise)
-        freq_data = beamformer.freq_data
+
+        if signal_length_sampler is not None:
+            # adjust source signals, noise signal length
+            signals = get_all_source_signals(sources)
+            for signal in signals:
+                signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
         # sample parameters
         loc = loc_sampler.target
         nsources = loc.shape[1]
@@ -615,6 +649,8 @@ class DatasetSyntheticConfig(ConfigBase):
         mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
         if mic_noise:
             mic_noise_signal = mic_noise[0].signal
+            if signal_length_sampler is not None:
+                mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
             if noise_sampler is not None:
                 noise_signal_ratio = noise_sampler.target # normalized noise variance
                 noise_prms_sq = prms_sq.sum()*noise_signal_ratio
@@ -646,11 +682,18 @@ class DatasetSyntheticConfig(ConfigBase):
         rms_sampler = sampler.get(3)
         loc_sampler = sampler.get(4)
         noise_sampler = sampler.get(5)
+        signal_length_sampler = sampler.get(6)
+
         freq_data = beamformer.freq_data
+
         if micgeom_sampler is not None:
             noisy_mics = micgeom_sampler.target
         else:
             noisy_mics = beamformer.steer.mics # use the original mics (without noise)
+
+        if signal_length_sampler is not None:
+            freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
+
         nfft = freq_data.fftfreq().shape[0]
         # sample parameters
         loc = loc_sampler.target
@@ -692,7 +735,7 @@ class DatasetSyntheticConfig(ConfigBase):
 
 class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
 
-    tdim = Int(desc="time dimension")
+    tdim = Either(Int(desc="time dimension"), None)
     fdim = Int(desc="frequency dimension")
     mdim = Int(desc="microphone dimension")
 
