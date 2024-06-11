@@ -19,6 +19,7 @@ from functools import partial
 
 import acoular as ac
 import numpy as np
+import pyroomacoustics as pra
 from scipy.stats import norm, poisson
 from traits.api import Bool, Dict, Either, Enum, Float, Instance, Int, List, observe
 
@@ -957,6 +958,165 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
                                             {"num" : "int64"})
 
 
+
+
+class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
+
+    # def create_sampler(self):
+    #     self.location_sampler = self.create_location_sampler()
+    #     self.signal_seed_sampler = self.create_signal_seed_sampler()
+    #     self.rms_sampler = self.create_rms_sampler()
+    #     self.nsources_sampler = self.create_nsources_sampler()
+    #     self.mic_noise_sampler = self.create_mic_noise_sampler()
+
+    # def get_sampler(self):
+    #     self.create_sampler()
+    #     sampler = {
+    #         2 : self.signal_seed_sampler,
+    #         3 : self.rms_sampler,
+    #         4 : self.location_sampler,
+    #         }
+
+    #     if self.max_nsources != self.min_nsources:
+    #         sampler[0] = self.nsources_sampler
+    #     if self.mic_sig_noise:
+    #         sampler[5] = self.mic_noise_sampler
+    #     return sampler
+
+    def create_sources(self):
+        sources = []
+        for signal in self.signals:
+            sources.append(
+                ac.PointSourceConvolve(
+                    signal=signal,
+                    mics=self.noisy_mics,
+                    env=self.env,
+                    )
+            )
+        return sources
+
+    @staticmethod
+    def get_rir(fs, locs, mics):
+        # The desired reverberation time and dimensions of the room
+
+        rt60 = .5  # seconds
+        room_dim = [7, 7, 3]  # meters
+        # We invert Sabine's formula to obtain the parameters for the ISM simulator
+        e_absorption, max_order = pra.inverse_sabine(rt60, room_dim)
+        # Create the room
+        room = pra.ShoeBox(
+            room_dim, fs=fs, materials=pra.Material(e_absorption), max_order=max_order,
+            use_rand_ism = False, max_rand_disp = 0.05
+        )
+        shift = np.array(room_dim)/2 # centering
+        for loc in locs.T:
+            room.add_source(loc+shift)
+        for mic in mics.T:
+            room.add_microphone(mic+shift)
+        room.compute_rir()
+        n = len(room.rir[0][0]) # length of the rir
+        rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
+        for j in range(locs.shape[1]):
+            for i in range(mics.shape[1]):
+                rir = np.array(room.rir[i][j])
+                ns = min(n, rir.shape[0])
+                rir_arr[j,i,:ns] = rir[:ns]
+        return rir_arr
+
+    @staticmethod
+    def calc_analytic_prepare_func(sampler, beamformer):
+
+        mic_pos_noise_sampler = sampler.get(1)
+        seed_sampler = sampler.get(2)
+        rms_sampler = sampler.get(3)
+        loc_sampler = sampler.get(4)
+        noise_sampler = sampler.get(5)
+        freq_data = beamformer.freq_data
+        nfft = freq_data.fftfreq().shape[0]
+        # sample parameters
+        loc = loc_sampler.target
+        all_loc = np.concatenate([loc, freq_data.steer.ref[:,np.newaxis]], axis=1)
+        nsources = loc.shape[1]
+
+        # creating the room
+        rir = DatasetSyntheticReverbConfig.get_rir(
+            freq_data.sample_freq, all_loc, mic_pos_noise_sampler.mpos_init)
+
+        # finding the SRIR matching the location
+        transfer = np.empty((nfft, beamformer.steer.mics.num_mics,nsources), dtype=complex)
+        for i in range(nsources):
+            tf = blockwise_transfer(rir[i], freq_data.block_size).T
+            # normalize the transfer functions to match the prms at reference mic
+            tf_pow = np.real(tf[:,-1]*tf[:,-1].conjugate()).sum(0) / nfft
+            tf = tf / np.sqrt(tf_pow)
+            transfer[:,:,i] = tf
+        # adjust freq_data
+        freq_data.custom_transfer = transfer
+        freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
+        freq_data.seed=seed_sampler.target
+        # change source strength
+        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
+        prms_sq_per_freq = prms_sq / nfft #prms_sq_per_freq
+        freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
+        # add noise to freq_data
+        if noise_sampler is not None:
+            noise_signal_ratio = noise_sampler.target # normalized noise variance
+            noise_prms_sq = prms_sq.sum()*noise_signal_ratio
+            noise_prms_sq_per_freq = noise_prms_sq / nfft
+            nperf = np.diag(np.array([noise_prms_sq_per_freq]*beamformer.steer.mics.num_mics))
+            freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
+        else:
+            freq_data.noise = None
+        return {}
+
+    @staticmethod
+    def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
+        # restore sampler and acoular objects
+        mic_pos_noise_sampler = sampler.get(1)
+        seed_sampler = sampler.get(2)
+        rms_sampler = sampler.get(3)
+        loc_sampler = sampler.get(4)
+        noise_sampler = sampler.get(5)
+        freq_data = beamformer.freq_data
+        # sample parameters
+        loc = loc_sampler.target
+        np.concatenate([loc, beamformer.steer.ref[:,np.newaxis]], axis=1)
+        nsources = loc.shape[1]
+
+        # creating the room
+        rir = DatasetSyntheticReverbConfig.get_rir(
+            freq_data.sample_freq, loc, mic_pos_noise_sampler.mpos_init)
+
+        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
+        # apply parameters
+        mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if mic_noise:
+            mic_noise_signal = mic_noise[0].signal
+            if noise_sampler is not None:
+                noise_signal_ratio = noise_sampler.target # normalized noise variance
+                noise_prms_sq = prms_sq.sum()*noise_signal_ratio
+                mic_noise_signal.rms = np.sqrt(noise_prms_sq)
+                mic_noise_signal.seed = seed_sampler.target+1000
+        subset_sources = sources[:nsources]
+        for i,src in enumerate(subset_sources):
+            kernel = rir[i].T
+            # normalize energy
+            kernel /=  np.sqrt(np.sum(kernel[:,-1]**2))
+            src.kernel = kernel
+            src.signal.seed = seed_sampler.target+i
+            src.signal.rms = np.sqrt(prms_sq[i])
+            src.loc = (loc[0,i],loc[1,i],loc[2,i] )
+        freq_data.source.sources = subset_sources # apply subset of sources
+        fft_spectra.source = freq_data.source # only for spectrogram feature
+        # update observation point
+        obs_sources = deepcopy(subset_sources)
+        for src in obs_sources:
+            src.mics = obs
+            src.kernel = src.kernel[:,-1][:,np.newaxis]
+        fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
+        return {}
+
+
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
 
     def create_mics(self):
@@ -970,6 +1130,19 @@ class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
                                     z=0.5*ap, increment=1/5*ap)
 
 
+
+class DatasetSyntheticReverb(DatasetSynthetic):
+
+    def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
+                snap_to_grid=False, signal_length=5, fs=13720., min_nsources=1,
+                max_nsources=10, tasks=1, logger=None, config=None):
+        if config is None:
+            config = DatasetSyntheticReverbConfig(
+                mode=mode, signal_length=signal_length, fs=fs,
+                min_nsources=min_nsources, max_nsources=max_nsources,
+                mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
+                snap_to_grid=snap_to_grid)
+        super().__init__(tasks=tasks, logger=logger, config=config)
 
 
 
