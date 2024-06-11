@@ -44,7 +44,7 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.utils import get_all_source_signals, get_uncorrelated_noise_source_recursively
+from acoupipe.datasets.utils import blockwise_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
 
 
 class DatasetSynthetic(DatasetBase):
@@ -998,21 +998,24 @@ class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
     @staticmethod
     def get_rir(fs, locs, mics):
         # The desired reverberation time and dimensions of the room
-
-        rt60 = .5  # seconds
+        fs = int(fs)
+        rt60 = 1.5  # seconds
         room_dim = [7, 7, 3]  # meters
+        shift = np.array(room_dim)/2 # centering
+
         # We invert Sabine's formula to obtain the parameters for the ISM simulator
         e_absorption, max_order = pra.inverse_sabine(rt60, room_dim)
+        max_order = min(max_order, 10) # limit the maximum order to 3
+
         # Create the room
         room = pra.ShoeBox(
             room_dim, fs=fs, materials=pra.Material(e_absorption), max_order=max_order,
-            use_rand_ism = False, max_rand_disp = 0.05
+            sources = [pra.SoundSource(loc+shift) for loc in locs.T]
+            #use_rand_ism = False, max_rand_disp = 0.05
         )
-        shift = np.array(room_dim)/2 # centering
-        for loc in locs.T:
-            room.add_source(loc+shift)
-        for mic in mics.T:
-            room.add_microphone(mic+shift)
+        room.add_microphone_array(
+            pra.beamforming.MicrophoneArray(mics+shift[:,np.newaxis], fs)
+        )
         room.compute_rir()
         n = len(room.rir[0][0]) # length of the rir
         rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
@@ -1031,25 +1034,29 @@ class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
         rms_sampler = sampler.get(3)
         loc_sampler = sampler.get(4)
         noise_sampler = sampler.get(5)
+        signal_length_sampler = sampler.get(6)
+
         freq_data = beamformer.freq_data
+
+        if signal_length_sampler is not None:
+            freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
+
         nfft = freq_data.fftfreq().shape[0]
         # sample parameters
         loc = loc_sampler.target
-        all_loc = np.concatenate([loc, freq_data.steer.ref[:,np.newaxis]], axis=1)
         nsources = loc.shape[1]
+        nummics = beamformer.steer.mics.num_mics
 
         # creating the room
+        mics = np.concatenate([mic_pos_noise_sampler.mpos_init, freq_data.steer.ref[:,np.newaxis]], axis=1)
         rir = DatasetSyntheticReverbConfig.get_rir(
-            freq_data.sample_freq, all_loc, mic_pos_noise_sampler.mpos_init)
+            freq_data.sample_freq, loc, mics)
 
         # finding the SRIR matching the location
-        transfer = np.empty((nfft, beamformer.steer.mics.num_mics,nsources), dtype=complex)
+        transfer = np.empty((nfft, nummics,nsources), dtype=complex)
         for i in range(nsources):
             tf = blockwise_transfer(rir[i], freq_data.block_size).T
-            # normalize the transfer functions to match the prms at reference mic
-            tf_pow = np.real(tf[:,-1]*tf[:,-1].conjugate()).sum(0) / nfft
-            tf = tf / np.sqrt(tf_pow)
-            transfer[:,:,i] = tf
+            transfer[:,:,i] = tf[:,:-1] / tf[:,-1][:,np.newaxis] # reference mic based normalization
         # adjust freq_data
         freq_data.custom_transfer = transfer
         freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
@@ -1063,7 +1070,7 @@ class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
             noise_signal_ratio = noise_sampler.target # normalized noise variance
             noise_prms_sq = prms_sq.sum()*noise_signal_ratio
             noise_prms_sq_per_freq = noise_prms_sq / nfft
-            nperf = np.diag(np.array([noise_prms_sq_per_freq]*beamformer.steer.mics.num_mics))
+            nperf = np.diag(np.array([noise_prms_sq_per_freq]*nummics))
             freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
         else:
             freq_data.noise = None
