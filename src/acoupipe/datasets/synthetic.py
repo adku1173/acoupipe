@@ -44,7 +44,12 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.utils import blockwise_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
+from acoupipe.datasets.utils import (
+    blockwise_transfer,
+    get_all_source_signals,
+    get_uncorrelated_noise_source_recursively,
+    sample_shoebox_room,
+)
 
 
 class DatasetSynthetic(DatasetBase):
@@ -337,18 +342,6 @@ class DatasetSyntheticConfig(ConfigBase):
         Noise signal configuration object.
     mic_noise_source : ac.UncorrelatedNoiseSource
         Noise source configuration object.
-    micgeom_sampler : sp.MicGeomSampler
-        Sampler that applies positional noise to the microphone geometry.
-    location_sampler : sp.LocationSampler
-        Source location sampler that samples the locations of the sound sources.
-    rms_sampler : sp.ContainerSampler
-        Signal RMS sampler that samples the RMS values of the source signals.
-    nsources_sampler : sp.NumericAttributeSampler
-        Number of sources sampler.
-    mic_noise_sampler : sp.ContainerSampler
-        Microphone noise sampler that creates random uncorrelated noise at the microphones.
-    signal_length_sampler : sp.ContainerSampler
-        Signal length sampler that samples the length of the source signals. Only used if :attr:`random_signal_length` is :code:`True`.
     """
 
     # public traits
@@ -386,19 +379,6 @@ class DatasetSyntheticConfig(ConfigBase):
     mic_noise_source = Instance(ac.UncorrelatedNoiseSource, desc="noise source configuration")
     source_steer = Instance(ac.SteeringVector, desc="steering vector configuration")
 
-    # sampler traits
-    micgeom_sampler = Instance(sp.MicGeomSampler,
-            desc="microphone geometry positional noise sampler")
-    location_sampler = Instance(sp.LocationSampler, desc="source location sampler")
-    signal_seed_sampler = Instance(sp.ContainerSampler, desc="signal seed sampler")
-    rms_sampler = Instance(sp.ContainerSampler, desc="signal rms sampler")
-    nsources_sampler = Instance(sp.NumericAttributeSampler,
-                    desc="number of sources sampler")
-    mic_noise_sampler = Instance(sp.ContainerSampler,
-                    desc="microphone noise sampler")
-    signal_length_sampler = Instance(sp.ContainerSampler,
-                    desc="signal length sampler (only if random_signal_length=True)")
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.create_acoular_pipeline()
@@ -425,31 +405,22 @@ class DatasetSyntheticConfig(ConfigBase):
         self.fft_obs_spectra = self.create_fft_obs_spectra()
         self.beamformer = self.create_beamformer()
 
-    def create_sampler(self):
-        self.micgeom_sampler = self.create_micgeom_sampler()
-        self.location_sampler = self.create_location_sampler()
-        self.signal_seed_sampler = self.create_signal_seed_sampler()
-        self.rms_sampler = self.create_rms_sampler()
-        self.nsources_sampler = self.create_nsources_sampler()
-        self.mic_noise_sampler = self.create_mic_noise_sampler()
-        self.signal_length_sampler = self.create_signal_length_sampler()
-
     def get_sampler(self):
-        self.create_sampler()
+        location_sampler = self.create_location_sampler()
         sampler = {
-            2 : self.signal_seed_sampler,
-            3 : self.rms_sampler,
-            4 : self.location_sampler,
+            2 : self.create_signal_seed_sampler(),
+            3 : self.create_rms_sampler(),
+            4 : location_sampler,
             }
-
         if self.max_nsources != self.min_nsources:
-            sampler[0] = self.nsources_sampler
+            sampler[0] = self.create_nsources_sampler(
+                target=[location_sampler])
         if self.mic_pos_noise:
-            sampler[1] = self.micgeom_sampler
+            sampler[1] = self.create_micgeom_sampler()
         if self.mic_sig_noise:
-            sampler[5] = self.mic_noise_sampler
+            sampler[5] = self.create_mic_noise_sampler()
         if self.random_signal_length:
-            sampler[6] = self.signal_length_sampler
+            sampler[6] = self.create_signal_length_sampler()
         return sampler
 
     def create_env(self):
@@ -603,12 +574,12 @@ class DatasetSyntheticConfig(ConfigBase):
         return sp.ContainerSampler(
             random_func = sample_signal_seed)
 
-    def create_nsources_sampler(self):
+    def create_nsources_sampler(self, target):
         return sp.NumericAttributeSampler(
             random_var = poisson(mu=3, loc=1),
             attribute = "nsources",
             equal_value = True,
-            target=[self.location_sampler],
+            target=target,
             filter=lambda x: (x <= self.max_nsources) and (
                 x >= self.min_nsources))
 
@@ -960,28 +931,57 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
 
 
 
+
 class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
 
-    # def create_sampler(self):
-    #     self.location_sampler = self.create_location_sampler()
-    #     self.signal_seed_sampler = self.create_signal_seed_sampler()
-    #     self.rms_sampler = self.create_rms_sampler()
-    #     self.nsources_sampler = self.create_nsources_sampler()
-    #     self.mic_noise_sampler = self.create_mic_noise_sampler()
+    # important note for the doc string:
+    # rms value belongs to the source signal and not to the measured signal at the reference position
 
-    # def get_sampler(self):
-    #     self.create_sampler()
-    #     sampler = {
-    #         2 : self.signal_seed_sampler,
-    #         3 : self.rms_sampler,
-    #         4 : self.location_sampler,
-    #         }
+    def create_room_sampler(self):
+        aperture = self.mics.aperture
+        random_func = partial(sample_shoebox_room, aperture=aperture)
+        return sp.ContainerSampler(
+            random_func = random_func)
 
-    #     if self.max_nsources != self.min_nsources:
-    #         sampler[0] = self.nsources_sampler
-    #     if self.mic_sig_noise:
-    #         sampler[5] = self.mic_noise_sampler
-    #     return sampler
+    def create_relative_location_sampler(self):
+        """Create a sampler for the relative location of the sources in the room.
+
+        The sampler is a :class:`acoupipe.sampler.ContainerSampler` with a random function
+        that samples the relative location of the microphone array and the sources in the room.
+
+        Returns
+        -------
+        sp.ContainerSampler
+            The sampler for the relative location of the sources in the room.
+
+        """
+        def random_func(rng):
+            # Randomly sample the relative placement of the array and the sources inside the room
+            shift = np.array(
+                [rng.uniform(0.05,0.95), rng.uniform(0.05,0.95), rng.uniform(0.05,0.95)]
+            )
+            return shift
+        return sp.ContainerSampler(random_func = random_func)
+
+    def get_sampler(self):
+        location_sampler = self.create_location_sampler()
+        sampler = {
+            2 : self.create_signal_seed_sampler(),
+            3 : self.create_rms_sampler(),
+            4 : location_sampler,
+            7 : self.create_room_sampler(),
+            8 : self.create_relative_location_sampler(),
+            }
+        if self.max_nsources != self.min_nsources:
+            sampler[0] = self.create_nsources_sampler(
+                target=[location_sampler])
+        if self.mic_pos_noise:
+            sampler[1] = self.create_micgeom_sampler()
+        if self.mic_sig_noise:
+            sampler[5] = self.create_mic_noise_sampler()
+        if self.random_signal_length:
+            sampler[6] = self.create_signal_length_sampler()
+        return sampler
 
     def create_sources(self):
         sources = []
@@ -990,46 +990,98 @@ class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
                 ac.PointSourceConvolve(
                     signal=signal,
                     mics=self.noisy_mics,
-                    env=self.env,
-                    )
+                    env=self.env,)
             )
         return sources
 
     @staticmethod
-    def get_rir(fs, locs, mics):
-        # The desired reverberation time and dimensions of the room
-        fs = int(fs)
-        rt60 = 1.5  # seconds
-        room_dim = [7, 7, 3]  # meters
-        shift = np.array(room_dim)/2 # centering
+    def _get_rir_matrix(room, locs, mics, pad):
+        """Compute the RIRs for the given room, source and microphone locations.
 
-        # We invert Sabine's formula to obtain the parameters for the ISM simulator
-        e_absorption, max_order = pra.inverse_sabine(rt60, room_dim)
-        max_order = min(max_order, 10) # limit the maximum order to 3
-
-        # Create the room
-        room = pra.ShoeBox(
-            room_dim, fs=fs, materials=pra.Material(e_absorption), max_order=max_order,
-            sources = [pra.SoundSource(loc+shift) for loc in locs.T]
-            #use_rand_ism = False, max_rand_disp = 0.05
-        )
-        room.add_microphone_array(
-            pra.beamforming.MicrophoneArray(mics+shift[:,np.newaxis], fs)
-        )
-        room.compute_rir()
-        n = len(room.rir[0][0]) # length of the rir
-        rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
-        for j in range(locs.shape[1]):
-            for i in range(mics.shape[1]):
-                rir = np.array(room.rir[i][j])
-                ns = min(n, rir.shape[0])
-                rir_arr[j,i,:ns] = rir[:ns]
+        Parameters
+        ----------
+        room : pyroomacoustics.room.ShoeBox
+            The room object.
+        locs : np.ndarray
+            The source locations with shape (3, n_sources).
+        mics : np.ndarray
+            The microphone locations with shape (3, n_mics).
+        pad : bool
+            If True, pad the RIRs to the length of the longest RIR. If False, trim the RIRs to the 
+            length of the shortest RIR.
+        """
+        room.compute_rir() # room.rir is a list of lists of RIRs with different length
+        n = len(room.rir[0][0]) # length of the first rir
+        if not pad:
+            # trim all RIRs by the length of the shortest one
+            rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
+            for j in range(locs.shape[1]):
+                for i in range(mics.shape[1]):
+                    rir = np.array(room.rir[i][j])
+                    ns = min(n, rir.shape[0])
+                    rir_arr[j,i,:ns] = rir[:ns]
+            return rir_arr[:,:,:ns]
+        else:
+            for j in range(locs.shape[1]):
+                for i in range(mics.shape[1]):
+                    n = max(n, np.array(room.rir[i][j]).shape[0])
+            rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
+            for j in range(locs.shape[1]):
+                for i in range(mics.shape[1]):
+                    rir = np.array(room.rir[i][j])
+                    ns = rir.shape[0]
+                    rir_arr[j,i,:ns] = rir
         return rir_arr
 
     @staticmethod
-    def calc_analytic_prepare_func(sampler, beamformer):
+    def _get_loc_shift(locs, mics, walls, rloc):
+        pmax = np.max(np.concatenate([locs, mics], axis=1),axis=1)
+        pmin = np.min(np.concatenate([locs, mics], axis=1),axis=1)
+        rmax = np.array([w.corners.max(1) for w in walls]).max(0)
+        return rloc*(rmax - pmax - pmin)
 
-        mic_pos_noise_sampler = sampler.get(1)
+    @staticmethod
+    def _get_rir(sampler, beamformer):
+        micgeom_sampler = sampler.get(1)
+        room_sampler = sampler.get(7)
+        loc_sampler = sampler.get(4)
+        relative_location_sampler = sampler.get(8)
+        freq_data = beamformer.freq_data
+
+        # set up microphone array
+        if micgeom_sampler is not None:
+            noisy_mpos = micgeom_sampler.target.mpos
+        else:
+            noisy_mpos = beamformer.steer.mics.mpos # use the original mics (without noise)
+
+        # creating the room
+        room = room_sampler.target
+        room.fs = int(freq_data.sample_freq)
+
+        # oriantation of the microphone array and sources in the room
+        loc = loc_sampler.target
+        all_mics = np.concatenate([noisy_mpos, beamformer.steer.ref[:,np.newaxis]], axis=1)
+        shift = DatasetSyntheticReverbConfig._get_loc_shift(loc, all_mics, room.walls, relative_location_sampler.target)
+
+        # set the sources and microphones
+        room.sources = [pra.SoundSource(loc+shift) for loc in loc.T]
+        room.add_microphone_array(
+            pra.beamforming.MicrophoneArray(all_mics+shift[:,np.newaxis], freq_data.sample_freq)
+        )
+        # get the RIR
+        rir = DatasetSyntheticReverbConfig._get_rir_matrix(room, loc, all_mics, pad=True)
+
+        # trim the RIRs to the a power of 2 length
+        lpow2 = 2**int(np.ceil(np.log2(rir.shape[2])))
+        padded_rir = np.zeros((rir.shape[0], rir.shape[1], lpow2))
+        padded_rir[:,:,:rir.shape[2]] = rir
+        return padded_rir
+
+
+    @staticmethod
+    def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
+        # restore sampler and acoular objects
+        micgeom_sampler = sampler.get(1)
         seed_sampler = sampler.get(2)
         rms_sampler = sampler.get(3)
         loc_sampler = sampler.get(4)
@@ -1038,28 +1090,88 @@ class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
 
         freq_data = beamformer.freq_data
 
+        if micgeom_sampler is not None:
+            noisy_mics = micgeom_sampler.target
+        else:
+            noisy_mics = beamformer.steer.mics # use the original mics (without noise)
+
+        if signal_length_sampler is not None:
+            # adjust source signals, noise signal length
+            signals = get_all_source_signals(sources)
+            for signal in signals:
+                signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+        # sample parameters
+        loc = loc_sampler.target
+        nsources = loc.shape[1]
+        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
+        # apply parameters
+        mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if mic_noise:
+            mic_noise_signal = mic_noise[0].signal
+            if signal_length_sampler is not None:
+                mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+            if noise_sampler is not None:
+                noise_signal_ratio = noise_sampler.target # normalized noise variance
+                noise_prms_sq = prms_sq.sum()*noise_signal_ratio
+                mic_noise_signal.rms = np.sqrt(noise_prms_sq)
+                mic_noise_signal.seed = seed_sampler.target+1000
+                freq_data.source.source.mics = noisy_mics
+        subset_sources = sources[:nsources]
+        # creating the room
+        rir = DatasetSyntheticReverbConfig._get_rir(sampler, beamformer)
+        for i,src in enumerate(subset_sources):
+            #src.kernel = rir[i,:-1].T
+            # NOTE: this step leads to numerically unstable results
+            # it may be better to directly use the transfer function of the room
+            # without normalization. However, this requires fundamental changes with the
+            # label calculation
+            tf = blockwise_transfer(rir[i]).T
+            #tf /= tf[:,-1][:,np.newaxis] # reference mic based normalization
+            # ifft to get kernel
+            src.kernel = np.fft.irfft(tf[:,:-1],axis=0)
+            src.signal.seed = seed_sampler.target+i
+            src.signal.rms = np.sqrt(prms_sq[i])
+            src.loc = (loc[0,i],loc[1,i],loc[2,i] )
+        freq_data.source.sources = subset_sources # apply subset of sources
+        fft_spectra.source = freq_data.source # only for spectrogram feature
+        # update observation point
+        obs_sources = deepcopy(subset_sources)
+        kernel = np.zeros((freq_data.block_size, 1))
+        kernel[0] = 1
+        for i, src in enumerate(obs_sources):
+            src.mics = obs
+            #src.kernel = np.fft.irfft(tf[:,-1][:,np.newaxis],axis=0)
+            src.kernel = kernel
+            # src.kernel = rir[i,-1][np.newaxis].T
+        fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
+        return {}
+
+    @staticmethod
+    def calc_analytic_prepare_func(sampler, beamformer):
+        micgeom_sampler = sampler.get(1)
+        seed_sampler = sampler.get(2)
+        rms_sampler = sampler.get(3)
+        loc_sampler = sampler.get(4)
+        noise_sampler = sampler.get(5)
+        signal_length_sampler = sampler.get(6)
+
+        freq_data = beamformer.freq_data
+
+        if micgeom_sampler is not None:
+            noisy_mics = micgeom_sampler.target
+        else:
+            noisy_mics = beamformer.steer.mics # use the original mics (without noise)
+
         if signal_length_sampler is not None:
             freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
 
         nfft = freq_data.fftfreq().shape[0]
+        nummics = beamformer.steer.mics.num_mics
         # sample parameters
         loc = loc_sampler.target
         nsources = loc.shape[1]
-        nummics = beamformer.steer.mics.num_mics
-
-        # creating the room
-        mics = np.concatenate([mic_pos_noise_sampler.mpos_init, freq_data.steer.ref[:,np.newaxis]], axis=1)
-        rir = DatasetSyntheticReverbConfig.get_rir(
-            freq_data.sample_freq, loc, mics)
-
-        # finding the SRIR matching the location
-        transfer = np.empty((nfft, nummics,nsources), dtype=complex)
-        for i in range(nsources):
-            tf = blockwise_transfer(rir[i], freq_data.block_size).T
-            transfer[:,:,i] = tf[:,:-1] / tf[:,-1][:,np.newaxis] # reference mic based normalization
-        # adjust freq_data
-        freq_data.custom_transfer = transfer
         freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
+        freq_data.steer.mics = noisy_mics # set mic locations
         freq_data.seed=seed_sampler.target
         # change source strength
         prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
@@ -1074,54 +1186,17 @@ class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
             freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
         else:
             freq_data.noise = None
+        # calculate the transfer function
+        transfer = np.empty((nfft, nummics,nsources), dtype=complex)
+        rir = DatasetSyntheticReverbConfig._get_rir(sampler, beamformer)
+        for i in range(nsources):
+            tf = blockwise_transfer(rir[i], freq_data.block_size).T
+            #transfer[:,:,i] = tf[:,:-1] / tf[:,-1][:,np.newaxis] # reference mic based normalization
+            transfer[:,:,i] = tf[:,:-1]
+        freq_data.custom_transfer = transfer
         return {}
 
-    @staticmethod
-    def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
-        # restore sampler and acoular objects
-        mic_pos_noise_sampler = sampler.get(1)
-        seed_sampler = sampler.get(2)
-        rms_sampler = sampler.get(3)
-        loc_sampler = sampler.get(4)
-        noise_sampler = sampler.get(5)
-        freq_data = beamformer.freq_data
-        # sample parameters
-        loc = loc_sampler.target
-        np.concatenate([loc, beamformer.steer.ref[:,np.newaxis]], axis=1)
-        nsources = loc.shape[1]
 
-        # creating the room
-        rir = DatasetSyntheticReverbConfig.get_rir(
-            freq_data.sample_freq, loc, mic_pos_noise_sampler.mpos_init)
-
-        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
-        # apply parameters
-        mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
-        if mic_noise:
-            mic_noise_signal = mic_noise[0].signal
-            if noise_sampler is not None:
-                noise_signal_ratio = noise_sampler.target # normalized noise variance
-                noise_prms_sq = prms_sq.sum()*noise_signal_ratio
-                mic_noise_signal.rms = np.sqrt(noise_prms_sq)
-                mic_noise_signal.seed = seed_sampler.target+1000
-        subset_sources = sources[:nsources]
-        for i,src in enumerate(subset_sources):
-            kernel = rir[i].T
-            # normalize energy
-            kernel /=  np.sqrt(np.sum(kernel[:,-1]**2))
-            src.kernel = kernel
-            src.signal.seed = seed_sampler.target+i
-            src.signal.rms = np.sqrt(prms_sq[i])
-            src.loc = (loc[0,i],loc[1,i],loc[2,i] )
-        freq_data.source.sources = subset_sources # apply subset of sources
-        fft_spectra.source = freq_data.source # only for spectrogram feature
-        # update observation point
-        obs_sources = deepcopy(subset_sources)
-        for src in obs_sources:
-            src.mics = obs
-            src.kernel = src.kernel[:,-1][:,np.newaxis]
-        fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
-        return {}
 
 
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
@@ -1141,14 +1216,14 @@ class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
 class DatasetSyntheticReverb(DatasetSynthetic):
 
     def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
-                snap_to_grid=False, signal_length=5, fs=13720., min_nsources=1,
+                snap_to_grid=False, random_signal_length=False, signal_length=5, fs=13720., min_nsources=1,
                 max_nsources=10, tasks=1, logger=None, config=None):
         if config is None:
             config = DatasetSyntheticReverbConfig(
                 mode=mode, signal_length=signal_length, fs=fs,
                 min_nsources=min_nsources, max_nsources=max_nsources,
                 mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
-                snap_to_grid=snap_to_grid)
+                snap_to_grid=snap_to_grid, random_signal_length=random_signal_length)
         super().__init__(tasks=tasks, logger=logger, config=config)
 
 

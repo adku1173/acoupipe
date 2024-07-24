@@ -406,28 +406,20 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         self.fft_obs_spectra = self.create_fft_obs_spectra()
         self.beamformer = self.create_beamformer()
 
-    def create_sampler(self):
-        self.location_sampler = self.create_location_sampler()
-        self.signal_seed_sampler = self.create_signal_seed_sampler()
-        self.rms_sampler = self.create_rms_sampler()
-        self.nsources_sampler = self.create_nsources_sampler()
-        self.mic_noise_sampler = self.create_mic_noise_sampler()
-        self.signal_length_sampler = self.create_signal_length_sampler()
-
     def get_sampler(self):
-        self.create_sampler()
+        location_sampler = self.create_location_sampler()
         sampler = {
-            2 : self.signal_seed_sampler,
-            3 : self.rms_sampler,
-            4 : self.location_sampler,
+            2 : self.create_signal_seed_sampler(),
+            3 : self.create_rms_sampler(),
+            4 : location_sampler,
             }
-
         if self.max_nsources != self.min_nsources:
-            sampler[0] = self.nsources_sampler
+            sampler[0] = self.create_nsources_sampler(
+                target=[location_sampler])
         if self.mic_sig_noise:
-            sampler[5] = self.mic_noise_sampler
+            sampler[5] = self.create_mic_noise_sampler()
         if self.random_signal_length:
-            sampler[6] = self.signal_length_sampler
+            sampler[6] = self.create_signal_length_sampler()
         return sampler
 
     def create_mics(self):
@@ -501,7 +493,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 assert len(ir_idx) == 1
                 tf = blockwise_transfer(
                     file["data/impulse_response"][ir_idx[0][0]], freq_data.block_size).T
-                transfer[:,:,i] = tf / tf[:,ref_mic][:,np.newaxis] # reference mic based normalization
+                #transfer[:,:,i] = tf / tf[:,ref_mic][:,np.newaxis] # reference mic based normalization
+                transfer[:,:,i] = tf
             # adjust freq_data
             freq_data.custom_transfer = transfer
             freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
@@ -560,7 +553,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 assert len(ir_idx) == 1
                 tf = blockwise_transfer(
                     file["data/impulse_response"][ir_idx[0][0]]).T
-                tf /= tf[:,ref_mic][:,np.newaxis] # reference mic based normalization
+                #tf /= tf[:,ref_mic][:,np.newaxis] # reference mic based normalization
                 # ifft to get kernel
                 src.kernel = np.fft.irfft(tf,axis=0)
                 src.signal.seed = seed_sampler.target+i

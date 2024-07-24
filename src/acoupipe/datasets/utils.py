@@ -15,6 +15,7 @@ from datetime import datetime
 from os.path import join
 from warnings import warn
 
+import pyroomacoustics as pra
 from numpy import concatenate, imag, newaxis, real, searchsorted
 
 
@@ -55,8 +56,26 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     """Generate a random parametric EQ cascase.
 
     Method according to [Nercessian 2020](https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf).
-    This method is part of the `IIRNet project <https://github.com/csteinmetz1/IIRNet>`_.
-    License: Apache License 2.0
+    
+    This function is based on code from the IIRNet project,
+    which is licensed under the Apache License 2.0.
+    
+    Original source: https://github.com/csteinmetz1/IIRNet
+
+    Modifications made:
+    - Changes the function signature to match the acoupipe codebase.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 
     Returns
     -------
@@ -382,3 +401,150 @@ def log_execution_time(f):
         (self._idx,end-start))
         return result
     return wrap
+
+
+def get_absorption_coeff(rng, realistic_walls=True):
+    """
+    Draw random absorption coefficients for the walls of a room.
+
+    This function is based on code from the Dir_SrcMic_DOA project,
+    which is licensed under the GNU Affero General Public License v3.0.
+
+    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+
+    GNU Affero General Public License v3.0: 
+    https://www.gnu.org/licenses/agpl-3.0.en.html
+    """
+    if not realistic_walls:
+        abs_coeff_val = round(rng.uniform(0.02, 0.50), 2)
+        abs_coeff_wall = np.ones((6, 6)) * abs_coeff_val
+
+    # Realistic walls
+    # id reflective walls = 7
+    # absorbant wall = 8
+    else:
+        no_reflective_walls = rng.choice([0, 1, 2, 3, 4, 5, 6])
+        walls_profile = np.array([8 for i in range(6)])
+        id_reflective = rng.choice(
+            [0, 1, 2, 3, 4, 5], size=no_reflective_walls, replace=False
+        )
+        walls_profile[id_reflective] = 7
+
+        abs_coeff_wall = np.empty((6, 6))
+        for i, a in enumerate(walls_profile):
+            if a == 7:  # Reflective Profile
+                abs_coeff_val = round(rng.uniform(0.01, 0.12), 2)
+                abs_coeff_wall[i, :] = [abs_coeff_val] * 6
+            elif a == 8:
+                f_o_c = rng.choice([1, 2])  # Removed 0 wall profile.
+                if f_o_c == 0:
+                    abs_coeff_val = [
+                        round(rng.uniform(0.01, 0.50), 2),
+                        round(rng.uniform(0.01, 0.50), 2),
+                        round(rng.uniform(0.01, 0.30), 2),
+                        round(rng.uniform(0.01, 0.12), 2),
+                        round(rng.uniform(0.01, 0.12), 2),
+                        round(rng.uniform(0.01, 0.12), 2),
+                    ]
+                    abs_coeff_wall[i, :] = abs_coeff_val
+                elif f_o_c == 1:
+                    abs_coeff_val = [
+                        round(rng.uniform(0.01, 0.70), 2),
+                        round(rng.uniform(0.15, 1.00), 2),
+                        round(rng.uniform(0.40, 1.00), 2),
+                        round(rng.uniform(0.40, 1.00), 2),
+                        round(rng.uniform(0.40, 1.00), 2),
+                        round(rng.uniform(0.30, 1.00), 2),
+                    ]
+                    abs_coeff_wall[i, :] = abs_coeff_val
+    return abs_coeff_wall.tolist()
+
+
+def get_diffusion_coeff(rng):
+    """
+    Draw random diffusion coefficients for the walls of a room.
+
+    This function is based on code from the Dir_SrcMic_DOA project,
+    which is licensed under the GNU Affero General Public License v3.0.
+
+    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+
+    GNU Affero General Public License v3.0: 
+    https://www.gnu.org/licenses/agpl-3.0.en.html
+    """
+    # Diffusion Coeff Range: [0.2,1]
+    coeff = round(rng.uniform(0.2, 1), 2)
+    return [coeff for x in range(36)]
+
+def sample_shoebox_room(rng, aperture):
+    """ 
+    Sample a random shoebox room.
+
+    This function is based on code from the Dir_SrcMic_DOA project,
+    which is licensed under the GNU Affero General Public License v3.0.
+
+    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+
+    GNU Affero General Public License v3.0: 
+    https://www.gnu.org/licenses/agpl-3.0.en.html
+    """
+    room_dim = [
+        round(rng.uniform(3*aperture, 10*aperture), 1),
+        round(rng.uniform(3*aperture, 10*aperture), 1),
+        round(rng.uniform(2*aperture, 4.5*aperture), 1),
+    ]
+    absorbtion = get_absorption_coeff(rng)
+    diffusion = get_diffusion_coeff(rng)[0]
+
+    all_materials = {
+        "east": pra.Material(
+            energy_absorption={
+                "coeffs": absorbtion[0],
+                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+            },
+            scattering=diffusion,
+        ),
+        "west": pra.Material(
+            energy_absorption={
+                "coeffs": absorbtion[1],
+                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+            },
+            scattering=diffusion,
+        ),
+        "north": pra.Material(
+            energy_absorption={
+                "coeffs": absorbtion[2],
+                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+            },
+            scattering=diffusion,
+        ),
+        "south": pra.Material(
+            energy_absorption={
+                "coeffs": absorbtion[3],
+                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+            },
+            scattering=diffusion,
+        ),
+        "ceiling": pra.Material(
+            energy_absorption={
+                "coeffs": absorbtion[4],
+                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+            },
+            scattering=diffusion,
+        ),
+        "floor": pra.Material(
+            energy_absorption={
+                "coeffs": absorbtion[5],
+                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+            },
+            scattering=diffusion,
+        ),
+    }
+    return pra.ShoeBox(
+        room_dim,
+        max_order=20,
+        materials=all_materials,
+        air_absorption=True,
+        ray_tracing=False,
+        #min_phase=False,
+    )

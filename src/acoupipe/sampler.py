@@ -73,6 +73,7 @@ from traits.api import (
     Tuple,
     cached_property,
     observe,
+    on_trait_change,
 )
 
 
@@ -328,19 +329,24 @@ class ContainerSampler(BaseSampler):
     random_state = Either(RandomState, Generator,
         desc="random state consumed by the func callable")
 
+    @on_trait_change("random_func")
     def _validate(self):
         if self.random_func:
             sig = signature(self.random_func)
-            if len(sig.parameters) == 0 or len(sig.parameters) > 1:
+            nparams = 0
+            for param in sig.parameters.values():
+                if (param.kind == param.POSITIONAL_OR_KEYWORD):
+                    nparams += 1
+
+            if nparams == 0 or nparams > 1:
                 raise ValueError(
-                    "the random_func callable has to have a signature of "
-                    "'<Signature (RandomState)>'. Only a single argument "
-                    "is valid that takes a random number generator as the "
-                    "input.")
+                    f"the random_func callable {self.random_func} has to have a signature of "
+                    "'<Signature (RandomState)>'. Only a single argument positional or keyword argument"
+                    "is valid that takes a random number generator as the input."
+                    )
 
     def rvs(self):
         """Evokes the :attr:`random_func`."""
-        self._validate()
         return self.random_func(self.random_state)
 
     def sample(self):

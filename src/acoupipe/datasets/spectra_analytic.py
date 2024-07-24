@@ -111,6 +111,8 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     def _sample_wishart ( self, scale, rng ):
         df = int(self.num_blocks)
         dim = scale.shape[0]
+        if df <= dim:
+            raise ValueError(f"Degrees of freedom ({df}) must be greater than the dimension of the scale matrix ({dim})")
         n_tril = dim * (dim-1) // 2
         C = cholesky(scale, lower=True)
         covariances = rng.normal(size=n_tril) + 1j*rng.normal(size=n_tril)
