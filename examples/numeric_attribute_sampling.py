@@ -19,8 +19,8 @@ wn = WNoiseGenerator(sample_freq=51200,seed=10, rms=1.0, numsamples=51200)
 rayleigh_dist = scipy.stats.rayleigh(scale=5.)
 
 # create sampler object to sample rms value with rayleigh distribution
-rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist, 
-                                       target=[wn], 
+rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist,
+                                       target=[wn],
                                        attribute="rms")
 
 rms_values = []

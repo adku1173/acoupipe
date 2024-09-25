@@ -6,7 +6,9 @@ from functools import partial
 from traits.api import HasPrivateTraits, Instance, Int, Property
 
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.features import BaseFeatureCollectionBuilder
+from acoupipe.datasets.collection import BaseFeatureCollection, FeatureCollectionBuilder
+from acoupipe.datasets.features import Feature
+from acoupipe.datasets.setup import MsmSetupBase, SamplerSetupBase
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
@@ -16,9 +18,40 @@ if TF_FLAG:
 
     from acoupipe.writer import WriteTFRecord, complex_list_feature
 
-
 class ConfigBase(HasPrivateTraits):
-    """Configuration base class for generating microphone array datasets."""
+    """Configuration base class for generating AcouPipe datasets."""
+
+    msm_setup = Instance(MsmSetupBase, desc="simulation setup object")
+    sampler_setup = Instance(SamplerSetupBase, args=(), desc="sampler setup object")
+    _feature_builder = Instance(FeatureCollectionBuilder, args=(), desc="feature setup object")
+
+    def get_feature_collection(self, features, f=None, num=0):
+        """
+        Get the feature collection of the dataset.
+
+        Parameters
+        ----------
+        features : list
+            List of features included in the dataset.
+        f : float
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+        num : integer
+            Controls the width of the frequency bands considered; defaults to 0 (single frequency line).
+
+        Returns
+        -------
+        BaseFeatureCollection
+            BaseFeatureCollection object.
+        """
+        self._feature_builder.feature_collection = BaseFeatureCollection()
+        self._feature_builder.add_idx()
+        self._feature_builder.add_seeds(self.sampler_setup.numsampler)
+        for feature in features:
+            if isinstance(feature, Feature):
+                self._feature_builder.add_feature(feature)
+            else:
+                raise ValueError(f"Feature {feature} is not a valid feature object.")
+        return self._feature_builder.feature_collection
 
     def get_sampler(self):
         """Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
@@ -38,8 +71,7 @@ class ConfigBase(HasPrivateTraits):
         dict
             dictionary containing the sampler objects
         """
-        sampler = {}
-        return sampler
+        return self.sampler_setup.get_sampler()
 
 
 class DatasetBase(HasPrivateTraits):
@@ -66,6 +98,7 @@ class DatasetBase(HasPrivateTraits):
     def __init__(self,config=None, tasks=1, logger=None):
         HasPrivateTraits.__init__(self)
         self.tasks = tasks
+        # If no config is provided, use the default ConfigBase settings
         if config is None:
             config = ConfigBase()
         self.config = config
@@ -105,7 +138,8 @@ class DatasetBase(HasPrivateTraits):
         else:
             return BasePipeline()
 
-    def _generate(self, pipeline, progress_bar, start_idx):
+    @staticmethod
+    def _generate(pipeline, progress_bar, start_idx):
         """Generate dataset samples.
 
         Parameters
@@ -126,17 +160,6 @@ class DatasetBase(HasPrivateTraits):
             progress_bar=progress_bar, start_idx=start_idx):
             yield data
 
-    def get_feature_collection(self, features, f, num):
-        """
-        Get the feature collection of the dataset.
-
-        Returns
-        -------
-        BaseFeatureCollection
-            BaseFeatureCollection object.
-        """
-        builder = BaseFeatureCollectionBuilder(features=features, f=f,num=num)
-        return builder.build()
 
     def generate(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
@@ -191,7 +214,7 @@ class DatasetBase(HasPrivateTraits):
         """
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        pipeline.features = self.config.get_feature_collection(features, f, num).get_feature_funcs()
         set_pipeline_seeds(pipeline, start_idx, size, split)
         for data in pipeline.get_data(
             progress_bar=progress_bar, start_idx=start_idx):
@@ -249,7 +272,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        pipeline.features = self.config.get_feature_collection(features, f, num).get_feature_funcs()
         set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteH5Dataset(name=name,
                        source=pipeline,
@@ -314,47 +337,12 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
+        feature_collection = self.config.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
         set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteTFRecord(name=name, source=pipeline,
                       encoder_funcs=feature_collection.feature_tf_encoder_mapper).save(progress_bar, start_idx)
     DatasetBase.save_tfrecord = save_tfrecord
-
-    def get_output_signature(self, features, f=None, num=0):
-        """Get the output signature of the dataset.
-
-        Parameters
-        ----------
-        features : list
-            List of features included in the dataset. The features "seeds" and "idx" are always included.
-        f : float
-            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
-
-        Returns
-        -------
-        dict
-            Output signature of the dataset.
-        """
-        signature = {}
-        feature_collection = self.get_feature_collection(features, f, num)
-        for feature in features:
-            signature[feature] = tf.TensorSpec(
-                feature_collection.feature_tf_shape_mapper[feature],feature_collection.feature_tf_dtype_mapper[feature])
-        return signature
-    DatasetBase.get_output_signature = get_output_signature
 
 
     def get_tf_dataset(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=False):
@@ -396,16 +384,13 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
+        feature_collection = self.config.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
         set_pipeline_seeds(pipeline, start_idx, size, split)
-        features = features + ["idx", "seeds"]
-        output_signature = self.get_output_signature(features, f=f, num=num)
+        output_signature = feature_collection.get_output_signature(features + ["idx", "seeds"])
         return tf.data.Dataset.from_generator(
             partial(
-                self._generate,
-                pipeline=pipeline,
-                start_idx=start_idx, progress_bar=progress_bar),
+                DatasetBase._generate, pipeline=pipeline, start_idx=start_idx, progress_bar=progress_bar),
                 output_signature=output_signature)
     DatasetBase.get_tf_dataset = get_tf_dataset
 
@@ -458,7 +443,7 @@ if TF_FLAG:
         >>> data = next(dataset)
 
         """
-        feature_collection = self.get_feature_collection(features, f, num)
+        feature_collection = self.config.get_feature_collection(features, f, num)
         features = features + ["idx", "seeds"]
         feature_description = {}
         shapes = feature_collection.feature_tf_shape_mapper

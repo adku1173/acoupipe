@@ -23,8 +23,8 @@ class TestWriteAndLoad(unittest.TestCase):
         self.assertEqual(ds.numsamples,5)
         self.assertEqual(ds.basename,"test_data")
         self.assertEqual(ds.h5f["1"]["data"][()],True)
-        
-        
 
 
-    
+
+
+

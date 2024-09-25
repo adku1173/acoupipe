@@ -25,7 +25,7 @@ from os import path
 import numpy as np
 from acoular import config
 from h5py import File as H5File
-from traits.api import Bool, Dict, File, Function, Instance, List, Str, Trait
+from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
 
 from acoupipe.config import TF_FLAG
 from acoupipe.pipeline import DataGenerator
@@ -202,7 +202,7 @@ if TF_FLAG:
         #: Dictionary with encoding functions (dict values) to convert data yielded by the pipeline to binary .tfrecord format.
         #: The key values of this dictionary are the feature names specified in the :attr:`features` attribute
         #: of the :attr:`source` object.
-        encoder_funcs = Dict(key_trait=Str(), value_trait=Function(),
+        encoder_funcs = Dict(key_trait=Str(), value_trait=Callable(),
             desc="encoding functions to convert data yielded by the pipeline to binary format of .tfrecord file.")
 
         #: if True, writes an additional .txt file containing the names, types and shapes of the features stored in the

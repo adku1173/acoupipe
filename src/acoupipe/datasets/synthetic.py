@@ -19,37 +19,29 @@ from functools import partial
 
 import acoular as ac
 import numpy as np
-import pyroomacoustics as pra
 from scipy.stats import norm, poisson
-from traits.api import Bool, Dict, Either, Enum, Float, Instance, Int, List, observe
+from traits.api import DelegatesTo, Instance
 
 import acoupipe.sampler as sp
-from acoupipe.config import TF_FLAG
 from acoupipe.datasets.base import ConfigBase, DatasetBase
+from acoupipe.datasets.collection import FeatureCollectionBuilder
 from acoupipe.datasets.features import (
-    AnalyticNoiseStrengthFeature,
-    AnalyticSourceStrengthFeature,
-    BaseFeatureCollection,
-    BaseFeatureCollectionBuilder,
+    CSMDiagonalAnalytic,
+    CSMDiagonalWelch,
     CSMFeature,
     CSMtriuFeature,
     EigmodeFeature,
-    EstimatedNoiseStrengthFeature,
-    EstimatedSourceStrengthFeature,
-    LocFeature,
+    Feature,
+    FloatFeature,
+    IntFeature,
     SourcemapFeature,
     SpectrogramFeature,
     TargetmapFeature,
     TimeDataFeature,
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
-from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.utils import (
-    blockwise_transfer,
-    get_all_source_signals,
-    get_uncorrelated_noise_source_recursively,
-    sample_shoebox_room,
-)
+from acoupipe.datasets.setup import SyntheticSamplerSetup, SyntheticSetup, SyntheticSetupAnalytic, SyntheticSetupWelch
+from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic, TransferMonopole
 
 
 class DatasetSynthetic(DatasetBase):
@@ -130,52 +122,424 @@ class DatasetSynthetic(DatasetBase):
     **Initialization Parameters**
     """
 
-    def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
-                snap_to_grid=False, random_signal_length=False, signal_length=5, fs=13720., min_nsources=1,
-                max_nsources=10, tasks=1, logger=None, config=None):
+    def __init__(self, config=None, tasks=1, logger=None, **kwargs):
         """Initialize the DatasetSynthetic object.
 
-        The input parameters are passed to the DatasetSyntheticConfig object, which creates
+        Most of the input parameters are passed to the DatasetSyntheticConfig object, which creates
         all necessary objects for the simulation of microphone array data.
 
         Parameters
         ----------
-        mode : str
-            Type of calculation method. Can be either :code:`welch`, :code:`analytic` or :code:`wishart`.
-            Defaults to :code:`welch`.
-        mic_pos_noise : bool
-            Apply positional noise to microphone geometry. Defaults to True.
-        mic_sig_noise : bool
-            Apply additional uncorrelated white noise to microphone signals. Defaults to True.
-        snap_to_grid : bool
-            Snap source locations to grid. The grid is defined in the config object as
-            config.grid. Defaults to False.
-        random_signal_length : bool
-            Randomize signal length. Defaults to False. If True, the signal length is
-            uniformly sampled from the interval [1s,10s].
-        signal_length : float
-            Length of the signal in seconds. Defaults to 5 seconds.
-        fs : float
-            Sampling frequency in Hz. Defaults to 13720 Hz.
-        min_nsources : int
-            Minimum number of sources in the dataset. Defaults to 1.
-        max_nsources : int
-            Maximum number of sources in the dataset. Defaults to 10.
+        config : DatasetSyntheticConfig
+            Configuration object. Defaults to None. If None, a default configuration
+            object is created and the input parameters / kwargs are passed to it.
         tasks : int
             Number of parallel tasks. Defaults to 1.
         logger : logging.Logger
             Logger object. Defaults to None.
-        config : DatasetSyntheticConfig
-            Configuration object. Defaults to None. If None, a default configuration
-            object is created.
+        **kwargs
+            Additional keyword arguments passed to the DatasetSyntheticConfig object.
+            * mode : str (default: 'welch')
+                Type of CSM calculation method.
+            * signal_length : float (default: 5)
+                Length of the source signals in seconds.
+            * fs : float (default: 13720)
+                Sampling frequency in Hz.
+            * min_nsources : int (default: 1)
+                Minimum number of sources.
+            * max_nsources : int (default: 10)
+                Maximum number of sources.
+            * mic_pos_noise : bool (default: True)
+                Apply positional noise to microphone geometry.
+            * mic_sig_noise : bool (default: True)
+                Apply signal noise to microphone signals.
+            * snap_to_grid : bool (default: False)
+                Snap source locations to grid.
+            * random_signal_length : bool (default: False)
+                Randomize signal length.
+            * fft_params
+                FFT parameters with default items :code:`block_size=128`,
+                :code:`overlap="50%"`, :code:`window="Hanning"` and :code:`precision="complex64"`.
+            * env : ac.Environment
+                Instance of acoular.Environment defining the environmental coditions,
+                i.e. the speed of sound.
+            * mics : ac.MicGeom
+                Instance of acoular.MicGeom defining the microphone array geometry. 
+            * grid : ac.RectGrid
+                Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
+            ... and all other parameters of the DatasetSyntheticConfig object.
         """
         if config is None:
-            config = DatasetSyntheticConfig(
-                mode=mode, signal_length=signal_length, fs=fs,
-                min_nsources=min_nsources, max_nsources=max_nsources,
-                mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
-                snap_to_grid=snap_to_grid, random_signal_length=random_signal_length)
+            if kwargs.get("mode") in ["analytic", "wishart"]:
+                config = DatasetSyntheticConfigAnalytic(**kwargs)
+            else:
+                config = DatasetSyntheticConfigWelch(**kwargs)
         super().__init__(config=config, tasks=tasks, logger=logger)
+
+
+
+class DatasetSyntheticConfig(ConfigBase):
+
+    msm_setup = Instance(SyntheticSetup, desc="SyntheticSetupAnalytic object.")
+    sampler_setup = Instance(SyntheticSamplerSetup, desc="SyntheticSamplerSetup object.")
+
+    def __init__(self, msm_setup=None, sampler_setup=None, **kwargs):
+
+        if msm_setup is None: #set the default
+            msm_setup = self._get_default_msm_setup(**kwargs)
+        msm_setup.build()
+
+        # build sampler setup
+        if sampler_setup is None:
+            sampler_setup = self.get_default_sampler_setup(msm_setup, **kwargs)
+
+        # handle unrecognized kwargs
+        all_keys = list(set(
+            sampler_setup.__class__.class_traits().keys()) | set(
+            msm_setup.__class__.class_traits().keys()))
+        unrecognized_keys = set(kwargs.keys()) - set(all_keys)
+        if unrecognized_keys:
+            msg = f"Unrecognized keyword arguments: {unrecognized_keys} in {self.__class__.__name__}"
+            raise ValueError(msg)
+        super().__init__(msm_setup=msm_setup, sampler_setup=sampler_setup)
+
+    def get_default_mic_sampler(self, msm_setup, **kwargs):
+        if kwargs.get("mic_pos_sampler") is None:
+            kwargs["mic_pos_sampler"] = sp.MicGeomSampler(
+                    random_var = norm(loc=0, scale=0.001),
+                    ddir = np.array([[1.0], [1.0], [0]]),
+                    target = deepcopy(msm_setup.mics),
+                    mpos_init = msm_setup.mics.mpos_tot,
+                )
+        return kwargs
+
+    def get_default_loc_sampler(self, msm_setup, **kwargs):
+        if kwargs.get("loc_sampler") is None:
+            ap = msm_setup.mics.aperture
+            kwargs["loc_sampler"] = sp.LocationSampler(
+                random_var = (norm(0,0.1688*ap),norm(0,0.1688*ap),norm(0.5*ap,0)),
+                x_bounds = (-0.5*ap,0.5*ap),
+                y_bounds = (-0.5*ap,0.5*ap),
+                z_bounds = (0.5*ap,0.5*ap),
+                )
+        return kwargs
+
+    def get_default_nsources_sampler(self, msm_setup, **kwargs):
+        if kwargs.get("nsources_sampler") is None:
+            kwargs["nsources_sampler"] = sp.NumericAttributeSampler(
+                random_var = poisson(mu=3, loc=1),
+                attribute = "nsources",
+                equal_value = True,
+                target = [kwargs["loc_sampler"]],
+                )
+        return kwargs
+
+    def get_default_strength_sampler(self, msm_setup, **kwargs):
+        if kwargs.get("strength_sampler") is None:
+            kwargs["strength_sampler"] = sp.ContainerSampler(
+                random_func = lambda rng: np.sqrt(rng.rayleigh(5,kwargs["max_nsources"]))
+            )
+        return kwargs
+
+    def get_default_mic_sig_noise_sampler(self, msm_setup, **kwargs):
+        if kwargs.get("mic_sig_noise_sampler") is None:
+            kwargs["mic_sig_noise_sampler"] = sp.ContainerSampler(
+                random_func = lambda rng: rng.uniform(10e-6,0.1)
+            )
+        return kwargs
+
+    def get_default_signal_length_sampler(self, msm_setup, **kwargs):
+        if kwargs.get("signal_length_sampler") is None:
+            kwargs["signal_length_sampler"] = sp.ContainerSampler(
+                random_func = lambda rng: rng.uniform(1, 10), # between 1 and 10 seconds
+            )
+        return kwargs
+
+    def get_default_seed_sampler(self, msm_setup, **kwargs):
+        if kwargs.get("seed_sampler") is None:
+            kwargs["seed_sampler"] = sp.ContainerSampler(
+                random_func = lambda rng: int(rng.uniform(1,1e9))
+            )
+        return kwargs
+
+    def get_default_mics(self, **kwargs):
+        if kwargs.get("mics") is None:
+            kwargs["mics"] = ac.MicGeom(mpos_tot=tub_vogel64_ap1)
+        return kwargs
+
+    def get_default_env(self, **kwargs):
+        if kwargs.get("env") is None:
+            kwargs["env"] = ac.Environment()
+        return kwargs
+
+    def get_default_grid(self, **kwargs):
+        if kwargs.get("grid") is None:
+            ap = kwargs["mics"].aperture
+            kwargs["grid"] = ac.RectGrid(
+                y_min=-0.5*ap, y_max=0.5*ap, x_min=-0.5*ap, x_max=0.5*ap, z=0.5*ap, increment=1/63*ap)
+        return kwargs
+
+    def get_default_steer(self, **kwargs):
+        if kwargs.get("steer") is None:
+            steer = ac.SteeringVector(ref=tub_vogel64_ap1[:,63])
+            kwargs.update({"steer": steer})
+        return kwargs
+
+    def get_default_beamformer(self, **kwargs):
+        if kwargs.get("beamformer") is None:
+            kwargs["beamformer"] = ac.BeamformerBase(
+                precision="float32", cached=False, r_diag=False, steer=kwargs["steer"])
+        return kwargs
+
+    def get_default_sampler_setup(self, msm_setup, **kwargs):
+        kwargs["max_nsources"] = kwargs.get("max_nsources", 10)
+        kwargs["min_nsources"] = kwargs.get("min_nsources", 1)
+        kwargs = self.get_default_mic_sampler(msm_setup, **kwargs)
+        kwargs = self.get_default_loc_sampler(msm_setup, **kwargs)
+        kwargs = self.get_default_nsources_sampler(msm_setup, **kwargs)
+        kwargs = self.get_default_strength_sampler(msm_setup, **kwargs)
+        kwargs = self.get_default_mic_sig_noise_sampler(msm_setup, **kwargs)
+        kwargs = self.get_default_signal_length_sampler(msm_setup, **kwargs)
+        kwargs = self.get_default_seed_sampler(msm_setup, **kwargs)
+
+        setup_class_attr = SyntheticSamplerSetup.class_traits().keys()
+        sampler_setup = SyntheticSamplerSetup(msm_setup=msm_setup,
+            **{key: kwargs.pop(key) for key in setup_class_attr if key in kwargs}
+        )
+        return sampler_setup
+
+    def _get_time_data_feature(self):
+        return TimeDataFeature(
+            time_data=self.msm_setup.time_data,
+            shape=(None, self.msm_setup.mics.num_mics)
+        )
+
+    def _get_spectrogram_feature(self, f, num):
+        _fft_spectra = ac.FFTSpectra(
+            window = self.msm_setup.freq_data.window,
+            block_size = self.msm_setup.freq_data.block_size,
+            overlap = self.msm_setup.freq_data.overlap,
+            source = self.msm_setup.time_data
+        )
+        return SpectrogramFeature(
+            freq_data=_fft_spectra, f=f, num=num,
+            shape=(None, self._get_fdim(f), self.msm_setup.mics.num_mics)
+        )
+
+    def _get_csm_feature(self, f, num):
+        return CSMFeature(
+            freq_data = self.msm_setup.freq_data, f=f, num=num,
+            shape = (self._get_fdim(f), self.msm_setup.mics.num_mics, self.msm_setup.mics.num_mics)
+        )
+
+    def _get_csmtriu_feature(self, f, num):
+        return CSMtriuFeature(
+            freq_data = self.msm_setup.freq_data, f=f, num=num,
+            shape = (self._get_fdim(f), self.msm_setup.mics.num_mics, self.msm_setup.mics.num_mics)
+        )
+
+    def _get_eigmode_feature(self, f, num):
+        return EigmodeFeature(
+            freq_data = self.msm_setup.freq_data, f=f, num=num,
+            shape = (self._get_fdim(f), self.msm_setup.mics.num_mics, self.msm_setup.mics.num_mics)
+        )
+
+    def _get_sourcemap_feature(self, f, num):
+        return SourcemapFeature(
+            beamformer = self.msm_setup.beamformer, f=f, num=num,
+            shape = (self._get_fdim(f),) + self.msm_setup.grid.shape
+        )
+
+    def _get_source_strength_analytic_feature(self, f, num):
+        return CSMDiagonalWelch(name="source_strength_analytic",
+                    transfer=TransferMonopole(env=self.msm_setup.env, ref=self.msm_setup.ref),
+                    freq_data=self.msm_setup._fft_ref_spectra, shape=(self._get_fdim(f), None),
+                    mode="analytic", csm_type="source", f=f, num=num)
+
+    def _get_source_strength_estimated_feature(self, f, num):
+        return CSMDiagonalWelch(name="source_strength_estimated",
+                    freq_data=self.msm_setup._fft_ref_spectra, shape=(self._get_fdim(f), None),
+                    mode="welch", csm_type="source", f=f, num=num)
+
+    def _get_noise_strength_analytic_feature(self, f, num):
+        return CSMDiagonalWelch(name="noise_strength_analytic",
+                    freq_data=self.msm_setup.freq_data, shape=(self._get_fdim(f), self.msm_setup.mics.num_mics),
+                    mode="analytic", csm_type="noise", f=f, num=num)
+
+    def _get_noise_strength_estimated_feature(self, f, num):
+        return CSMDiagonalWelch(name="noise_strength_estimated",
+                    freq_data=self.msm_setup.freq_data, shape=(self._get_fdim(f), self.msm_setup.mics.num_mics),
+                    mode="welch", csm_type="noise", f=f, num=num)
+
+    def _get_loc_feature(self):
+        loc_feature = FloatFeature(name="loc", shape=(3, None))
+        loc_feature.feature_func = lambda sampler, dtype, name: {
+            name: sampler[4].target.astype(dtype)}
+        return loc_feature
+
+    def _get_targetmap_analytic_feature(self, loc_callable, strength_callable, f, num):
+        return TargetmapFeature(
+            name = "targetmap_analytic",
+            shape = (self._get_fdim(f),) + self.msm_setup.grid.shape,
+            grid = self.msm_setup.grid,
+            loc_callable = loc_callable,
+            strength_callable = strength_callable
+        )
+
+    def _get_targetmap_estimated_feature(self, loc_callable, strength_callable, f, num):
+        return TargetmapFeature(
+            name = "targetmap_estimated",
+            shape = (self._get_fdim(f),) + self.msm_setup.grid.shape,
+            grid = self.msm_setup.grid,
+            loc_callable = loc_callable,
+            strength_callable = strength_callable
+        )
+
+    def _get_f_feature(self, f, num):
+        f_array = f_as_array(f, num, self.msm_setup.freq_data.fftfreq())
+        feat = FloatFeature(name="f", shape=f_array.shape)
+        feat.feature_func = lambda sampler, dtype, name: {name: f_array.astype(dtype)}
+        return feat
+
+    def _get_num_feature(self, num):
+        feat = IntFeature(name="num", shape=(1,))
+        feat.feature_func = lambda sampler, dtype, name: {name: np.array([num], dtype=dtype)}
+        return feat
+
+    def _get_fdim(self, f):
+        if f is None:
+            return self.msm_setup.freq_data.fftfreq().shape[0]
+        elif isinstance(f, list):
+            return len(f)
+        else:
+            return 1
+
+
+class DatasetSyntheticConfigAnalytic(DatasetSyntheticConfig):
+    """
+    Default Configuration class for synthetic data simulation.
+
+    Attributes
+    ----------
+    msm_setup : SyntheticSetupAnalytic
+        SyntheticSetupAnalytic object.
+    sampler_setup : SyntheticSamplerSetup
+        SyntheticSamplerSetup object.
+    """
+
+    msm_setup = Instance(SyntheticSetupAnalytic, args=(), desc="SyntheticSetupAnalytic object.")
+
+    def _get_default_msm_setup(self, **kwargs):
+        kwargs["signal_length"] = kwargs.get("signal_length", 5.0)
+        kwargs["source_grid"] = kwargs.get("source_grid", None)
+        kwargs = self.get_default_mics(**kwargs)
+        kwargs = self.get_default_env(**kwargs)
+        kwargs = self.get_default_grid(**kwargs)
+        kwargs = self.get_default_steer(**kwargs)
+        kwargs = self.get_default_beamformer(**kwargs)
+        kwargs = self.get_default_freq_data(**kwargs)
+
+        setup_class_attr = SyntheticSetupAnalytic.class_traits().keys()
+        msm_setup = SyntheticSetupAnalytic(
+            **{key: kwargs.pop(key) for key in setup_class_attr if key in kwargs}
+        )
+        return msm_setup
+
+    def get_default_freq_data(self, **kwargs):
+        if kwargs.get("freq_data") is None:
+            fs = kwargs.get("fs", 13720)
+            signal_length = kwargs.get("signal_length", 5.0)
+            transfer = TransferMonopole(
+                env = kwargs["env"], ref = kwargs["beamformer"].steer.ref, mics=kwargs["mics"])
+            kwargs["freq_data"] = PowerSpectraAnalytic(transfer = transfer,
+                precision="complex64", sample_freq=13720, block_size=128, overlap="50%", mode=kwargs["mode"],
+                numsamples=int(fs*signal_length))
+        return kwargs
+
+    def _apply_new_mic_pos(self,sampler, msm_setup):
+        mic_sampler = sampler.get(1)
+        if mic_sampler is not None:
+            msm_setup.freq_data.transfer.mics = mic_sampler.target
+        else:
+            msm_setup.freq_data.transfer.mics = msm_setup.mics
+
+    def _apply_new_seeds(self,sampler, msm_setup):
+        seed_sampler = sampler.get(2)
+        if seed_sampler is not None:
+            msm_setup.freq_data.seed = seed_sampler.target
+
+    def _apply_new_loc(self,sampler, msm_setup):
+        loc = sampler[4].target
+        msm_setup.freq_data.transfer.grid = ac.ImportGrid(gpos_file=loc)
+
+    def _apply_new_signal_length(self,sampler, msm_setup):
+        signal_length_sampler = sampler.get(6)
+        if signal_length_sampler is not None:
+            msm_setup.freq_data.numsamples = signal_length_sampler.target*msm_setup.freq_data.sample_freq
+
+    def _apply_new_source_strength(self,sampler, msm_setup):
+        nfft = msm_setup.freq_data.fftfreq().shape[0]
+        nsources = sampler[4].nsources
+        prms_sq_per_freq = sampler[3].target[:nsources]**2 / nfft
+        msm_setup.freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
+
+    def _apply_new_mic_sig_noise(self,sampler, msm_setup):
+        noise_sampler = sampler.get(5)
+        if noise_sampler is not None:
+            nfft = msm_setup.freq_data.fftfreq().shape[0]
+            nsources = sampler[4].nsources
+            prms_sq = sampler[3].target[:nsources]**2
+            noise_signal_ratio = noise_sampler.target # normalized noise variance
+            noise_prms_sq = prms_sq.sum()*noise_signal_ratio
+            noise_prms_sq_per_freq = noise_prms_sq / nfft
+            nperf = np.diag(np.array([noise_prms_sq_per_freq]*msm_setup.beamformer.steer.mics.num_mics))
+            msm_setup.freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
+        else:
+            msm_setup.freq_data.noise = None
+
+    def get_prepare_func(self):
+        def prepare(sampler, msm_setup):
+            if self.sampler_setup.mic_pos_noise:
+                self._apply_new_mic_pos(sampler, msm_setup)
+            self._apply_new_loc(sampler, msm_setup)
+            self._apply_new_seeds(sampler, msm_setup)
+            if self.sampler_setup.random_signal_length:
+                self._apply_new_signal_length(sampler, msm_setup)
+            self._apply_new_source_strength(sampler, msm_setup)
+            if self.sampler_setup.mic_sig_noise:
+                self._apply_new_mic_sig_noise(sampler, msm_setup)
+            return {}
+        return partial(prepare, msm_setup=self.msm_setup)
+
+    def _get_source_strength_analytic_feature(self, f, num):
+        return CSMDiagonalAnalytic(name="source_strength_analytic",
+                    freq_data = self.msm_setup.freq_data,
+                    shape=(self._get_fdim(f), None),
+                    mode="analytic", csm_type="source", f=f, num=num)
+
+    def _get_source_strength_estimated_feature(self, f, num):
+        return CSMDiagonalAnalytic(name="source_strength_estimated",
+                    freq_data = self.msm_setup.freq_data,
+                    shape=(self._get_fdim(f), None),
+                    mode="wishart", csm_type="source", f=f, num=num)
+
+    def _get_noise_strength_estimated_feature(self, f, num):
+        return CSMDiagonalAnalytic(name="noise_strength_estimated",
+                    freq_data = self.msm_setup.freq_data,
+                    shape=(self._get_fdim(f), self.msm_setup.mics.num_mics),
+                    mode="wishart", csm_type="noise", f=f, num=num)
+
+    def _get_noise_strength_analytic_feature(self, f, num):
+        return CSMDiagonalAnalytic(name="noise_strength_analytic",
+                    freq_data = self.msm_setup.freq_data,
+                    shape=(self._get_fdim(f), self.msm_setup.mics.num_mics),
+                    mode="analytic", csm_type="noise", f=f, num=num)
+
+    def _get_time_data_feature(self, **kwargs):
+        raise ValueError("time_data feature is not possible with modes ['analytic', 'wishart'].")
+
+    def _get_spectrogram_feature(self, **kwargs):
+        raise ValueError("spectrogram feature is not possible with modes ['analytic', 'wishart'].")
 
     def get_feature_collection(self, features, f, num):
         """
@@ -186,1045 +550,620 @@ class DatasetSynthetic(DatasetBase):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        if f is None:
-            fdim = self.config.freq_data.fftfreq().shape[0]
-        elif isinstance(f, list):
-            fdim = len(f)
-        else:
-            fdim = 1
+        # create a source steer object for the source strength calculation
+        self.msm_setup.build()
 
-        if self.config.random_signal_length:
-            tdim = None
-        else:
-            tdim = int(self.config.signal_length*self.config.fs)
-
-        builder = DatasetSyntheticFeatureCollectionBuilder(
-            feature_collection = BaseFeatureCollection(),
-            mdim = self.config.mics.num_mics,
-            tdim = tdim,
-            fdim = fdim,
-        )
+        builder = FeatureCollectionBuilder()
         # add prepare function
-        builder.add_custom(self.config.get_prepare_func())
-        builder.add_seeds(len(self.config.get_sampler()))
+        builder.add_custom(self.get_prepare_func())
+        builder.add_seeds(self.sampler_setup.numsampler)
         builder.add_idx()
         # add feature functions
+        loc_feature = self._get_loc_feature()
+        source_strength_analytic_feature = self._get_source_strength_analytic_feature(f, num)
+        source_strength_estimated_feature = self._get_source_strength_estimated_feature(f, num)
+
         if "time_data" in features:
-            if self.config.mode == "welch":
-                builder.add_time_data(self.config.freq_data.source)
-            else:
-                raise ValueError("time_data feature is not possible with modes ['analytic', 'wishart'].")
+            builder.add_feature(self._get_time_data_feature())
         if "spectrogram" in features:
-            if self.config.mode == "welch":
-                builder.add_spectrogram(self.config.fft_spectra, f, num)
-            else:
-                raise ValueError("spectrogram feature is not possible with modes ['analytic', 'wishart'].")
+            builder.add_feature(self._get_spectrogram_feature(f, num))
         if "csm" in features:
-            builder.add_csm(self.config.freq_data, f, num)
+            builder.add_feature(self._get_csm_feature(f, num))
         if "csmtriu" in features:
-            builder.add_csmtriu(self.config.freq_data, f, num)
+            builder.add_feature(self._get_csmtriu_feature(f, num))
         if "eigmode" in features:
-            builder.add_eigmode(self.config.freq_data, f, num)
+            builder.add_feature(self._get_eigmode_feature(f, num))
         if "sourcemap" in features:
-            builder.add_sourcemap(self.config.beamformer, f, num)
-        if "loc" in features:
-            builder.add_loc(self.config.freq_data)
+            builder.add_feature(self._get_sourcemap_feature(f, num))
         if "source_strength_analytic" in features:
-            builder.add_source_strength_analytic(
-                self.config.freq_data, f, num, steer=self.config.source_steer)
+            builder.add_feature(source_strength_analytic_feature)
         if "source_strength_estimated" in features:
-            if self.config.mode == "welch":
-                freq_data = self.config.fft_obs_spectra
-            else:
-                freq_data = self.config.freq_data
-            builder.add_source_strength_estimated(freq_data, f, num)
+            builder.add_feature(source_strength_estimated_feature)
         if "noise_strength_analytic" in features:
-            builder.add_noise_strength_analytic(self.config.freq_data, f, num)
+            builder.add_feature(self._get_noise_strength_analytic_feature(f, num))
         if "noise_strength_estimated" in features:
-            if self.config.mode == "welch":
-                freq_data = self.config.fft_spectra
-            else:
-                freq_data = self.config.freq_data
-            builder.add_noise_strength_estimated(freq_data, f, num)
+            builder.add_feature(self._get_noise_strength_estimated_feature(f, num))
         if "targetmap_analytic" in features:
-            builder.add_targetmap(self.config.freq_data, f, num, self.config.source_steer,
-                ref_mic=None, strength_type="analytic", grid=self.config.grid)
+            builder.add_feature(self._get_targetmap_analytic_feature(
+                loc_feature.feature_func, source_strength_analytic_feature.feature_func, f, num))
         if "targetmap_estimated" in features:
-            if self.config.mode == "welch":
-                freq_data = self.config.fft_obs_spectra
-            else:
-                freq_data = self.config.freq_data
-            builder.add_targetmap(freq_data, f, num, self.config.source_steer,
-                ref_mic=None, strength_type="estimated", grid=self.config.grid)
+            builder.add_feature(self._get_targetmap_estimated_feature(
+                loc_feature.feature_func, source_strength_estimated_feature.feature_func, f, num))
+        if "loc" in features:
+            builder.add_feature(loc_feature)
         if "f" in features:
-            builder.add_f(self.config.freq_data.fftfreq(), f, num)
+            builder.add_feature(self._get_f_feature(f, num))
         if "num" in features:
-            builder.add_num(num)
-        return builder.build()
+            builder.add_feature(self._get_num_feature(num))
+        for feature in features:
+            if isinstance(feature, Feature):
+                self._feature_builder.add_feature(feature)
+            elif not isinstance(feature, str):
+                raise ValueError(f"Feature {feature} is not a valid feature object.")
+
+        # if "source_csm_analytic" in features:
+        #     builder.add_feature(
+        #         CSMAnalytic(
+        #             name="source_csm_analytic",
+        #             freq_data = self.msm_setup.freq_data,
+        #             shape = (fdim, mdim, mdim),
+        #             mode = "analytic",
+        #             csm_type = "source",
+        #             f=f, num=num
+        #         ))
+
+        # if "source_csm_estimated" in features:
+        #     builder.add_feature(
+        #         CSMAnalytic(
+        #             name="source_csm_estimated",
+        #             freq_data = self.msm_setup.freq_data,
+        #             shape = (fdim, mdim, mdim),
+        #             mode = "wishart",
+        #             csm_type = "source",
+        #             f=f, num=num
+        #         ))
+
+        # if "noise_csm_analytic" in features:
+        #     builder.add_feature(
+        #         CSMAnalytic(
+        #             name="noise_csm_analytic",
+        #             freq_data = self.msm_setup.freq_data,
+        #             shape = (fdim, mdim, mdim),
+        #             mode = "analytic",
+        #             csm_type = "noise",
+        #             f=f, num=num
+        #         ))
 
 
-def sample_rms(nsources, rng):
-    """Draw sources' squared rms pressures from Rayleigh distribution."""
-    return np.sqrt(rng.rayleigh(5,nsources))
+        # if "noise_csm_estimated" in features:
+        #     builder.add_feature(
+        #         CSMAnalytic(
+        #             name="noise_csm_estimated",
+        #             freq_data = self.msm_setup.freq_data,
+        #             shape = (fdim, mdim, mdim),
+        #             mode = "wishart",
+        #             csm_type = "noise",
+        #             f=f, num=num
+        #         ))
+        return builder.feature_collection
 
-def sample_mic_noise_variance(rng):
-    """Draw microphone noise variance, uniform distribution."""
-    return rng.uniform(10e-6,0.1)
 
-def sample_signal_seed(rng):
-    return int(rng.uniform(1,1e9))
-
-def sample_signal_length(rng):
-    return rng.uniform(1,10)
-
-class DatasetSyntheticConfig(ConfigBase):
+class DatasetSyntheticConfigWelch(DatasetSyntheticConfig):
     """
-    Default Configuration class.
+    Default Configuration class for synthetic data simulation.
 
     Attributes
     ----------
-    fs : float
-        Sampling frequency in Hz.
-    signal_length : float
-        Length of the source signals in seconds.
-    max_nsources : int
-        Maximum number of sources.
-    min_nsources : int
-        Minimum number of sources.
-    mode : str
-        Type of CSM calculation method.
-    mic_pos_noise : bool
-        Apply positional noise to microphone geometry.
-    mic_sig_noise : bool
-        Apply signal noise to microphone signals.
-    snap_to_grid : bool
-        Snap source locations to grid.
-    random_signal_length : bool
-        Randomize signal length (Default: uniformly sampled signal length [1s,10s]).
-    fft_params : dict
-        FFT parameters with default items :code:`block_size=128`,
-        :code:`overlap="50%"`, :code:`window="Hanning"` and :code:`precision="complex64"`.
-    env : ac.Environment
-        Instance of acoular.Environment defining the environmental coditions,
-        i.e. the speed of sound.
-    mics : ac.MicGeom
-        Instance of acoular.MicGeom defining the microphone array geometry.
-    noisy_mics : ac.MicGeom
-        a second instance of acoular.MicGeom defining the noisy microphone array geometry.
-    obs : ac.MicGeom
-        Instance of acoular.MicGeom defining the observation point which is used as the
-        reference position when calculating the source strength.
-    grid : ac.RectGrid
-        Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
-        the source map and on which the targetmap feature is calculated.
-    source_grid : ac.Grid
-        Instance of acoular.Grid. Only relevant if :attr:`snap_to_grid` is :code:`True`.
-        Then, the source locations are snapped to this grid. Default is a copy of :attr:`grid`.
-    beamformer : ac.BeamformerBase
-        Instance of acoular.BeamformerBase defining the beamformer used to calculate the sourcemap.
-    steer : ac.SteeringVector
-        Instance of acoular.SteeringVector defining the steering vector used to calculate the sourcemap.
-    freq_data : ac.PowerSpectra
-        Instance of acoular.PowerSpectra defining the frequency domain data. Only used if :attr:`mode` is
-        :code:`welch`. Otherwise, an instance of :class:`acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic`
-        is used.
-    fft_spectra : ac.FFTSpectra
-        Instance of acoular.FFTSpectra used to calculate the spectrogram data. Only used if :attr:`mode` is
-        :code:`welch`.
-    fft_obs_spectra : ac.PowerSpectra
-        Instance of acoular.PowerSpectra used to calculate the source strength at the observation point given in
-        :attr:`obs`.
-    signals : list
-        List of signals.
-    sources : list
-        List of sources.
-    mic_noise_signal : ac.SignalGenerator
-        Noise signal configuration object.
-    mic_noise_source : ac.UncorrelatedNoiseSource
-        Noise source configuration object.
+    msm_setup : SyntheticSetupWelch
+        SyntheticSetupWelch object.
+    sampler_setup : SyntheticSamplerSetup
+        SyntheticSamplerSetup object.
+    mode : Enum
+        type of PowerSpectra calculation method.
     """
 
-    # public traits
-    fs = Float(13720, desc="sampling frequency")
-    signal_length = Float(5, desc="length of the signal in seconds")
-    max_nsources = Int(10, desc="maximum number of sources")
-    min_nsources = Int(1, desc="minimum number of sources")
-    mode = Enum(("welch", "analytic", "wishart"), default="welch",
-                            desc="type of PowerSpectra calculation method.")
-    mic_pos_noise = Bool(True, desc="apply positional noise to microphone geometry")
-    mic_sig_noise = Bool(True, desc="apply signal noise to microphone signals")
-    snap_to_grid = Bool(False, desc="snap source locations to grid")
-    random_signal_length = Bool(False, desc="randomize signal length")
-    fft_params = Dict({
-                    "block_size" : 128,
-                    "overlap" : "50%",
-                    "window" : "Hanning",
-                    "precision" : "complex64"},
-                desc="FFT parameters")
-    # acoular pipeline traits
-    env = Instance(ac.Environment, desc="environment configuration")
-    mics = Instance(ac.MicGeom, desc="microphone geometry configuration")
-    noisy_mics = Instance(ac.MicGeom, desc="microphone geometry configuration")
-    obs = Instance(ac.MicGeom, desc="observation point configuration")
-    grid = Instance(ac.RectGrid, desc="grid configuration")
-    source_grid = Instance(ac.Grid, desc="source grid configuration (only relevant if snap_to_grid=True)")
-    beamformer = Instance(ac.BeamformerBase, desc="beamformer configuration")
-    steer = Instance(ac.SteeringVector, desc="steering vector configuration")
-    freq_data = Instance(ac.PowerSpectra, desc="frequency domain data configuration")
-    fft_spectra = Instance(ac.FFTSpectra, desc="FFT spectra configuration (only for spectrogram feature)")
-    fft_obs_spectra = Instance(ac.PowerSpectra, desc="FFT spectra configuration only for 'estimated strength' label)")
-    signals = List(desc="list of signals")
-    sources = List(desc="list of sound sources")
-    mic_noise_signal = Instance(ac.SignalGenerator, desc="noise signal configuration")
-    mic_noise_source = Instance(ac.UncorrelatedNoiseSource, desc="noise source configuration")
-    source_steer = Instance(ac.SteeringVector, desc="steering vector configuration")
+    msm_setup = Instance(SyntheticSetupWelch, desc="SyntheticSetupWelch object.")
+    fs = DelegatesTo("msm_setup", prefix="_fs")
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.create_acoular_pipeline()
+    def _get_default_msm_setup(self, **kwargs):
+        kwargs["signal_length"] = kwargs.get("signal_length", 5.0)
+        kwargs["source_grid"] = kwargs.get("source_grid", None)
+        kwargs = self.get_default_mics(**kwargs)
+        kwargs = self.get_default_env(**kwargs)
+        kwargs = self.get_default_grid(**kwargs)
+        kwargs = self.get_default_sources(**kwargs)
+        kwargs = self.get_default_noise(**kwargs)
+        kwargs = self.get_default_steer(**kwargs)
+        kwargs = self.get_default_beamformer(**kwargs)
+        kwargs = self.get_default_freq_data(**kwargs)
 
-    @observe("mode, signal_length, fs, max_nsources, fft_params.items, mic_sig_noise")
-    def recreate_acoular_pipeline(self, event):
-        self.create_acoular_pipeline()
+        setup_class_attr = SyntheticSetupWelch.class_traits().keys()
+        msm_setup = SyntheticSetupWelch(
+            **{key: kwargs.pop(key) for key in setup_class_attr if key in kwargs}
+        )
+        return msm_setup
 
-    def create_acoular_pipeline(self):
-        self.env = self.create_env()
-        self.mics = self.create_mics()
-        self.noisy_mics = self.create_mics()
-        self.grid = self.create_grid()
-        self.source_grid = self.create_source_grid()
-        self.steer = self.create_steer()
-        self.obs = self.create_obs()
-        self.signals = self.create_signals()
-        self.sources = self.create_sources()
-        self.source_steer = self.create_source_steer()
-        self.mic_noise_signal = self.create_mic_noise_signal()
-        self.mic_noise_source = self.create_mic_noise_source()
-        self.freq_data = self.create_freq_data()
-        self.fft_spectra = self.create_fft_spectra()
-        self.fft_obs_spectra = self.create_fft_obs_spectra()
-        self.beamformer = self.create_beamformer()
-
-    def get_sampler(self):
-        location_sampler = self.create_location_sampler()
-        sampler = {
-            2 : self.create_signal_seed_sampler(),
-            3 : self.create_rms_sampler(),
-            4 : location_sampler,
-            }
-        if self.max_nsources != self.min_nsources:
-            sampler[0] = self.create_nsources_sampler(
-                target=[location_sampler])
-        if self.mic_pos_noise:
-            sampler[1] = self.create_micgeom_sampler()
-        if self.mic_sig_noise:
-            sampler[5] = self.create_mic_noise_sampler()
-        if self.random_signal_length:
-            sampler[6] = self.create_signal_length_sampler()
-        return sampler
-
-    def create_env(self):
-        return ac.Environment(c=343.0)
-
-    def create_mics(self):
-        return ac.MicGeom(mpos_tot = tub_vogel64_ap1)
-
-    def create_grid(self):
-        ap = self.mics.aperture
-        return ac.RectGrid(y_min=-0.5*ap, y_max=0.5*ap, x_min=-0.5*ap, x_max=0.5*ap,
-                                    z=0.5*ap, increment=1/63*ap)
-
-    def create_source_grid(self):
-        return self.create_grid()
-
-    def create_steer(self):
-        return ac.SteeringVector(
-            steer_type="true level",
-            ref=tub_vogel64_ap1[:,63], # centermost mic,
-            mics=self.mics,
-            grid=self.grid,
-            env=self.env)
-
-    def create_obs(self):
-        return ac.MicGeom(
-            mpos_tot=self.steer.ref[:,np.newaxis])
-
-    def create_beamformer(self):
-        return ac.BeamformerBase(
-            r_diag=False,
-            precision="float32",
-            cached=False,
-            freq_data = self.freq_data,
-            steer = self.steer,
-            )
-
-    def create_signals(self):
-        signals = []
-        for i in range(self.max_nsources):
-            signals.append(ac.WNoiseGenerator(
-                    seed = i+1,
-                    sample_freq=self.fs,
-                    numsamples=self.signal_length*self.fs,
-                    )
-            )
-        return signals
-
-    def create_sources(self):
-        sources = []
-        for signal in self.signals:
-            sources.append(
-                ac.PointSource(
-                    signal=signal,
-                    mics=self.noisy_mics,
-                    env=self.env,
-                    )
-            )
-        return sources
-
-    def create_fft_spectra(self):
-        if self.mic_sig_noise:
-            source = ac.Mixer(source=self.mic_noise_source,
-                            sources=self.sources,)
-        else:
-            source = ac.SourceMixer(sources=self.sources)
-        return ac.FFTSpectra(
-            source = source,
-            **self.fft_params,
-            )
-
-    def create_fft_obs_spectra(self):
-        return ac.PowerSpectra(
-            source = ac.SourceMixer(sources=self.sources),
-            cached = False,
-            **self.fft_params,
-            )
-
-    def create_freq_data(self):
-        if self.mode == "welch":
-            if self.mic_sig_noise:
-                source = ac.Mixer(source=self.mic_noise_source,
-                                sources=self.sources,)
-            else:
-                source = ac.SourceMixer(sources=self.sources)
-            return ac.PowerSpectra(
-                    cached = False,
-                    source = source,
-                    **self.fft_params,
-                    )
-        else:
-            fft_params = deepcopy(self.fft_params)
-            fft_params.pop("window")
-            return PowerSpectraAnalytic(
-                mode = self.mode,
-                numsamples=self.signal_length*self.fs,
-                sample_freq=self.fs,
-                steer=self.source_steer,
-                cached = False,
-                **fft_params
+    def get_default_noise(self, **kwargs):
+        if kwargs.get("noise") is None:
+            kwargs["noise"] = ac.UncorrelatedNoiseSource(
+                signal = ac.WNoiseGenerator(
+                    seed = 1000,
+                    sample_freq = kwargs.get("fs", 13720),
+                    numsamples = int(kwargs.get("fs", 13720)*kwargs.get("signal_length", 5.0)),
+                    ),
+                mics = kwargs["mics"]
                 )
+        return kwargs
 
-    def create_mic_noise_signal(self):
-        return ac.WNoiseGenerator(
-                seed = 1000,
-                sample_freq=self.fs,
-                numsamples=self.signal_length*self.fs,
-                )
+    def get_default_sources(self, **kwargs):
+        if kwargs.get("sources") is None:
+            kwargs["sources"] = []
+            for i in range(kwargs.get("max_nsources", 10)):
+                kwargs["sources"].append(
+                    ac.PointSource(signal = ac.WNoiseGenerator(
+                            seed = i+1,
+                            sample_freq = kwargs.get("fs", 13720),
+                            numsamples = int(kwargs.get("fs", 13720)*kwargs.get("signal_length", 5.0)),
+                            ),
+                            env = kwargs["env"],
+                            mics = kwargs["mics"],
+                            )
+                    )
+        return kwargs
 
-    def create_mic_noise_source(self):
-        return ac.UncorrelatedNoiseSource(
-                signal=self.mic_noise_signal,
-                mics=self.noisy_mics,
-                )
-
-    def create_source_steer(self):
-        return ac.SteeringVector(
-            steer_type="true level",
-            ref=self.obs.mpos.squeeze(),
-            mics=self.noisy_mics,
-            grid=ac.ImportGrid(), # is filled later
-            env=self.env
+    def get_default_freq_data(self, **kwargs):
+        if kwargs.get("freq_data") is None:
+            fs = kwargs.get("fs", 13720)
+            signal_length = kwargs.get("signal_length", 5.0)
+            kwargs["freq_data"] = ac.PowerSpectra(
+                source = ac.TimeSamples(sample_freq=fs, numsamples=int(fs*signal_length)), # dummy source
+                precision="complex64", block_size=128, overlap="50%", window="Hanning", cached=False
             )
+        return kwargs
 
-    def create_micgeom_sampler(self):
-        return sp.MicGeomSampler(
-            random_var = norm(loc=0, scale=0.001),
-            ddir = np.array([[1.0], [1.0], [0]]),
-            target = self.noisy_mics,
-            mpos_init = self.mics.mpos_tot,)
-
-    def create_location_sampler(self):
-        ap = self.mics.aperture
-        z = self.grid.z
-        location_sampler = sp.LocationSampler(
-            random_var = (norm(0,0.1688*ap),norm(0,0.1688*ap),norm(z,0)),
-            x_bounds = (-0.5*ap,0.5*ap),
-            y_bounds = (-0.5*ap,0.5*ap),
-            z_bounds = (0.5*ap,0.5*ap),
-            nsources = self.max_nsources,)
-        if self.snap_to_grid:
-            location_sampler.grid = self.source_grid
-        return location_sampler
-
-    def create_rms_sampler(self):
-        random_func = partial(sample_rms, self.max_nsources)
-        return sp.ContainerSampler(
-            random_func = random_func)
-
-    def create_signal_seed_sampler(self):
-        return sp.ContainerSampler(
-            random_func = sample_signal_seed)
-
-    def create_nsources_sampler(self, target):
-        return sp.NumericAttributeSampler(
-            random_var = poisson(mu=3, loc=1),
-            attribute = "nsources",
-            equal_value = True,
-            target=target,
-            filter=lambda x: (x <= self.max_nsources) and (
-                x >= self.min_nsources))
-
-    def create_mic_noise_sampler(self):
-        return sp.ContainerSampler(
-            random_func = sample_mic_noise_variance)
-
-    def create_signal_length_sampler(self):
-        return sp.ContainerSampler(
-            random_func = sample_signal_length)
-
-    @staticmethod
-    def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
-        # restore sampler and acoular objects
-        micgeom_sampler = sampler.get(1)
-        seed_sampler = sampler.get(2)
-        rms_sampler = sampler.get(3)
-        loc_sampler = sampler.get(4)
-        noise_sampler = sampler.get(5)
-        signal_length_sampler = sampler.get(6)
-
-        freq_data = beamformer.freq_data
-
-        if micgeom_sampler is not None:
-            noisy_mics = micgeom_sampler.target
+    def _connect_objects(self, sampler, msm_setup):
+        nsources = sampler[4].nsources
+        if self.sampler_setup.mic_sig_noise:
+            self.msm_setup.time_data.sources = msm_setup.sources[:nsources] + [msm_setup.noise]
         else:
-            noisy_mics = beamformer.steer.mics # use the original mics (without noise)
+            self.msm_setup.time_data.sources = msm_setup.sources[:nsources]
 
-        if signal_length_sampler is not None:
-            # adjust source signals, noise signal length
-            signals = get_all_source_signals(sources)
-            for signal in signals:
-                signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
-        # sample parameters
-        loc = loc_sampler.target
-        nsources = loc.shape[1]
-        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
-        # apply parameters
-        mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
-        if mic_noise:
-            mic_noise_signal = mic_noise[0].signal
-            if signal_length_sampler is not None:
-                mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
-            if noise_sampler is not None:
-                noise_signal_ratio = noise_sampler.target # normalized noise variance
-                noise_prms_sq = prms_sq.sum()*noise_signal_ratio
-                mic_noise_signal.rms = np.sqrt(noise_prms_sq)
-                mic_noise_signal.seed = seed_sampler.target+1000
-                freq_data.source.source.mics = noisy_mics
-        subset_sources = sources[:nsources]
-        source_steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
-        for i,src in enumerate(subset_sources):
-            src.signal.seed = seed_sampler.target+i
-            # weight the RMS with the distance to the reference position
-            src.signal.rms = np.sqrt(prms_sq[i])*source_steer.r0[i]
-            src.loc = (loc[0,i], loc[1,i], loc[2,i]) # apply wishart locations
+    def _apply_new_mic_pos(self, sampler, msm_setup):
+        noisy_mics = sampler[1].target
+        self.msm_setup.source_steer.mics = noisy_mics
+        for src in msm_setup.sources:
             src.mics = noisy_mics
-        freq_data.source.sources = subset_sources # apply subset of sources
-        fft_spectra.source = freq_data.source # only for spectrogram feature
-        # update observation point
-        obs_sources = deepcopy(subset_sources)
+
+    def _apply_new_ref_mic(self, sampler, msm_setup):
+        obs_sources = [deepcopy(src) for src in self.msm_setup.time_data.sources]
+        ref = ac.MicGeom(mpos_tot=self.msm_setup.source_steer.ref[:,np.newaxis])
         for src in obs_sources:
-            src.mics = obs
-        fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
-        return {}
+            src.mics = ref
+        self.msm_setup._fft_ref_spectra.source = ac.SourceMixer(sources=obs_sources)
 
-    @staticmethod
-    def calc_analytic_prepare_func(sampler, beamformer):
-        # restore sampler and acoular objects
-        micgeom_sampler = sampler.get(1)
-        seed_sampler = sampler.get(2)
-        rms_sampler = sampler.get(3)
-        loc_sampler = sampler.get(4)
-        noise_sampler = sampler.get(5)
+    def _apply_new_loc(self, sampler, msm_setup):
+        locations = sampler[4].target
+        for i, loc in enumerate(locations.T):
+            msm_setup.time_data.sources[i].loc = (loc[0], loc[1], loc[2])
+        msm_setup.source_steer.grid = ac.ImportGrid(gpos_file=locations)
+
+    def _apply_new_seeds(self, sampler, msm_setup):
+        seed = sampler.get(2).target
+        for i in range(sampler[4].nsources):
+            msm_setup.time_data.sources[i].signal.seed = seed + i
+        if self.sampler_setup.mic_sig_noise:
+            msm_setup.time_data.sources[-1].signal.seed = seed + 1000
+
+    def _apply_new_signal_length(self, sampler, msm_setup):
         signal_length_sampler = sampler.get(6)
+        t = signal_length_sampler.target
+        msm_setup.signal_length = t
 
-        freq_data = beamformer.freq_data
+    def _apply_new_source_strength(self, sampler, msm_setup):
+        nsources = sampler[4].nsources # loc sampler
+        rms = sampler[3].target[:nsources]*self.msm_setup.source_steer.r0
+        for i in range(nsources):
+            msm_setup.time_data.sources[i].signal.rms = rms[i] #TODO: use strength of a monopole source at ref! Not the transfer function itself
 
-        if micgeom_sampler is not None:
-            noisy_mics = micgeom_sampler.target
-        else:
-            noisy_mics = beamformer.steer.mics # use the original mics (without noise)
-
-        if signal_length_sampler is not None:
-            freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
-
-        nfft = freq_data.fftfreq().shape[0]
-        # sample parameters
-        loc = loc_sampler.target
-        nsources = loc.shape[1]
-        freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
-        freq_data.steer.mics = noisy_mics # set mic locations
-        freq_data.seed=seed_sampler.target
-        # change source strength
-        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
-        prms_sq_per_freq = prms_sq / nfft #prms_sq_per_freq
-        freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
-        # add noise to freq_data
+    def _apply_new_mic_sig_noise(self, sampler, msm_setup):
+        noise_sampler = sampler.get(5)
         if noise_sampler is not None:
+            nsources = sampler[4].nsources # loc sampler
+            prms_sq = sampler[3].target[:nsources]**2
             noise_signal_ratio = noise_sampler.target # normalized noise variance
             noise_prms_sq = prms_sq.sum()*noise_signal_ratio
-            noise_prms_sq_per_freq = noise_prms_sq / nfft
-            nperf = np.diag(np.array([noise_prms_sq_per_freq]*beamformer.steer.mics.num_mics))
-            freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
-        else:
-            freq_data.noise = None
-        return {}
+            msm_setup.time_data.sources[-1].signal.rms = np.sqrt(noise_prms_sq)
 
     def get_prepare_func(self):
-        if self.mode == "welch":
-            prepare_func = partial(
-            self.calc_welch_prepare_func,
-            beamformer=self.beamformer,
-            sources=self.sources,
-            source_steer = self.source_steer,
-            fft_spectra=self.fft_spectra,
-            fft_obs_spectra=self.fft_obs_spectra,
-            obs = self.obs)
-        else:
-            prepare_func = partial(
-            self.calc_analytic_prepare_func,
-            beamformer=self.beamformer)
-        return prepare_func
+        def prepare(sampler, msm_setup):
+            self._connect_objects(sampler, msm_setup)
+            if self.sampler_setup.mic_pos_noise:
+                self._apply_new_mic_pos(sampler, msm_setup)
+            self._apply_new_loc(sampler, msm_setup)
+            self._apply_new_seeds(sampler, msm_setup)
+            if self.sampler_setup.random_signal_length:
+                self._apply_new_signal_length(sampler, msm_setup)
+            self._apply_new_source_strength(sampler, msm_setup)
+            if self.sampler_setup.mic_sig_noise:
+                self._apply_new_mic_sig_noise(sampler, msm_setup)
+            self._apply_new_ref_mic(sampler, msm_setup)
+            return {}
+        return partial(prepare, msm_setup=self.msm_setup)
 
-
-class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
-
-    tdim = Either(Int(desc="time dimension"), None)
-    fdim = Int(desc="frequency dimension")
-    mdim = Int(desc="microphone dimension")
-
-    def add_time_data(self, time_data):
+    def get_feature_collection(self, features, f, num):
         """
-        Add a time_data feature to the BaseFeatureCollection.
-
-        Parameters
-        ----------
-        time_data : str
-            source object containing the time data e.g. ac.TimeSamples class instance.
-        """
-        calc_time_data = TimeDataFeature(
-            time_data=time_data, dtype=np.float32).get_feature_func()
-        self.feature_collection.add_feature_func(calc_time_data)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"time_data" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"time_data" : (self.tdim,None)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"time_data" : "float32"})
-
-    def add_spectrogram(self, freq_data, f, num):
-        calc_spectrogram = SpectrogramFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_spectrogram)
-        if TF_FLAG:
-            from acoupipe.writer import complex_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"spectrogram" : complex_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"spectrogram" : (None,self.fdim,self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"spectrogram" : "complex64"})
-
-    def add_csm(self, freq_data, f, num):
-        calc_csm = CSMFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_csm)
-        if TF_FLAG:
-            from acoupipe.writer import complex_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"csm" : complex_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"csm" : (self.fdim,self.mdim,self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"csm" : "complex64"})
-
-    def add_csmtriu(self, freq_data, f, num):
-        calc_csmtriu = CSMtriuFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_csmtriu)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"csmtriu" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"csmtriu" : (self.fdim,self.mdim,self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"csmtriu" : "float32"})
-
-    def add_eigmode(self, freq_data, f, num):
-        calc_eigmode = EigmodeFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_eigmode)
-        if TF_FLAG:
-            from acoupipe.writer import complex_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"eigmode" : complex_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"eigmode" : (self.fdim,self.mdim,self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"eigmode" : "complex64"})
-
-    def add_sourcemap(self, beamformer, f, num):
-        calc_sourcemap = SourcemapFeature(beamformer=beamformer, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_sourcemap)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"sourcemap" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"sourcemap" : (self.fdim,) + beamformer.grid.shape})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"sourcemap" : "float32"})
-
-    def add_loc(self, freq_data):
-        calc_loc = LocFeature(freq_data=freq_data).get_feature_func()
-        self.feature_collection.add_feature_func(calc_loc)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"loc" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"loc" : (3,None)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"loc" : "float32"})
-
-    def add_source_strength_analytic(self, freq_data, f, num, steer):
-        calc_strength = AnalyticSourceStrengthFeature(
-            freq_data=freq_data, f=f, num=num, steer=steer).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"source_strength_analytic" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"source_strength_analytic" : (self.fdim,None)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"source_strength_analytic" : "float32"})
-
-    def add_source_strength_estimated(self, freq_data, f, num):
-        calc_strength = EstimatedSourceStrengthFeature(
-            freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"source_strength_estimated" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"source_strength_estimated" : (self.fdim,None)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"source_strength_estimated" : "float32"})
-
-    def add_noise_strength_analytic(self, freq_data, f, num):
-        calc_noise = AnalyticNoiseStrengthFeature(
-            freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_noise)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"noise_strength_analytic" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"noise_strength_analytic" : (self.fdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"noise_strength_analytic" : "float32"})
-
-    def add_noise_strength_estimated(self, freq_data, f, num):
-        calc_noise = EstimatedNoiseStrengthFeature(
-            freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_noise)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {"noise_strength_estimated" : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {"noise_strength_estimated" : (self.fdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {"noise_strength_estimated" : "float32"})
-
-    def add_targetmap(self, freq_data, f, num, steer, ref_mic, strength_type, grid):
-        name = f"targetmap_{strength_type}"
-        calc_targetmap = TargetmapFeature(
-            freq_data=freq_data, f=f, num=num, steer=steer, ref_mic=ref_mic,
-            strength_type=strength_type, grid=grid, name=name).get_feature_func()
-        self.feature_collection.add_feature_func(calc_targetmap)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update(
-                {name : float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {name : (self.fdim,) + grid.shape})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                {name : "float32"})
-
-    def add_seeds(self, nsampler):
-        if TF_FLAG:
-            from acoupipe.writer import int_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update({
-                                            "seeds" : int_list_feature,})
-            self.feature_collection.feature_tf_shape_mapper.update({
-                                            "seeds" : (nsampler,2)})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                                            {"seeds" : "int64"})
-
-    def add_idx(self):
-        if TF_FLAG:
-            from acoupipe.writer import int64_feature
-            self.feature_collection.feature_tf_encoder_mapper.update({
-                                            "idx" : int64_feature,})
-            self.feature_collection.feature_tf_shape_mapper.update({
-                                            "idx" : (),})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                                            {"idx" : "int64"})
-
-    def add_f(self, fftfreq, f, num):
-        if f is None:
-            all_f = fftfreq
-        elif isinstance(f, list):
-            if num == 0:
-                all_f = np.array(
-                    [fftfreq[np.searchsorted(fftfreq, freq)] for freq in f])
-            else:
-                all_f = np.array(f)
-        else:
-            all_f = np.array([fftfreq[np.searchsorted(fftfreq, f)]])
-
-        def get_f(sampler, f):
-            return {"f": f}
-        feature_func = partial(get_f, f=all_f)
-        self.feature_collection.add_feature_func(feature_func)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-            self.feature_collection.feature_tf_encoder_mapper.update({
-                                            "f" : float_list_feature,})
-            self.feature_collection.feature_tf_shape_mapper.update({
-                                            "f" : (self.fdim,),})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                                            {"f" : "float32"})
-    def add_num(self, num):
-        def add_num(sampler, num):
-            return {"num": num}
-        self.feature_collection.add_feature_func(partial(add_num, num=num))
-        if TF_FLAG:
-            from acoupipe.writer import int64_feature
-            self.feature_collection.feature_tf_encoder_mapper.update({
-                                            "num" : int64_feature,})
-            self.feature_collection.feature_tf_shape_mapper.update({
-                                            "num" : (),})
-            self.feature_collection.feature_tf_dtype_mapper.update(
-                                            {"num" : "int64"})
-
-
-
-
-
-class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
-
-    # important note for the doc string:
-    # rms value belongs to the source signal and not to the measured signal at the reference position
-
-    def create_room_sampler(self):
-        aperture = self.mics.aperture
-        random_func = partial(sample_shoebox_room, aperture=aperture)
-        return sp.ContainerSampler(
-            random_func = random_func)
-
-    def create_relative_location_sampler(self):
-        """Create a sampler for the relative location of the sources in the room.
-
-        The sampler is a :class:`acoupipe.sampler.ContainerSampler` with a random function
-        that samples the relative location of the microphone array and the sources in the room.
+        Get the feature collection of the dataset.
 
         Returns
         -------
-        sp.ContainerSampler
-            The sampler for the relative location of the sources in the room.
-
+        BaseFeatureCollection
+            BaseFeatureCollection object.
         """
-        def random_func(rng):
-            # Randomly sample the relative placement of the array and the sources inside the room
-            shift = np.array(
-                [rng.uniform(0.05,0.95), rng.uniform(0.05,0.95), rng.uniform(0.05,0.95)]
-            )
-            return shift
-        return sp.ContainerSampler(random_func = random_func)
-
-    def get_sampler(self):
-        location_sampler = self.create_location_sampler()
-        sampler = {
-            2 : self.create_signal_seed_sampler(),
-            3 : self.create_rms_sampler(),
-            4 : location_sampler,
-            7 : self.create_room_sampler(),
-            8 : self.create_relative_location_sampler(),
-            }
-        if self.max_nsources != self.min_nsources:
-            sampler[0] = self.create_nsources_sampler(
-                target=[location_sampler])
-        if self.mic_pos_noise:
-            sampler[1] = self.create_micgeom_sampler()
-        if self.mic_sig_noise:
-            sampler[5] = self.create_mic_noise_sampler()
-        if self.random_signal_length:
-            sampler[6] = self.create_signal_length_sampler()
-        return sampler
-
-    def create_sources(self):
-        sources = []
-        for signal in self.signals:
-            sources.append(
-                ac.PointSourceConvolve(
-                    signal=signal,
-                    mics=self.noisy_mics,
-                    env=self.env,)
-            )
-        return sources
-
-    @staticmethod
-    def _get_rir_matrix(room, locs, mics, pad):
-        """Compute the RIRs for the given room, source and microphone locations.
-
-        Parameters
-        ----------
-        room : pyroomacoustics.room.ShoeBox
-            The room object.
-        locs : np.ndarray
-            The source locations with shape (3, n_sources).
-        mics : np.ndarray
-            The microphone locations with shape (3, n_mics).
-        pad : bool
-            If True, pad the RIRs to the length of the longest RIR. If False, trim the RIRs to the 
-            length of the shortest RIR.
-        """
-        room.compute_rir() # room.rir is a list of lists of RIRs with different length
-        n = len(room.rir[0][0]) # length of the first rir
-        if not pad:
-            # trim all RIRs by the length of the shortest one
-            rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
-            for j in range(locs.shape[1]):
-                for i in range(mics.shape[1]):
-                    rir = np.array(room.rir[i][j])
-                    ns = min(n, rir.shape[0])
-                    rir_arr[j,i,:ns] = rir[:ns]
-            return rir_arr[:,:,:ns]
+        # create additional objects needed for feature calculation and sampling
+        self.msm_setup.source_steer = deepcopy(self.msm_setup.steer)
+        if self.sampler_setup.mic_pos_noise:
+            self.msm_setup.source_steer.mics = self.sampler_setup.mic_pos_sampler.target
         else:
-            for j in range(locs.shape[1]):
-                for i in range(mics.shape[1]):
-                    n = max(n, np.array(room.rir[i][j]).shape[0])
-            rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
-            for j in range(locs.shape[1]):
-                for i in range(mics.shape[1]):
-                    rir = np.array(room.rir[i][j])
-                    ns = rir.shape[0]
-                    rir_arr[j,i,:ns] = rir
-        return rir_arr
-
-    @staticmethod
-    def _get_loc_shift(locs, mics, walls, rloc):
-        pmax = np.max(np.concatenate([locs, mics], axis=1),axis=1)
-        pmin = np.min(np.concatenate([locs, mics], axis=1),axis=1)
-        rmax = np.array([w.corners.max(1) for w in walls]).max(0)
-        return rloc*(rmax - pmax - pmin)
-
-    @staticmethod
-    def _get_rir(sampler, beamformer):
-        micgeom_sampler = sampler.get(1)
-        room_sampler = sampler.get(7)
-        loc_sampler = sampler.get(4)
-        relative_location_sampler = sampler.get(8)
-        freq_data = beamformer.freq_data
-
-        # set up microphone array
-        if micgeom_sampler is not None:
-            noisy_mpos = micgeom_sampler.target.mpos
-        else:
-            noisy_mpos = beamformer.steer.mics.mpos # use the original mics (without noise)
-
-        # creating the room
-        room = room_sampler.target
-        room.fs = int(freq_data.sample_freq)
-
-        # oriantation of the microphone array and sources in the room
-        loc = loc_sampler.target
-        all_mics = np.concatenate([noisy_mpos, beamformer.steer.ref[:,np.newaxis]], axis=1)
-        shift = DatasetSyntheticReverbConfig._get_loc_shift(loc, all_mics, room.walls, relative_location_sampler.target)
-
-        # set the sources and microphones
-        room.sources = [pra.SoundSource(loc+shift) for loc in loc.T]
-        room.add_microphone_array(
-            pra.beamforming.MicrophoneArray(all_mics+shift[:,np.newaxis], freq_data.sample_freq)
+            self.msm_setup.source_steer = self.msm_setup.steer
+        for src in self.msm_setup.sources:
+            src.mics = self.msm_setup.source_steer.mics
+        self.msm_setup._fft_ref_spectra = ac.PowerSpectra(
+            cached = False,
+            window = self.msm_setup.freq_data.window,
+            block_size = self.msm_setup.freq_data.block_size,
+            overlap = self.msm_setup.freq_data.overlap,
+            source = self.msm_setup.time_data
         )
-        # get the RIR
-        rir = DatasetSyntheticReverbConfig._get_rir_matrix(room, loc, all_mics, pad=True)
 
-        # trim the RIRs to the a power of 2 length
-        lpow2 = 2**int(np.ceil(np.log2(rir.shape[2])))
-        padded_rir = np.zeros((rir.shape[0], rir.shape[1], lpow2))
-        padded_rir[:,:,:rir.shape[2]] = rir
-        return padded_rir
+        builder = FeatureCollectionBuilder()
+        # add prepare function
+        builder.add_custom(self.get_prepare_func())
+        builder.add_seeds(self.sampler_setup.numsampler)
+        builder.add_idx()
+        # add feature functions
+        loc_feature = self._get_loc_feature()
+        source_strength_analytic_feature = self._get_source_strength_analytic_feature(f, num)
+        source_strength_estimated_feature = self._get_source_strength_estimated_feature(f, num)
+
+        if "time_data" in features:
+            builder.add_feature(self._get_time_data_feature())
+        if "spectrogram" in features:
+            builder.add_feature(self._get_spectrogram_feature(f, num))
+        if "csm" in features:
+            builder.add_feature(self._get_csm_feature(f, num))
+        if "csmtriu" in features:
+            builder.add_feature(self._get_csmtriu_feature(f, num))
+        if "eigmode" in features:
+            builder.add_feature(self._get_eigmode_feature(f, num))
+        if "sourcemap" in features:
+            builder.add_feature(self._get_sourcemap_feature(f, num))
+        if "source_strength_analytic" in features:
+            builder.add_feature(source_strength_analytic_feature)
+        if "source_strength_estimated" in features:
+            builder.add_feature(source_strength_estimated_feature)
+        if "noise_strength_analytic" in features:
+            builder.add_feature(self._get_noise_strength_analytic_feature(f, num))
+        if "noise_strength_estimated" in features:
+            builder.add_feature(self._get_noise_strength_estimated_feature(f, num))
+        if "targetmap_analytic" in features:
+            builder.add_feature(self._get_targetmap_analytic_feature(
+                loc_feature.feature_func, source_strength_analytic_feature.feature_func, f, num))
+        if "targetmap_estimated" in features:
+            builder.add_feature(self._get_targetmap_estimated_feature(
+                loc_feature.feature_func, source_strength_estimated_feature.feature_func, f, num))
+        if "loc" in features:
+            builder.add_feature(loc_feature)
+        if "f" in features:
+            builder.add_feature(self._get_f_feature(f, num))
+        if "num" in features:
+            builder.add_feature(self._get_num_feature(num))
+        for feature in features:
+            if isinstance(feature, Feature):
+                self._feature_builder.add_feature(feature)
+            elif not isinstance(feature, str):
+                raise ValueError(f"Feature {feature} is not a valid feature object.")
+        return builder.feature_collection
 
 
-    @staticmethod
-    def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
-        # restore sampler and acoular objects
-        micgeom_sampler = sampler.get(1)
-        seed_sampler = sampler.get(2)
-        rms_sampler = sampler.get(3)
-        loc_sampler = sampler.get(4)
-        noise_sampler = sampler.get(5)
-        signal_length_sampler = sampler.get(6)
-
-        freq_data = beamformer.freq_data
-
-        if micgeom_sampler is not None:
-            noisy_mics = micgeom_sampler.target
+def f_as_array(f, num, fftfreq):
+    if f is None:
+        f_array = fftfreq
+    elif isinstance(f, list):
+        if num == 0:
+            f_array = np.array(
+                [fftfreq[np.searchsorted(fftfreq, freq)] for freq in f])
         else:
-            noisy_mics = beamformer.steer.mics # use the original mics (without noise)
-
-        if signal_length_sampler is not None:
-            # adjust source signals, noise signal length
-            signals = get_all_source_signals(sources)
-            for signal in signals:
-                signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
-        # sample parameters
-        loc = loc_sampler.target
-        nsources = loc.shape[1]
-        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
-        # apply parameters
-        mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
-        if mic_noise:
-            mic_noise_signal = mic_noise[0].signal
-            if signal_length_sampler is not None:
-                mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
-            if noise_sampler is not None:
-                noise_signal_ratio = noise_sampler.target # normalized noise variance
-                noise_prms_sq = prms_sq.sum()*noise_signal_ratio
-                mic_noise_signal.rms = np.sqrt(noise_prms_sq)
-                mic_noise_signal.seed = seed_sampler.target+1000
-                freq_data.source.source.mics = noisy_mics
-        subset_sources = sources[:nsources]
-        # creating the room
-        rir = DatasetSyntheticReverbConfig._get_rir(sampler, beamformer)
-        for i,src in enumerate(subset_sources):
-            #src.kernel = rir[i,:-1].T
-            # NOTE: this step leads to numerically unstable results
-            # it may be better to directly use the transfer function of the room
-            # without normalization. However, this requires fundamental changes with the
-            # label calculation
-            tf = blockwise_transfer(rir[i]).T
-            #tf /= tf[:,-1][:,np.newaxis] # reference mic based normalization
-            # ifft to get kernel
-            src.kernel = np.fft.irfft(tf[:,:-1],axis=0)
-            src.signal.seed = seed_sampler.target+i
-            src.signal.rms = np.sqrt(prms_sq[i])
-            src.loc = (loc[0,i],loc[1,i],loc[2,i] )
-        freq_data.source.sources = subset_sources # apply subset of sources
-        fft_spectra.source = freq_data.source # only for spectrogram feature
-        # update observation point
-        obs_sources = deepcopy(subset_sources)
-        kernel = np.zeros((freq_data.block_size, 1))
-        kernel[0] = 1
-        for i, src in enumerate(obs_sources):
-            src.mics = obs
-            #src.kernel = np.fft.irfft(tf[:,-1][:,np.newaxis],axis=0)
-            src.kernel = kernel
-            # src.kernel = rir[i,-1][np.newaxis].T
-        fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
-        return {}
-
-    @staticmethod
-    def calc_analytic_prepare_func(sampler, beamformer):
-        micgeom_sampler = sampler.get(1)
-        seed_sampler = sampler.get(2)
-        rms_sampler = sampler.get(3)
-        loc_sampler = sampler.get(4)
-        noise_sampler = sampler.get(5)
-        signal_length_sampler = sampler.get(6)
-
-        freq_data = beamformer.freq_data
-
-        if micgeom_sampler is not None:
-            noisy_mics = micgeom_sampler.target
-        else:
-            noisy_mics = beamformer.steer.mics # use the original mics (without noise)
-
-        if signal_length_sampler is not None:
-            freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
-
-        nfft = freq_data.fftfreq().shape[0]
-        nummics = beamformer.steer.mics.num_mics
-        # sample parameters
-        loc = loc_sampler.target
-        nsources = loc.shape[1]
-        freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
-        freq_data.steer.mics = noisy_mics # set mic locations
-        freq_data.seed=seed_sampler.target
-        # change source strength
-        prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
-        prms_sq_per_freq = prms_sq / nfft #prms_sq_per_freq
-        freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
-        # add noise to freq_data
-        if noise_sampler is not None:
-            noise_signal_ratio = noise_sampler.target # normalized noise variance
-            noise_prms_sq = prms_sq.sum()*noise_signal_ratio
-            noise_prms_sq_per_freq = noise_prms_sq / nfft
-            nperf = np.diag(np.array([noise_prms_sq_per_freq]*nummics))
-            freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
-        else:
-            freq_data.noise = None
-        # calculate the transfer function
-        transfer = np.empty((nfft, nummics,nsources), dtype=complex)
-        rir = DatasetSyntheticReverbConfig._get_rir(sampler, beamformer)
-        for i in range(nsources):
-            tf = blockwise_transfer(rir[i], freq_data.block_size).T
-            #transfer[:,:,i] = tf[:,:-1] / tf[:,-1][:,np.newaxis] # reference mic based normalization
-            transfer[:,:,i] = tf[:,:-1]
-        freq_data.custom_transfer = transfer
-        return {}
+            f_array = np.array(f)
+    else:
+        f_array = np.array([fftfreq[np.searchsorted(fftfreq, f)]])
+    return f_array
 
 
 
 
-class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
+# class DatasetSyntheticReverbConfig(DatasetSyntheticConfig):
 
-    def create_mics(self):
-        return ac.MicGeom(mpos_tot=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
-        [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
-        [ 0.32909911,  0.56201909, -0.24697204, -0.68677001]]))
+#     # important note for the doc string:
+#     # rms value belongs to the source signal and not to the measured signal at the reference position
 
-    def create_grid(self):
-        ap = self.mics.aperture
-        return ac.RectGrid(y_min=-0.5*ap, y_max=0.5*ap, x_min=-0.5*ap, x_max=0.5*ap,
-                                    z=0.5*ap, increment=1/5*ap)
+#     def create_room_sampler(self):
+#         aperture = self.mics.aperture
+#         random_func = partial(sample_shoebox_room, aperture=aperture)
+#         return sp.ContainerSampler(
+#             random_func = random_func)
+
+#     def create_relative_location_sampler(self):
+#         """Create a sampler for the relative location of the sources in the room.
+
+#         The sampler is a :class:`acoupipe.sampler.ContainerSampler` with a random function
+#         that samples the relative location of the microphone array and the sources in the room.
+
+#         Returns
+#         -------
+#         sp.ContainerSampler
+#             The sampler for the relative location of the sources in the room.
+
+#         """
+#         def random_func(rng):
+#             # Randomly sample the relative placement of the array and the sources inside the room
+#             shift = np.array(
+#                 [rng.uniform(0.05,0.95), rng.uniform(0.05,0.95), rng.uniform(0.05,0.95)]
+#             )
+#             return shift
+#         return sp.ContainerSampler(random_func = random_func)
+
+#     def get_sampler(self):
+#         location_sampler = self.create_location_sampler()
+#         sampler = {
+#             2 : self.create_signal_seed_sampler(),
+#             3 : self.create_rms_sampler(),
+#             4 : location_sampler,
+#             7 : self.create_room_sampler(),
+#             8 : self.create_relative_location_sampler(),
+#             }
+#         if self.max_nsources != self.min_nsources:
+#             sampler[0] = self.create_nsources_sampler(
+#                 target=[location_sampler])
+#         if self.mic_pos_noise:
+#             sampler[1] = self.create_micgeom_sampler()
+#         if self.mic_sig_noise:
+#             sampler[5] = self.create_mic_noise_sampler()
+#         if self.random_signal_length:
+#             sampler[6] = self.create_signal_length_sampler()
+#         return sampler
+
+#     def create_sources(self):
+#         sources = []
+#         for signal in self.signals:
+#             sources.append(
+#                 ac.PointSourceConvolve(
+#                     signal=signal,
+#                     mics=self._noisy_mics,
+#                     env=self.env,)
+#             )
+#         return sources
+
+#     @staticmethod
+#     def _get_rir_matrix(room, locs, mics, pad):
+#         """Compute the RIRs for the given room, source and microphone locations.
+
+#         Parameters
+#         ----------
+#         room : pyroomacoustics.room.ShoeBox
+#             The room object.
+#         locs : np.ndarray
+#             The source locations with shape (3, n_sources).
+#         mics : np.ndarray
+#             The microphone locations with shape (3, n_mics).
+#         pad : bool
+#             If True, pad the RIRs to the length of the longest RIR. If False, trim the RIRs to the
+#             length of the shortest RIR.
+#         """
+#         room.compute_rir() # room.rir is a list of lists of RIRs with different length
+#         n = len(room.rir[0][0]) # length of the first rir
+#         if not pad:
+#             # trim all RIRs by the length of the shortest one
+#             rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
+#             for j in range(locs.shape[1]):
+#                 for i in range(mics.shape[1]):
+#                     rir = np.array(room.rir[i][j])
+#                     ns = min(n, rir.shape[0])
+#                     rir_arr[j,i,:ns] = rir[:ns]
+#             return rir_arr[:,:,:ns]
+#         else:
+#             for j in range(locs.shape[1]):
+#                 for i in range(mics.shape[1]):
+#                     n = max(n, np.array(room.rir[i][j]).shape[0])
+#             rir_arr = np.zeros((locs.shape[1], mics.shape[1],n))
+#             for j in range(locs.shape[1]):
+#                 for i in range(mics.shape[1]):
+#                     rir = np.array(room.rir[i][j])
+#                     ns = rir.shape[0]
+#                     rir_arr[j,i,:ns] = rir
+#         return rir_arr
+
+#     @staticmethod
+#     def _get_loc_shift(locs, mics, walls, rloc):
+#         pmax = np.max(np.concatenate([locs, mics], axis=1),axis=1)
+#         pmin = np.min(np.concatenate([locs, mics], axis=1),axis=1)
+#         rmax = np.array([w.corners.max(1) for w in walls]).max(0)
+#         return rloc*(rmax - pmax - pmin)
+
+#     @staticmethod
+#     def _get_rir(sampler, beamformer):
+#         micgeom_sampler = sampler.get(1)
+#         room_sampler = sampler.get(7)
+#         loc_sampler = sampler.get(4)
+#         relative_location_sampler = sampler.get(8)
+#         freq_data = beamformer.freq_data
+
+#         # set up microphone array
+#         if micgeom_sampler is not None:
+#             noisy_mpos = micgeom_sampler.target.mpos
+#         else:
+#             noisy_mpos = beamformer.steer.mics.mpos # use the original mics (without noise)
+
+#         # creating the room
+#         room = room_sampler.target
+#         room.fs = int(freq_data.sample_freq)
+
+#         # oriantation of the microphone array and sources in the room
+#         loc = loc_sampler.target
+#         all_mics = np.concatenate([noisy_mpos, beamformer.steer.ref[:,np.newaxis]], axis=1)
+#         shift = DatasetSyntheticReverbConfig._get_loc_shift(loc, all_mics, room.walls, relative_location_sampler.target)
+
+#         # set the sources and microphones
+#         room.sources = [pra.SoundSource(loc+shift) for loc in loc.T]
+#         room.add_microphone_array(
+#             pra.beamforming.MicrophoneArray(all_mics+shift[:,np.newaxis], freq_data.sample_freq)
+#         )
+#         # get the RIR
+#         rir = DatasetSyntheticReverbConfig._get_rir_matrix(room, loc, all_mics, pad=True)
+
+#         # trim the RIRs to the a power of 2 length
+#         lpow2 = 2**int(np.ceil(np.log2(rir.shape[2])))
+#         padded_rir = np.zeros((rir.shape[0], rir.shape[1], lpow2))
+#         padded_rir[:,:,:rir.shape[2]] = rir
+#         return padded_rir
+
+
+#     @staticmethod
+#     def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_ref_spectra):
+#         # restore sampler and acoular objects
+#         micgeom_sampler = sampler.get(1)
+#         seed_sampler = sampler.get(2)
+#         rms_sampler = sampler.get(3)
+#         loc_sampler = sampler.get(4)
+#         noise_sampler = sampler.get(5)
+#         signal_length_sampler = sampler.get(6)
+
+#         freq_data = beamformer.freq_data
+
+#         if micgeom_sampler is not None:
+#             noisy_mics = micgeom_sampler.target
+#         else:
+#             noisy_mics = beamformer.steer.mics # use the original mics (without noise)
+
+#         if signal_length_sampler is not None:
+#             # adjust source signals, noise signal length
+#             signals = get_all_source_signals(sources)
+#             for signal in signals:
+#                 signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+#         # sample parameters
+#         loc = loc_sampler.target
+#         nsources = loc.shape[1]
+#         prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
+#         # apply parameters
+#         mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
+#         if mic_noise:
+#             mic_noise_signal = mic_noise[0].signal
+#             if signal_length_sampler is not None:
+#                 mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+#             if noise_sampler is not None:
+#                 noise_signal_ratio = noise_sampler.target # normalized noise variance
+#                 noise_prms_sq = prms_sq.sum()*noise_signal_ratio
+#                 mic_noise_signal.rms = np.sqrt(noise_prms_sq)
+#                 mic_noise_signal.seed = seed_sampler.target+1000
+#                 freq_data.source.source.mics = noisy_mics
+#         subset_sources = sources[:nsources]
+#         # creating the room
+#         rir = DatasetSyntheticReverbConfig._get_rir(sampler, beamformer)
+#         for i,src in enumerate(subset_sources):
+
+#             #src.kernel = rir[i,:-1].T
+#             # NOTE: this step leads to numerically unstable results
+#             # it may be better to directly use the transfer function of the room
+#             # without normalization. However, this requires fundamental changes with the
+#             # label calculation
+#             tf = blockwise_transfer(rir[i]).T
+#             #tf /= tf[:,-1][:,np.newaxis] # reference mic based normalization
+#             # ifft to get kernel
+#             src.kernel = np.fft.irfft(tf[:,:-1],axis=0)
+#             src.signal.seed = seed_sampler.target+i
+#             src.signal.rms = np.sqrt(prms_sq[i])
+#             src.loc = (loc[0,i],loc[1,i],loc[2,i] )
+#         freq_data.source.sources = subset_sources # apply subset of sources
+#         fft_spectra.source = freq_data.source # only for spectrogram feature
+#         # update observation point
+#         obs_sources = deepcopy(subset_sources)
+#         kernel = np.zeros((freq_data.block_size, 1))
+#         kernel[0] = 1
+#         ref = ac.MicGeom(mpos_tot=source_steer.ref[:,np.newaxis])
+#         for i, src in enumerate(obs_sources):
+#             src.mics = ref
+#             #src.kernel = np.fft.irfft(tf[:,-1][:,np.newaxis],axis=0)
+#             src.kernel = kernel
+#             # src.kernel = rir[i,-1][np.newaxis].T
+#         fft_ref_spectra.source = ac.SourceMixer(sources=obs_sources)
+#         return {}
+
+#     @staticmethod
+#     def calc_analytic_prepare_func(sampler, beamformer):
+#         micgeom_sampler = sampler.get(1)
+#         seed_sampler = sampler.get(2)
+#         rms_sampler = sampler.get(3)
+#         loc_sampler = sampler.get(4)
+#         noise_sampler = sampler.get(5)
+#         signal_length_sampler = sampler.get(6)
+
+#         freq_data = beamformer.freq_data
+
+#         if micgeom_sampler is not None:
+#             noisy_mics = micgeom_sampler.target
+#         else:
+#             noisy_mics = beamformer.steer.mics # use the original mics (without noise)
+
+#         if signal_length_sampler is not None:
+#             freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
+
+#         nfft = freq_data.fftfreq().shape[0]
+#         nummics = beamformer.steer.mics.num_mics
+#         # sample parameters
+#         loc = loc_sampler.target
+#         nsources = loc.shape[1]
+#         freq_data.transfer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
+#         freq_data.transfer.mics = noisy_mics # set mic locations
+#         freq_data.seed=seed_sampler.target
+#         # change source strength
+#         prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
+#         prms_sq_per_freq = prms_sq / nfft #prms_sq_per_freq
+#         freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
+#         # add noise to freq_data
+#         if noise_sampler is not None:
+#             noise_signal_ratio = noise_sampler.target # normalized noise variance
+#             noise_prms_sq = prms_sq.sum()*noise_signal_ratio
+#             noise_prms_sq_per_freq = noise_prms_sq / nfft
+#             nperf = np.diag(np.array([noise_prms_sq_per_freq]*nummics))
+#             freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
+#         else:
+#             freq_data.noise = None
+#         # calculate the transfer function
+#         transfer = np.empty((nfft, nummics,nsources), dtype=complex)
+#         rir = DatasetSyntheticReverbConfig._get_rir(sampler, beamformer)
+#         for i in range(nsources):
+#             tf = blockwise_transfer(rir[i], freq_data.block_size).T
+#             #transfer[:,:,i] = tf[:,:-1] / tf[:,-1][:,np.newaxis] # reference mic based normalization
+#             transfer[:,:,i] = tf[:,:-1]
+#         freq_data.custom_transfer = transfer
+#         return {}
 
 
 
-class DatasetSyntheticReverb(DatasetSynthetic):
 
-    def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
-                snap_to_grid=False, random_signal_length=False, signal_length=5, fs=13720., min_nsources=1,
-                max_nsources=10, tasks=1, logger=None, config=None):
-        if config is None:
-            config = DatasetSyntheticReverbConfig(
-                mode=mode, signal_length=signal_length, fs=fs,
-                min_nsources=min_nsources, max_nsources=max_nsources,
-                mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
-                snap_to_grid=snap_to_grid, random_signal_length=random_signal_length)
-        super().__init__(tasks=tasks, logger=logger, config=config)
+
+
+# class DatasetSyntheticReverb(DatasetSynthetic):
+
+#     def __init__(self, mode="welch", mic_pos_noise=True, mic_sig_noise=True,
+#                 snap_to_grid=False, random_signal_length=False, signal_length=5, fs=13720., min_nsources=1,
+#                 max_nsources=10, tasks=1, logger=None, config=None):
+#         if config is None:
+#             config = DatasetSyntheticReverbConfig(
+#                 mode=mode, signal_length=signal_length, fs=fs,
+#                 min_nsources=min_nsources, max_nsources=max_nsources,
+#                 mic_pos_noise=mic_pos_noise, mic_sig_noise=mic_sig_noise,
+#                 snap_to_grid=snap_to_grid, random_signal_length=random_signal_length)
+#         super().__init__(tasks=tasks, logger=logger, config=config)
 
 
 

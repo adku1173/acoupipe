@@ -233,9 +233,10 @@ def set_pipeline_seeds(pipeline,start_idx,size,dataset="training"):
     elif dataset == "test":
         off = int(1e21)
     soff = int(1e7) # offset to ensure that seeds of sampler object doesn't match
-    pipeline.random_seeds = {i : range(off+(i*soff)+start_idx, off+(i*soff)+size+start_idx) for i in list(pipeline.sampler.keys())}
-
-
+    if len(pipeline.sampler) > 0:
+        pipeline.random_seeds = {i : range(off+(i*soff)+start_idx, off+(i*soff)+size+start_idx) for i in list(pipeline.sampler.keys())}
+    else:
+        pipeline.numsamples = size
 
 def set_filename(writer,path=".",*args):
     """Set the filename of the dataset.
@@ -369,7 +370,7 @@ def blockwise_transfer(ir,blocksize=None):
     Returns
     -------
     tf : ndarray, shape (n_channels, n_samples)
-        Power spectrum of the impulse response.
+        frequency spectrum of the impulse response.
     """
     n_channels, n_samples = ir.shape
     if blocksize is None:

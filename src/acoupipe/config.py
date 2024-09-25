@@ -1,6 +1,12 @@
 
-TF_FLAG = True
-try:
-    import tensorflow
-except ImportError:
-    TF_FLAG = False
+import importlib
+
+
+def _have_module(module_name):
+    spec = importlib.util.find_spec(module_name)
+    return spec is not None
+
+TF_FLAG = _have_module("tensorflow")
+PYROOMACOUSTICS = _have_module("pyroomacoustics")
+GPURIR = _have_module("gpuRIR")
+

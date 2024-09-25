@@ -63,9 +63,8 @@ import os
 from functools import wraps
 from time import time
 
-import ray
 import numpy as np
-from numpy import array
+import ray
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
 from traits.api import Callable, Dict, Either, HasPrivateTraits, Instance, Int, Property, Tuple
@@ -252,7 +251,7 @@ class BasePipeline(DataGenerator):
                 nargs = len(inspect.signature(self.features[0]).parameters)
                 if nargs == 0:
                     raise ValueError(
-                        "feature functions at must accept at least one argument in order to pass a list of sampler objects!" 
+                        "feature functions at must accept at least one argument in order to pass a list of sampler objects!"
                         " E.g. lambda sampler: {...}")
                 elif nargs > 1 and len(self.features[1:]) == nargs:
                     raise ValueError(
@@ -264,7 +263,7 @@ class BasePipeline(DataGenerator):
             nargs = len(inspect.signature(self.features).parameters)
             if nargs == 0:
                 raise ValueError(
-                    "feature functions at must accept at least one argument in order to pass a list of sampler objects!" 
+                    "feature functions at must accept at least one argument in order to pass a list of sampler objects!"
                     " E.g. lambda sampler: {...}")
 
 

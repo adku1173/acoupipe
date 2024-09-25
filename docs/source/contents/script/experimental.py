@@ -12,7 +12,7 @@ fig.suptitle(f"Sourcemap ($f={f}$ Hz)", fontsize=12)
 
 for i, scenario in enumerate(["A1", "A2", "R2"]):
 
-    dataset = DatasetMIRACLE(scenario=scenario, mode="wishart")
+    dataset = DatasetMIRACLE(scenario=scenario, mode="welch")
     data_generator = dataset.generate(features=["sourcemap","loc", "f"],
                                         split="training", size=1, f=[f], num=0, start_idx=1)
     data_sample = next(data_generator)

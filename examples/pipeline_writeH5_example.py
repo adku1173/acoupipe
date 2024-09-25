@@ -18,7 +18,7 @@ from acoupipe.writer import WriteH5Dataset
 
    # float_list_feature, float_feature, int64_feature #WriteTFRecord
 
-####################global###################### 
+####################global######################
 acoular.config.h5library = "h5py"
 acoular.config.global_caching = "none"
 DATASET_NAME = "example_hdfdata_format.h5"
@@ -33,8 +33,8 @@ rayleigh_dist = scipy.stats.rayleigh(scale=5.)
 wn = acoular.WNoiseGenerator(sample_freq=51200,seed=10, rms=1.0, numsamples=51200)
 
 # create sampler object to sample rms value with rayleigh distribution
-rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist, 
-                                       target=[wn], 
+rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist,
+                                       target=[wn],
                                        attribute="rms",
                                        random_state=rng)
 
@@ -59,18 +59,18 @@ pipeline = BasePipeline(sampler={1: rms_sampling},
                         numsamples = 1,
                         features=(extract_features, bb, wn))
 
-#%% save data to file 
+#%% save data to file
 
 # One can write the data to multiple files by chaining multiple Writer Objects
 
-# create some additional meta data 
+# create some additional meta data
 metadata = {"sample_freq": 51200,
             "freq" : 1000,
             "bandwidth" : "octave",
             "block_size" : 128 }
 
 #create TFRecordWriter to save pipeline output to TFRecord File
-writer_sourcemap = WriteH5Dataset(source=pipeline, 
+writer_sourcemap = WriteH5Dataset(source=pipeline,
                         name="sourcemap_"+DATASET_NAME,
                         features=["sourcemap", "rms"],
                         metadata=metadata)
@@ -108,7 +108,7 @@ except ImportError:
 DATASET_NAME = "test_hdfdata_format.tfrecord"
 
 #create TFRecordWriter to save pipeline output to TFRecord File
-writer_sourcemap = WriteTFRecord(source=pipeline, 
+writer_sourcemap = WriteTFRecord(source=pipeline,
                         name="sourcemap_"+DATASET_NAME,
                         encoder_funcs={"sourcemap":float_list_feature})
 

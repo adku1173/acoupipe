@@ -6,16 +6,24 @@ from pathlib import Path
 
 import acoular as ac
 import numpy as np
+import pytest
 import tensorflow as tf
 from parameterized import parameterized
 
 from acoupipe.datasets.experimental import DatasetMIRACLE
-from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
+from acoupipe.datasets.synthetic import DatasetSynthetic
 
 IMPLEMENTED_FEATURES = ["time_data","csm","csmtriu","sourcemap","eigmode", "spectrogram"] + [
     "seeds", "idx","loc","source_strength_analytic", "source_strength_estimated", "noise_strength_analytic",
     "noise_strength_estimated","f","num","targetmap_analytic", "targetmap_estimated"]
 TEST_SIGNAL_LENGTH = 0.5
+TEST_MICS = ac.MicGeom(mpos_tot=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
+         [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
+         [ 0.32909911,  0.56201909, -0.24697204, -0.68677001]]))
+
+ap = TEST_MICS.aperture
+TEST_GRID = ac.RectGrid(y_min=-0.5*ap, y_max=0.5*ap, x_min=-0.5*ap, x_max=0.5*ap,
+                                     z=0.5*ap, increment=1/5*ap)
 
 
 dirpath = Path(__file__).parent.absolute()
@@ -36,8 +44,7 @@ class TestDatasetSynthetic(unittest.TestCase):
     def create_dataset(full=False, tasks=1, **kwargs):
         if full:
             return DatasetSynthetic(tasks=tasks,**kwargs)
-        config = DatasetSyntheticTestConfig(**kwargs)
-        return DatasetSynthetic(config=config,tasks=tasks,**kwargs)
+        return DatasetSynthetic(mics=TEST_MICS, grid=TEST_GRID, tasks=tasks,**kwargs)
 
     def tearDown(self):
         #print(f"Removing {self.test_dir}")
@@ -153,32 +160,32 @@ class TestDatasetSynthetic(unittest.TestCase):
                     name=self.test_dir / "test.h5", progress_bar=False)
 
 
-    @parameterized.expand(modes)
-    def test_get_feature_shapes(self, mode):
-        """Test if the output of the get_feature_shapes method is matches with the generated shapes.
+    # @parameterized.expand(modes) # TODO: should move to feature tests
+    # def test_get_feature_shapes(self, mode):
+    #     """Test if the output of the get_feature_shapes method is matches with the generated shapes.
 
-        This test consideres a fixed number of sources (varying numbers result in None type shapes, which
-        cannot be compared with the generated shapes). Vaying source numbers are implicitly tested in the
-        test_get_tf_dataset method.
-        """
-        for feature in IMPLEMENTED_FEATURES:
-            for num in [0,3]:
-                for f in [None, 1000, [1000,2000]]:
-                    if num == 3 and f is None:
-                        continue
-                    with self.subTest(f"feature={feature}, f={f}, num={num}"):
-                        if mode == "analytic" and "_estimated" in feature:
-                            continue
-                        if mode != "welch" and feature in ["spectrogram","time_data"]:
-                            continue
-                        dataset = self.create_dataset(mode)
-                        data = next(dataset.generate(f=f, num=num, features=[feature],
-                                                split="training", size=1, progress_bar=False))
-                        feature_collection = dataset.get_feature_collection(features=[feature],f=f,num=num)
-                        desired_shape = feature_collection.feature_tf_shape_mapper[feature]
-                        for i in range(len(desired_shape)):
-                            if desired_shape[i] is not None:
-                                self.assertEqual(desired_shape[i], data[feature].shape[i])
+    #     This test consideres a fixed number of sources (varying numbers result in None type shapes, which
+    #     cannot be compared with the generated shapes). Vaying source numbers are implicitly tested in the
+    #     test_get_tf_dataset method.
+    #     """
+    #     for feature in IMPLEMENTED_FEATURES:
+    #         for num in [0,3]:
+    #             for f in [None, 1000, [1000,2000]]:
+    #                 if num == 3 and f is None:
+    #                     continue
+    #                 with self.subTest(f"feature={feature}, f={f}, num={num}"):
+    #                     if mode == "analytic" and "_estimated" in feature:
+    #                         continue
+    #                     if mode != "welch" and feature in ["spectrogram","time_data"]:
+    #                         continue
+    #                     dataset = self.create_dataset(mode)
+    #                     data = next(dataset.generate(f=f, num=num, features=[feature],
+    #                                             split="training", size=1, progress_bar=False))
+    #                     feature_collection = dataset.get_feature_collection(features=[feature],f=f,num=num)
+    #                     desired_shape = feature_collection.feature_tf_shape_mapper[feature]
+    #                     for i in range(len(desired_shape)):
+    #                         if desired_shape[i] is not None:
+    #                             self.assertEqual(desired_shape[i], data[feature].shape[i])
 
     @parameterized.expand(modes)
     def test_get_tf_dataset(self,mode):
@@ -195,7 +202,7 @@ class TestDatasetSynthetic(unittest.TestCase):
                             if mode != "welch" and feature in ["spectrogram","time_data"]:
                                 continue
                             dataset = self.create_dataset(
-                                mode,mic_sig_noise=mic_sig_noise)
+                                mode=mode, mic_sig_noise=mic_sig_noise)
                             dataset = dataset.get_tf_dataset(split="training", size=1, progress_bar=False,
                              f=f, num=num, features=[feature],)
                             data = next(iter(dataset))
@@ -212,7 +219,7 @@ class TestDatasetSynthetic(unittest.TestCase):
                 features=["csm","noise_strength_estimated","noise_strength_analytic"],)
                 data = next(gen)
                 self.assertIn("csm", data.keys())
-                if dataset.config.mic_sig_noise is not False:
+                if dataset.config.sampler_setup.mic_sig_noise is not False:
                     if mode != "analytic":
                         self.assertGreater(data["noise_strength_estimated"].sum(), 0)
                     self.assertGreater(data["noise_strength_analytic"].sum(), 0)
@@ -231,7 +238,7 @@ class TestDatasetSynthetic(unittest.TestCase):
                         continue
                     with self.subTest(f"f={f}, num={num}, mic_sig_noise={mic_sig_noise}"):
                         dataset = self.create_dataset(full=True, mode=mode,
-                             mic_sig_noise=mic_sig_noise,mic_pos_noise=False)
+                             mic_sig_noise=mic_sig_noise, mic_pos_noise=False)
                         gen = dataset.generate(
                             f=f, num=num, features=features,
                             split="training", size=1, progress_bar=False)
@@ -257,8 +264,7 @@ class TestDatasetSynthetic(unittest.TestCase):
             with self.subTest(f"f={f}, num={num}"):
                 dataset = self.create_dataset(full=False, mode=mode,
                         mic_sig_noise=False,mic_pos_noise=False,
-                        max_nsources=1, snap_to_grid=True)
-                dataset.config.fft_params["block_size"] = 512
+                        max_nsources=1, snap_to_grid=True, block_size=512)
                 gen = dataset.generate(
                     f=f, num=num, features=features,
                     split="training", size=1, progress_bar=False)
@@ -276,8 +282,7 @@ class TestDatasetSynthetic(unittest.TestCase):
         with self.subTest(f"f={f}, num={num}"):
             dataset = self.create_dataset(full=True, mode=mode,
                     mic_sig_noise=False,mic_pos_noise=False,
-                    max_nsources=1, snap_to_grid=True)
-            dataset.config.fft_params["block_size"] = 512
+                    max_nsources=1, snap_to_grid=True, block_size=512)
             gen = dataset.generate(
                 f=f, num=num, features=features,
                 split="training", size=1, progress_bar=False)
@@ -346,8 +351,9 @@ class TestMIRACLEDataset(unittest.TestCase):
                     source_stength_estimated = ac.L_p(data["source_strength_estimated"].max())
                     np.testing.assert_allclose(sourcemap_max,source_stength_estimated,atol=3e0)
 
-    @parameterized.expand(modes)
-    def test_values_correct(self,mode):
+    #@parameterized.expand([(m,f) for m in modes for f in IMPLEMENTED_FEATURES])
+    @pytest.mark.parametrize("mode, feature", [(m,f) for m in modes for f in IMPLEMENTED_FEATURES])
+    def test_values_correct(self,mode, feature):
         """Test generate method of the datasets in single task mode."""
         for feature in IMPLEMENTED_FEATURES:
             if mode == "analytic" and "_estimated" in feature:

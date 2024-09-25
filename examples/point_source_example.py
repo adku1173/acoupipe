@@ -9,8 +9,8 @@ from acoupipe.sampler import NumericAttributeSampler, PointSourceSampler, Source
 acoular.config.global_caching = "none"
 
 rng1 = np.random.RandomState(1) # scipy listens to numpy random seed (when scipy seed is None)
-rng2 = np.random.RandomState(2) # 
-rng3 = np.random.RandomState(3) # 
+rng2 = np.random.RandomState(2) #
+rng3 = np.random.RandomState(3) #
 
 z = .5 # distance between array and source plane
 
@@ -39,8 +39,8 @@ bb = acoular.BeamformerBase( freq_data=ps, steer=st)
 
 
 # create sampler object to sample rms value with rayleigh distribution
-rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist, 
-                                       target=wn_list, 
+rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist,
+                                       target=wn_list,
                                        attribute="rms",
                                        random_state=rng1)
 

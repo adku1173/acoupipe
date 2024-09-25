@@ -1,202 +1,138 @@
 
 from copy import deepcopy
-from functools import partial
+from pathlib import Path
 
 import acoular as ac
+import h5py as h5
 import numpy as np
-from scipy.stats import norm, poisson
-from traits.api import (
-    Any,
-    Bool,
-    CArray,
-    Enum,
-    Float,
-    HasPrivateTraits,
-    HasTraits,
-    Instance,
-    Int,
-    Property,
-    ReadOnly,
-    Str,
-    cached_property,
-    observe,
-)
+from traits.api import Bool, DelegatesTo, Either, Enum, Float, HasTraits, Instance, Int, List, Property, Str, cached_property, observe
 
 import acoupipe.sampler as sp
-from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
+from acoupipe.datasets.utils import get_all_source_signals
 
 
-def create_default_grid():
-    return ac.RectGrid(y_min=-0.5, y_max=0.5, x_min=-0.5, x_max=0.5,z=0.5, increment=1/63)
-
-class MsmSetupBase(HasPrivateTraits):
+class MsmSetupBase(HasTraits):
     """Base class defining the virtual measurement setup.
 
     The objects are created lazily, i.e. only when they are accessed.
     """
 
-    env = Instance(ac.Environment, args=(), desc="environment configuration") # created lazy!
-    mics = Instance(ac.MicGeom, kw={"mpos_tot":tub_vogel64_ap1}, desc="microphone geometry configuration") # created lazy!
-    grid = Instance(
-        ac.Grid,factory=create_default_grid, desc="grid configuration")
-    source_grid = Instance(ac.Grid, desc="source grid configuration. Default is None.")
-    beamformer = Property(depends_on=["freq_data","steer"], desc="beamformer configuration")
-    freq_data = Property()
-    steer = Property()
+    env = Instance(ac.Environment, args=(), desc="environment configuration")
+    mics = Instance(ac.MicGeom, args=(), desc="microphone geometry configuration")
+    grid = Instance(ac.Grid, args=(), desc="grid configuration")
+    source_grid = Either(None, Instance(ac.Grid, desc="source grid configuration. Default is None."))
+    beamformer = Instance(ac.BeamformerBase, args=(), desc="beamformer configuration")
+    freq_data = Instance(ac.PowerSpectra, args=(), desc="frequency domain data configuration")
+    steer = Instance(ac.SteeringVector, args=(), desc="steering vector configuration")
 
-    #TODO: might it be better to put all this in the init of the config to set the default -> not really needed ??
-
-    # fast access attributes (can be used to set the values at multiple places without the need to access the object)
-    min_nsources = Int(1, desc="minimum number of sources")
-    max_nsources = Int(10, desc="maximum number of sources")
-    signal_length = Float(5.0, desc="signal length in seconds")
-    ref = CArray(dtype=float, shape=(3,), value=tub_vogel64_ap1[:,63], desc="reference point for steering vector calculation")
-    steer_type = Str("true level", desc="steering vector type")
-    fs = Int(13720, desc="sampling frequency")
-    block_size = Int(128, desc="block size for fft")
-    overlap = Str("50%", desc="overlap for fft")
-
-    _beamformer = Instance(ac.BeamformerBase,
-        kw={"precision":"float32", "cached":False, "r_diag":False}, desc="beamformer configuration")
-    _freq_data = Instance(ac.PowerSpectra(cached=False, precision="complex64"), desc="frequency domain data configuration")
-    _steer = Instance(ac.SteeringVector(), desc="steering vector configuration")
-
-    def _get_beamformer(self):
-        return self._beamformer
-
-    def _set_beamformer(self, beamformer):
-        self._beamformer = beamformer
-
-    def _get_freq_data(self):
-        return self._freq_data
-
-    def _get_steer(self):
-        return self._steer
-
-    @observe(["block_size","overlap"])
-    def _set_fft_params(self, event):
-        print("set fft params")
-        self.freq_data.block_size = self.block_size
-        self.freq_data.overlap = self.overlap
-
-    @observe(["grid","env", "mics","steer_type", "ref"])
-    def _set_steer(self, event):
-        print("set steer")
-        self.steer.ref = self.ref
-        self.steer.grid = self.grid
+    def build(self):
+        """Connect the related objects."""
         self.steer.env = self.env
+        self.steer.grid = self.grid
         self.steer.mics = self.mics
-        self.steer.steer_type = self.steer_type
-
-    @observe(["_beamformer"])
-    def _set_beamformer(self, event):
-        print("set beamformer")
-        self.beamformer.freq_data = self.freq_data
         self.beamformer.steer = self.steer
+        self.beamformer.freq_data = self.freq_data
 
 
-class SyntheticSetupWelch(MsmSetupBase):
+class MIRACLESetup(MsmSetupBase):
 
-    sources = Property()
-    mic_sig_noise_source = Property()
-    mic_sig_noise = Bool(True, desc="apply signal noise to microphone signals")
-    fft_spectra =  ReadOnly(ac.FFTSpectra(precision="complex64"),
-        desc="FFT spectra configuration (only for spectrogram feature)")
-    window = Str("Rectangular", desc="window function for fft")
-    _sources = Any()
-    _mic_sig_noise_source = Instance(ac.UncorrelatedNoiseSource, desc="noise source configuration")
-
-    @observe(["signal_length","fs"])
-    def _set_numsamples(self, event):
-        for source in self.sources:
-            source.signal.numsamples = int(self.fs*self.signal_length)
-        if self.mic_sig_noise:
-            self.mic_sig_noise_source.signal.numsamples = int(self.fs*self.signal_length)
-
-    @observe(["grid","env", "mics","steer_type", "ref"])
-    def _set_steer(self, event):
-        self.steer.ref = self.ref
-        self.steer.grid = self.grid
-        self.steer.env = self.env
-        self.steer.mics = self.mics
-        self.steer.steer_type = self.steer_type
-
-    @observe(["block_size","overlap", "window"])
-    def _set_fft_params(self, event):
-        self.freq_data.block_size = self.block_size
-        self.freq_data.overlap = self.overlap
-        self.freq_data.window = self.window
-        self.fft_spectra.block_size = self.block_size
-        self.fft_spectra.overlap = self.overlap
-        self.fft_spectra.window = self.window
-
-    def _set_sources(self, sources):
-        self._sources = sources
-
-    def _set_mic_sig_noise_source(self, mic_noise_source):
-        self._mic_noise_source = mic_noise_source
+    filename = Either(Instance(Path), Str, None)
+    env = Property(depends_on="filename")
+    mics = Property(depends_on="filename")
 
     @cached_property
-    def _get_mic_sig_noise_source(self):
-        if not self._mic_noise_source and self.mic_sig_noise:
-            self._mic_noise_source = ac.UncorrelatedNoiseSource(
-                signal = ac.WNoiseGenerator(
-                    seed = 1000,
-                    sample_freq = self.fs,
-                    numsamples = int(self.fs*self.signal_length),
-                    ),
-                mics = self.mics
-                )
-        return self._mic_noise_source
+    def _get_mics(self):
+        with h5.File(self.filename, "r") as file:
+            mpos_tot = file["data/location/receiver"][()].T
+        return ac.MicGeom(mpos_tot = mpos_tot)
 
     @cached_property
-    def _get_sources(self):
-        if not self._sources:
-            sources = []
-            for i in range(self.max_nsources):
-                sources.append(
-                    ac.PointSource(signal = ac.WNoiseGenerator(
-                            seed = i+1,
-                            sample_freq = self.fs,
-                            numsamples = int(self.fs*self.signal_length),
-                            ),
-                            env = self.env,
-                            mics = self.mics,
-                            )
-                    )
-            if self.mic_sig_noise:
-                sources.append(self.mic_sig_noise_source)
-            self._sources = sources
-        return self._sources
+    def create_env(self):
+        with h5.File(self.filename, "r") as file:
+            c = np.mean(file["metadata/c0"][()])
+        return ac.Environment(c=c)
 
 
-class SyntheticSetupAnalytic(MsmSetupBase):
+class SyntheticSetup(MsmSetupBase):
+    signal_length = Float(desc="signal length in seconds")
+    fs = DelegatesTo("freq_data", prefix="sample_freq", desc="sampling frequency")
+    c = DelegatesTo("env", prefix="c", desc="Speed of sound in m/s.")
+    ref = DelegatesTo("steer", prefix="ref", desc="reference point for steering vector calculation")
+    block_size = DelegatesTo("freq_data", prefix="block_size", desc="block size for fft")
+    overlap = DelegatesTo("freq_data", prefix="overlap", desc="overlap for fft")
 
-    freq_data = ReadOnly(PowerSpectraAnalytic(precision="complex64"), desc="frequency domain data configuration")
-    mode = Enum("wishart", "analytic", default="wishart", desc="mode for frequency domain data generation")
 
-    @observe("mode")
-    def _set_mode(self, event):
-        self.freq_data.mode = self.mode
+class SyntheticSetupAnalytic(SyntheticSetup):
 
-    @observe(["signal_length","fs"])
+    freq_data = Instance(PowerSpectraAnalytic, args=(), desc="frequency domain data configuration")
+    mode = DelegatesTo("freq_data", prefix="mode", desc="mode for frequency domain data generation")
+
+    @observe(["freq_data.numsamples"])
+    def _set_signal_length(self, event):
+        self.signal_length = int(self.freq_data.numsamples/self.freq_data.sample_freq)
+
+    @observe(["signal_length", "fs"])
     def _set_numsamples(self, event):
         self.freq_data.numsamples = int(self.fs*self.signal_length)
 
-    @observe(["grid","env", "mics","steer_type", "ref"])
-    def _set_steer(self, event):
-        self.steer.ref = self.ref
-        self.steer.grid = self.grid
+    def build(self):
+        """Connect the related objects."""
         self.steer.env = self.env
+        self.steer.grid = self.grid
         self.steer.mics = self.mics
-        self.steer.steer_type = self.steer_type
+        #self.freq_data.steer = deepcopy(self.steer)
+        self.beamformer.steer = self.steer
+        self.beamformer.freq_data = self.freq_data
 
-    @observe(["block_size","overlap","fs"])
-    def _set_fft_params(self, event):
-        self.freq_data.block_size = self.block_size
-        self.freq_data.overlap = self.overlap
-        self.freq_data.sample_freq = self.fs
+
+class SyntheticSetupWelch(SyntheticSetup):
+
+    time_data = Instance(ac.SourceMixer, args=(), desc="object holding the time domain data")
+    sources = List(Instance(ac.PointSource), desc="list of point sources")
+    noise = Instance(ac.UncorrelatedNoiseSource, desc="noise source configuration")
+    fs = Property(desc="sampling frequency")
+    window = DelegatesTo("freq_data", prefix="window", desc="window function for fft")
+    mode = Enum("welch", desc="mode for frequency domain data generation")
+    _fs = Float(desc="sampling frequency")
+
+    def build(self):
+        """Connect the related objects."""
+        self.time_data.sources = self.sources + [self.noise]
+        self.steer.env = self.env
+        self.steer.grid = self.grid
+        self.steer.mics = self.mics
+        self.freq_data.source = self.time_data
+        self.beamformer.steer = self.steer
+        self.beamformer.freq_data = self.freq_data
+
+    @observe(["freq_data.source.numsamples"])
+    def _set_signal_length(self, event):
+        self.signal_length = int(self.freq_data.source.numsamples/self.freq_data.sample_freq)
+
+    @observe(["signal_length", "fs"])
+    def _set_numsamples(self, event):
+        signals = get_all_source_signals(source_list=self.sources + [self.noise])
+        for signal in signals:
+            signal.numsamples = int(self.fs*self.signal_length)
+
+    def _set_fs(self, fs):
+        self._fs = fs
+        signals = get_all_source_signals(source_list=self.sources + [self.noise])
+        for signal in signals:
+            signal.sample_freq = self._fs
+
+    def _get_fs(self):
+        signals = get_all_source_signals(source_list=self.sources + [self.noise])
+        all_fs = [signal.sample_freq for signal in signals]
+        if len(set(all_fs)) == 1:
+            fs = all_fs[0]
+            if self._fs != fs:
+                self._fs = fs
+        else:
+            raise ValueError("Sampling frequency of all signals has to be the same.")
+        return self._fs
+
 
 
 class SamplerSetupBase(HasTraits):
@@ -228,20 +164,8 @@ class SamplerSetupBase(HasTraits):
         sampler = {}
         return sampler
 
-def sample_mic_noise_variance(rng):
-    """Draw microphone noise variance, uniform distribution."""
-    return rng.uniform(10e-6,0.1)
-
-def sample_rms(nsources, rng):
-    """Draw sources' squared rms pressures from Rayleigh distribution."""
-    return np.sqrt(rng.rayleigh(5,nsources))
-
-def sample_signal_length(rng):
-    return rng.uniform(1,10)
 
 class SyntheticSamplerSetup(SamplerSetupBase):
-    #TODO: can the sampler be created in the __init__ method? -> deepcopy in get_sampler?
-    # this would enable the user to make changes to the sampler after the setup has been created
     """The sampler setup for synthetic data generation.
 
     Parameters
@@ -257,7 +181,7 @@ class SyntheticSamplerSetup(SamplerSetupBase):
     snap_to_grid : bool
         Snap sampled source locations to source grid. Default is :code:`False`.
     random_signal_length : bool
-        Randomize signal length (uniformly sampled signal length [1s,10s]). Default is :code:`False`.        
+        Randomize signal length (uniformly sampled signal length [1s,10s]). Default is :code:`False`.
     nsources_random_var : scipy.stats.rv_continuous
         Random variable for the number of sources sampler. Default is Poisson distribution.
     location_random_var : tuple of scipy.stats.rv_continuous
@@ -272,80 +196,72 @@ class SyntheticSamplerSetup(SamplerSetupBase):
         Random variable for the signal length sampler. Default is :func:`sample_signal_length`.
     """
 
-    mic_pos_noise = Bool(True, desc="apply positional noise to microphone geometry")
+    min_nsources = Either(None, Int, desc="minimum number of sources")
+    max_nsources = Either(None, Int, desc="maximum number of sources")
+    # positional noise to microphone geometry
+    mic_pos_noise = Bool(True, desc="apply positional noise to microphone arrangement")
+    mic_pos_sampler = Instance(sp.MicGeomSampler, desc="sampler for microphone geometry noise")
+    mic_pos_random_var = DelegatesTo("mic_pos_sampler", prefix="random_var", desc="random variable for the microphone geometry noise sampler")
+    mic_pos_ddir = DelegatesTo("mic_pos_sampler", prefix="ddir", desc="deviation direction for the microphone geometry noise sampler")
+    # source location sampling
+    loc_sampler = Instance(sp.LocationSampler, desc="sampler for source location")
+    loc_random_var = DelegatesTo("loc_sampler", prefix="random_var", desc="random variable for the location sampler")
+    snap_to_grid = Bool(False, desc="snap source locations to source_grid of measurement setup")
+    # number of sources sampling
+    nsources_sampler = Instance(sp.NumericAttributeSampler, desc="sampler for the number of sources")
+    nsources_random_var = DelegatesTo("nsources_sampler", prefix="random_var", desc="random variable for the number of sources sampler")
+    # source strength sampling
+    strength_sampler = Instance(sp.ContainerSampler, desc="sampler for the source strength")
+    strength_random_func = DelegatesTo("strength_sampler", prefix="random_func", desc="random variable for the source strength sampler")
+    # microphone noise variance sampling
     mic_sig_noise = Bool(True, desc="apply signal noise to microphone signals")
-    snap_to_grid = Bool(False, desc="snap source locations to grid of measurement setup")
+    mic_sig_noise_sampler = Instance(sp.ContainerSampler, desc="sampler for the microphone noise variance")
+    mic_sig_noise_random_func = DelegatesTo("mic_sig_noise_sampler", prefix="random_func", desc="random variable for the microphone noise variance sampler")
+    # signal length sampling
     random_signal_length = Bool(False, desc="randomize signal length")
-    nsources_random_var = Any(poisson(mu=3, loc=1), desc="random variable for the number of sources sampler")
-    location_random_var = Any((norm(0,0.1688),norm(0,0.1688),norm(0.5,0)), desc="random variable for the location sampler")
-    mic_pos_random_var = Any(norm(loc=0, scale=0.001), desc="random variable for the microphone geometry noise sampler")
-    mic_sig_random_var = Any(sample_mic_noise_variance, desc="callable random variable for the microphone signal noise sampler")
-    strenght_random_var = Any(sample_rms, desc="callable random variable for the source strength sampler")
-    signal_length_random_var = Any(sample_signal_length, desc="callable random variable for the signal length sampler")
+    signal_length_sampler = Instance(sp.ContainerSampler, desc="sampler for the signal length")
+    signal_length_random_func = DelegatesTo("signal_length_sampler", prefix="random_func", desc="random variable for the signal length sampler")
+    # seed sampling
+    seed_sampler = Instance(sp.ContainerSampler, desc="sampler for the signal seed")
+    seed_random_func = DelegatesTo("seed_sampler", prefix="random_func", desc="random variable for the signal seed sampler")
 
     def _get_numsampler(self):
-        numsampler = 3
-        if self.mic_pos_noise:
-            numsampler += 1
-        if self.mic_sig_noise:
-            numsampler += 1
-        if self.random_signal_length:
-            numsampler += 1
-        if self.msm_setup.max_nsources != self.msm_setup.min_nsources:
-            numsampler += 1
-        return numsampler
+        return len(self.get_sampler())
 
-    def _create_signal_length_sampler(self):
-        return sp.ContainerSampler(
-            random_func = self.signal_length_random_var)
+    @observe(["msm_setup.mics","mic_pos_sampler"])
+    def _set_mics(self, event):
+        if self.mic_pos_sampler is not None:
+            self.mic_pos_sampler.mpos_init = self.msm_setup.mics.mpos_tot
+            self.mic_pos_sampler.target = deepcopy(self.msm_setup.mics)
 
-    def _create_mic_noise_sampler(self):
-        return sp.ContainerSampler(
-            random_func = self.mic_sig_random_var)
+    @observe(["min_nsources","max_nsources","loc_sampler"])
+    def _set_nsources(self, event):
+        if (self.loc_sampler is not None) and (self.max_nsources is not None):
+            self.loc_sampler.nsources = self.max_nsources
+        if self.nsources_sampler is not None:
+            if self.max_nsources and self.min_nsources:
+                self.nsources_sampler.filter = lambda x: (x <= self.max_nsources) and (x >= self.min_nsources)
+            elif self.max_nsources:
+                self.nsources_sampler.filter = lambda x: x <= self.max_nsources
+            elif self.min_nsources:
+                self.nsources_sampler.filter = lambda x: x >= self.min_nsources
+            else:
+                self.nsources_sampler.filter = None
 
-    def _create_micgeom_sampler(self):
-        noisy_mics = deepcopy(self.msm_setup.mics)
-        return sp.MicGeomSampler(
-            random_var = self.mic_pos_random_var,
-            ddir = np.array([[1.0], [1.0], [0]]),
-            target = noisy_mics, # TODO: noisy mics public?
-            mpos_init = self.msm_setup.mics.mpos_tot,)
-
-    def _create_nsources_sampler(self, target):
-        return sp.NumericAttributeSampler(
-            random_var = self.nsources_random_var,
-            attribute = "nsources",
-            equal_value = True,
-            target=target,
-            filter=lambda x: (x <= self.msm_setup.max_nsources) and (
-                x >= self.msm_setup.min_nsources))
-
-    def _create_rms_sampler(self):
-        random_func = partial(self.strenght_random_var, self.msm_setup.max_nsources)
-        return sp.ContainerSampler(random_func = random_func)
-
-    def _create_signal_seed_sampler(self):
-        def sample_signal_seed(rng):
-            return int(rng.uniform(1,1e9))
-        return sp.ContainerSampler(
-            random_func = sample_signal_seed)
-
-    def _create_location_sampler(self):
-        if self.msm_setup.source_grid is None:
-            grid = self.msm_setup.grid
-        else:
-            grid = self.msm_setup.source_grid
-
-        location_sampler = sp.LocationSampler(
-            random_var = self.location_random_var,
-            x_bounds = (grid.gpos[0].min(),grid.gpos[0].max()), #TODO: automatically set bounds from grid
-            y_bounds = (grid.gpos[1].min(),grid.gpos[1].max()),
-            z_bounds = (grid.gpos[2].min(),grid.gpos[2].max()),
-            nsources = self.msm_setup.max_nsources,
-            )
+    @observe(["snap_to_grid","msm_setup.source_grid","msm_setup.grid","loc_sampler"])
+    def _set_snap_to_grid(self, event):
         if self.snap_to_grid:
-            location_sampler.grid = grid
-        return location_sampler
+            if self.msm_setup.source_grid is None:
+                grid = self.msm_setup.grid
+            else:
+                grid = self.msm_setup.source_grid
+            if self.loc_sampler is not None:
+                self.loc_sampler.grid = grid
+
+    @observe(["loc_sampler","nsources_sampler"])
+    def _set_target(self, event):
+        if self.nsources_sampler is not None:
+            self.nsources_sampler.target = [self.loc_sampler]
 
     def get_sampler(self):
         """Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
@@ -365,62 +281,61 @@ class SyntheticSamplerSetup(SamplerSetupBase):
         dict
             dictionary containing the sampler objects
         """
-        location_sampler = self._create_location_sampler()
         sampler = {
-            2 : self._create_signal_seed_sampler(),
-            3 : self._create_rms_sampler(),
-            4 : location_sampler,
+            2 : self.seed_sampler,
+            3 : self.strength_sampler,
+            4 : self.loc_sampler,
             }
-        if self.msm_setup.max_nsources != self.msm_setup.min_nsources:
-            sampler[0] = self._create_nsources_sampler(
-                target=[location_sampler])
+        if self.max_nsources != self.min_nsources:
+            sampler[0] = self.nsources_sampler
         if self.mic_pos_noise:
-            sampler[1] = self._create_micgeom_sampler()
+            sampler[1] = self.mic_pos_sampler
         if self.mic_sig_noise:
-            sampler[5] = self._create_mic_noise_sampler()
+            sampler[5] = self.mic_sig_noise_sampler
         if self.random_signal_length:
-            sampler[6] = self._create_signal_length_sampler()
+            sampler[6] = self.signal_length_sampler
         return sampler
 
 
+class ISMSamplerSetup(SyntheticSamplerSetup):
 
-if __name__ == "__main__":
+    room_size_sampler = Instance(sp.ContainerSampler, desc="sampler for the room size")
+    absoption_coeff_sampler = Instance(sp.ContainerSampler, desc="samples pyroomacoustics rooms (e.g. ShoeBox rooms)")
+    room_placement_sampler = Instance(sp.ContainerSampler,
+        desc="the relative position of the source-microphone array center in the room")
 
-    import numpy as np
+    def get_sampler(self):
+        """Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
 
-    from acoupipe.pipeline import BasePipeline, DistributedPipeline
+        this function has to be manually defined in a dataset subclass.
+        It includes the sampler objects as values. The key defines the idx in the sample order.
 
-    s = MsmSetupBase()
-    p = BasePipeline(numsamples=1, sampler={0: np.random.RandomState(1)}, features=(lambda sampler, s: {"setup" : s}, s))
-    res = next(p.get_data())
-    print(res["setup"], s)
+        e.g.:
+        >>> sampler = {
+        >>>     0 : BaseSampler(...),
+        >>>     1 : BaseSampler(...),
+        >>>     ...
+        >>> }
 
-    # p2 = DistributedPipeline(numworkers=2, numsamples=1, sampler={0: np.random.RandomState(1)}, features=lambda sampler: {"setup" : MsmSetupBase()})
-    # res = next(p2.get_data())
-
-    s = MsmSetupBase()
-    s._rtest = 2
-    #import ray
-    #s_ref = ray.put(s) # serialize the object
-    s_ref = s
-    # The object must be explicitly freed by calling ray._private.internal_api.free(obj_ref). !!!!
-
-    func = (lambda sampler, s: {"setup" : id(s)}, s_ref)
-    #func = partial(lambda sampler, s: {"setup" : s}, s_ref)
-    p3 = DistributedPipeline(numworkers=6, numsamples=10, sampler={0: np.random.RandomState(1)},
-                features=func)
-
-    # measure time
-    import time
-    test_value = []
-    for i, res in enumerate(p3.get_data()):
-        test_value.append(res["setup"])
-        if i == p3.numworkers:
-            start = time.time()
-    print(time.time()-start)
-    print(set(test_value))
-
-    # res = next(p3.get_data())
-    # print(res["setup"], s)
-
-#    ray._private.internal_api.free(s_ref)
+        Returns
+        -------
+        dict
+            dictionary containing the sampler objects
+        """
+        sampler = {
+            2 : self.seed_sampler,
+            3 : self.strength_sampler,
+            4 : self.loc_sampler,
+            7 : self.room_size_sampler,
+            8 : self.absoption_coeff_sampler,
+            9 : self.room_placement_sampler,
+            }
+        if self.max_nsources != self.min_nsources:
+            sampler[0] = self.nsources_sampler
+        if self.mic_pos_noise:
+            sampler[1] = self.mic_pos_sampler
+        if self.mic_sig_noise:
+            sampler[5] = self.mic_sig_noise_sampler
+        if self.random_signal_length:
+            sampler[6] = self.signal_length_sampler
+        return sampler

@@ -360,6 +360,8 @@ class ContainerSampler(BaseSampler):
 
 class LocationSampler(BaseSampler):
 
+    #TODO: in some cases, the result is not the same if a grid is used (in some cases leads to resampling and in other it does not)
+
     #: locations
     target = CArray(
         desc="array with source locations")
