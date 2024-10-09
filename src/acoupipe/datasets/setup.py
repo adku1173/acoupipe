@@ -164,6 +164,35 @@ class SamplerSetupBase(HasTraits):
         sampler = {}
         return sampler
 
+    def set_pipeline_seeds(self, pipeline, start_idx, size, dataset="training"):
+        """Create the random seed list for each of the sampler objects that is held by the pipeline object.
+
+        Parameters
+        ----------
+        pipeline : instance of class BasePipeline
+            the pipeline object holding the sampler classes
+        start_idx : int
+            start index to be calculated by the pipeline
+        size : int
+            number of samples to be yielded by the pipeline
+        dataset : str, optional
+            the data set type, by default "training". Choose from ["training","validation"]
+        """
+        if dataset == "training":
+            off = 0
+        elif dataset == "validation":
+            # we assume that the training set will never be larger than 1e12 samples
+            off = int(1e12)  # a general offset to ensure that validation and training seeds never match
+        elif dataset == "test":
+            off = int(1e21)
+        soff = int(1e7)  # offset to ensure that seeds of sampler object doesn't match
+        if len(pipeline.sampler) > 0:
+            pipeline.random_seeds = {
+                i: range(off + (i * soff) + start_idx, off + (i * soff) + size + start_idx) for i in list(pipeline.sampler.keys())
+            }
+        else:
+            pipeline.numsamples = size
+
 
 class SyntheticSamplerSetup(SamplerSetupBase):
     """The sampler setup for synthetic data generation.
@@ -230,7 +259,7 @@ class SyntheticSamplerSetup(SamplerSetupBase):
 
     @observe(["msm_setup.mics","mic_pos_sampler"])
     def _set_mics(self, event):
-        if self.mic_pos_sampler is not None:
+        if self.mic_pos_sampler is not None and self.msm_setup is not None:
             self.mic_pos_sampler.mpos_init = self.msm_setup.mics.mpos_tot
             self.mic_pos_sampler.target = deepcopy(self.msm_setup.mics)
 
@@ -299,10 +328,52 @@ class SyntheticSamplerSetup(SamplerSetupBase):
 
 class ISMSamplerSetup(SyntheticSamplerSetup):
 
+    #: Number of rooms to simulate. Defaults to -1, which means infinite number rooms
+    #: if set to a positive integer, the number of rooms to simulate is limited to this number.
+    nrooms = Int(10, desc="Number of rooms to simulate. Defaults to -1, which means infinite number rooms")
+    precalc = Bool(False, desc="Pre-calculate the room impulse responses / transfer functions.")
+    snap_to_grid = Bool(True, desc="snap source locations to source_grid of measurement setup")
     room_size_sampler = Instance(sp.ContainerSampler, desc="sampler for the room size")
     absoption_coeff_sampler = Instance(sp.ContainerSampler, desc="samples pyroomacoustics rooms (e.g. ShoeBox rooms)")
     room_placement_sampler = Instance(sp.ContainerSampler,
         desc="the relative position of the source-microphone array center in the room")
+
+    def set_pipeline_seeds(self, pipeline, start_idx, size, dataset="training"):
+        """Create the random seed list for each of the sampler objects that is held by the pipeline object.
+
+        Parameters
+        ----------
+        pipeline : instance of class BasePipeline
+            the pipeline object holding the sampler classes
+        start_idx : int
+            start index to be calculated by the pipeline
+        size : int
+            number of samples to be yielded by the pipeline
+        dataset : str, optional
+            the data set type, by default "training". Choose from ["training","validation"]
+        """
+        if dataset == "training":
+            off = 0
+        elif dataset == "validation":
+            # we assume that the training set will never be larger than 1e12 samples
+            off = int(1e12)  # a general offset to ensure that validation and training seeds never match
+        elif dataset == "test":
+            off = int(1e21)
+        soff = int(1e7)  # offset to ensure that seeds of sampler object doesn't match
+        if len(pipeline.sampler) > 0:
+            pipeline.random_seeds = {
+                i: range(off + (i * soff) + start_idx, off + (i * soff) + size + start_idx) for i in list(pipeline.sampler.keys())
+            }
+        else:
+            if self.nrooms > 0:
+                # repeat the seeds for samplers sampling the room properties and microphone positions
+                sind = [1,7,8,9] if self.mic_pos_noise else [7,8,9]
+                _start_idx = start_idx % self.nrooms
+                pipeline.random_seeds.update({
+                    i: [
+                        off + (i * soff) + _start_idx + j % self.nrooms for j in range(size)] for i in sind
+                })
+            pipeline.numsamples = size
 
     def get_sampler(self):
         """Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.

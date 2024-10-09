@@ -41,7 +41,8 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.setup import SyntheticSamplerSetup, SyntheticSetup, SyntheticSetupAnalytic, SyntheticSetupWelch
-from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic, TransferMonopole
+from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
+from acoupipe.datasets.transfer import TransferMonopole
 
 
 class DatasetSynthetic(DatasetBase):
@@ -164,7 +165,7 @@ class DatasetSynthetic(DatasetBase):
                 Instance of acoular.Environment defining the environmental coditions,
                 i.e. the speed of sound.
             * mics : ac.MicGeom
-                Instance of acoular.MicGeom defining the microphone array geometry. 
+                Instance of acoular.MicGeom defining the microphone array geometry.
             * grid : ac.RectGrid
                 Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
             ... and all other parameters of the DatasetSyntheticConfig object.

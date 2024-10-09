@@ -9,7 +9,6 @@ from acoupipe.config import TF_FLAG
 from acoupipe.datasets.collection import BaseFeatureCollection, FeatureCollectionBuilder
 from acoupipe.datasets.features import Feature
 from acoupipe.datasets.setup import MsmSetupBase, SamplerSetupBase
-from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
 
@@ -215,7 +214,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
         pipeline.features = self.config.get_feature_collection(features, f, num).get_feature_funcs()
-        set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
         for data in pipeline.get_data(
             progress_bar=progress_bar, start_idx=start_idx):
             yield data
@@ -273,7 +272,7 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.features = self.config.get_feature_collection(features, f, num).get_feature_funcs()
-        set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteH5Dataset(name=name,
                        source=pipeline,
                        ).save(progress_bar, start_idx)  # start the calculation
@@ -339,7 +338,7 @@ if TF_FLAG:
         pipeline.sampler = self.config.get_sampler()
         feature_collection = self.config.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
-        set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteTFRecord(name=name, source=pipeline,
                       encoder_funcs=feature_collection.feature_tf_encoder_mapper).save(progress_bar, start_idx)
     DatasetBase.save_tfrecord = save_tfrecord
@@ -386,7 +385,7 @@ if TF_FLAG:
         pipeline.sampler = self.config.get_sampler()
         feature_collection = self.config.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
-        set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
         output_signature = feature_collection.get_output_signature(features + ["idx", "seeds"])
         return tf.data.Dataset.from_generator(
             partial(

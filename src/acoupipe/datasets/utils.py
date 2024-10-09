@@ -5,7 +5,7 @@ import acoular as ac
 import numpy as np
 import scipy.signal
 
-from acoupipe.config import TF_FLAG
+from acoupipe.config import PYROOMACOUSTICS, TF_FLAG
 from acoupipe.writer import WriteH5Dataset
 
 if TF_FLAG:
@@ -15,7 +15,6 @@ from datetime import datetime
 from os.path import join
 from warnings import warn
 
-import pyroomacoustics as pra
 from numpy import concatenate, imag, newaxis, real, searchsorted
 
 
@@ -42,24 +41,26 @@ def tqdm_hook(t):
 
     return update_to
 
+
 def _handle_log(fname):
-    logging.basicConfig(level=logging.INFO) # root logger
+    logging.basicConfig(level=logging.INFO)  # root logger
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    pipeline_log = logging.FileHandler(fname,mode="w") # log everything to file
-    pipeline_log.setFormatter(logging.Formatter(
-        "%(process)d-%(levelname)s-%(asctime)s.%(msecs)02d-%(message)s", datefmt="%Y-%m-%d,%H:%M:%S"))
-    logger.addHandler(pipeline_log) # attach handler to the root logger
+    pipeline_log = logging.FileHandler(fname, mode="w")  # log everything to file
+    pipeline_log.setFormatter(
+        logging.Formatter("%(process)d-%(levelname)s-%(asctime)s.%(msecs)02d-%(message)s", datefmt="%Y-%m-%d,%H:%M:%S")
+    )
+    logger.addHandler(pipeline_log)  # attach handler to the root logger
 
 
 def generate_uniform_parametric_eq(num_points, max_order, rng):
     """Generate a random parametric EQ cascase.
 
     Method according to [Nercessian 2020](https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf).
-    
+
     This function is based on code from the IIRNet project,
     which is licensed under the Apache License 2.0.
-    
+
     Original source: https://github.com/csteinmetz1/IIRNet
 
     Modifications made:
@@ -92,7 +93,7 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     g = rng.uniform(low=-10.0, high=10.0)
     q = rng.uniform(low=0.1, high=1.0)
     A = np.power(10, g / 40)
-    alpha = np.sin(omega_low) * np.sqrt((A ** 2 + 1) * ((1 / q) - 1) + 2 * A)
+    alpha = np.sin(omega_low) * np.sqrt((A**2 + 1) * ((1 / q) - 1) + 2 * A)
 
     b0 = A * ((A + 1) - (A - 1) * np.cos(omega_low) + alpha)
     b1 = 2 * A * ((A - 1) - (A + 1) * np.cos(omega_low))
@@ -113,7 +114,7 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     g = rng.uniform(low=-10.0, high=10.0)
     q = rng.uniform(low=0.1, high=1.0)
     A = np.power(10, g / 40)
-    alpha = np.sin(omega_high) * np.sqrt((A ** 2 + 1) * ((1 / q) - 1) + 2 * A)
+    alpha = np.sin(omega_high) * np.sqrt((A**2 + 1) * ((1 / q) - 1) + 2 * A)
 
     b0 = A * ((A + 1) + (A - 1) * np.cos(omega_high) + alpha)
     b1 = -2 * A * ((A - 1) + (A + 1) * np.cos(omega_high))
@@ -161,7 +162,7 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     return h, sos
 
 
-def get_frequency_index_range(freq,f,num):
+def get_frequency_index_range(freq, f, num):
     """Return the left and right indices that define the frequency range to integrate over.
 
     Parameters
@@ -182,63 +183,42 @@ def get_frequency_index_range(freq,f,num):
         # single frequency line
         ind = searchsorted(freq, f)
         if ind >= len(freq):
-            warn("Queried frequency (%g Hz) not in resolved "
-                            "frequency range. Returning zeros." % f,
-                            Warning, stacklevel = 2)
+            warn("Queried frequency (%g Hz) not in resolved " "frequency range. Returning zeros." % f, Warning, stacklevel=2)
             ind = None
         else:
             if freq[ind] != f:
-                warn("Queried frequency (%g Hz) not in set of "
-                        "discrete FFT sample frequencies. "
-                        "Using frequency %g Hz instead." % (f,freq[ind]),
-                        Warning, stacklevel = 2)
-        return (ind,ind+1)
+                warn(
+                    "Queried frequency (%g Hz) not in set of "
+                    "discrete FFT sample frequencies. "
+                    "Using frequency %g Hz instead." % (f, freq[ind]),
+                    Warning,
+                    stacklevel=2,
+                )
+        return (ind, ind + 1)
     else:
         # fractional octave band
-        if isinstance(num,list):
-            f1=num[0]
-            f2=num[-1]
+        if isinstance(num, list):
+            f1 = num[0]
+            f2 = num[-1]
         else:
-            f1 = f*2.**(-0.5/num)
-            f2 = f*2.**(+0.5/num)
+            f1 = f * 2.0 ** (-0.5 / num)
+            f2 = f * 2.0 ** (+0.5 / num)
         ind1 = searchsorted(freq, f1)
         ind2 = searchsorted(freq, f2)
         if ind1 == ind2:
-            warn("Queried frequency band (%g to %g Hz) does not "
-                    "include any discrete FFT sample frequencies. "
-                    "Returning zeros." % (f1,f2),
-                    Warning, stacklevel = 2)
-        return (ind1,ind2)
+            warn(
+                "Queried frequency band (%g to %g Hz) does not "
+                "include any discrete FFT sample frequencies. "
+                "Returning zeros." % (f1, f2),
+                Warning,
+                stacklevel=2,
+            )
+        return (ind1, ind2)
 
 
-def set_pipeline_seeds(pipeline,start_idx,size,dataset="training"):
-    """Create the random seed list for each of the sampler objects that is held by the pipeline object.
 
-    Parameters
-    ----------
-    pipeline : instance of class BasePipeline
-        the pipeline object holding the sampler classes
-    start_idx : int
-        start index to be calculated by the pipeline
-    size : int
-        number of samples to be yielded by the pipeline
-    dataset : str, optional
-        the data set type, by default "training". Choose from ["training","validation"]
-    """
-    if dataset=="training":
-        off = 0
-    elif dataset=="validation":
-        # we assume that the training set will never be larger than 1e12 samples
-        off = int(1e12) # a general offset to ensure that validation and training seeds never match
-    elif dataset == "test":
-        off = int(1e21)
-    soff = int(1e7) # offset to ensure that seeds of sampler object doesn't match
-    if len(pipeline.sampler) > 0:
-        pipeline.random_seeds = {i : range(off+(i*soff)+start_idx, off+(i*soff)+size+start_idx) for i in list(pipeline.sampler.keys())}
-    else:
-        pipeline.numsamples = size
 
-def set_filename(writer,path=".",*args):
+def set_filename(writer, path=".", *args):
     """Set the filename of the dataset.
 
     Parameters
@@ -254,21 +234,21 @@ def set_filename(writer,path=".",*args):
     for arg in args[1:]:
         name += f"_{arg}"
     name += f"_{datetime.now().strftime('%d-%b-%Y')}"
-    if isinstance(writer,WriteH5Dataset):
+    if isinstance(writer, WriteH5Dataset):
         name += ".h5"
     if TF_FLAG:
-        if isinstance(writer,WriteTFRecord):
+        if isinstance(writer, WriteTFRecord):
             name += ".tfrecord"
-    writer.name=join(path,name)
+    writer.name = join(path, name)
 
 
 def complex_to_real(func):
-    def complex_to_real_wrapper(*args,**kwargs):
-        a = func(*args,**kwargs)
-        return concatenate(
-            [real(a)[...,newaxis],
-            imag(a)[...,newaxis]],axis=-1)
+    def complex_to_real_wrapper(*args, **kwargs):
+        a = func(*args, **kwargs)
+        return concatenate([real(a)[..., newaxis], imag(a)[..., newaxis]], axis=-1)
+
     return complex_to_real_wrapper
+
 
 def get_point_sources_recursively(source):
     """Recursively get all point sources from a `acoular.TimeInOut` object.
@@ -297,16 +277,18 @@ def get_point_sources_recursively(source):
         return []
     return sources
 
+
 def _get_signals_recursively(source, signals):
-    if hasattr(source,"signal") and isinstance(source.signal,ac.SignalGenerator):
+    if hasattr(source, "signal") and isinstance(source.signal, ac.SignalGenerator):
         signals.append(source.signal)
-    elif hasattr(source,"sources") or hasattr(source,"sources") and isinstance(source, ac.SamplesGenerator):
-        if hasattr(source,"sources"):
+    elif hasattr(source, "sources") or hasattr(source, "sources") and isinstance(source, ac.SamplesGenerator):
+        if hasattr(source, "sources"):
             for s in source.sources:
                 signals = _get_signals_recursively(s, signals)
-        if hasattr(source,"source"):
+        if hasattr(source, "source"):
             signals = _get_signals_recursively(source.source, signals)
     return signals
+
 
 def get_all_source_signals(source_list):
     """Get all signals from a list of `acoular.SamplesGenerator` derived objects.
@@ -328,6 +310,7 @@ def get_all_source_signals(source_list):
             raise ValueError("source must be of type `acoular.SamplesGenerator`")
         signals = _get_signals_recursively(source, signals)
     return signals
+
 
 def get_uncorrelated_noise_source_recursively(source):
     """Recursively get all uncorrelated noise sources from a `acoular.TimeInOut` object.
@@ -356,7 +339,8 @@ def get_uncorrelated_noise_source_recursively(source):
         return [source]
     return sources
 
-def blockwise_transfer(ir,blocksize=None):
+
+def blockwise_transfer(ir, blocksize=None):
     """Calculate the transfer function of an impulse response in a blockwise manner.
 
     Parameters
@@ -377,11 +361,11 @@ def blockwise_transfer(ir,blocksize=None):
         blocksize = n_samples
     if n_samples % blocksize != 0:
         pad = blocksize - n_samples % blocksize
-        ir = np.pad(ir,((0,0),(0,pad)))
+        ir = np.pad(ir, ((0, 0), (0, pad)))
     n_blocks = ir.shape[-1] // blocksize
-    tf = np.zeros((n_channels, blocksize//2+1), dtype=complex)
+    tf = np.zeros((n_channels, blocksize // 2 + 1), dtype=complex)
     for i in range(n_blocks):
-        tf += np.fft.rfft(ir[:,i*blocksize:(i+1)*blocksize], axis=1)
+        tf += np.fft.rfft(ir[:, i * blocksize : (i + 1) * blocksize], axis=1)
     return tf
 
 
@@ -389,163 +373,164 @@ def blockwise_transfer(ir,blocksize=None):
 # function 'f' would have been 'wrap', and the docstring of the original f() would have been lost.
 def log_execution_time(f):
     """Log execution time during feature calculation."""
+
     @wraps(f)
     def wrap(self, *args, **kw):
-        self.logger.info("id %i: start task." %self._idx)
+        self.logger.info("id %i: start task." % self._idx)
         start = time()
         result = f(self, *args, **kw)
         end = time()
-        self.logger.info("id %i: finished task." %self._idx)
+        self.logger.info("id %i: finished task." % self._idx)
         # self.logger.info("%r args:[%r] took: %2.32f sec" % \
         # (f.__name__,args,end-start))
-        self.logger.info("id %i: executing task took: %2.32f sec" % \
-        (self._idx,end-start))
+        self.logger.info("id %i: executing task took: %2.32f sec" % (self._idx, end - start))
         return result
+
     return wrap
 
 
-def get_absorption_coeff(rng, realistic_walls=True):
-    """
-    Draw random absorption coefficients for the walls of a room.
+if PYROOMACOUSTICS:
+    import pyroomacoustics as pra
 
-    This function is based on code from the Dir_SrcMic_DOA project,
-    which is licensed under the GNU Affero General Public License v3.0.
+    def get_absorption_coeff(rng, realistic_walls=True):
+        """
+        Draw random absorption coefficients for the walls of a room.
 
-    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+        This function is based on code from the Dir_SrcMic_DOA project,
+        which is licensed under the GNU Affero General Public License v3.0.
 
-    GNU Affero General Public License v3.0: 
-    https://www.gnu.org/licenses/agpl-3.0.en.html
-    """
-    if not realistic_walls:
-        abs_coeff_val = round(rng.uniform(0.02, 0.50), 2)
-        abs_coeff_wall = np.ones((6, 6)) * abs_coeff_val
+        Original source: https://github.com/prerak23/Dir_SrcMic_DOA
 
-    # Realistic walls
-    # id reflective walls = 7
-    # absorbant wall = 8
-    else:
-        no_reflective_walls = rng.choice([0, 1, 2, 3, 4, 5, 6])
-        walls_profile = np.array([8 for i in range(6)])
-        id_reflective = rng.choice(
-            [0, 1, 2, 3, 4, 5], size=no_reflective_walls, replace=False
+        GNU Affero General Public License v3.0:
+        https://www.gnu.org/licenses/agpl-3.0.en.html
+        """
+        if not realistic_walls:
+            abs_coeff_val = round(rng.uniform(0.02, 0.50), 2)
+            abs_coeff_wall = np.ones((6, 6)) * abs_coeff_val
+
+        # Realistic walls
+        # id reflective walls = 7
+        # absorbant wall = 8
+        else:
+            no_reflective_walls = rng.choice([0, 1, 2, 3, 4, 5, 6])
+            walls_profile = np.array([8 for i in range(6)])
+            id_reflective = rng.choice([0, 1, 2, 3, 4, 5], size=no_reflective_walls, replace=False)
+            walls_profile[id_reflective] = 7
+
+            abs_coeff_wall = np.empty((6, 6))
+            for i, a in enumerate(walls_profile):
+                if a == 7:  # Reflective Profile
+                    abs_coeff_val = round(rng.uniform(0.01, 0.12), 2)
+                    abs_coeff_wall[i, :] = [abs_coeff_val] * 6
+                elif a == 8:
+                    f_o_c = rng.choice([1, 2])  # Removed 0 wall profile.
+                    if f_o_c == 0:
+                        abs_coeff_val = [
+                            round(rng.uniform(0.01, 0.50), 2),
+                            round(rng.uniform(0.01, 0.50), 2),
+                            round(rng.uniform(0.01, 0.30), 2),
+                            round(rng.uniform(0.01, 0.12), 2),
+                            round(rng.uniform(0.01, 0.12), 2),
+                            round(rng.uniform(0.01, 0.12), 2),
+                        ]
+                        abs_coeff_wall[i, :] = abs_coeff_val
+                    elif f_o_c == 1:
+                        abs_coeff_val = [
+                            round(rng.uniform(0.01, 0.70), 2),
+                            round(rng.uniform(0.15, 1.00), 2),
+                            round(rng.uniform(0.40, 1.00), 2),
+                            round(rng.uniform(0.40, 1.00), 2),
+                            round(rng.uniform(0.40, 1.00), 2),
+                            round(rng.uniform(0.30, 1.00), 2),
+                        ]
+                        abs_coeff_wall[i, :] = abs_coeff_val
+        return np.array(abs_coeff_wall)
+
+    def get_diffusion_coeff(rng):
+        """
+        Draw random diffusion coefficients for the walls of a room.
+
+        This function is based on code from the Dir_SrcMic_DOA project,
+        which is licensed under the GNU Affero General Public License v3.0.
+
+        Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+
+        GNU Affero General Public License v3.0:
+        https://www.gnu.org/licenses/agpl-3.0.en.html
+        """
+        # Diffusion Coeff Range: [0.2,1]
+        coeff = round(rng.uniform(0.2, 1), 2)
+        return np.array([coeff for x in range(36)])
+
+    def sample_shoebox_room(rng, aperture):
+        """
+        Sample a random shoebox room.
+
+        This function is based on code from the Dir_SrcMic_DOA project,
+        which is licensed under the GNU Affero General Public License v3.0.
+
+        Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+
+        GNU Affero General Public License v3.0:
+        https://www.gnu.org/licenses/agpl-3.0.en.html
+        """
+        room_dim = [
+            round(rng.uniform(3 * aperture, 10 * aperture), 1),
+            round(rng.uniform(3 * aperture, 10 * aperture), 1),
+            round(rng.uniform(2 * aperture, 4.5 * aperture), 1),
+        ]
+        absorbtion = get_absorption_coeff(rng)
+        diffusion = get_diffusion_coeff(rng)[0]
+
+        all_materials = {
+            "east": pra.Material(
+                energy_absorption={
+                    "coeffs": absorbtion[0],
+                    "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+                },
+                scattering=diffusion,
+            ),
+            "west": pra.Material(
+                energy_absorption={
+                    "coeffs": absorbtion[1],
+                    "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+                },
+                scattering=diffusion,
+            ),
+            "north": pra.Material(
+                energy_absorption={
+                    "coeffs": absorbtion[2],
+                    "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+                },
+                scattering=diffusion,
+            ),
+            "south": pra.Material(
+                energy_absorption={
+                    "coeffs": absorbtion[3],
+                    "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+                },
+                scattering=diffusion,
+            ),
+            "ceiling": pra.Material(
+                energy_absorption={
+                    "coeffs": absorbtion[4],
+                    "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+                },
+                scattering=diffusion,
+            ),
+            "floor": pra.Material(
+                energy_absorption={
+                    "coeffs": absorbtion[5],
+                    "center_freqs": [125, 250, 500, 1000, 2000, 4000],
+                },
+                scattering=diffusion,
+            ),
+        }
+        return pra.ShoeBox(
+            room_dim,
+            max_order=20,
+            materials=all_materials,
+            air_absorption=True,
+            ray_tracing=False,
+            # min_phase=False,
         )
-        walls_profile[id_reflective] = 7
-
-        abs_coeff_wall = np.empty((6, 6))
-        for i, a in enumerate(walls_profile):
-            if a == 7:  # Reflective Profile
-                abs_coeff_val = round(rng.uniform(0.01, 0.12), 2)
-                abs_coeff_wall[i, :] = [abs_coeff_val] * 6
-            elif a == 8:
-                f_o_c = rng.choice([1, 2])  # Removed 0 wall profile.
-                if f_o_c == 0:
-                    abs_coeff_val = [
-                        round(rng.uniform(0.01, 0.50), 2),
-                        round(rng.uniform(0.01, 0.50), 2),
-                        round(rng.uniform(0.01, 0.30), 2),
-                        round(rng.uniform(0.01, 0.12), 2),
-                        round(rng.uniform(0.01, 0.12), 2),
-                        round(rng.uniform(0.01, 0.12), 2),
-                    ]
-                    abs_coeff_wall[i, :] = abs_coeff_val
-                elif f_o_c == 1:
-                    abs_coeff_val = [
-                        round(rng.uniform(0.01, 0.70), 2),
-                        round(rng.uniform(0.15, 1.00), 2),
-                        round(rng.uniform(0.40, 1.00), 2),
-                        round(rng.uniform(0.40, 1.00), 2),
-                        round(rng.uniform(0.40, 1.00), 2),
-                        round(rng.uniform(0.30, 1.00), 2),
-                    ]
-                    abs_coeff_wall[i, :] = abs_coeff_val
-    return abs_coeff_wall.tolist()
-
-
-def get_diffusion_coeff(rng):
-    """
-    Draw random diffusion coefficients for the walls of a room.
-
-    This function is based on code from the Dir_SrcMic_DOA project,
-    which is licensed under the GNU Affero General Public License v3.0.
-
-    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
-
-    GNU Affero General Public License v3.0: 
-    https://www.gnu.org/licenses/agpl-3.0.en.html
-    """
-    # Diffusion Coeff Range: [0.2,1]
-    coeff = round(rng.uniform(0.2, 1), 2)
-    return [coeff for x in range(36)]
-
-def sample_shoebox_room(rng, aperture):
-    """ 
-    Sample a random shoebox room.
-
-    This function is based on code from the Dir_SrcMic_DOA project,
-    which is licensed under the GNU Affero General Public License v3.0.
-
-    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
-
-    GNU Affero General Public License v3.0: 
-    https://www.gnu.org/licenses/agpl-3.0.en.html
-    """
-    room_dim = [
-        round(rng.uniform(3*aperture, 10*aperture), 1),
-        round(rng.uniform(3*aperture, 10*aperture), 1),
-        round(rng.uniform(2*aperture, 4.5*aperture), 1),
-    ]
-    absorbtion = get_absorption_coeff(rng)
-    diffusion = get_diffusion_coeff(rng)[0]
-
-    all_materials = {
-        "east": pra.Material(
-            energy_absorption={
-                "coeffs": absorbtion[0],
-                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
-            },
-            scattering=diffusion,
-        ),
-        "west": pra.Material(
-            energy_absorption={
-                "coeffs": absorbtion[1],
-                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
-            },
-            scattering=diffusion,
-        ),
-        "north": pra.Material(
-            energy_absorption={
-                "coeffs": absorbtion[2],
-                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
-            },
-            scattering=diffusion,
-        ),
-        "south": pra.Material(
-            energy_absorption={
-                "coeffs": absorbtion[3],
-                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
-            },
-            scattering=diffusion,
-        ),
-        "ceiling": pra.Material(
-            energy_absorption={
-                "coeffs": absorbtion[4],
-                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
-            },
-            scattering=diffusion,
-        ),
-        "floor": pra.Material(
-            energy_absorption={
-                "coeffs": absorbtion[5],
-                "center_freqs": [125, 250, 500, 1000, 2000, 4000],
-            },
-            scattering=diffusion,
-        ),
-    }
-    return pra.ShoeBox(
-        room_dim,
-        max_order=20,
-        materials=all_materials,
-        air_absorption=True,
-        ray_tracing=False,
-        #min_phase=False,
-    )

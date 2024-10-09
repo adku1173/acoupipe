@@ -14,7 +14,6 @@
 
 """
 
-
 from functools import partial
 
 import numpy as np
@@ -27,7 +26,6 @@ from acoupipe.datasets.synthetic import (
     DatasetSynthetic,
     DatasetSyntheticConfig,
     DatasetSyntheticConfigAnalytic,
-    DatasetSyntheticConfigWelch,
 )
 from acoupipe.datasets.utils import get_absorption_coeff
 
@@ -152,7 +150,7 @@ class DatasetISM(DatasetSynthetic):
                 Instance of acoular.Environment defining the environmental coditions,
                 i.e. the speed of sound.
             * mics : ac.MicGeom
-                Instance of acoular.MicGeom defining the microphone array geometry. 
+                Instance of acoular.MicGeom defining the microphone array geometry.
             * grid : ac.RectGrid
                 Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
             ... and all other parameters of the DatasetSyntheticConfig object.
@@ -161,40 +159,43 @@ class DatasetISM(DatasetSynthetic):
             if kwargs.get("mode") in ["analytic", "wishart"]:
                 config = DatasetISMConfigAnalytic(**kwargs)
             else:
-                config = DatasetSyntheticConfigWelch(**kwargs)
+                config = DatasetISMConfigWelch(**kwargs)
         super().__init__(config=config, tasks=tasks, logger=logger)
 
 
 class DatasetISMConfig(DatasetSyntheticConfig):
-
     sampler_setup = Instance(ISMSamplerSetup, desc="SyntheticSamplerSetup object.")
-    ism_backend = Enum(("pyroomacoustics", "gpuRIR"), desc="Backend for the room simulation.")
+    ism_backend = Enum(("gpuRIR", "pyroomacoustics",),
+        desc="Backend for the room simulation.")
 
     def _get_transfer_class(self):
         if self.ism_backend == "pyroomacoustics":
-            from acoupipe.datasets.spectra_analytic import TransferShoeBoxPyroomacoustics
+            from acoupipe.datasets.transfer import TransferShoeBoxPyroomacoustics
+
             return TransferShoeBoxPyroomacoustics
         elif self.ism_backend == "gpuRIR":
-            from acoupipe.datasets.spectra_analytic import TransferShoeBoxGPUrir
-            return TransferShoeBoxGPUrir
+            from acoupipe.datasets.transfer import TransferGpuRIR
+            return TransferGpuRIR
 
     def get_default_room_size_sampler(self, msm_setup, **kwargs):
         if kwargs.get("room_size_sampler") is None:
             ap = msm_setup.mics.aperture
+
             def random_func(rng):
-                return np.array([
-                round(rng.uniform(3*ap, 10*ap), 1),
-                round(rng.uniform(3*ap, 10*ap), 1),
-                round(rng.uniform(2*ap, 4.5*ap), 1),
-                ])
-            kwargs["room_size_sampler"] = sp.ContainerSampler(random_func = random_func)
+                return np.array(
+                    [
+                        round(rng.uniform(3 * ap, 10 * ap), 1),
+                        round(rng.uniform(3 * ap, 10 * ap), 1),
+                        round(rng.uniform(2 * ap, 4.5 * ap), 1),
+                    ]
+                )
+            kwargs["room_size_sampler"] = sp.ContainerSampler(random_func=random_func)
         return kwargs
 
     def get_default_absoption_coeff_sampler(self, msm_setup, **kwargs):
         if kwargs.get("absoption_coeff_sampler") is None:
-            random_func = partial(get_absorption_coeff, realistic_walls=True)
-            kwargs["absoption_coeff_sampler"] = sp.ContainerSampler(
-                random_func = random_func)
+            random_func = partial(get_absorption_coeff, realistic_walls=False)
+            kwargs["absoption_coeff_sampler"] = sp.ContainerSampler(random_func=random_func)
         return kwargs
 
     def get_default_room_placement_sampler(self, msm_setup, **kwargs):
@@ -210,24 +211,33 @@ class DatasetISMConfig(DatasetSyntheticConfig):
 
         """
         if kwargs.get("room_placement_sampler") is None:
+
             def random_func(rng):
                 # Randomly sample the relative placement of the array and the sources inside the room
-                shift = np.array(
-                    [rng.uniform(0.05,0.95), rng.uniform(0.05,0.95), rng.uniform(0.05,0.95)]
-                )
+                shift = np.array([rng.uniform(0.05, 0.95), rng.uniform(0.05, 0.95), rng.uniform(0.05, 0.95)])
                 return shift
-            kwargs["room_placement_sampler"] = sp.ContainerSampler(random_func = random_func)
+
+            kwargs["room_placement_sampler"] = sp.ContainerSampler(random_func=random_func)
         return kwargs
 
     def get_default_freq_data(self, **kwargs):
         if kwargs.get("freq_data") is None:
             fs = kwargs.get("fs", 13720)
             signal_length = kwargs.get("signal_length", 5.0)
+            block_size = kwargs.get("block_size", 128)
+            overlap = kwargs.get("overlap", "50%")
             Transfer = self._get_transfer_class()
-            transfer = Transfer(env = kwargs["env"], ref = 1.0, mics=kwargs["mics"])
-            kwargs["freq_data"] = PowerSpectraAnalytic(transfer = transfer,
-                precision="complex64", sample_freq=13720, block_size=128, overlap="50%", mode=kwargs["mode"],
-                numsamples=int(fs*signal_length))
+            transfer = Transfer(sample_freq=fs, block_size=block_size,
+                env=kwargs["env"], ref=1.0, mics=kwargs["mics"])
+            kwargs["freq_data"] = PowerSpectraAnalytic(
+                transfer=transfer,
+                precision="complex64",
+                sample_freq=fs,
+                block_size=block_size,
+                overlap=overlap,
+                mode=kwargs["mode"],
+                numsamples=int(fs * signal_length),
+            )
         return kwargs
 
     def get_default_sampler_setup(self, msm_setup, **kwargs):
@@ -241,23 +251,32 @@ class DatasetISMConfig(DatasetSyntheticConfig):
         kwargs = self.get_default_signal_length_sampler(msm_setup, **kwargs)
         kwargs = self.get_default_seed_sampler(msm_setup, **kwargs)
         kwargs = self.get_default_room_size_sampler(msm_setup, **kwargs)
-        kwargs = self.get_absoption_coeff_sampler(msm_setup, **kwargs)
+        kwargs = self.get_default_absoption_coeff_sampler(msm_setup, **kwargs)
         kwargs = self.get_default_room_placement_sampler(msm_setup, **kwargs)
 
         setup_class_attr = ISMSamplerSetup.class_traits().keys()
-        sampler_setup = ISMSamplerSetup(msm_setup=msm_setup,
-            **{key: kwargs.pop(key) for key in setup_class_attr if key in kwargs}
-        )
+        sampler_setup = ISMSamplerSetup(msm_setup=msm_setup, **{key: kwargs.pop(key) for key in setup_class_attr if key in kwargs})
         return sampler_setup
-
 
 
 class DatasetISMConfigAnalytic(DatasetISMConfig, DatasetSyntheticConfigAnalytic):
 
+    def _get_new_origin(self, transfer, rel_translation):
+        if np.isscalar(transfer.ref):
+            all_locs = np.concatenate([transfer.grid.gpos, transfer.mics.mpos], axis=1)
+        else:
+            all_locs = np.concatenate([transfer.grid.gpos, transfer.mics.mpos, transfer.ref[:, np.newaxis]], axis=1)
+        valid_range = transfer.room_size - (np.max(all_locs, axis=1) - np.min(all_locs, axis=1))
+        # assert range is positive
+        assert np.all(valid_range > 0), "The room size is too small for the current setup."
+        return rel_translation * valid_range - np.min(all_locs, axis=1)
+
     def _apply_room_settings(self, sampler, msm_setup):
-        msm_setup.transfer.room_size = sampler[7]
-        msm_setup.transfer.alpha = sampler[8]
-        msm_setup.transfer.rel_tdir = sampler[9]
+        msm_setup.freq_data.transfer.room_size = sampler[7].target
+        msm_setup.freq_data.transfer.alpha = sampler[8].target[:,0]
+        rel_translation = sampler[9].target
+        msm_setup.freq_data.transfer.origin = self._get_new_origin(
+            msm_setup.freq_data.transfer, rel_translation)
 
     def get_prepare_func(self):
         def prepare(sampler, msm_setup):
@@ -270,5 +289,12 @@ class DatasetISMConfigAnalytic(DatasetISMConfig, DatasetSyntheticConfigAnalytic)
             self._apply_new_source_strength(sampler, msm_setup)
             if self.sampler_setup.mic_sig_noise:
                 self._apply_new_mic_sig_noise(sampler, msm_setup)
+            self._apply_room_settings(sampler, msm_setup)
             return {}
+
         return partial(prepare, msm_setup=self.msm_setup)
+
+
+class DatasetISMConfigWelch(DatasetISMConfig, DatasetSyntheticConfig):
+
+    pass

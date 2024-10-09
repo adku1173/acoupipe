@@ -43,8 +43,25 @@ maintainers = [
 ]
 
 [project.optional-dependencies]
-dev = [
+full = [
     "tensorflow",
+    "pyroomacoustics",
+]
+
+dev = [
+    "acoupipe[full,build]",
+]
+
+fullgpu = [
+    "acoupipe[full]",
+    "gpuRIR",
+]
+
+devgpu = [
+    "acoupipe[fullgpu,build]",
+]
+
+build = [ # only to avoid double code
     "ipython",
     "ipykernel",
     "nb-clean",
@@ -58,10 +75,7 @@ dev = [
     "sphinxcontrib.bibtex",
     "pandas",   
     "pandoc",
-]
 
-full = [
-    "tensorflow",
 ]
 
 

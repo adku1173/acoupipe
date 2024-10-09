@@ -8,12 +8,14 @@ data_generator = dataset.generate(features=["sourcemap","loc", "f"],
                                     split="training", size=10, f=[2000], num=0)
 data_sample = next(data_generator)
 
+
+
 #%%
 
 import acoular as ac
 import matplotlib.pyplot as plt
 
-extent = dataset.config.grid.extend()
+extent = dataset.config.msm_setup.grid.extend()
 
 # sound pressure level
 Lm = ac.L_p(data_sample["sourcemap"]).T

@@ -8,5 +8,5 @@ def _have_module(module_name):
 
 TF_FLAG = _have_module("tensorflow")
 PYROOMACOUSTICS = _have_module("pyroomacoustics")
-GPURIR = _have_module("gpuRIR")
+HAVE_GPURIR = _have_module("gpuRIR")
 

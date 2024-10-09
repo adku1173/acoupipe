@@ -306,7 +306,7 @@ class BasePipeline(DataGenerator):
         pbar.close()
 
 
-@ray.remote
+@ray.remote#(num_gpus=1)
 class SamplerActor(object):
     """Actor class to sample data."""
 
