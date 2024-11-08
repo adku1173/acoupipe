@@ -56,18 +56,19 @@ The example returns the following output:
     {'idx': 3, 'seeds': array([[0, 3]]), 'rms_sq': 4.082256836394099}
     {'idx': 4, 'seeds': array([[0, 4]]), 'rms_sq': 0.454416774044029}
 """
-
+import gc
 import inspect
 import logging
 import os
 from functools import wraps
 from time import time
 
+import memray
 import numpy as np
 import ray
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
-from traits.api import Callable, Dict, Either, HasPrivateTraits, Instance, Int, Property, Tuple
+from traits.api import Callable, Dict, Either, Float, HasPrivateTraits, Instance, Int, Property, Tuple
 
 from acoupipe.sampler import BaseSampler
 
@@ -306,8 +307,8 @@ class BasePipeline(DataGenerator):
         pbar.close()
 
 
-@ray.remote#(num_gpus=1)
-class SamplerActor(object):
+@ray.remote
+class SamplerActor:
     """Actor class to sample data."""
 
     def __init__(self, sampler, feature_func):
@@ -315,6 +316,13 @@ class SamplerActor(object):
         self.feature_func = feature_func
         self.sampler_order = list(self.sampler.keys())
         self.sampler_order.sort()
+        print("GPU IDs: {}".format(ray.get_runtime_context().get_accelerator_ids()["GPU"]))
+        print("CUDA_VISIBLE_DEVICES: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
+        # Every memory allocation after `__enter__` method will be tracked.
+        memray.Tracker(
+            "/tmp/ray/session_latest/logs/"
+            f"{ray.get_runtime_context().get_actor_id()}_mem_profile.bin"
+        ).__enter__()
 
     def sample(self, seeds):
         """Invocation of the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
@@ -324,12 +332,16 @@ class SamplerActor(object):
                 self.sampler[k].sample()
         return self.sampler
 
+    #@ray.method(num_returns=3, enable_task_events=False)
     def extract_features(self, seeds, times, *feature_args):
         """Remote calculation of all features."""
         times[1] = time()
         data = self.feature_func(self.sample(seeds), *feature_args)
         times[2] = time()
-        return (data, times, os.getpid())
+        data_copy = data.copy()
+        del data
+        gc.collect()
+        return (data_copy, times, os.getpid())
 
     def set_new_seed(self, seeds=None):
         """Re-seeds :class:`BaseSampler` instances specified in :attr:`sampler` dict."""
@@ -348,12 +360,16 @@ class SamplerActor(object):
     def exit(self):
         ray.actor.exit_actor()
 
-class ActorHandler(object):
-    def __init__(self, numworkers, sampler, feature_func):
+class ActorHandler:
+    def __init__(self, numworkers, num_gpus, sampler, feature_func):
+        if num_gpus > 0:
+            Actor = SamplerActor.options(num_gpus=num_gpus/numworkers, memory=int(1.5*1024*1024*1024))
+        else:
+            Actor = SamplerActor
         self.actors = [
-            SamplerActor.remote(
+            Actor.remote(
                 sampler=sampler, feature_func=feature_func
-                ) for _ in range(numworkers)]
+                ) for i in range(numworkers)]
     def __enter__(self):
         return self.actors
     def __exit__(self, type, value, traceback):
@@ -376,6 +392,9 @@ class DistributedPipeline(BasePipeline):
     #: each worker is associated with a stateless task.
     numworkers = Int(1,
         desc="number of tasks to be performed in parallel (usually number of CPUs)")
+
+    num_gpus = Float(0,
+        desc="number of GPUs to be used for parallel calculation")
 
     def _log_execution_time(self,task_index,times,pid):
         self.logger.info("id %i on pid %i: scheduling task took: %2.32f sec" % \
@@ -447,24 +466,24 @@ class DistributedPipeline(BasePipeline):
             feature_func = self.features[0]
         task_dict = {}
         finished_tasks = 0
-        with ActorHandler(nworkers, self.sampler, feature_func) as actors:
+        with ActorHandler(nworkers, self.num_gpus, self.sampler, feature_func) as actors: #TODO: check if ActorPool can be used here
             for actor in actors:
                 self._update_sample_index_and_seeds(seed_iter)
                 self._sample_and_schedule_task(actor,task_dict)
             while finished_tasks < nsamples:
                 done_ids, pending_ids = ray.wait(list(task_dict.keys()))
                 if done_ids:
-                    id = done_ids[0]
+                    task_id = done_ids[0]
                     finished_tasks += 1
                     try:
-                        data, times, pid = ray.get(id)
+                        data, times, pid = ray.get(task_id)
                     except Exception as exception:
                         self.logger.info(
-                            f"task with id {task_dict[id]} failed with Traceback:",
+                            f"task with id {task_dict[task_id]} failed with Traceback:",
                             exc_info=True)
                         raise exception
                     times[-1] = time() # add getter time
-                    actor, new_data = task_dict.pop(id)
+                    actor, new_data = task_dict.pop(task_id)
                     data.update(new_data) # add the remaining task_dict items to the data dict
                     self.logger.info(f"id {data['idx']} on pid {pid}: finished task.")
                     self._log_execution_time(data["idx"], times, pid)
@@ -472,4 +491,7 @@ class DistributedPipeline(BasePipeline):
                         self._update_sample_index_and_seeds(seed_iter)
                         self._sample_and_schedule_task(actor,task_dict)
                     yield data
+                    # yield data.copy()
+                    # del data
+                    # gc.collect()
                     progress_bar.update(1)

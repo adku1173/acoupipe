@@ -3,7 +3,7 @@
 import logging
 from functools import partial
 
-from traits.api import HasPrivateTraits, Instance, Int, Property
+from traits.api import Float, HasPrivateTraits, Instance, Int, Property
 
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.collection import BaseFeatureCollection, FeatureCollectionBuilder
@@ -87,6 +87,8 @@ class DatasetBase(HasPrivateTraits):
 
     config = Instance(ConfigBase, desc="configuration object")
     tasks = Property(desc="number of parallel tasks for data generation")
+    num_gpus = Float(0, desc="number of GPUs to use for data generation (only relevant if multiple tasks are used)")
+
     #: logger instance to log calculation times for each data sample
     logger = Property(desc="Logger instance to log timing statistics")
 
@@ -94,9 +96,10 @@ class DatasetBase(HasPrivateTraits):
     _logger = Instance(logging.Logger, desc="Internal logger instance")
     _tasks = Int(1, desc="number of parallel tasks for data generation")
 
-    def __init__(self,config=None, tasks=1, logger=None):
+    def __init__(self,config=None, tasks=1, num_gpus=0, logger=None):
         HasPrivateTraits.__init__(self)
         self.tasks = tasks
+        self.num_gpus = num_gpus
         # If no config is provided, use the default ConfigBase settings
         if config is None:
             config = ConfigBase()
@@ -133,7 +136,7 @@ class DatasetBase(HasPrivateTraits):
     def get_pipeline_instance(self):
         if self.tasks > 1:
             return DistributedPipeline(
-                numworkers=self.tasks,)
+                numworkers=self.tasks, num_gpus=self.num_gpus)
         else:
             return BasePipeline()
 
@@ -214,7 +217,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
         pipeline.features = self.config.get_feature_collection(features, f, num).get_feature_funcs()
-        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_seeds(pipeline, start_idx, size, split)
         for data in pipeline.get_data(
             progress_bar=progress_bar, start_idx=start_idx):
             yield data
@@ -272,7 +275,7 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.features = self.config.get_feature_collection(features, f, num).get_feature_funcs()
-        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_seeds(pipeline, start_idx, size, split)
         WriteH5Dataset(name=name,
                        source=pipeline,
                        ).save(progress_bar, start_idx)  # start the calculation
@@ -338,7 +341,7 @@ if TF_FLAG:
         pipeline.sampler = self.config.get_sampler()
         feature_collection = self.config.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
-        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_seeds(pipeline, start_idx, size, split)
         WriteTFRecord(name=name, source=pipeline,
                       encoder_funcs=feature_collection.feature_tf_encoder_mapper).save(progress_bar, start_idx)
     DatasetBase.save_tfrecord = save_tfrecord
@@ -385,7 +388,7 @@ if TF_FLAG:
         pipeline.sampler = self.config.get_sampler()
         feature_collection = self.config.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
-        self.config.sampler_setup.set_pipeline_seeds(pipeline, start_idx, size, split)
+        self.config.sampler_setup.set_seeds(pipeline, start_idx, size, split)
         output_signature = feature_collection.get_output_signature(features + ["idx", "seeds"])
         return tf.data.Dataset.from_generator(
             partial(

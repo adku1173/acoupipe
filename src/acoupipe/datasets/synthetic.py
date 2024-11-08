@@ -123,7 +123,7 @@ class DatasetSynthetic(DatasetBase):
     **Initialization Parameters**
     """
 
-    def __init__(self, config=None, tasks=1, logger=None, **kwargs):
+    def __init__(self, config=None, tasks=1, num_gpus=0, logger=None, **kwargs):
         """Initialize the DatasetSynthetic object.
 
         Most of the input parameters are passed to the DatasetSyntheticConfig object, which creates
@@ -175,7 +175,7 @@ class DatasetSynthetic(DatasetBase):
                 config = DatasetSyntheticConfigAnalytic(**kwargs)
             else:
                 config = DatasetSyntheticConfigWelch(**kwargs)
-        super().__init__(config=config, tasks=tasks, logger=logger)
+        super().__init__(config=config, tasks=tasks, num_gpus=num_gpus, logger=logger)
 
 
 
@@ -232,7 +232,8 @@ class DatasetSyntheticConfig(ConfigBase):
                 attribute = "nsources",
                 equal_value = True,
                 target = [kwargs["loc_sampler"]],
-                )
+                filter=lambda x: (x <= kwargs["max_nsources"]) and (
+                                x >= kwargs["min_nsources"]))
         return kwargs
 
     def get_default_strength_sampler(self, msm_setup, **kwargs):
@@ -282,7 +283,9 @@ class DatasetSyntheticConfig(ConfigBase):
 
     def get_default_steer(self, **kwargs):
         if kwargs.get("steer") is None:
-            steer = ac.SteeringVector(ref=tub_vogel64_ap1[:,63])
+            if kwargs.get("ref") is None:
+                kwargs["ref"] = tub_vogel64_ap1[:,63]
+            steer = ac.SteeringVector(ref=kwargs["ref"])
             kwargs.update({"steer": steer})
         return kwargs
 
@@ -375,7 +378,7 @@ class DatasetSyntheticConfig(ConfigBase):
     def _get_loc_feature(self):
         loc_feature = FloatFeature(name="loc", shape=(3, None))
         loc_feature.feature_func = lambda sampler, dtype, name: {
-            name: sampler[4].target.astype(dtype)}
+            name: sampler[4].target.astype(dtype, copy=False)}
         return loc_feature
 
     def _get_targetmap_analytic_feature(self, loc_callable, strength_callable, f, num):
@@ -399,7 +402,7 @@ class DatasetSyntheticConfig(ConfigBase):
     def _get_f_feature(self, f, num):
         f_array = f_as_array(f, num, self.msm_setup.freq_data.fftfreq())
         feat = FloatFeature(name="f", shape=f_array.shape)
-        feat.feature_func = lambda sampler, dtype, name: {name: f_array.astype(dtype)}
+        feat.feature_func = lambda sampler, dtype, name: {name: f_array.astype(dtype, copy=False)}
         return feat
 
     def _get_num_feature(self, num):
@@ -468,21 +471,26 @@ class DatasetSyntheticConfigAnalytic(DatasetSyntheticConfig):
         seed_sampler = sampler.get(2)
         if seed_sampler is not None:
             msm_setup.freq_data.seed = seed_sampler.target
+            msm_setup._ref_spectra.seed = seed_sampler.target
 
     def _apply_new_loc(self,sampler, msm_setup):
-        loc = sampler[4].target
-        msm_setup.freq_data.transfer.grid = ac.ImportGrid(gpos_file=loc)
+        loc = ac.ImportGrid(gpos_file=sampler[4].target)
+        msm_setup.freq_data.transfer.grid = loc
+        msm_setup._ref_spectra.transfer.grid = loc
 
     def _apply_new_signal_length(self,sampler, msm_setup):
         signal_length_sampler = sampler.get(6)
         if signal_length_sampler is not None:
-            msm_setup.freq_data.numsamples = signal_length_sampler.target*msm_setup.freq_data.sample_freq
+            numsamples = int(signal_length_sampler.target*msm_setup.freq_data.sample_freq)
+            msm_setup.freq_data.numsamples = numsamples
+            msm_setup._ref_spectra.numsamples = numsamples
 
     def _apply_new_source_strength(self,sampler, msm_setup):
         nfft = msm_setup.freq_data.fftfreq().shape[0]
         nsources = sampler[4].nsources
         prms_sq_per_freq = sampler[3].target[:nsources]**2 / nfft
         msm_setup.freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
+        msm_setup._ref_spectra.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
 
     def _apply_new_mic_sig_noise(self,sampler, msm_setup):
         noise_sampler = sampler.get(5)
@@ -494,9 +502,12 @@ class DatasetSyntheticConfigAnalytic(DatasetSyntheticConfig):
             noise_prms_sq = prms_sq.sum()*noise_signal_ratio
             noise_prms_sq_per_freq = noise_prms_sq / nfft
             nperf = np.diag(np.array([noise_prms_sq_per_freq]*msm_setup.beamformer.steer.mics.num_mics))
-            msm_setup.freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
+            Qnoise = np.stack([nperf for _ in range(nfft)], axis=0)
+            msm_setup.freq_data.noise = Qnoise
+            msm_setup._ref_spectra.noise = Qnoise
         else:
             msm_setup.freq_data.noise = None
+            msm_setup._ref_spectra.noise = None
 
     def get_prepare_func(self):
         def prepare(sampler, msm_setup):
@@ -514,13 +525,13 @@ class DatasetSyntheticConfigAnalytic(DatasetSyntheticConfig):
 
     def _get_source_strength_analytic_feature(self, f, num):
         return CSMDiagonalAnalytic(name="source_strength_analytic",
-                    freq_data = self.msm_setup.freq_data,
+                    freq_data = self.msm_setup._ref_spectra,
                     shape=(self._get_fdim(f), None),
                     mode="analytic", csm_type="source", f=f, num=num)
 
     def _get_source_strength_estimated_feature(self, f, num):
         return CSMDiagonalAnalytic(name="source_strength_estimated",
-                    freq_data = self.msm_setup.freq_data,
+                    freq_data = self.msm_setup._ref_spectra,
                     shape=(self._get_fdim(f), None),
                     mode="wishart", csm_type="source", f=f, num=num)
 
@@ -559,6 +570,12 @@ class DatasetSyntheticConfigAnalytic(DatasetSyntheticConfig):
         builder.add_custom(self.get_prepare_func())
         builder.add_seeds(self.sampler_setup.numsampler)
         builder.add_idx()
+
+        # add freq_data copy
+        self.msm_setup._ref_spectra = deepcopy(self.msm_setup.freq_data)
+        self.msm_setup._ref_spectra.transfer.mics = ac.MicGeom(mpos_tot=self.msm_setup.ref[:,np.newaxis])
+        self.msm_setup._ref_spectra.transfer.ref = 1.0
+
         # add feature functions
         loc_feature = self._get_loc_feature()
         source_strength_analytic_feature = self._get_source_strength_analytic_feature(f, num)
@@ -598,7 +615,7 @@ class DatasetSyntheticConfigAnalytic(DatasetSyntheticConfig):
             builder.add_feature(self._get_num_feature(num))
         for feature in features:
             if isinstance(feature, Feature):
-                self._feature_builder.add_feature(feature)
+                builder.add_feature(feature)
             elif not isinstance(feature, str):
                 raise ValueError(f"Feature {feature} is not a valid feature object.")
 
@@ -860,7 +877,7 @@ class DatasetSyntheticConfigWelch(DatasetSyntheticConfig):
             builder.add_feature(self._get_num_feature(num))
         for feature in features:
             if isinstance(feature, Feature):
-                self._feature_builder.add_feature(feature)
+                builder.add_feature(feature)
             elif not isinstance(feature, str):
                 raise ValueError(f"Feature {feature} is not a valid feature object.")
         return builder.feature_collection

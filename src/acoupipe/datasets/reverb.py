@@ -108,7 +108,7 @@ class DatasetISM(DatasetSynthetic):
     **Initialization Parameters**
     """
 
-    def __init__(self, config=None, tasks=1, logger=None, **kwargs):
+    def __init__(self, config=None, tasks=1, num_gpus=0, logger=None, **kwargs):
         """Initialize the DatasetSynthetic object.
 
         Most of the input parameters are passed to the DatasetSyntheticConfig object, which creates
@@ -160,7 +160,7 @@ class DatasetISM(DatasetSynthetic):
                 config = DatasetISMConfigAnalytic(**kwargs)
             else:
                 config = DatasetISMConfigWelch(**kwargs)
-        super().__init__(config=config, tasks=tasks, logger=logger)
+        super().__init__(config=config, tasks=tasks, num_gpus=num_gpus, logger=logger)
 
 
 class DatasetISMConfig(DatasetSyntheticConfig):
@@ -228,7 +228,10 @@ class DatasetISMConfig(DatasetSyntheticConfig):
             overlap = kwargs.get("overlap", "50%")
             Transfer = self._get_transfer_class()
             transfer = Transfer(sample_freq=fs, block_size=block_size,
-                env=kwargs["env"], ref=1.0, mics=kwargs["mics"])
+                env=kwargs["env"], ref = kwargs["beamformer"].steer.ref, mics=kwargs["mics"],
+                room_size=(1, 1, 1), #TODO: dummy room size needs some workaround
+                order = [10,10,10],
+                ) # use a dummy room size here (will be overwritten)
             kwargs["freq_data"] = PowerSpectraAnalytic(
                 transfer=transfer,
                 precision="complex64",
@@ -272,11 +275,26 @@ class DatasetISMConfigAnalytic(DatasetISMConfig, DatasetSyntheticConfigAnalytic)
         return rel_translation * valid_range - np.min(all_locs, axis=1)
 
     def _apply_room_settings(self, sampler, msm_setup):
-        msm_setup.freq_data.transfer.room_size = sampler[7].target
-        msm_setup.freq_data.transfer.alpha = sampler[8].target[:,0]
+        room_size = sampler[7].target.copy()
+        alpha = sampler[8].target[:,0]
         rel_translation = sampler[9].target
-        msm_setup.freq_data.transfer.origin = self._get_new_origin(
+        msm_setup.freq_data.transfer.room_size = msm_setup._ref_spectra.transfer.room_size = room_size
+        msm_setup.freq_data.transfer.alpha = msm_setup._ref_spectra.transfer.alpha = alpha
+        origin = self._get_new_origin(
             msm_setup.freq_data.transfer, rel_translation)
+        msm_setup.freq_data.transfer.origin = msm_setup._ref_spectra.transfer.origin = origin
+
+    def _apply_new_source_strength(self,sampler, msm_setup):
+        nfft = msm_setup.freq_data.fftfreq().shape[0]
+        nsources = sampler[4].nsources
+        prms_sq_per_freq = sampler[3].target[:nsources]**2 / nfft
+
+        Q = np.stack(
+            [np.diag(prms_sq_per_freq) for i in range(nfft)],
+            axis=0)
+
+        msm_setup.freq_data.Q = Q
+        msm_setup._ref_spectra.Q = Q
 
     def get_prepare_func(self):
         def prepare(sampler, msm_setup):
@@ -286,12 +304,11 @@ class DatasetISMConfigAnalytic(DatasetISMConfig, DatasetSyntheticConfigAnalytic)
             self._apply_new_seeds(sampler, msm_setup)
             if self.sampler_setup.random_signal_length:
                 self._apply_new_signal_length(sampler, msm_setup)
+            self._apply_room_settings(sampler, msm_setup)
             self._apply_new_source_strength(sampler, msm_setup)
             if self.sampler_setup.mic_sig_noise:
                 self._apply_new_mic_sig_noise(sampler, msm_setup)
-            self._apply_room_settings(sampler, msm_setup)
             return {}
-
         return partial(prepare, msm_setup=self.msm_setup)
 
 

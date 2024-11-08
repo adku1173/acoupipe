@@ -1,13 +1,19 @@
 
 #%%
+import acoular as ac
+
 from acoupipe.datasets.synthetic import DatasetSynthetic
 
-dataset = DatasetSynthetic()
+dataset = DatasetSynthetic(max_nsources=1, mode="analytic", mic_sig_noise=False)
 # generate data for frequency 2000 Hz (single frequency)
-data_generator = dataset.generate(features=["sourcemap","loc", "f"],
+data_generator = dataset.generate(features=["source_strength_analytic", "source_strength_estimated","sourcemap","loc", "f"],
                                     split="training", size=10, f=[2000], num=0)
 data_sample = next(data_generator)
 
+
+print(ac.L_p(data_sample["source_strength_analytic"]))
+print(ac.L_p(data_sample["source_strength_estimated"]))
+print(ac.L_p(data_sample["sourcemap"]).max())
 
 
 #%%

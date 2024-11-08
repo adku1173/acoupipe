@@ -1,3 +1,6 @@
+
+
+
 import acoular as ac
 import numpy as np
 import numpy.fft as fft
@@ -173,13 +176,16 @@ class TransferISM(TransferBase):
 
     room_size = CArray(shape=(3,), dtype=float, desc="room size")
 
-    alpha = CArray(shape=(6,), desc="Sabine absorption coefficients for each wall")
+    alpha = CArray(shape=(6,), value=np.array([1e-16]*6),
+    desc="Sabine absorption coefficients for each wall")
 
     beta = Property(desc="reflection coefficients")
 
     order = Int(desc="number of images to simulate")
 
-    rir = Property()
+    rir = Property(depends_on=["digest"], desc="room impulse response")
+
+    ref_rir = Property(depends_on=["digest"], desc="reference room impulse response")
 
     origin = CArray(
         shape=(3,),
@@ -188,16 +194,7 @@ class TransferISM(TransferBase):
         desc="sets the origin of the room coordinate system",
     )
 
-    # origin = Property()
-
     _transfer = Property(depends_on=["digest"])
-
-    # def _get_origin(self):
-    #     if np.isscalar(self.ref):
-    #         all_locs = np.concatenate([self.grid.gpos, self.mics.mpos], axis=1)
-    #     else:
-    #         all_locs = np.concatenate([self.grid.gpos, self.mics.mpos, self.ref[:, np.newaxis]], axis=1)
-    #     return self.tdir * (self.room_size - np.max(all_locs, axis=1) - np.min(all_locs, axis=1))
 
     def _get_beta(self):
         return np.sqrt(1 - self.alpha)
@@ -211,11 +208,23 @@ class TransferISM(TransferBase):
         )
         return 0.1611 * V / A
 
+    def _get_r0_transfer(self):
+        rir = self.ref_rir
+        ref_init_shape = rir.shape
+        tf =  blockwise_transfer(
+            rir.reshape(-1, ref_init_shape[-1]), self.block_size)
+        return tf.reshape((*ref_init_shape[:-1], tf.shape[-1]))
+
+    def _get_rm_transfer(self):
+        rir = self.rir
+        init_shape = rir.shape
+        tf = blockwise_transfer(
+            rir.reshape(-1, init_shape[-1]), self.block_size)
+        return tf.reshape((*init_shape[:-1], tf.shape[-1]))
+
     @cached_property
     def _get__transfer(self):
-        init_shape = self.rir.shape
-        tf = blockwise_transfer(self.rir.reshape(-1, init_shape[-1]), self.block_size)
-        return tf.reshape((*init_shape[:-1], tf.shape[-1]))
+        return self._get_rm_transfer() / self._get_r0_transfer()[:,np.newaxis,:]
 
     def fftfreq(self):
         """Return the FFT frequencies of the transfer function data."""
@@ -259,9 +268,9 @@ if HAVE_GPURIR:
 
         _order = Either((CArray(shape=(3,), dtype=int), None), default=None, desc="number of images to simulate")
 
-        att_diff = Either((Float, None), default=20, desc="Attenuation when using diffuse reverberation model (in dB)")
+        att_diff = Either((Float, None), default=15, desc="Attenuation when using diffuse reverberation model (in dB)")
 
-        att_max = Either((Float, None), default=60, desc="Maximum attenuation of the room (in dB)")
+        att_max = Either((Float, None), default=30, desc="Maximum attenuation of the room (in dB)")
 
         source_directivity = Either(
             (
@@ -285,9 +294,27 @@ if HAVE_GPURIR:
 
         _tdiff = Property()
 
+        _tgpos = Property()
+
+        _tmpos = Property()
+
+        _t0pos = Property()
+
+        @property_depends_on("digest")
+        def _get__tgpos(self):
+            return np.array(self.grid.gpos + self.origin[:, np.newaxis], order="C", dtype=np.float32)
+
+        @property_depends_on("digest")
+        def _get__tmpos(self):
+            return np.array(self.mics.mpos + self.origin[:, np.newaxis], order="C", dtype=np.float32)
+
+        @property_depends_on("digest")
+        def _get__t0pos(self):
+            return np.array(self.ref[:, np.newaxis] + self.origin[:, np.newaxis], order="C", dtype=np.float32)
+
         # internal identifier
         digest = Property(depends_on=[
-            "env.digest", "grid.digest", "mics.digest", "_ref",
+            "env.digest", "grid.digest", "mics.digest", "_ref", "origin",
             "source_directivity", "mics_directivity", "source_orientation", "mics_orientation",
             "att_diff", "att_max", "_order", "room_size", "alpha", "tdir",
             "block_size", "sample_freq"])
@@ -297,17 +324,85 @@ if HAVE_GPURIR:
             return digest(self)
 
         def _get__tdiff(self):
-            if self.att_diff is not None:
-                return gpuRIR.att2t_SabineEstimator(self.att_diff, self.sabine())
-            return None
+            if self.att_diff is None:
+                raise ValueError("att_diff must be set in order to calculate the time difference")
+            return gpuRIR.att2t_SabineEstimator(self.att_diff, self.sabine())
 
         def _get_order(self):
-            if self._order is not None:
-                return self._order
-            return np.array(gpuRIR.t2n(self._tdiff, self.room_size))
+            return self._order
 
         def _set_order(self, order):
             self._order = order
+
+        def get_optimal_order(self):
+            return np.array(gpuRIR.t2n(self._tdiff, self.room_size, c=self.env.c))
+
+        def calc_rir(self, pos_src, pos_rcv):
+            nummics = pos_rcv.shape[1]
+            numsrc = pos_src.shape[1]
+            tmax = self.att_max / 60.0 * self.sabine()
+            if self.order is None:
+                order = self.get_optimal_order()
+            else:
+                order = self.order
+            kwargs = {
+                "room_sz": self.room_size.tolist(),
+                "beta": self.beta.tolist(),
+                "nb_img": order.tolist(),
+                "Tmax": tmax,
+                "fs": self.sample_freq,
+                "Tdiff": self._tdiff,
+                "c": self.env.c,
+            }
+                # if not isinstance(self.source_directivity, list):
+                #     self.source_directivity = [self.source_directivity] * self.grid.size
+                # if not isinstance(self.mics_directivity, list):
+                #     self.mics_directivity = [self.mics_directivity] * self.mics.num_mics
+                # if self.source_orientation is not None and self.source_orientation.size > 3:
+                #     self.source_orientation = np.tile(self.source_orientation, (self.grid.size, 1))
+                # if self.mics_orientation is not None and self.mics_orientation.size > 3:
+                #     self.mics_orientation = np.tile(self.mics_orientation, (self.mics.num_mics, 1))
+
+            if True:
+                rirs = []
+                for i in range(numsrc):
+                    for j in range(nummics):
+                        rir = gpuRIR.simulateRIR(
+                            pos_src=pos_src[:,i][np.newaxis],
+                            pos_rcv=pos_rcv[:,j][np.newaxis],
+                            # spkr_pattern=self.source_directivity[i],
+                            # mic_pattern=self.mics_directivity[j],
+                            # orV_src=self.source_orientation[i],
+                            # orV_rcv=self.mics_orientation[j],
+                            **kwargs,
+                        )
+                        rirs.append(rir.squeeze())
+                rir_array = np.concatenate(rirs).reshape(numsrc, nummics, -1)
+                return rir_array
+            else:
+                rirs = np.zeros((numsrc * nummics, int(np.round(self.sample_freq * tmax))))
+                #rirs = np.random.normal(size=(numsrc * nummics, int(np.round(self.sample_freq * tmax))))*1e-6
+                rirs[:,0] = 1.
+                return rirs.reshape(numsrc, nummics, -1)
+
+        @cached_property
+        def _get_rir(self):
+            rir = self.calc_rir(
+                pos_src = self._tgpos,
+                pos_rcv = self._tmpos,
+            )
+            return rir
+
+        @cached_property
+        def _get_ref_rir(self):
+            # in case ref is a microphone position, we return the index of the already
+            # calculated rir
+            if self.ref[:,np.newaxis] in self.mics.mpos:
+                return np.atleast_2d(self.rir[:, np.where(self.mics.mpos == self.ref[:,np.newaxis])[0][0]])
+            return self.calc_rir(
+                pos_src = self._tgpos,
+                pos_rcv = self._t0pos,
+            )
 
         # def _get_rir(self):
         #     tmax = self.att_max / 60.0 * self.sabine()
@@ -401,46 +496,6 @@ if HAVE_GPURIR:
         #                 **kwargs,
         #             )
         #     return rir
-
-        def _get_rir(self):
-            tmax = self.att_max / 60.0 * self.sabine()
-            rir = np.zeros(
-                (self.grid.size, self.mics.num_mics, int(np.round(self.sample_freq * tmax))+1))
-            kwargs = {
-                "room_sz": self.room_size.tolist(),
-                "beta": self.beta.tolist(),
-                "nb_img": self.order.tolist(),
-                "Tmax": tmax,
-                "fs": self.sample_freq,
-                "Tdiff": self._tdiff,
-                "c": self.env.c,
-            }
-                # if not isinstance(self.source_directivity, list):
-                #     self.source_directivity = [self.source_directivity] * self.grid.size
-                # if not isinstance(self.mics_directivity, list):
-                #     self.mics_directivity = [self.mics_directivity] * self.mics.num_mics
-                # if self.source_orientation is not None and self.source_orientation.size > 3:
-                #     self.source_orientation = np.tile(self.source_orientation, (self.grid.size, 1))
-                # if self.mics_orientation is not None and self.mics_orientation.size > 3:
-                #     self.mics_orientation = np.tile(self.mics_orientation, (self.mics.num_mics, 1))
-
-            rir_length = rir.shape[2]
-            for i in range(self.grid.size):
-                for j in range(self.mics.num_mics):
-                    r = gpuRIR.simulateRIR(
-                        pos_src=self.grid.gpos.T[i] + self.origin,
-                        pos_rcv=self.mics.mpos.T[j] + self.origin,
-                        # spkr_pattern=self.source_directivity[i],
-                        # mic_pattern=self.mics_directivity[j],
-                        # orV_src=self.source_orientation[i],
-                        # orV_rcv=self.mics_orientation[j],
-                        **kwargs,
-                    )
-                    if r.shape[2] > rir_length:
-                        rir[i, j, :] = r[0,0,:rir_length]
-                    else:
-                        rir[i,j, :r.shape[2]] = r[0,0,:]
-            return rir
 
 if PYROOMACOUSTICS:
     import pyroomacoustics as pra

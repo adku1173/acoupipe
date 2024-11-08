@@ -6,7 +6,6 @@ from numpy.random import default_rng
 from scipy.linalg import cholesky
 from traits.api import (
     CArray,
-    CLong,
     Either,
     Float,
     Instance,
@@ -23,7 +22,7 @@ from acoupipe.datasets.transfer import TransferBase, TransferISM
 class PowerSpectraAnalytic(ac.PowerSpectraImport):
     transfer = Instance(TransferBase)
 
-    numsamples = CLong
+    numsamples = Int
 
     sample_freq = Float(1.0, desc="sampling frequency")
 
@@ -109,7 +108,11 @@ class PowerSpectraAnalytic(ac.PowerSpectraImport):
         df = int(self.num_blocks)
         dim = scale.shape[0]
         if df <= dim:
-            raise ValueError(f"Degrees of freedom ({df}) must be greater than the dimension of the scale matrix ({dim})")
+            msg = (f"Degrees of freedom ({df}) must be greater than the dimension of the scale matrix ({dim})"
+                     " to generate a positive definite matrix."
+                     f" Increase the degrees of freedom (number of averages) by either shrinking the block size (currently {self.block_size}) or"
+                     f" by increasing the number of samples (currently {self.numsamples}). An overlap of {self.overlap} is used.")
+            raise ValueError(msg)
         n_tril = dim * (dim - 1) // 2
         C = cholesky(scale, lower=True)
         covariances = rng.normal(size=n_tril) + 1j * rng.normal(size=n_tril)
@@ -120,7 +123,7 @@ class PowerSpectraAnalytic(ac.PowerSpectraImport):
         tril_idx = tril_indices(dim, k=-1)
         A[tril_idx] = covariances
         # Input the variances
-        A[diag_indices(dim)] = variances.astype(complex)[:, 0]
+        A[diag_indices(dim)] = variances.astype(complex, copy=False)[:, 0]
         # build matrix
         CA = dot(C, A)
         return dot(CA, CA.conjugate().T) / df

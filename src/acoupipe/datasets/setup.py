@@ -70,7 +70,7 @@ class SyntheticSetupAnalytic(SyntheticSetup):
 
     @observe(["freq_data.numsamples"])
     def _set_signal_length(self, event):
-        self.signal_length = int(self.freq_data.numsamples/self.freq_data.sample_freq)
+        self.signal_length = self.freq_data.numsamples/self.freq_data.sample_freq
 
     @observe(["signal_length", "fs"])
     def _set_numsamples(self, event):
@@ -164,7 +164,7 @@ class SamplerSetupBase(HasTraits):
         sampler = {}
         return sampler
 
-    def set_pipeline_seeds(self, pipeline, start_idx, size, dataset="training"):
+    def set_seeds(self, pipeline, start_idx, size, dataset="training"):
         """Create the random seed list for each of the sampler objects that is held by the pipeline object.
 
         Parameters
@@ -330,15 +330,15 @@ class ISMSamplerSetup(SyntheticSamplerSetup):
 
     #: Number of rooms to simulate. Defaults to -1, which means infinite number rooms
     #: if set to a positive integer, the number of rooms to simulate is limited to this number.
-    nrooms = Int(10, desc="Number of rooms to simulate. Defaults to -1, which means infinite number rooms")
+    nrooms = Int(-1, desc="Number of rooms to simulate. Defaults to -1, which means infinite number rooms")
     precalc = Bool(False, desc="Pre-calculate the room impulse responses / transfer functions.")
-    snap_to_grid = Bool(True, desc="snap source locations to source_grid of measurement setup")
+    snap_to_grid = Bool(False, desc="snap source locations to source_grid of measurement setup")
     room_size_sampler = Instance(sp.ContainerSampler, desc="sampler for the room size")
     absoption_coeff_sampler = Instance(sp.ContainerSampler, desc="samples pyroomacoustics rooms (e.g. ShoeBox rooms)")
     room_placement_sampler = Instance(sp.ContainerSampler,
         desc="the relative position of the source-microphone array center in the room")
 
-    def set_pipeline_seeds(self, pipeline, start_idx, size, dataset="training"):
+    def set_seeds(self, pipeline, start_idx, size, dataset="training"):
         """Create the random seed list for each of the sampler objects that is held by the pipeline object.
 
         Parameters

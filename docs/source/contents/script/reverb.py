@@ -1,41 +1,88 @@
 
 #%%
 
+
+from pathlib import Path
+
+import acoular as ac
+import matplotlib.pyplot as plt
+from modelsdfg.transformer.datasets import ConfigUMAReverb
+
 from acoupipe.datasets.reverb import DatasetISM
 
 #%%
 
-dataset = DatasetISM(mode="analytic", tasks=2)
+
+mics = ac.MicGeom(from_file=Path(ac.__file__).parent / "xml" / "minidsp_uma-16_mirrored.xml")
+
+config = ConfigUMAReverb(
+        mode="wishart",
+        random_signal_length = True,
+        mic_pos_noise=False,
+        )
+
+dataset = DatasetISM(
+    # mode = "analytic",
+    # max_nsources = 1,
+    # mic_sig_noise = False,
+    # random_signal_length = False,
+    # mic_pos_noise = False,
+    # signal_length = 10,
+    config=config,
+    tasks=1, num_gpus=1,
+    )
 # generate data for frequency 2000 Hz (single frequency)
-data_generator = dataset.generate(features=["csm","loc", "f"],
-                                    split="training", size=1000, f=[2000], num=0)
-for _i, _ in enumerate(data_generator):
-    pass
+data_generator = dataset.generate(
+    features=["sourcemap", "csm", "source_strength_analytic", "source_strength_estimated", "loc", "f"],
+    #features=["csm"],
+                                    split="training", size=1000, f=[4000], num=0, start_idx=1)
+data_sample = next(data_generator)
+
+# for data_sample in enumerate(data_generator):
+#     pass
+
+if data_sample.get("source_strength_analytic") is not None:
+    print(ac.L_p(data_sample["source_strength_analytic"].sum()))
+if data_sample.get("source_strength_estimated") is not None:
+    print(ac.L_p(data_sample["source_strength_estimated"]))
+if data_sample.get("csm") is not None:
+    print(ac.L_p(data_sample["csm"][0,0,0]))
+if data_sample.get("sourcemap") is not None:
+    print(ac.L_p(data_sample["sourcemap"]).max())
+
+if data_sample.get("sourcemap") is not None and data_sample.get("loc") is not None and data_sample.get("f") is not None:
+
+    extent = dataset.config.msm_setup.grid.extend()
+
+    # sound pressure level
+    Lm = ac.L_p(data_sample["sourcemap"]).T
+    Lm_max = Lm.max()
+    Lm_min = Lm.max() - 20
+
+    # plot sourcemap
+    fig = plt.figure()
+    plt.title(f'Beamforming Map (f={data_sample["f"][0]} Hz)')
+    plt.imshow(Lm, vmax=Lm_max, vmin=Lm_min, extent=extent, origin="lower")
+    plt.colorbar(label="Sound Pressure Level (dB)")
+
+    # plot source locations
+    for loc in data_sample["loc"].T:
+        plt.scatter(loc[0], loc[1])
+    plt.xlabel("x (m)")
+    plt.ylabel("y (m)")
 
 
-# #%%
-# extent = dataset.config.msm_setup.grid.extend()
 
-# # sound pressure level
-# Lm = ac.L_p(data_sample["sourcemap"]).T
-# Lm_max = Lm.max()
-# Lm_min = Lm.max() - 20
+import numpy as np
 
-# # plot sourcemap
-# fig = plt.figure()
-# plt.title(f'Beamforming Map (f={data_sample["f"][0]} Hz)')
-# plt.imshow(Lm, vmax=Lm_max, vmin=Lm_min, extent=extent, origin="lower")
-# plt.colorbar(label="Sound Pressure Level (dB)")
-# # plot source locations
-# for loc in data_sample["loc"].T:
-#     plt.scatter(loc[0], loc[1])
-# plt.xlabel("x (m)")
-# plt.ylabel("y (m)")
+plt.figure()
+freqs = config.msm_setup.freq_data.transfer.fftfreq()
+H_j0 = config.msm_setup.freq_data.transfer._get_r0_transfer().squeeze()
+H_rm_0 = config.msm_setup.freq_data.transfer._get_rm_transfer()[:,0].squeeze()
 
-
-
-
-
+plt.plot(freqs,10*np.log10(np.abs(H_j0)))
+plt.plot(freqs,10*np.log10(np.abs(H_rm_0)))
+plt.show()
 
 
 # #%%

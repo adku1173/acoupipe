@@ -1,12 +1,11 @@
 
-from functools import partial
 
-from traits.api import Dict, HasPrivateTraits, Instance, List
+from functools import partial
 
 from acoupipe.config import TF_FLAG
 
 
-class BaseFeatureCollection(HasPrivateTraits):
+class BaseFeatureCollection:
     """
     BaseFeatureCollection base class for handling feature funcs.
 
@@ -16,10 +15,16 @@ class BaseFeatureCollection(HasPrivateTraits):
         List of feature_funcs.
     """
 
-    feature_funcs = List(desc="list of feature_funcs")
-    feature_tf_encoder_mapper = Dict(desc="feature encoder mapper")
-    feature_tf_shape_mapper = Dict(desc="feature shape mapper")
-    feature_tf_dtype_mapper = Dict(desc="feature dtype mapper")
+    def __init__(self, feature_funcs=None, feature_tf_encoder_mapper=None, feature_tf_shape_mapper=None, feature_tf_dtype_mapper=None):
+        if feature_funcs is None:
+            self.feature_funcs = []
+        if feature_tf_encoder_mapper is None:
+            self.feature_tf_encoder_mapper = {}
+        if feature_tf_shape_mapper is None:
+            self.feature_tf_shape_mapper = {}
+        if feature_tf_dtype_mapper is None:
+            self.feature_tf_dtype_mapper = {}
+        self._signature = {}
 
     def add_feature_func(self, feature_func): #TODO: remove some unnecessary functions here!
         """
@@ -42,11 +47,15 @@ class BaseFeatureCollection(HasPrivateTraits):
             List of feature_funcs.
         """
         def calc_features(sampler, feature_funcs):
-            data = {}
+            feature_dict = {}
             for ffunc in feature_funcs:
-                data.update(ffunc(sampler=sampler))
-            return data
+                result = ffunc(sampler=sampler)
+                feature_dict.update(result)
+            #     del result  # Delete result explicitly to free up memory
+            # gc.collect()  # Manually trigger garbage collection
+            return feature_dict
         return partial(calc_features, feature_funcs=self.feature_funcs)
+
 
 if TF_FLAG:
     import tensorflow as tf
@@ -72,19 +81,18 @@ if TF_FLAG:
         dict
             Output signature of the dataset.
         """
-        signature = {}
         for feature in features:
             if isinstance(feature, str):
                 feature_name = feature
             else:
                 feature_name = feature.name
-            signature[feature_name] = tf.TensorSpec(
+            self._signature[feature_name] = tf.TensorSpec(
                 self.feature_tf_shape_mapper[feature_name],self.feature_tf_dtype_mapper[feature_name])
-        return signature
+        return self._signature
     BaseFeatureCollection.get_output_signature = get_output_signature
 
 
-class FeatureCollectionBuilder(HasPrivateTraits):
+class FeatureCollectionBuilder:
     """
     FeatureCollectionBuilder base class for building a BaseFeatureCollection.
 
@@ -94,7 +102,9 @@ class FeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection object.
     """
 
-    feature_collection = Instance(BaseFeatureCollection, args=(), desc="BaseFeatureCollection object")
+    def __init__(self, feature_collection=None):
+        if feature_collection is None:
+            self.feature_collection = BaseFeatureCollection()
 
     def _add_tf_mapper(self, feature):
         if TF_FLAG:

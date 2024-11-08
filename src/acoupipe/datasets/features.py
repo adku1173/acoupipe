@@ -249,14 +249,14 @@ class LocFeature(FloatFeature):
     def calc_loc1(sampler, freq_data, dtype, name):
         sources = get_point_sources_recursively(freq_data.source)
         locs = np.array([src.loc for src in sources]).T
-        return {name: locs.astype(dtype)}
+        return {name: locs.astype(dtype, copy=False)}
 
     @staticmethod
     def calc_loc2(sampler, freq_data, dtype, name):
         if isinstance(freq_data.transfer.grid, ac.ImportGrid):
-            return {name: freq_data.transfer.grid.gpos_file.astype(dtype)}
+            return {name: freq_data.transfer.grid.gpos_file.astype(dtype, copy=False)}
         else:
-            return {name: freq_data.transfer.grid.gpos.astype(dtype)}
+            return {name: freq_data.transfer.grid.gpos.astype(dtype, copy=False)}
 
     def _get_feature_func(self):
         if isinstance(self.freq_data, PowerSpectraAnalytic):
@@ -299,18 +299,18 @@ class TimeDataFeature(FloatFeature):
                 if isinstance(time_data[0], ac.SamplesGenerator):
                     time_data = ac.SourceMixer(sources=time_data)
                     return {
-                        name: ac.tools.return_result(time_data).astype(dtype)
+                        name: ac.tools.return_result(time_data).astype(dtype, copy=False)
                         }
                 elif isinstance(time_data[0], ac.SignalGenerator):
                     time_data = np.concatenate([_.signal()[:,np.newaxis] for _ in time_data], axis=1)
                     return {
-                        name: time_data.astype(dtype)
+                        name: time_data.astype(dtype, copy=False)
                         }
             elif isinstance(time_data, ac.SignalGenerator):
-                return {name: time_data.signal()[:,np.newaxis].astype(dtype)}
+                return {name: time_data.signal()[:,np.newaxis].astype(dtype, copy=False)}
             else:
                 return {
-                    name: ac.tools.return_result(time_data).astype(dtype)
+                    name: ac.tools.return_result(time_data).astype(dtype, copy=False)
                     }
         return partial(_calc_time_data,time_data=self.time_data, name=self.name, dtype=self.dtype)
 
@@ -523,10 +523,10 @@ class CSMFeature(SpectraFeature):
             The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
             depending on the number of frequencies in fidx.
         """
-        csm = freq_data.csm[:]
         if fidx is not None:
-            csm = SpectraFeature.get_spectral_coeff(csm, dtype, fidx)
-        return {name :csm.astype(dtype)}
+            return {name : SpectraFeature.get_spectral_coeff(freq_data.csm, dtype, fidx)}
+        else:
+            return {name :freq_data.csm.astype(dtype, copy=False)}
 
     def _get_feature_func(self):
         """Return the callable for calculating the cross-spectral matrix."""
@@ -611,7 +611,7 @@ class EigmodeFeature(SpectraFeature):
                 The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics) with numfreq
                 depending on the number of frequencies in fidx.
             """
-            csm = freq_data.csm.astype(dtype)
+            csm = freq_data.csm.astype(dtype, copy=False)
             if fidx is not None:
                 csm = SpectraFeature.get_spectral_coeff(csm, dtype, fidx)
             return {name: EigmodeFeature.transform(csm)}
@@ -657,7 +657,7 @@ class CSMAnalytic(CSMFeature):
                 raise ValueError(f"Unknown csm_type {csm_type}.")
         if csm is None:
             return None
-        return csm.astype(dtype)
+        return csm.astype(dtype, copy=False)
 
     @staticmethod
     def calc_csm(sampler, csm_type, mode, freq_data, fidx, dtype, name):
@@ -742,7 +742,7 @@ class CSMDiagonalWelch(FloatFeature, CSMFeature):
                     overlap=freq_data.overlap, source=source)
                 spectrogram = SpectrogramFeature.calc_spectrogram(
                     sampler,fft_spectra, fidx=fidx, dtype="complex128", name="s")["s"]
-                strength = np.real(spectrogram*spectrogram.conjugate()).mean(0).astype(dtype)
+                strength = np.real(spectrogram*spectrogram.conjugate()).mean(0).astype(dtype, copy=False)
         else:
             raise ValueError("Only one uncorrelated noise source is supported.")
         return {name: strength}
@@ -786,7 +786,7 @@ class CSMDiagonalWelch(FloatFeature, CSMFeature):
             strength = np.zeros((nfft, len(sources)), dtype=dtype)
             for j, src in enumerate(sources):
                 freq_data.source = src
-                res = freq_data.csm.astype(dtype).reshape((-1))
+                res = freq_data.csm.astype(dtype, copy=False).reshape((-1))
                 if fidx is not None:
                     res = SpectraFeature.get_spectral_coeff(res, dtype, fidx)
                 strength[:,j] = res
