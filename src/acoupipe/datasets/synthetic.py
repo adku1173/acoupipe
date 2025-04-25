@@ -455,7 +455,7 @@ class DatasetSyntheticConfig(ConfigBase):
         return ac.Environment(c=343.0)
 
     def create_mics(self):
-        return ac.MicGeom(mpos_tot = tub_vogel64_ap1)
+        return ac.MicGeom(pos_total = tub_vogel64_ap1)
 
     def create_grid(self):
         ap = self.mics.aperture
@@ -475,7 +475,7 @@ class DatasetSyntheticConfig(ConfigBase):
 
     def create_obs(self):
         return ac.MicGeom(
-            mpos_tot=self.steer.ref[:,np.newaxis])
+            pos_total=self.steer.ref[:,np.newaxis])
 
     def create_beamformer(self):
         return ac.BeamformerBase(
@@ -492,7 +492,7 @@ class DatasetSyntheticConfig(ConfigBase):
             signals.append(ac.WNoiseGenerator(
                     seed = i+1,
                     sample_freq=self.fs,
-                    numsamples=self.signal_length*self.fs,
+                    num_samples=self.signal_length*self.fs,
                     )
             )
         return signals
@@ -544,7 +544,7 @@ class DatasetSyntheticConfig(ConfigBase):
             fft_params.pop("window")
             return PowerSpectraAnalytic(
                 mode = self.mode,
-                numsamples=self.signal_length*self.fs,
+                num_samples=self.signal_length*self.fs,
                 sample_freq=self.fs,
                 steer=self.source_steer,
                 cached = False,
@@ -555,7 +555,7 @@ class DatasetSyntheticConfig(ConfigBase):
         return ac.WNoiseGenerator(
                 seed = 1000,
                 sample_freq=self.fs,
-                numsamples=self.signal_length*self.fs,
+                num_samples=self.signal_length*self.fs,
                 )
 
     def create_mic_noise_source(self):
@@ -578,7 +578,7 @@ class DatasetSyntheticConfig(ConfigBase):
             random_var = norm(loc=0, scale=0.001),
             ddir = np.array([[1.0], [1.0], [0]]),
             target = self.noisy_mics,
-            mpos_init = self.mics.mpos_tot,)
+            mpos_init = self.mics.pos_total,)
 
     def create_location_sampler(self):
         ap = self.mics.aperture
@@ -640,7 +640,7 @@ class DatasetSyntheticConfig(ConfigBase):
             # adjust source signals, noise signal length
             signals = get_all_source_signals(sources)
             for signal in signals:
-                signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+                signal.num_samples = signal_length_sampler.target*freq_data.sample_freq
         # sample parameters
         loc = loc_sampler.target
         nsources = loc.shape[1]
@@ -650,7 +650,7 @@ class DatasetSyntheticConfig(ConfigBase):
         if mic_noise:
             mic_noise_signal = mic_noise[0].signal
             if signal_length_sampler is not None:
-                mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+                mic_noise_signal.num_samples = signal_length_sampler.target*freq_data.sample_freq
             if noise_sampler is not None:
                 noise_signal_ratio = noise_sampler.target # normalized noise variance
                 noise_prms_sq = prms_sq.sum()*noise_signal_ratio
@@ -692,7 +692,7 @@ class DatasetSyntheticConfig(ConfigBase):
             noisy_mics = beamformer.steer.mics # use the original mics (without noise)
 
         if signal_length_sampler is not None:
-            freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
+            freq_data.num_samples = signal_length_sampler.target*freq_data.sample_freq
 
         nfft = freq_data.fftfreq().shape[0]
         # sample parameters
@@ -960,7 +960,7 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
 
     def create_mics(self):
-        return ac.MicGeom(mpos_tot=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
+        return ac.MicGeom(pos_total=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
         [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
         [ 0.32909911,  0.56201909, -0.24697204, -0.68677001]]))
 

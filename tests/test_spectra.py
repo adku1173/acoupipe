@@ -6,7 +6,7 @@ from parameterized import parameterized
 
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 
-mg = MicGeom(mpos_tot=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
+mg = MicGeom(pos_total=np.array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
        [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
        [ 0.32909911,  0.56201909, -0.24697204, -0.68677001]]))
 
@@ -33,8 +33,8 @@ def change_overlap(psa):
     return psa
 
 
-def change_numsamples(psa):
-    psa.numsamples = psa.numsamples // 2
+def change_num_samples(psa):
+    psa.num_samples = psa.num_samples // 2
     return psa
 
 def change_noise(psa):
@@ -64,7 +64,7 @@ class TestPowerSpectraAnalytic(unittest.TestCase):
             block_size = 256,
             overlap = "50%",
             sample_freq = 51200,
-            numsamples = 51200,
+            num_samples = 51200,
             steer=SteeringVector(mics=mg, grid=ImportGrid(gpos_file=np.random.normal(size=(3,3)))))
         nfft = self.psa.fftfreq()
         self.psa.Q = np.stack([np.eye(3,dtype=complex)*0.1 for _ in range(nfft.shape[0])])
@@ -75,7 +75,7 @@ class TestPowerSpectraAnalytic(unittest.TestCase):
             ("seed", change_seed, [False,False]),
             ("mode", change_mode, [False,False]),
             ("overlap", change_overlap, [False,False]),
-            ("numsamples", change_numsamples, [False,False]),
+            ("num_samples", change_num_samples, [False,False]),
             ("noise", change_noise, [False,False]),
             ("ind_low", change_indices, [False,False]),
             ("Q", change_Q, [True,False]),
@@ -99,7 +99,7 @@ class TestPowerSpectraAnalytic(unittest.TestCase):
             ("seed", change_seed, [False,False]),
             ("mode", change_mode, [False,False]),
             ("overlap", change_overlap, [False,False]),
-            ("numsamples", change_numsamples, [False,False]),
+            ("num_samples", change_num_samples, [False,False]),
             ("noise", change_noise, [True,False]),
             ("ind_low", change_indices, [False,False]),
             ("Q", change_Q, [False,False]),

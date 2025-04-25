@@ -8,17 +8,17 @@ from scipy.stats import norm, rayleigh
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.sampler import MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
 
-mpos_tot = array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
+pos_total = array([[-0.68526741, -0.7593943 , -1.99918406,  0.08414458],
        [-0.60619132,  1.20374544, -0.27378946, -1.38583541],
        [ 0.32909911,  0.56201909, -0.24697204, -0.68677001]])
 
 def get_pipeline(nsamples):
-    mg = MicGeom( mpos_tot = mpos_tot )
+    mg = MicGeom( pos_total = pos_total )
     wn_list = []
     ps_list = []
     for i in range(2):
         wn_list.append(
-            WNoiseGenerator(sample_freq=51200,seed=100+i, rms=1.0, numsamples=51200))
+            WNoiseGenerator(sample_freq=51200,seed=100+i, rms=1.0, num_samples=51200))
         ps_list.append(
             PointSource(signal=wn_list[i],mics=mg,loc=(0.,0.,1.0)))
     sm = SourceMixer(sources=ps_list)
@@ -53,12 +53,12 @@ def get_pipeline(nsamples):
 
 def get_distributed_pipeline(nsamples=100,num_workers=1):
 
-    mg = MicGeom( mpos_tot = mpos_tot )
+    mg = MicGeom( pos_total = pos_total )
     wn_list = []
     ps_list = []
     for i in range(2):
         wn_list.append(
-            WNoiseGenerator(sample_freq=51200,seed=100+i, rms=1.0, numsamples=51200))
+            WNoiseGenerator(sample_freq=51200,seed=100+i, rms=1.0, num_samples=51200))
         ps_list.append(
             PointSource(signal=wn_list[i],mics=mg,loc=(0.,0.,1.0)))
     sm = SourceMixer(sources=ps_list)

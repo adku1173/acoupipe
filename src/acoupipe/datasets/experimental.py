@@ -432,8 +432,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     def create_mics(self):
         with h5.File(self.filename, "r") as file:
-            mpos_tot = file["data/location/receiver"][()].T
-        return ac.MicGeom(mpos_tot = mpos_tot)
+            pos_total = file["data/location/receiver"][()].T
+        return ac.MicGeom(pos_total = pos_total)
 
     def create_env(self):
         with h5.File(self.filename, "r") as file:
@@ -487,7 +487,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             freq_data = beamformer.freq_data
 
             if signal_length_sampler is not None:
-                freq_data.numsamples = signal_length_sampler.target*freq_data.sample_freq
+                freq_data.num_samples = signal_length_sampler.target*freq_data.sample_freq
 
             nfft = freq_data.fftfreq().shape[0]
             # sample parameters
@@ -538,7 +538,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 # adjust source signals, noise signal length
                 signals = get_all_source_signals(sources)
                 for signal in signals:
-                    signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+                    signal.num_samples = signal_length_sampler.target*freq_data.sample_freq
             # sample parameters
             loc = loc_sampler.target
             nsources = loc.shape[1]
@@ -548,7 +548,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             if mic_noise:
                 mic_noise_signal = mic_noise[0].signal
                 if signal_length_sampler is not None:
-                    mic_noise_signal.numsamples = signal_length_sampler.target*freq_data.sample_freq
+                    mic_noise_signal.num_samples = signal_length_sampler.target*freq_data.sample_freq
                 if noise_sampler is not None:
                     noise_signal_ratio = noise_sampler.target # normalized noise variance
                     noise_prms_sq = prms_sq.sum()*noise_signal_ratio

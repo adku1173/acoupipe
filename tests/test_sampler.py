@@ -218,7 +218,7 @@ class TestMicGeomSampler(unittest.TestCase):
 
     def get_micgeom(self):
         rng = RandomState(1)
-        mics = MicGeom(mpos_tot=rng.rand(3,10))
+        mics = MicGeom(pos_total=rng.rand(3,10))
         return mics
 
     def get_sampler(self,stype="deviate"):
@@ -239,7 +239,7 @@ class TestMicGeomSampler(unittest.TestCase):
         return sampler
 
     def test_mpos_init(self):
-        """Mpos init should be the same as the target mpos_tot.
+        """Mpos init should be the same as the target pos_total.
 
         1. test that mpos_init has not changed after sampling.
         2. test that mpos changed due to sampling.
@@ -251,11 +251,11 @@ class TestMicGeomSampler(unittest.TestCase):
                 digest1 = micgeom.digest
                 sampler = self.get_sampler(mode)
                 sampler.target = micgeom
-                mpos_target = micgeom.mpos_tot.copy()
+                mpos_target = micgeom.pos_total.copy()
                 sampler.sample()
                 digest2 = micgeom.digest
                 assert_almost_equal(mpos_target,sampler.mpos_init)
-                self.assertNotEqual(micgeom.mpos_tot[0,0],mpos_target[0,0])
+                self.assertNotEqual(micgeom.pos_total[0,0],mpos_target[0,0])
                 self.assertNotEqual(digest1,digest2)
 
 

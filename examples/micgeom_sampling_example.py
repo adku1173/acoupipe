@@ -12,7 +12,7 @@ from acoupipe.sampler import MicGeomSampler
 nsamples = 10
 
 # create Microphone Geometry object
-mics = ac.MicGeom(from_file=Path(ac.__file__).parent / "xml" / "tub_vogel64.xml")
+mics = ac.MicGeom(file=Path(ac.__file__).parent / "xml" / "tub_vogel64.xml")
 # define random state
 rng = RandomState(seed=1)
 

@@ -64,7 +64,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     # internal identifier
     digest = Property(
         depends_on = ["_csmsum", "seed", "mode","steer.digest","Q","noise","ind_low","ind_high", "sample_freq",\
-            "block_size", "overlap", "numsamples"],
+            "block_size", "overlap", "num_samples"],
         )
 
     @cached_property
@@ -83,9 +83,9 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         return abs(fft.fftfreq(self.block_size, 1./self.sample_freq)\
                         [:int(self.block_size/2+1)])
 
-    @property_depends_on("numsamples, block_size, overlap")
+    @property_depends_on("num_samples, block_size, overlap")
     def _get_num_blocks ( self ):
-        return self.overlap_*self.numsamples/self.block_size-\
+        return self.overlap_*self.num_samples/self.block_size-\
         self.overlap_+1
 
     def _validate_custom_transfer( self ):
@@ -128,7 +128,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         return dot(CA, CA.conjugate().T)/df
 
     @property_depends_on(
-        "seed, mode, block_size, overlap, sample_freq, numsamples, Q, noise, ind_low, ind_high, steer.digest, custom_transfer")
+        "seed, mode, block_size, overlap, sample_freq, num_samples, Q, noise, ind_low, ind_high, steer.digest, custom_transfer")
     def _get_csm ( self ):
         #self._validate_freq_data()
         if self.custom_transfer is None:
@@ -156,7 +156,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
             csm += self._noise
         return csm
 
-    @property_depends_on("seed, mode, block_size, overlap, sample_freq, numsamples, Q, ind_low, ind_high")
+    @property_depends_on("seed, mode, block_size, overlap, sample_freq, num_samples, Q, ind_low, ind_high")
     def _get__Q(self):
         if self.mode == "analytic":
             return self.Q
@@ -168,7 +168,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
                 Q[i] = self._sample_wishart(self.Q[i],rng)
             return Q
 
-    @property_depends_on("seed, mode, block_size, overlap, sample_freq, numsamples, noise, ind_low, ind_high")
+    @property_depends_on("seed, mode, block_size, overlap, sample_freq, num_samples, noise, ind_low, ind_high")
     def _get__noise(self):
         if self.noise is not None:
             if self.mode == "analytic":

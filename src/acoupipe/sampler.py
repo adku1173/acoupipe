@@ -23,12 +23,12 @@ New RMS values following a normal distribution are assigned to the :code:`WNoise
     random_var = norm(loc=1.,scale=.5)
 
     n1 = ac.WNoiseGenerator( sample_freq=24000,
-                    numsamples=24000*5,
+                    num_samples=24000*5,
                     rms=1.0,
                     seed=1 )
 
     n2 = ac.WNoiseGenerator( sample_freq=24000,
-                    numsamples=24000*5,
+                    num_samples=24000*5,
                     rms=.5,
                     seed=2 )
 
@@ -562,7 +562,7 @@ class MicGeomSampler(BaseSampler):
     @cached_property
     def _get_mpos_init(self):
         if self._mpos_init is None:
-            return self.target.mpos_tot.copy()
+            return self.target.pos_total.copy()
         else:
             return self._mpos_init.copy()
 
@@ -580,27 +580,27 @@ class MicGeomSampler(BaseSampler):
         theta = 2 * np.pi * self.rscale * self.rvs()
         # Rodrigues' rotation formula
         R = np.eye(3) + np.sin(theta) * self.cpm + (1 - np.cos(theta)) * self.cpm @ self.cpm
-        new_mpos_tot = R @ self.target.mpos_tot.copy()
-        self.target.mpos_tot = new_mpos_tot.copy()
+        new_pos_total = R @ self.target.pos_total.copy()
+        self.target.pos_total = new_pos_total.copy()
 
     def translate(self):
         """Translate the microphone array."""
-        new_mpos_tot = self.target.mpos_tot.copy()
-        new_mpos_tot += np.sum(self.tdir *self.rvs(size=self.tdir.shape[-1]),
+        new_pos_total = self.target.pos_total.copy()
+        new_pos_total += np.sum(self.tdir *self.rvs(size=self.tdir.shape[-1]),
             axis=-1).reshape(-1, 1)
-        self.target.mpos_tot = new_mpos_tot.copy()
+        self.target.pos_total = new_pos_total.copy()
 
     def deviate(self):
         """Deviates the individual microphone positions."""
         dev_axs = self.ddir.nonzero()[0] # get axes to deviate
-        new_mpos_tot = self.target.mpos_tot.copy()
-        new_mpos_tot[dev_axs] += self.ddir[dev_axs] * \
+        new_pos_total = self.target.pos_total.copy()
+        new_pos_total[dev_axs] += self.ddir[dev_axs] * \
             self.rvs(size=((self.mpos_init.shape[1],dev_axs.size))).T
-        self.target.mpos_tot = new_mpos_tot.copy()
+        self.target.pos_total = new_pos_total.copy()
 
     def sample(self):
         """Random sampling of microphone positions."""
-        self.target.mpos_tot = self.mpos_init.copy() # initialize
+        self.target.pos_total = self.mpos_init.copy() # initialize
         if self.rvec.any():  # if rotation vector exist, rotate first!
             self.rotate()
         if self.tdir.any():

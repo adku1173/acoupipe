@@ -35,7 +35,7 @@ the Acoular_ microphone array geometry object is initialised
 
 .. code-block:: Python
 
-    mics = MicGeom(from_file="array64_d0o686.xml")
+    mics = MicGeom(file="array64_d0o686.xml")
 
 and a SciPy_ random distribution object is generated using a preset random seed in order to guarantee reproducibility.
 
