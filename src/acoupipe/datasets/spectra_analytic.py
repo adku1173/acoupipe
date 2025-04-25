@@ -5,12 +5,12 @@ from acoular.internal import digest
 from numpy import diag_indices, dot, r_, tril_indices, zeros
 from numpy.random import default_rng
 from scipy.linalg import cholesky
-from traits.api import CArray, CLong, Either, Float, Instance, Int, Property, Trait, cached_property, property_depends_on
+from traits.api import CArray, CInt, Either, Float, Instance, Int, Property, Trait, cached_property, property_depends_on
 
 
 class PowerSpectraAnalytic(PowerSpectraImport):
 
-    numsamples = CLong
+    numsamples = CInt
 
     sample_freq = Float(1.0,
         desc="sampling frequency")

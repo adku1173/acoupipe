@@ -3,7 +3,7 @@ from os import path
 
 from acoular import config
 from h5py import File as H5File
-from traits.api import CLong, Dict, File, Instance, List, Property, cached_property, on_trait_change
+from traits.api import CInt, Dict, File, Instance, List, Property, cached_property, on_trait_change
 
 from acoupipe.pipeline import DataGenerator
 
@@ -44,7 +44,7 @@ class LoadH5Dataset(BaseLoadDataset):
         desc="basename of data file")
 
     #: Number of data samples, is set automatically / read from file.
-    numsamples = CLong(0,
+    numsamples = CInt(0,
         desc="number of samples in the dataset")
 
     #: Names of features, is set automatically / read from file.
@@ -52,7 +52,7 @@ class LoadH5Dataset(BaseLoadDataset):
         desc="names of the features in the dataset")
 
     #: Number of features, is set automatically / read from file.
-    numfeatures = CLong(0,
+    numfeatures = CInt(0,
         desc="number of features in the dataset")
 
     #: Number of features, is set automatically / read from file.
