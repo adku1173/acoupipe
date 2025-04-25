@@ -162,13 +162,16 @@ class NumericAttributeSampler(BaseSampler):
         Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` that are going to be assigned
         to the target instance attribute via internal :meth:`set_value` method.
         """
-        if self.equal_value:
+        if self.equal_value or len(self.target) == 0:
             value = self.rvs()[0]
             if self.filter: # resample if filter returns False
                 while not self.filter(value):
                     value = self.rvs()[0]
-            for target in self.target:
-                self.set_value(target, value)
+            if not self.target:
+                self.target = [value]
+            else:
+                for target in self.target:
+                    self.set_value(target, value)
         else:
             values = self.rvs(len(self.target))
             if self.filter: # resample if filter returns False
@@ -312,6 +315,19 @@ class ContainerSampler(BaseSampler):
     '<Signature (numpy.random.Generator)>'.
     The callable is evoked via the :meth:`sample` method of this class.
     The output of the callable is assigned to the :attr:`target` attribute.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from acoupipe.sampler import ContainerSampler
+    >>> from numpy.random import RandomState
+
+    >>> sampler = ContainerSampler(random_state=RandomState(0),
+    ...     random_func=lambda rng: rng.uniform(0, 1, size=1),
+    ... )
+    >>> sampler.sample()
+    >>> print(sampler.target)
+    [0.5488135]
     """
 
     target = Any(
@@ -532,7 +548,7 @@ class MicGeomSampler(BaseSampler):
     """Random disturbance of microphone positions of a :class:`acoular.MicGeom` object."""
 
     #: the microphone geometry instance (type :class:`acoular.MicGeom`)
-    target = Instance(ac.MicGeom,
+    target = Instance(ac.MicGeom, args=(),
         desc="microphone geometry whose positions are sampled")
 
     #:manages if a single value is chosen for all targets

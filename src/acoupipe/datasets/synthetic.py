@@ -782,6 +782,7 @@ class DatasetSyntheticConfigWelch(DatasetSyntheticConfig):
         rms = sampler[3].target[:nsources]*self.msm_setup.source_steer.r0
         for i in range(nsources):
             msm_setup.time_data.sources[i].signal.rms = rms[i] #TODO: use strength of a monopole source at ref! Not the transfer function itself
+            #print(rms[i])
 
     def _apply_new_mic_sig_noise(self, sampler, msm_setup):
         noise_sampler = sampler.get(5)

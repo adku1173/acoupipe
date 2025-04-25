@@ -63,7 +63,6 @@ import os
 from functools import wraps
 from time import time
 
-import memray
 import numpy as np
 import ray
 from numpy.random import RandomState, default_rng
@@ -319,10 +318,10 @@ class SamplerActor:
         print("GPU IDs: {}".format(ray.get_runtime_context().get_accelerator_ids()["GPU"]))
         print("CUDA_VISIBLE_DEVICES: {}".format(os.environ["CUDA_VISIBLE_DEVICES"]))
         # Every memory allocation after `__enter__` method will be tracked.
-        memray.Tracker(
-            "/tmp/ray/session_latest/logs/"
-            f"{ray.get_runtime_context().get_actor_id()}_mem_profile.bin"
-        ).__enter__()
+        # memray.Tracker(
+        #     "/tmp/ray/session_latest/logs/"
+        #     f"{ray.get_runtime_context().get_actor_id()}_mem_profile.bin"
+        # ).__enter__()
 
     def sample(self, seeds):
         """Invocation of the :meth:`sample` function of one or more :class:`BaseSampler` instances."""

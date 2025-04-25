@@ -56,7 +56,9 @@ class RangeDatasource(Datasource):
         block_format = self._block_format
         tensor_shape = self._tensor_shape
         total_count = stop - start
-        block_size = max(1, total_count // parallelism)
+
+        # Safeguard for parallelism
+        parallelism = max(1, parallelism)  # Ensure at least 1 parallel task
 
         ctx = DataContext.get_current()
         if total_count == 0:
@@ -66,34 +68,37 @@ class RangeDatasource(Datasource):
             row_size_bytes = max(row_size_bytes, 1)
             target_rows_per_block = max(1, ctx.target_max_block_size // row_size_bytes)
 
-        def make_block(start: int, count: int) -> Block:
+        def make_block(start: int, count: int, stride: int) -> Block:
             if block_format == "arrow":
                 import pyarrow as pa
 
+                indices = np.arange(start, start + count * stride, stride)
                 return pa.Table.from_arrays(
-                    [np.arange(start, start + count)],
+                    [indices],
                     names=[self._column_name or "value"],
                 )
             elif block_format == "tensor":
                 import pyarrow as pa
 
+                indices = np.arange(start, start + count * stride, stride)
                 tensor = np.ones(tensor_shape, dtype=np.int64) * np.expand_dims(
-                    np.arange(start, start + count),
+                    indices,
                     tuple(range(1, 1 + len(tensor_shape))),
                 )
                 return BlockAccessor.batch_to_block(
                     {self._column_name: tensor} if self._column_name else tensor
                 )
             else:
-                return list(builtins.range(start, start + count))
+                return list(builtins.range(start, start + count * stride, stride))
 
         def make_blocks(
-            start: int, count: int, target_rows_per_block: int
+            task_id: int, total_tasks: int, start: int, count: int, target_rows_per_block: int
         ) -> Iterable[Block]:
+            stride = total_tasks
             while count > 0:
                 num_rows = min(count, target_rows_per_block)
-                yield make_block(start, num_rows)
-                start += num_rows
+                yield make_block(start + task_id, num_rows, stride)
+                start += num_rows * stride
                 count -= num_rows
 
         if block_format == "tensor":
@@ -101,9 +106,8 @@ class RangeDatasource(Datasource):
         else:
             element_size = 1
 
-        i = start
-        while i < stop:
-            count = min(block_size, stop - i)
+        for task_id in builtins.range(parallelism):
+            count = (total_count + parallelism - 1 - task_id) // parallelism  # Distribute rows evenly
             meta = BlockMetadata(
                 num_rows=count,
                 size_bytes=8 * count * element_size,
@@ -113,13 +117,12 @@ class RangeDatasource(Datasource):
             )
             read_tasks.append(
                 ReadTask(
-                    lambda i=i, count=count: make_blocks(
-                        i, count, target_rows_per_block
+                    lambda task_id=task_id, count=count: make_blocks(
+                        task_id, parallelism, start, count, target_rows_per_block
                     ),
                     meta,
                 )
             )
-            i += block_size
 
         return read_tasks
 
