@@ -1,0 +1,45 @@
+Bootstrap: docker
+From: continuumio/miniconda3:latest
+
+%environment
+    export PATH="/opt/micromamba/envs/acoupipe/bin:$PATH"
+
+
+%post
+    # Update and install tools
+    apt-get update && apt-get install -y curl git
+
+    # Install micromamba
+    curl -L https://micro.mamba.pm/api/micromamba/linux-64/latest | \
+    tar -xj -C /usr/local/bin --strip-components=1 bin/micromamba
+
+    # Create the environment
+    /usr/local/bin/micromamba create -y -p /opt/micromamba/envs/acoupipe python=3.12 -c conda-forge
+
+    # acoupipe
+    rm -rf /tmp/acoupipe
+    git clone --branch ray_data --single-branch https://github.com/adku1173/acoupipe.git /tmp/acoupipe
+    cp -r /tmp/acoupipe/src/acoupipe /opt/micromamba/envs/acoupipe/lib/python3.12/site-packages/
+    rm -rf /tmp/acoupipe
+
+    # Clean up before
+    rm -rf /tmp/acoular
+    git clone --branch pickle_fix --single-branch https://github.com/acoular/acoular.git /tmp/acoular
+    cp -r /tmp/acoular/acoular /opt/micromamba/envs/acoupipe/lib/python3.12/site-packages/
+    rm -rf /tmp/acoular
+
+    # install packages from conda-forge
+    /usr/local/bin/micromamba install -y -p /opt/micromamba/envs/acoupipe -c conda-forge \
+        scikit-learn pandas matplotlib scipy numba numpy traits pytables h5py tqdm parameterized pooch
+
+    # install pip using conda
+    /usr/local/bin/micromamba install -y -p /opt/micromamba/envs/acoupipe -c conda-forge pip
+
+    # install packages from pypi
+    /usr/local/bin/micromamba run -p /opt/micromamba/envs/acoupipe python -m pip install \
+        ray[default,train]    
+
+    # install ray with pip 
+    #/usr/local/bin/micromamba run -p /opt/micromamba/envs/acoupipe python -m pip install ray[default,train]    
+
+

@@ -1,67 +1,44 @@
-FROM tensorflow/tensorflow:latest-gpu-jupyter AS jupyter-gpu
+# Stage 1: Base image with Miniconda
+FROM continuumio/miniconda3:latest AS base
 
-#https://github.com/numba/numba/issues/4032 -> the numba cache directory
-# should be at a writable location when using no 
-# root priviliges
+# Set environment variables
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
-ENV PIP_ROOT_USER_ACTION=ignore
+ENV PATH="/opt/conda/envs/acoupipe/bin:$PATH"
 
-# custom acoular version
-RUN pip install acoular>=24.03
-
-# copy needed scripts to workingdir
-COPY . /tmp/acoupipe
-RUN cd /tmp/acoupipe
-
-# install
-RUN pip install /tmp/acoupipe
-
-############################################ base builds ###########################################################
-
-FROM python:3.11 AS base
-
-#https://github.com/numba/numba/issues/4032 -> the numba cache directory
-# should be at a writable location when using no 
-# root priviliges
-ENV NUMBA_CACHE_DIR=/tmp/numba_cache
-ENV PIP_ROOT_USER_ACTION=ignore
-
-# set the working directory in the container
+# Set the working directory
 WORKDIR /src
 
-# install dependencies
-RUN /usr/local/bin/python -m pip install --upgrade pip
-# echoing pip manager version
-RUN bash -c 'echo "$(pip --version)"'
+# Create and activate the `acoupipe` environment, and install Python
+RUN conda install -y -n base python=3.12 && \
+    conda clean --all --yes
 
-# custom acoular version
-#ARG TOKEN
-#RUN git clone https://kujawski:${TOKEN}@git.tu-berlin.de/acoular-dev/kujawski/acoular.git /tmp/acoular
-#RUN pip install /tmp/acoular
-#RUN rm -r /tmp/acoular
+# Activate the `acoupipe` environment and install essential tools
+RUN conda install -y -n base -c conda-forge git && \
+    conda clean --all --yes
 
-RUN pip install acoular>=24.03
+# Clone and install Acoular in the `acoupipe` environment
+RUN git clone --branch pickle_fix --single-branch https://github.com/acoular/acoular.git /tmp/acoular && \
+    pip install /tmp/acoular && \
+    rm -rf /tmp/acoular
 
-# copy needed scripts to workingdir
-COPY . /tmp/acoupipe
-RUN cd /tmp/acoupipe
+# Copy project files
+COPY . /src
 
-# copy app 
-RUN mkdir /app
-COPY ./app /app
+# Install project dependencies in the `acoupipe` environment
+RUN pip install .
 
-# install
-RUN pip install /tmp/acoupipe
 
-# run the main.py script to save data to file
-CMD [ "python", "/app/main.py" ]
+# Default command to run the application
+CMD ["python", "/src/app/main.py"]
 
-# second stage
+# Stage 2: Full build with optional dependencies
 FROM base AS full
-RUN cd /tmp/acoupipe
-RUN pip install "/tmp/acoupipe[full]"
 
-# third stage
+# Install optional dependencies in the `acoupipe` environment
+RUN pip install ".[full]"
+
+# Stage 3: Development build
 FROM full AS dev
-RUN cd /tmp/acoupipe
-RUN pip install "/tmp/acoupipe[dev]"
+
+# Install development dependencies in the `acoupipe` environment
+RUN pip install ".[dev]"
