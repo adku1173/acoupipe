@@ -1,14 +1,16 @@
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-import pandas as pd
-import seaborn as sns
-
-sns.set() # Setting seaborn as default style even if use only matplotlib
-
-sns.set_theme(style="whitegrid")
 
 def plot_all_features_over_tasks(name, device):
+
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import seaborn as sns
+
+    sns.set() # Setting seaborn as default style even if use only matplotlib
+
+    sns.set_theme(style="whitegrid")
+
     if device == "compute4":
         dev_name = "24x Intel(R) Xeon(R) Silver 4214R CPU @ 2.40GHz"
     elif device == "compute1":

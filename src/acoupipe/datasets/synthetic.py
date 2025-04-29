@@ -322,8 +322,8 @@ class DatasetSyntheticConfig(ConfigBase):
         Instance of acoular.PowerSpectra defining the frequency domain data. Only used if :attr:`mode` is
         :code:`welch`. Otherwise, an instance of :class:`acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic`
         is used.
-    fft_spectra : ac.FFTSpectra
-        Instance of acoular.FFTSpectra used to calculate the spectrogram data. Only used if :attr:`mode` is
+    fft_spectra : ac.RFFT
+        Instance of acoular.RFFT used to calculate the spectrogram data. Only used if :attr:`mode` is
         :code:`welch`.
     fft_obs_spectra : ac.PowerSpectra
         Instance of acoular.PowerSpectra used to calculate the source strength at the observation point given in
@@ -377,7 +377,7 @@ class DatasetSyntheticConfig(ConfigBase):
     beamformer = Instance(ac.BeamformerBase, desc="beamformer configuration")
     steer = Instance(ac.SteeringVector, desc="steering vector configuration")
     freq_data = Instance(ac.PowerSpectra, desc="frequency domain data configuration")
-    fft_spectra = Instance(ac.FFTSpectra, desc="FFT spectra configuration (only for spectrogram feature)")
+    fft_spectra = Instance(ac.RFFT, desc="FFT spectra configuration (only for spectrogram feature)")
     fft_obs_spectra = Instance(ac.PowerSpectra, desc="FFT spectra configuration only for 'estimated strength' label)")
     signals = List(desc="list of signals")
     sources = List(desc="list of sound sources")
@@ -515,7 +515,7 @@ class DatasetSyntheticConfig(ConfigBase):
                             sources=self.sources,)
         else:
             source = ac.SourceMixer(sources=self.sources)
-        return ac.FFTSpectra(
+        return ac.RFFT(
             source = source,
             **self.fft_params,
             )
@@ -567,7 +567,7 @@ class DatasetSyntheticConfig(ConfigBase):
     def create_source_steer(self):
         return ac.SteeringVector(
             steer_type="true level",
-            ref=self.obs.mpos.squeeze(),
+            ref=self.obs.pos.squeeze(),
             mics=self.noisy_mics,
             grid=ac.ImportGrid(), # is filled later
             env=self.env
@@ -658,7 +658,7 @@ class DatasetSyntheticConfig(ConfigBase):
                 mic_noise_signal.seed = seed_sampler.target+1000
                 freq_data.source.source.mics = noisy_mics
         subset_sources = sources[:nsources]
-        source_steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
+        source_steer.grid = ac.ImportGrid(pos=loc) # set source locations
         for i,src in enumerate(subset_sources):
             src.signal.seed = seed_sampler.target+i
             # weight the RMS with the distance to the reference position
@@ -698,7 +698,7 @@ class DatasetSyntheticConfig(ConfigBase):
         # sample parameters
         loc = loc_sampler.target
         nsources = loc.shape[1]
-        freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
+        freq_data.steer.grid = ac.ImportGrid(pos=loc) # set source locations
         freq_data.steer.mics = noisy_mics # set mic locations
         freq_data.seed=seed_sampler.target
         # change source strength
@@ -816,7 +816,7 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
             self.feature_collection.feature_tf_encoder_mapper.update(
                 {"sourcemap" : float_list_feature})
             self.feature_collection.feature_tf_shape_mapper.update(
-                {"sourcemap" : (self.fdim,) + beamformer.grid.shape})
+                {"sourcemap" : (self.fdim,) + beamformer.steer.grid.shape})
             self.feature_collection.feature_tf_dtype_mapper.update(
                 {"sourcemap" : "float32"})
 

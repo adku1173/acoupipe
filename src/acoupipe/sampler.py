@@ -446,7 +446,7 @@ class LocationSampler(BaseSampler):
     def _sample_grid(self):
         """Sample of locations with grid."""
         loc_array = np.empty((3,self.nsources))
-        gpos = self.grid.gpos
+        gpos = self.grid.pos
         for i in range(self.nsources):
             index = np.argmin(np.linalg.norm(gpos-self.rvs()[:,np.newaxis],axis=0))
             new_loc = gpos[:,index]

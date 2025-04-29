@@ -33,7 +33,6 @@ dependencies = [
 	'ray',
 	'h5py',
 	'tqdm',
-	'parameterized',
     'pooch',
 ]
 maintainers = [

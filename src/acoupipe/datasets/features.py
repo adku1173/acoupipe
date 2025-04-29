@@ -234,7 +234,7 @@ class SpectrogramFeature(SpectraFeature):
     ----------
     name : str
         Name of the feature (default='spectrogram').
-    freq_data : instance of class acoular.FFTSpectra
+    freq_data : instance of class acoular.RFFT
         The object which calculates the spectrogram data.
     f : float
         the frequency (or center frequency) of interest
@@ -245,7 +245,7 @@ class SpectrogramFeature(SpectraFeature):
     """
 
     name = Str("spectrogram")
-    freq_data = Instance(ac.FFTSpectra, desc="spectrogram")
+    freq_data = Instance(ac.RFFT, desc="spectrogram")
 
     @staticmethod
     def calc_spectrogram1(sampler, freq_data, name):
@@ -671,7 +671,7 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
             else:
                 return partial(self.calc_source_strength_estimated3_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
 
-        elif isinstance(self.freq_data, ac.FFTSpectra):
+        elif isinstance(self.freq_data, ac.RFFT):
             if self.fidx is None:
                 return partial(self.calc_source_strength_estimated1_fullfreq, freq_data = self.freq_data, name=self.name)
             else:
@@ -816,7 +816,7 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
             else:
                 return partial(self.calc_noise_strength_estimated2_partfreq, freq_data = self.freq_data,fidx = self.fidx, name=self.name)
 
-        elif isinstance(self.freq_data, ac.FFTSpectra):
+        elif isinstance(self.freq_data, ac.RFFT):
             if self.fidx is None:
                 return partial(self.calc_noise_strength_estimated1_fullfreq, freq_data = self.freq_data, name=self.name)
             else:

@@ -10,7 +10,7 @@ from traits.api import CArray, CInt, Either, Float, Instance, Int, Property, Tra
 
 class PowerSpectraAnalytic(PowerSpectraImport):
 
-    numsamples = CInt
+    num_samples = CInt
 
     sample_freq = Float(1.0,
         desc="sampling frequency")

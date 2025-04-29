@@ -472,7 +472,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     def create_source_grid(self):
         with h5.File(self.filename, "r") as file:
             gpos_file = file["data/location/source"][()].T
-        return ac.ImportGrid(gpos_file=gpos_file)
+        return ac.ImportGrid(pos=gpos_file)
 
     @staticmethod
     def calc_analytic_prepare_func(sampler, beamformer, filename, ref_mic):
@@ -497,14 +497,14 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             # finding the SRIR matching the location
             transfer = np.empty((nfft,nummics,nsources), dtype=complex)
             for i in range(nsources):
-                ir_idx = np.where( np.sum(loc_sampler.grid.gpos - loc[:,i][:,np.newaxis],axis=0) == 0)
+                ir_idx = np.where( np.sum(loc_sampler.grid.pos - loc[:,i][:,np.newaxis],axis=0) == 0)
                 assert len(ir_idx) == 1
                 tf = blockwise_transfer(
                     file["data/impulse_response"][ir_idx[0][0]], freq_data.block_size).T
                 transfer[:,:,i] = tf / tf[:,ref_mic][:,np.newaxis] # reference mic based normalization
             # adjust freq_data
             freq_data.custom_transfer = transfer
-            freq_data.steer.grid = ac.ImportGrid(gpos_file=loc) # set source locations
+            freq_data.steer.grid = ac.ImportGrid(pos=loc) # set source locations
             freq_data.seed=seed_sampler.target
             # change source strength
             prms_sq = rms_sampler.target[:nsources]**2 # squared sound pressure RMS at reference position
@@ -556,7 +556,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                     mic_noise_signal.seed = seed_sampler.target+1000
             subset_sources = sources[:nsources]
             for i,src in enumerate(subset_sources):
-                ir_idx = np.where( np.sum(loc_sampler.grid.gpos - loc[:,i][:,np.newaxis],axis=0) == 0)
+                ir_idx = np.where( np.sum(loc_sampler.grid.pos - loc[:,i][:,np.newaxis],axis=0) == 0)
                 assert len(ir_idx) == 1
                 tf = blockwise_transfer(
                     file["data/impulse_response"][ir_idx[0][0]]).T

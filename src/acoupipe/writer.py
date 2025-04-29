@@ -25,7 +25,7 @@ from os import path
 import numpy as np
 from acoular import config
 from h5py import File as H5File
-from traits.api import Bool, Dict, File, Callable, Instance, List, Str, Trait
+from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
 
 from acoupipe.config import TF_FLAG
 from acoupipe.pipeline import DataGenerator
