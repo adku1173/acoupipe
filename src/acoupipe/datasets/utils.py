@@ -183,7 +183,7 @@ def get_frequency_index_range(freq, f, num):
         # single frequency line
         ind = searchsorted(freq, f)
         if ind >= len(freq):
-            warn("Queried frequency (%g Hz) not in resolved " "frequency range. Returning zeros." % f, Warning, stacklevel=2)
+            warn("Queried frequency (%g Hz) not in resolved frequency range. Returning zeros." % f, Warning, stacklevel=2)
             ind = None
         else:
             if freq[ind] != f:
@@ -207,15 +207,11 @@ def get_frequency_index_range(freq, f, num):
         ind2 = searchsorted(freq, f2)
         if ind1 == ind2:
             warn(
-                "Queried frequency band (%g to %g Hz) does not "
-                "include any discrete FFT sample frequencies. "
-                "Returning zeros." % (f1, f2),
+                "Queried frequency band (%g to %g Hz) does not include any discrete FFT sample frequencies. Returning zeros." % (f1, f2),
                 Warning,
                 stacklevel=2,
             )
         return (ind1, ind2)
-
-
 
 
 def set_filename(writer, path=".", *args):
@@ -389,78 +385,80 @@ def log_execution_time(f):
     return wrap
 
 
+def get_absorption_coeff(rng, realistic_walls=True):
+    """
+    Draw random absorption coefficients for the walls of a room.
+
+    This function is based on code from the Dir_SrcMic_DOA project,
+    which is licensed under the GNU Affero General Public License v3.0.
+
+    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+
+    GNU Affero General Public License v3.0:
+    https://www.gnu.org/licenses/agpl-3.0.en.html
+    """
+    if not realistic_walls:
+        abs_coeff_val = round(rng.uniform(0.02, 0.50), 2)
+        abs_coeff_wall = np.ones((6, 6)) * abs_coeff_val
+
+    # Realistic walls
+    # id reflective walls = 7
+    # absorbant wall = 8
+    else:
+        no_reflective_walls = rng.choice([0, 1, 2, 3, 4, 5, 6])
+        walls_profile = np.array([8 for i in range(6)])
+        id_reflective = rng.choice([0, 1, 2, 3, 4, 5], size=no_reflective_walls, replace=False)
+        walls_profile[id_reflective] = 7
+
+        abs_coeff_wall = np.empty((6, 6))
+        for i, a in enumerate(walls_profile):
+            if a == 7:  # Reflective Profile
+                abs_coeff_val = round(rng.uniform(0.01, 0.12), 2)
+                abs_coeff_wall[i, :] = [abs_coeff_val] * 6
+            elif a == 8:
+                f_o_c = rng.choice([1, 2])  # Removed 0 wall profile.
+                if f_o_c == 0:
+                    abs_coeff_val = [
+                        round(rng.uniform(0.01, 0.50), 2),
+                        round(rng.uniform(0.01, 0.50), 2),
+                        round(rng.uniform(0.01, 0.30), 2),
+                        round(rng.uniform(0.01, 0.12), 2),
+                        round(rng.uniform(0.01, 0.12), 2),
+                        round(rng.uniform(0.01, 0.12), 2),
+                    ]
+                    abs_coeff_wall[i, :] = abs_coeff_val
+                elif f_o_c == 1:
+                    abs_coeff_val = [
+                        round(rng.uniform(0.01, 0.70), 2),
+                        round(rng.uniform(0.15, 1.00), 2),
+                        round(rng.uniform(0.40, 1.00), 2),
+                        round(rng.uniform(0.40, 1.00), 2),
+                        round(rng.uniform(0.40, 1.00), 2),
+                        round(rng.uniform(0.30, 1.00), 2),
+                    ]
+                    abs_coeff_wall[i, :] = abs_coeff_val
+    return np.array(abs_coeff_wall)
+
+
+def get_diffusion_coeff(rng):
+    """
+    Draw random diffusion coefficients for the walls of a room.
+
+    This function is based on code from the Dir_SrcMic_DOA project,
+    which is licensed under the GNU Affero General Public License v3.0.
+
+    Original source: https://github.com/prerak23/Dir_SrcMic_DOA
+
+    GNU Affero General Public License v3.0:
+    https://www.gnu.org/licenses/agpl-3.0.en.html
+    """
+    # Diffusion Coeff Range: [0.2,1]
+    coeff = round(rng.uniform(0.2, 1), 2)
+    return np.array([coeff for x in range(36)])
+
+
 if PYROOMACOUSTICS:
     import pyroomacoustics as pra
-
-    def get_absorption_coeff(rng, realistic_walls=True):
-        """
-        Draw random absorption coefficients for the walls of a room.
-
-        This function is based on code from the Dir_SrcMic_DOA project,
-        which is licensed under the GNU Affero General Public License v3.0.
-
-        Original source: https://github.com/prerak23/Dir_SrcMic_DOA
-
-        GNU Affero General Public License v3.0:
-        https://www.gnu.org/licenses/agpl-3.0.en.html
-        """
-        if not realistic_walls:
-            abs_coeff_val = round(rng.uniform(0.02, 0.50), 2)
-            abs_coeff_wall = np.ones((6, 6)) * abs_coeff_val
-
-        # Realistic walls
-        # id reflective walls = 7
-        # absorbant wall = 8
-        else:
-            no_reflective_walls = rng.choice([0, 1, 2, 3, 4, 5, 6])
-            walls_profile = np.array([8 for i in range(6)])
-            id_reflective = rng.choice([0, 1, 2, 3, 4, 5], size=no_reflective_walls, replace=False)
-            walls_profile[id_reflective] = 7
-
-            abs_coeff_wall = np.empty((6, 6))
-            for i, a in enumerate(walls_profile):
-                if a == 7:  # Reflective Profile
-                    abs_coeff_val = round(rng.uniform(0.01, 0.12), 2)
-                    abs_coeff_wall[i, :] = [abs_coeff_val] * 6
-                elif a == 8:
-                    f_o_c = rng.choice([1, 2])  # Removed 0 wall profile.
-                    if f_o_c == 0:
-                        abs_coeff_val = [
-                            round(rng.uniform(0.01, 0.50), 2),
-                            round(rng.uniform(0.01, 0.50), 2),
-                            round(rng.uniform(0.01, 0.30), 2),
-                            round(rng.uniform(0.01, 0.12), 2),
-                            round(rng.uniform(0.01, 0.12), 2),
-                            round(rng.uniform(0.01, 0.12), 2),
-                        ]
-                        abs_coeff_wall[i, :] = abs_coeff_val
-                    elif f_o_c == 1:
-                        abs_coeff_val = [
-                            round(rng.uniform(0.01, 0.70), 2),
-                            round(rng.uniform(0.15, 1.00), 2),
-                            round(rng.uniform(0.40, 1.00), 2),
-                            round(rng.uniform(0.40, 1.00), 2),
-                            round(rng.uniform(0.40, 1.00), 2),
-                            round(rng.uniform(0.30, 1.00), 2),
-                        ]
-                        abs_coeff_wall[i, :] = abs_coeff_val
-        return np.array(abs_coeff_wall)
-
-    def get_diffusion_coeff(rng):
-        """
-        Draw random diffusion coefficients for the walls of a room.
-
-        This function is based on code from the Dir_SrcMic_DOA project,
-        which is licensed under the GNU Affero General Public License v3.0.
-
-        Original source: https://github.com/prerak23/Dir_SrcMic_DOA
-
-        GNU Affero General Public License v3.0:
-        https://www.gnu.org/licenses/agpl-3.0.en.html
-        """
-        # Diffusion Coeff Range: [0.2,1]
-        coeff = round(rng.uniform(0.2, 1), 2)
-        return np.array([coeff for x in range(36)])
 
     def sample_shoebox_room(rng, aperture):
         """

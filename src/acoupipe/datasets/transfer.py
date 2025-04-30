@@ -1,6 +1,3 @@
-
-
-
 import acoular as ac
 import numpy as np
 import numpy.fft as fft
@@ -88,12 +85,12 @@ class TransferMonopole(TransferBase):
         if np.isscalar(self.ref):
             if self.ref > 0:
                 return np.full((self.grid.size,), self.ref)
-            return self.env._r(self.grid.pos())
-        return self.env._r(self.grid.pos(), self.ref[:, np.newaxis])
+            return self.env._r(self.grid.pos)
+        return self.env._r(self.grid.pos, self.ref[:, np.newaxis])
 
     @property_depends_on("grid.digest, mics.digest, env.digest")
     def _get_rm(self):
-        return np.atleast_2d(self.env._r(self.grid.pos(), self.mics.mpos))
+        return np.atleast_2d(self.env._r(self.grid.pos, self.mics.mpos))
 
     def transfer(self, f, ind=None):
         """Calculate the transfer matrix for one frequency.
@@ -176,8 +173,7 @@ class TransferISM(TransferBase):
 
     room_size = CArray(shape=(3,), dtype=float, desc="room size")
 
-    alpha = CArray(shape=(6,), value=np.array([1e-16]*6),
-    desc="Sabine absorption coefficients for each wall")
+    alpha = CArray(shape=(6,), value=np.array([1e-16] * 6), desc="Sabine absorption coefficients for each wall")
 
     beta = Property(desc="reflection coefficients")
 
@@ -211,20 +207,18 @@ class TransferISM(TransferBase):
     def _get_r0_transfer(self):
         rir = self.ref_rir
         ref_init_shape = rir.shape
-        tf =  blockwise_transfer(
-            rir.reshape(-1, ref_init_shape[-1]), self.block_size)
+        tf = blockwise_transfer(rir.reshape(-1, ref_init_shape[-1]), self.block_size)
         return tf.reshape((*ref_init_shape[:-1], tf.shape[-1]))
 
     def _get_rm_transfer(self):
         rir = self.rir
         init_shape = rir.shape
-        tf = blockwise_transfer(
-            rir.reshape(-1, init_shape[-1]), self.block_size)
+        tf = blockwise_transfer(rir.reshape(-1, init_shape[-1]), self.block_size)
         return tf.reshape((*init_shape[:-1], tf.shape[-1]))
 
     @cached_property
     def _get__transfer(self):
-        return self._get_rm_transfer() / self._get_r0_transfer()[:,np.newaxis,:]
+        return self._get_rm_transfer() / self._get_r0_transfer()[:, np.newaxis, :]
 
     def fftfreq(self):
         """Return the FFT frequencies of the transfer function data."""
@@ -258,6 +252,7 @@ class TransferISM(TransferBase):
             if ind is None:
                 return self._transfer
             return self._transfer[:, ind]
+
 
 if HAVE_GPURIR:
     import gpuRIR
@@ -313,11 +308,27 @@ if HAVE_GPURIR:
             return np.array(self.ref[:, np.newaxis] + self.origin[:, np.newaxis], order="C", dtype=np.float32)
 
         # internal identifier
-        digest = Property(depends_on=[
-            "env.digest", "grid.digest", "mics.digest", "_ref", "origin",
-            "source_directivity", "mics_directivity", "source_orientation", "mics_orientation",
-            "att_diff", "att_max", "_order", "room_size", "alpha", "tdir",
-            "block_size", "sample_freq"])
+        digest = Property(
+            depends_on=[
+                "env.digest",
+                "grid.digest",
+                "mics.digest",
+                "_ref",
+                "origin",
+                "source_directivity",
+                "mics_directivity",
+                "source_orientation",
+                "mics_orientation",
+                "att_diff",
+                "att_max",
+                "_order",
+                "room_size",
+                "alpha",
+                "tdir",
+                "block_size",
+                "sample_freq",
+            ]
+        )
 
         @cached_property
         def _get_digest(self):
@@ -354,22 +365,22 @@ if HAVE_GPURIR:
                 "Tdiff": self._tdiff,
                 "c": self.env.c,
             }
-                # if not isinstance(self.source_directivity, list):
-                #     self.source_directivity = [self.source_directivity] * self.grid.size
-                # if not isinstance(self.mics_directivity, list):
-                #     self.mics_directivity = [self.mics_directivity] * self.mics.num_mics
-                # if self.source_orientation is not None and self.source_orientation.size > 3:
-                #     self.source_orientation = np.tile(self.source_orientation, (self.grid.size, 1))
-                # if self.mics_orientation is not None and self.mics_orientation.size > 3:
-                #     self.mics_orientation = np.tile(self.mics_orientation, (self.mics.num_mics, 1))
+            # if not isinstance(self.source_directivity, list):
+            #     self.source_directivity = [self.source_directivity] * self.grid.size
+            # if not isinstance(self.mics_directivity, list):
+            #     self.mics_directivity = [self.mics_directivity] * self.mics.num_mics
+            # if self.source_orientation is not None and self.source_orientation.size > 3:
+            #     self.source_orientation = np.tile(self.source_orientation, (self.grid.size, 1))
+            # if self.mics_orientation is not None and self.mics_orientation.size > 3:
+            #     self.mics_orientation = np.tile(self.mics_orientation, (self.mics.num_mics, 1))
 
             if True:
                 rirs = []
                 for i in range(numsrc):
                     for j in range(nummics):
                         rir = gpuRIR.simulateRIR(
-                            pos_src=pos_src[:,i][np.newaxis],
-                            pos_rcv=pos_rcv[:,j][np.newaxis],
+                            pos_src=pos_src[:, i][np.newaxis],
+                            pos_rcv=pos_rcv[:, j][np.newaxis],
                             # spkr_pattern=self.source_directivity[i],
                             # mic_pattern=self.mics_directivity[j],
                             # orV_src=self.source_orientation[i],
@@ -381,15 +392,15 @@ if HAVE_GPURIR:
                 return rir_array
             else:
                 rirs = np.zeros((numsrc * nummics, int(np.round(self.sample_freq * tmax))))
-                #rirs = np.random.normal(size=(numsrc * nummics, int(np.round(self.sample_freq * tmax))))*1e-6
-                rirs[:,0] = 1.
+                # rirs = np.random.normal(size=(numsrc * nummics, int(np.round(self.sample_freq * tmax))))*1e-6
+                rirs[:, 0] = 1.0
                 return rirs.reshape(numsrc, nummics, -1)
 
         @cached_property
         def _get_rir(self):
             rir = self.calc_rir(
-                pos_src = self._tgpos,
-                pos_rcv = self._tmpos,
+                pos_src=self._tgpos,
+                pos_rcv=self._tmpos,
             )
             return rir
 
@@ -397,11 +408,11 @@ if HAVE_GPURIR:
         def _get_ref_rir(self):
             # in case ref is a microphone position, we return the index of the already
             # calculated rir
-            if self.ref[:,np.newaxis] in self.mics.mpos:
-                return np.atleast_2d(self.rir[:, np.where(self.mics.mpos == self.ref[:,np.newaxis])[0][0]])
+            if self.ref[:, np.newaxis] in self.mics.mpos:
+                return np.atleast_2d(self.rir[:, np.where(self.mics.mpos == self.ref[:, np.newaxis])[0][0]])
             return self.calc_rir(
-                pos_src = self._tgpos,
-                pos_rcv = self._t0pos,
+                pos_src=self._tgpos,
+                pos_rcv=self._t0pos,
             )
 
         # def _get_rir(self):
@@ -497,6 +508,7 @@ if HAVE_GPURIR:
         #             )
         #     return rir
 
+
 if PYROOMACOUSTICS:
     import pyroomacoustics as pra
     from traits.api import Bool, List
@@ -518,8 +530,8 @@ if PYROOMACOUSTICS:
 
         def transfer(self, f, ind=None):
             if ind is None:
-                return self.room.transfer(f, self.grid.pos())
-            return self.room.transfer(f, self.grid.pos()[ind])
+                return self.room.transfer(f, self.grid.pos)
+            return self.room.transfer(f, self.grid.pos[ind])
 
         @cached_property
         def _get_rir(self):
