@@ -1,0 +1,67 @@
+cff-version: 1.2.0
+title: AcouPipe - A framework for generating large-scale microphone array data for machine learning
+abstract: "<p><strong>AcouPipe</strong> is an easy-to-use Python toolbox for generating unique acoustical source localization and characterization data sets with <a href=\"http://www.acoular.org/\">Acoular</a> that can be used for training of deep neural networks and machine learning. Instead of raw time-data, only the necessary input features for acoustical beamforming are stored, which include:</p><ul><li>Cross-Spectral Matrix / non-redundant Cross-Spectral Matrix</li><li>Conventional Beamforming Map</li></ul><p>This allows the user to create datasets of manageable size that are portable and facilitate reproducible research.</p><p>AcouPipe supports distributed computation with <a href=\"https://docs.ray.io/en/master/\">Ray</a> and comes with a default configuration data set inside a pre-built Docker container that can be downloaded from <a href=\"https://hub.docker.com/r/adku1173/acoupipe/tags?page=1&amp;ordering=last_updated\">DockerHub</a>.</p>"
+message: >-
+  If you use this software, please cite both the article and the software
+  itself using the metadata from this file.
+type: software
+authors:
+  - given-names: "Adam"
+    family-names: "Kujawski"
+    affiliation: "Department of Engineering Acoustics, TU Berlin"
+    orcid: "https://orcid.org/0000-0003-4579-8813"
+  - given-names: "Art J. R."
+    family-names: "Pelling"
+    affiliation: "Department of Engineering Acoustics, TU Berlin"
+    orcid: "https://orcid.org/0000-0003-3228-6069"
+  - given-names: "Simon"
+    family-names: "Jekosch"
+    affiliation: "Department of Engineering Acoustics, TU Berlin"
+  - given-names: "Ennes"
+    family-names: "Sarradj"
+    affiliation: "Department of Engineering Acoustics, TU Berlin"
+    orcid: "https://orcid.org/0000-0002-0274-8456"
+contributors:
+  - given-names: "Can"
+    family-names: "Kayser"
+    type: "Other"
+  - given-names: "Jakob"
+    family-names: "Tschavoll"
+    type: "Other"
+identifiers:
+  - description: "acoupipe: all versions"
+    type: "doi"
+    value: "10.1007/s11042-023-16947-w"
+repository-code: "https://github.com/adku1173/acoupipe"
+url: "https://adku1173.github.io/acoupipe/"
+license: "BSD-3-Clause"
+version: "25.05"
+date-released: "2025-05-07"
+contact:
+  - email: "adam.kujawski@tu-berlin.de"
+    name: "Adam Kujawski"
+preferred-citation:
+    type: "article"
+    title: "A framework for generating large-scale microphone array data for machine learning"
+    doi: "10.1007/s11042-023-16947-w"
+    authors:
+      - family-names: "Kujawski"
+        given-names: "Adam"
+        affiliation: "Department of Engineering Acoustics, TU Berlin"
+        orcid: "https://orcid.org/0000-0003-4579-8813"
+      - family-names: "Pelling"
+        given-names: "Art J. R."
+        affiliation: "Department of Engineering Acoustics, TU Berlin"
+        orcid: "https://orcid.org/0000-0003-3228-6069"
+      - family-names: "Jekosch"
+        given-names: "Simon"
+        affiliation: "Department of Engineering Acoustics, TU Berlin"
+      - family-names: "Sarradj"
+        given-names: "Ennes"
+        affiliation: "Department of Engineering Acoustics, TU Berlin"
+        orcid: "https://orcid.org/0000-0002-0274-8456"
+    year: "2023"
+    journal: "Multimedia Tools and Applications"
+    volume: "83"
+    start: "31211"
+    end: "31231"

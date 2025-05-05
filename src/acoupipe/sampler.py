@@ -20,23 +20,13 @@ New RMS values following a normal distribution are assigned to the :code:`WNoise
     from acoupipe.sampler import NumericAttributeSampler
     from scipy.stats import norm
 
-    random_var = norm(loc=1.,scale=.5)
+    random_var = norm(loc=1.0, scale=0.5)
 
-    n1 = ac.WNoiseGenerator( sample_freq=24000,
-                    num_samples=24000*5,
-                    rms=1.0,
-                    seed=1 )
+    n1 = ac.WNoiseGenerator(sample_freq=24000, num_samples=24000 * 5, rms=1.0, seed=1)
 
-    n2 = ac.WNoiseGenerator( sample_freq=24000,
-                    num_samples=24000*5,
-                    rms=.5,
-                    seed=2 )
+    n2 = ac.WNoiseGenerator(sample_freq=24000, num_samples=24000 * 5, rms=0.5, seed=2)
 
-    rms_sampler = NumericAttributeSampler(
-                    target=[n1,n2],
-                    attribute='rms',
-                    random_var=random_var,
-                    random_state=10)
+    rms_sampler = NumericAttributeSampler(target=[n1, n2], attribute='rms', random_var=random_var, random_state=10)
 
     rms_sampler.sample()
     print(n1.rms, n2.rms)
@@ -84,21 +74,17 @@ class BaseSampler(HasPrivateTraits):
     """
 
     #: a list of instances which attributes are to be manipulated
-    target = Trait(list,
-        desc="the object instances which are manipulated by this class")
+    target = Trait(list, desc='the object instances which are manipulated by this class')
 
     #: the random variable specifying the random distribution
-    random_var = Instance(_distn_infrastructure.rv_frozen,
-        desc="instance of a random variable from scipy.stats module")
+    random_var = Instance(_distn_infrastructure.rv_frozen, desc='instance of a random variable from scipy.stats module')
 
     #: the state of the random variable :attr:`random_var`
-    random_state = Either(int,RandomState,Generator,
-        desc="random state of the random variable")
+    random_state = Either(int, RandomState, Generator, desc='random state of the random variable')
 
     #: manages if the same sampled value is chosen for all objects in the :attr:`target` list
     #: if False, one value for each target is drawn
-    equal_value = Bool(False,
-        desc="manages if a single value is chosen for all targets")
+    equal_value = Bool(False, desc='manages if a single value is chosen for all targets')
 
     def rvs(self, size=1):
         """Random variable sampling (for internal use)."""
@@ -122,38 +108,37 @@ class NumericAttributeSampler(BaseSampler):
 
     #: attribute of the object in the :attr:`target` list that should be
     #: sampled by the random variable
-    attribute = Str(desc="name of the target instance attribute to be manipulated (sampled)")
+    attribute = Str(desc='name of the target instance attribute to be manipulated (sampled)')
 
     #: whether to normalize the drawn values (maximum element equals 1).
     #: if :attr:`equal_value` is set to True, this has no effect.
-    normalize = Bool(False,
-        desc="if attribute is True, sampled values will be normalized")
+    normalize = Bool(False, desc='if attribute is True, sampled values will be normalized')
 
     #: whether to order the drawn values in ascending or descending order for all objects in the :attr:`target` list.
     #: if :attr:`equal_value` is set to True, this has no effect. If no value is set (:attr:`order` `=None`), no ordering is performed.
-    order = Either("ascending","descending")
+    order = Either('ascending', 'descending')
 
     #: sampled value filter (resample if callable filter returns False)
     filter = Callable(
-        desc="a callable function that returns a bool"
-        )
+        desc='a callable function that returns a bool',
+    )
 
     def order_samples(self, samples):
         """Order drawn values (Internal function)."""
         samples = np.sort(samples)
-        if self.order == "descending":
+        if self.order == 'descending':
             samples = samples[::-1]
-        elif self.order == "ascending":
+        elif self.order == 'ascending':
             pass
         return samples
 
     def set_value(self, target, value):
-        if len(self.attribute.split("."))== 1:
+        if len(self.attribute.split('.')) == 1:
             setattr(target, self.attribute, value)
         else:
-            asub1 = self.attribute.split(".")[:-1]
-            asub2 = self.attribute.split(".")[-1]
-            setattr(eval("target."+".".join(asub1)), asub2, value)
+            asub1 = self.attribute.split('.')[:-1]
+            asub2 = self.attribute.split('.')[-1]
+            setattr(eval('target.' + '.'.join(asub1)), asub2, value)
 
     def sample(self):
         """Random sampling of the target instance attribute.
@@ -163,14 +148,14 @@ class NumericAttributeSampler(BaseSampler):
         """
         if self.equal_value:
             value = self.rvs()[0]
-            if self.filter: # resample if filter returns False
+            if self.filter:  # resample if filter returns False
                 while not self.filter(value):
                     value = self.rvs()[0]
             for target in self.target:
                 self.set_value(target, value)
         else:
             values = self.rvs(len(self.target))
-            if self.filter: # resample if filter returns False
+            if self.filter:  # resample if filter returns False
                 while not self.filter(values):
                     values = self.rvs(len(self.target))
             if self.normalize:
@@ -179,7 +164,6 @@ class NumericAttributeSampler(BaseSampler):
                 values = self.order_samples(values)
             for i, target in enumerate(self.target):
                 self.set_value(target, values[i])
-
 
 
 class SetSampler(BaseSampler):
@@ -198,52 +182,41 @@ class SetSampler(BaseSampler):
     random_var = Enum(None)
 
     #: the state of the random variable (defaults to :class:`numpy.random.RandomState` )
-    random_state = Either(Generator,RandomState,default=RandomState(),
-        desc="random state of the random variable")
+    random_state = Either(Generator, RandomState, default=RandomState(), desc='random state of the random variable')
 
     #: attribute of the object in the :attr:`target` list that should be
     #: sampled by the random variable
-    attribute = Str(desc="name of the target instance attribute to be manipulated (sampled)")
+    attribute = Str(desc='name of the target instance attribute to be manipulated (sampled)')
 
     #: a List of Samples representing the set
-    set = List([],
-        desc="set of samples to be drawn")
+    set = List([], desc='set of samples to be drawn')
 
     #: number of samples to be drawn from the set (fixed to one)
-    numsamples = Enum(1,
-        desc="number of samples to be drawn from the set (behavior is fixed to a single sample)")
+    numsamples = Enum(1, desc='number of samples to be drawn from the set (behavior is fixed to a single sample)')
 
     #: whether to use the replace argument of :meth:`numpy.random.choice` function
-    replace = Bool(True,
-        desc="replace option for Choice function")
+    replace = Bool(True, desc='replace option for Choice function')
 
     #:Probability List, same lenght as the set, need to sum up to 1
     #:If left empty assume uniform distribution
-    prob_list =  List([],
-        desc="Probability List, same lenght as the set, need to sum up to 1")
+    prob_list = List([], desc='Probability List, same lenght as the set, need to sum up to 1')
 
     def _get_sample_propabilities(self):
         """Return propabilities associated with the samples in the given set (for internal use)."""
-        if not self.prob_list:
-            prob_list = None
-        else:
-            prob_list = self.prob_list
-        return prob_list
+        return None if not self.prob_list else self.prob_list
 
     def set_value(self, target, value):
-        if len(self.attribute.split("."))== 1:
+        if len(self.attribute.split('.')) == 1:
             setattr(target, self.attribute, value[0])
         else:
-            asub1 = self.attribute.split(".")[:-1]
-            asub2 = self.attribute.split(".")[-1]
-            setattr(eval("target."+".".join(asub1)), asub2, value[0])
+            asub1 = self.attribute.split('.')[:-1]
+            asub2 = self.attribute.split('.')[-1]
+            setattr(eval('target.' + '.'.join(asub1)), asub2, value[0])
 
     def rvs(self, size=1):
         """Random variable sampling (for internal use)."""
         prob_list = self._get_sample_propabilities()
-        value = self.random_state.choice(self.set, size=size,
-                replace=self.replace, p=prob_list)
-        return value
+        return self.random_state.choice(self.set, size=size, replace=self.replace, p=prob_list)
 
     def sample(self):
         """Random sampling of the target instance attribute.
@@ -272,21 +245,17 @@ class SourceSetSampler(SetSampler):
     """
 
     #: a list of :class:`acoular.SourceMixer` instances
-    target = List(Instance(ac.SourceMixer, ()),
-        desc="the SourceMixer instances holding a subset of sources")
+    target = List(Instance(ac.SourceMixer, ()), desc='the SourceMixer instances holding a subset of sources')
 
     # a list of :class:`acoular.SamplesGenerator` instances representing the set of sources
-    set = List(Instance(ac.SamplesGenerator, ()),
-            desc="set of sources to be drawn")
+    set = List(Instance(ac.SamplesGenerator, ()), desc='set of sources to be drawn')
 
     #: number of samples to be drawn from the set
-    nsources = Int(1,
-        desc="number of sources to be drawn from the set")
+    nsources = Int(1, desc='number of sources to be drawn from the set')
 
     #: attribute where drawn sources are assigned to. Fixed to :attr:`sources` attribute
     #: of :class:`acoular.SourceMixer`.
-    attribute = Enum("sources",
-        desc="class instance samples the sources attribute of a SourceMixer instance")
+    attribute = Enum('sources', desc='class instance samples the sources attribute of a SourceMixer instance')
 
     def sample(self):
         """Random sampling of sources.
@@ -313,30 +282,28 @@ class ContainerSampler(BaseSampler):
     The output of the callable is assigned to the :attr:`target` attribute.
     """
 
-    target = Any(
-        desc="output of the callable is assigned to this attribute when calling the sample method")
+    target = Any(desc='output of the callable is assigned to this attribute when calling the sample method')
 
-    random_var = Enum(None,
-        desc="this class has no explicit random variable")
+    random_var = Enum(None, desc='this class has no explicit random variable')
 
     #: a callable function that defines the random process.
     #: has to have the signature '<Signature (numpy.random.RandomState)>'
-    random_func = Callable(
-        desc="the function that defines the random process")
+    random_func = Callable(desc='the function that defines the random process')
 
     #: the random state consumed by the :meth:`random_func` callable"
-    random_state = Either(RandomState, Generator,
-        desc="random state consumed by the func callable")
+    random_state = Either(RandomState, Generator, desc='random state consumed by the func callable')
 
     def _validate(self):
         if self.random_func:
             sig = signature(self.random_func)
             if len(sig.parameters) == 0 or len(sig.parameters) > 1:
-                raise ValueError(
-                    "the random_func callable has to have a signature of "
+                msg = (
+                    'the random_func callable has to have a signature of '
                     "'<Signature (RandomState)>'. Only a single argument "
-                    "is valid that takes a random number generator as the "
-                    "input.")
+                    'is valid that takes a random number generator as the '
+                    'input.'
+                )
+                raise ValueError(msg)
 
     def rvs(self):
         """Evokes the :attr:`random_func`."""
@@ -353,153 +320,149 @@ class ContainerSampler(BaseSampler):
 
 
 class LocationSampler(BaseSampler):
-
     #: locations
-    target = CArray(
-        desc="array with source locations")
+    target = CArray(desc='array with source locations')
 
     #: the number of source for which the location is sampled
-    nsources = Int(
-        desc="number of sources")
+    nsources = Int(desc='number of sources')
 
     #: the random variable specifying the random distribution
-    random_var = Tuple(
-        desc="instance of a random variable from scipy.stats module")
+    random_var = Tuple(desc='instance of a random variable from scipy.stats module')
 
     #: limits of the allowed locations of a source along the x-axis (lower,upper)
-    x_bounds = Tuple(None, None,
-        desc="limits of the allowed drawn locations along the x-axis (lower,upper)")
+    x_bounds = Tuple(None, None, desc='limits of the allowed drawn locations along the x-axis (lower,upper)')
 
     #: limits of the allowed locations of a source along the y-axis (lower,upper)
-    y_bounds = Tuple(None, None,
-        desc="limits of the allowed drawn locations along the y-axis (lower,upper)")
+    y_bounds = Tuple(None, None, desc='limits of the allowed drawn locations along the y-axis (lower,upper)')
 
     #: limits of the allowed locations of a source along the z-axis (lower,upper)
-    z_bounds = Tuple(None, None,
-        desc="limits of the allowed drawn locations along the x-axis (lower,upper)")
+    z_bounds = Tuple(None, None, desc='limits of the allowed drawn locations along the x-axis (lower,upper)')
 
     #: minimum distance between any two sources
-    mindist = Either(None, Float, default=None,
-        desc="minimum distance between any two sources. Default is None, meaning that any distance is allowed.")
+    mindist = Either(
+        None,
+        Float,
+        default=None,
+        desc='minimum distance between any two sources. Default is None, meaning that any distance is allowed.',
+    )
 
     #: optional grid object to which the drawn locations are snapped to
     grid = Instance(ac.Grid)
 
-    def _bounds_violated(self,loc):
+    def _bounds_violated(self, loc):
         """Validate drawn source locations."""
-        if self.x_bounds[0]:
-            if (self.x_bounds[0] > loc[0]):
-                return True
-        if self.x_bounds[1]:
-            if (loc[0] > self.x_bounds[1]):
-                return True
-        if self.y_bounds[0]:
-            if (self.y_bounds[0] > loc[1]):
-                return True
-        if self.y_bounds[1]:
-            if (loc[1] > self.y_bounds[1]):
-                return True
-        if self.z_bounds[0]:
-            if (self.z_bounds[0] > loc[2]):
-                return True
+        if self.x_bounds[0] and (self.x_bounds[0] > loc[0]):
+            return True
+        if self.x_bounds[1] and (loc[0] > self.x_bounds[1]):
+            return True
+        if self.y_bounds[0] and (self.y_bounds[0] > loc[1]):
+            return True
+        if self.y_bounds[1] and (loc[1] > self.y_bounds[1]):
+            return True
+        if self.z_bounds[0] and (self.z_bounds[0] > loc[2]):
+            return True
         if self.z_bounds[1]:
-            if (loc[2] > self.z_bounds[1]):
+            if loc[2] > self.z_bounds[1]:
                 return True
-        else:
-            return False
+            return None
+        return False
 
-    def _mindist_violated(self,loc,loc_array):
+    def _mindist_violated(self, loc, loc_array):
         """Validate minimum distance between any two sources."""
-        if self.mindist:
-            if loc_array.size > 0:
-                if np.min(np.linalg.norm(loc_array-loc[:,np.newaxis],axis=0)) < self.mindist:
-                    return True
+        if self.mindist and loc_array.size > 0:  # noqa SIM102
+            if np.min(np.linalg.norm(loc_array - loc[:, np.newaxis], axis=0)) < self.mindist:
+                return True
         return False
 
     def rvs(self):
         """Random variable sampling (for internal use)."""
-        return np.array([
-            self.random_var[0].rvs(size=1, random_state=self.random_state),
-            self.random_var[1].rvs(size=1, random_state=self.random_state),
-            self.random_var[2].rvs(size=1, random_state=self.random_state),
-        ]).squeeze()
+        return np.array(
+            [
+                self.random_var[0].rvs(size=1, random_state=self.random_state),
+                self.random_var[1].rvs(size=1, random_state=self.random_state),
+                self.random_var[2].rvs(size=1, random_state=self.random_state),
+            ],
+        ).squeeze()
 
     def _sample_no_bounds(self):
         """Sample locations without bounds."""
-        loc_array = np.empty((3,self.nsources))
+        loc_array = np.empty((3, self.nsources))
         for i in range(self.nsources):
             new_loc = self.rvs()
-            loc_array[:,i] = new_loc
+            loc_array[:, i] = new_loc
         self.target = loc_array
 
     def _sample_with_bounds(self):
         """Sample locations with bounds."""
-        loc_array = np.empty((3,self.nsources))
+        loc_array = np.empty((3, self.nsources))
         for i in range(self.nsources):
             new_loc = self.rvs()
-            while self._bounds_violated(new_loc) or self._mindist_violated(new_loc,loc_array[:,:i]):
+            while self._bounds_violated(new_loc) or self._mindist_violated(new_loc, loc_array[:, :i]):
                 new_loc = self.rvs()
             else:
-                loc_array[:,i] = new_loc
+                loc_array[:, i] = new_loc
         self.target = loc_array
 
     def _sample_grid(self):
         """Sample of locations with grid."""
-        loc_array = np.empty((3,self.nsources))
+        loc_array = np.empty((3, self.nsources))
         gpos = self.grid.pos
         for i in range(self.nsources):
-            index = np.argmin(np.linalg.norm(gpos-self.rvs()[:,np.newaxis],axis=0))
-            new_loc = gpos[:,index]
-            while self._mindist_violated(new_loc,loc_array[:,:i]):
-                index = np.argmin(np.linalg.norm(gpos-self.rvs()[:,np.newaxis],axis=0))
-                new_loc = gpos[:,index]
-            loc_array[:,i] = new_loc
+            index = np.argmin(np.linalg.norm(gpos - self.rvs()[:, np.newaxis], axis=0))
+            new_loc = gpos[:, index]
+            while self._mindist_violated(new_loc, loc_array[:, :i]):
+                index = np.argmin(np.linalg.norm(gpos - self.rvs()[:, np.newaxis], axis=0))
+                new_loc = gpos[:, index]
+            loc_array[:, i] = new_loc
         self.target = loc_array
 
     def sample(self):
         """Random sampling of locations."""
         if self.grid:
             self._sample_grid()
-        elif self.x_bounds[0] or self.x_bounds[1] or \
-            self.y_bounds[0] or self.y_bounds[1] or \
-            self.z_bounds[0] or self.z_bounds[1]:
-            self._sample_with_bounds()
-        elif self.mindist:
+        elif (
+            self.x_bounds[0]
+            or self.x_bounds[1]
+            or self.y_bounds[0]
+            or self.y_bounds[1]
+            or self.z_bounds[0]
+            or self.z_bounds[1]
+            or self.mindist
+        ):
             self._sample_with_bounds()
         else:
             self._sample_no_bounds()
-
 
 
 class PointSourceSampler(LocationSampler):
     """Random process that samples the locations of one or more instances of type :class:`PointSource`."""
 
     #: a list of :class:`acoular.PointSource` instances
-    target = Trait(list,
-        desc="a list of PointSource instances to manipulate")
+    target = Trait(list, desc='a list of PointSource instances to manipulate')
 
     #: the random variable specifying the random distribution
-    random_var = Instance(_distn_infrastructure.rv_frozen,
-        desc="instance of a random variable from scipy.stats module")
+    random_var = Instance(_distn_infrastructure.rv_frozen, desc='instance of a random variable from scipy.stats module')
 
     #:manages if a single value is chosen for all targets
     #: is fixed to False (one value for each object in :attr:`target` list is drawn)
-    equal_value = Enum(False,
-        desc="manages if the same sampled value is assigned to all targets; (only False is valid)")
+    equal_value = Enum(
+        False,
+        desc='manages if the same sampled value is assigned to all targets; (only False is valid)',
+    )
 
     #: (x,y,z)-directions of location sampling
-    ldir = CArray( dtype=float, shape=(3, (1, 3)),
-        desc="(x,y,z)-directions of location sampling")
+    ldir = CArray(dtype=float, shape=(3, (1, 3)), desc='(x,y,z)-directions of location sampling')
 
-    @observe("target")
-    def validate_target(self, event):
+    @observe('target')
+    def validate_target(self, event):  # noqa:ARG002
         for t in self.target:
-            if not isinstance(t,ac.PointSource):
-                raise AttributeError("Elements in target must be instances of class acoular.PointSource")
+            if not isinstance(t, ac.PointSource):
+                msg = 'Elements in target must be instances of class acoular.PointSource'
+                raise AttributeError(msg)
 
     def sample_loc(self, target):
         """Sample a single target location (internal use)."""
-        loc_axs = self.ldir.nonzero()[0] # get axes to sample
+        loc_axs = self.ldir.nonzero()[0]  # get axes to sample
         loc = np.array(target.loc)
         loc[loc_axs] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
         return loc
@@ -519,56 +482,44 @@ class PointSourceSampler(LocationSampler):
                     target.loc = tuple(new_loc)
 
 
-
 class MicGeomSampler(BaseSampler):
     """Random disturbance of microphone positions of a :class:`acoular.MicGeom` object."""
 
     #: the microphone geometry instance (type :class:`acoular.MicGeom`)
-    target = Instance(ac.MicGeom,
-        desc="microphone geometry whose positions are sampled")
+    target = Instance(ac.MicGeom, desc='microphone geometry whose positions are sampled')
 
     #:manages if a single value is chosen for all targets
     #:if False one value for each target is drawn
-    equal_value = Enum(True,
-        desc="manages if a single value is chosen for all targets")
+    equal_value = Enum(True, desc='manages if a single value is chosen for all targets')
 
     #: a copy of the initial microphone geometry object provided as the
     #: :attr:`target` attribute value.
-    mpos_init = Property(depends_on=["target","_mpos_init"],
-        desc="a copy of the initial microphone geometry")
+    mpos_init = Property(depends_on=['target', '_mpos_init'], desc='a copy of the initial microphone geometry')
 
-    _mpos_init = Either(None, CArray(shape = (3, None)), default=None)
+    _mpos_init = Either(None, CArray(shape=(3, None)), default=None)
 
     #: (x,y,z)-directions of full geometry translation
-    tdir = CArray( dtype=float, shape=(3, (1, 3)),
-        desc="(x,y,z)-directions of full geometry translation")
+    tdir = CArray(dtype=float, shape=(3, (1, 3)), desc='(x,y,z)-directions of full geometry translation')
 
     #: (x,y,z)-directions of individual position deviation
-    ddir = CArray(shape=(3, (1, 3)),
-          desc="(x,y,z)-directions of individual position deviation")
+    ddir = CArray(shape=(3, (1, 3)), desc='(x,y,z)-directions of individual position deviation')
 
     #: Reference vector for rotation
-    rvec = CArray( dtype=float, shape=(3,(1, 3)),
-        desc="rotational reference vector")
+    rvec = CArray(dtype=float, shape=(3, (1, 3)), desc='rotational reference vector')
 
     #: scaling factor of rotation deviation
-    rscale = Float(1.0,
-       desc="scaling factor of rotation deviation")
+    rscale = Float(1.0, desc='scaling factor of rotation deviation')
 
-    cpm = Property(
-        depends_on=["rvec"],
-        desc="cross-product matrix used in Rodrigues' rotation formula")
+    cpm = Property(depends_on=['rvec'], desc="cross-product matrix used in Rodrigues' rotation formula")
 
     @cached_property
     def _get_mpos_init(self):
         if self._mpos_init is None:
             return self.target.pos_total.copy()
-        else:
-            return self._mpos_init.copy()
+        return self._mpos_init.copy()
 
     def _set_mpos_init(self, mpos):
         self._mpos_init = mpos.copy()
-
 
     @cached_property
     def _get_cpm(self):
@@ -586,21 +537,19 @@ class MicGeomSampler(BaseSampler):
     def translate(self):
         """Translate the microphone array."""
         new_pos_total = self.target.pos_total.copy()
-        new_pos_total += np.sum(self.tdir *self.rvs(size=self.tdir.shape[-1]),
-            axis=-1).reshape(-1, 1)
+        new_pos_total += np.sum(self.tdir * self.rvs(size=self.tdir.shape[-1]), axis=-1).reshape(-1, 1)
         self.target.pos_total = new_pos_total.copy()
 
     def deviate(self):
         """Deviates the individual microphone positions."""
-        dev_axs = self.ddir.nonzero()[0] # get axes to deviate
+        dev_axs = self.ddir.nonzero()[0]  # get axes to deviate
         new_pos_total = self.target.pos_total.copy()
-        new_pos_total[dev_axs] += self.ddir[dev_axs] * \
-            self.rvs(size=((self.mpos_init.shape[1],dev_axs.size))).T
+        new_pos_total[dev_axs] += self.ddir[dev_axs] * self.rvs(size=((self.mpos_init.shape[1], dev_axs.size))).T
         self.target.pos_total = new_pos_total.copy()
 
     def sample(self):
         """Random sampling of microphone positions."""
-        self.target.pos_total = self.mpos_init.copy() # initialize
+        self.target.pos_total = self.mpos_init.copy()  # initialize
         if self.rvec.any():  # if rotation vector exist, rotate first!
             self.rotate()
         if self.tdir.any():
@@ -738,5 +687,3 @@ class MicGeomSampler(BaseSampler):
 #                 Q[:,i,i] /= Q[:,i,i].sum()/variance[i].astype(complex)
 #         self.target = Q
 #         self.variances = variance.copy() # copy full variance
-
-

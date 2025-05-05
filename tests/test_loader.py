@@ -20,7 +20,7 @@ def h5_test_file():
         4: range(4, 9),
     }
     temp_dir = tempfile.mkdtemp()
-    file_path = os.path.join(temp_dir, "test_data.h5")
+    file_path = os.path.join(temp_dir, 'test_data.h5')
     writer = WriteH5Dataset(source=pipeline, name=file_path)
     writer.save()
     yield file_path
@@ -32,10 +32,5 @@ def test_load_h5_data(h5_test_file):
     """Test loading data from an HDF5 file."""
     ds = LoadH5Dataset(name=h5_test_file)
     assert ds.numsamples == 5
-    assert ds.basename == "test_data"
-    assert ds.h5f["1"]["data"][()]
-
-
-
-
-
+    assert ds.basename == 'test_data'
+    assert ds.h5f['1']['data'][()]

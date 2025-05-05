@@ -1,4 +1,3 @@
-
 from pathlib import Path
 
 import acoular as ac
@@ -12,31 +11,29 @@ from acoupipe.sampler import MicGeomSampler
 nsamples = 10
 
 # create Microphone Geometry object
-mics = ac.MicGeom(file=Path(ac.__file__).parent / "xml" / "tub_vogel64.xml")
+mics = ac.MicGeom(file=Path(ac.__file__).parent / 'xml' / 'tub_vogel64.xml')
 # define random state
 rng = RandomState(seed=1)
 
 # create instantiate random distribution object
 # standard deviation, approx 1/3 min dist between mics (mindist/0.686 = 0.0409885123851)
-normal_distribution = scipy.stats.norm(loc=0, scale= 0.004) #scale=0.04/3.)
+normal_distribution = scipy.stats.norm(loc=0, scale=0.004)  # scale=0.04/3.)
 
 # create MicGeomSampler object
-mgs = MicGeomSampler(random_var=normal_distribution,
-                     random_state=rng,
-                     target=mics)
+mgs = MicGeomSampler(random_var=normal_distribution, random_state=rng, target=mics)
 
 
 # =============================================================================
 # # first deviate individual microphone positions along x-axis
 # =============================================================================
-mgs.ddir = np.array([[1.],[0],[0]])
+mgs.ddir = np.array([[1.0], [0], [0]])
 
 plt.figure()
-plt.title("individual deviation on x-axis")
+plt.title('individual deviation on x-axis')
 for _ in range(nsamples):
     mgs.sample()
-    plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker="x",s=10,label="true positions")
+    plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
+plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()
 
@@ -44,14 +41,14 @@ plt.show()
 # =============================================================================
 # # second: deviate individual microphone positions along x- and y-axis
 # =============================================================================
-mgs.ddir = np.array([[1.],[0.5],[0]])
+mgs.ddir = np.array([[1.0], [0.5], [0]])
 
 plt.figure()
-plt.title("individual deviation on x- and y- axis")
+plt.title('individual deviation on x- and y- axis')
 for _ in range(nsamples):
     mgs.sample()
-    plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker="x",s=10,label="true positions")
+    plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
+plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()
 
@@ -60,17 +57,17 @@ plt.show()
 # third: rotate around axis
 # =============================================================================
 
-mgs.ddir = np.array([[0.0],[0.0],[0.0]]) # no individual deviation
+mgs.ddir = np.array([[0.0], [0.0], [0.0]])  # no individual deviation
 
 # for additional rotation around z-axis
 mgs.rvec = np.array([[0], [0], [1]])
 
 plt.figure()
-plt.title("rotation around z-axis")
+plt.title('rotation around z-axis')
 for _ in range(nsamples):
     mgs.sample()
-    plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker="x",s=10,label="true positions")
+    plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
+plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()
 
@@ -80,13 +77,13 @@ plt.show()
 # =============================================================================
 
 mgs.rvec = np.array([[0], [0], [0]])
-mgs.tdir = np.array([[0], [2.], [0]])
+mgs.tdir = np.array([[0], [2.0], [0]])
 
 plt.figure()
-plt.title("translation of full geometry along y-axis")
+plt.title('translation of full geometry along y-axis')
 for _ in range(nsamples):
     mgs.sample()
-    plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker="x",s=10,label="true positions")
+    plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
+plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()
