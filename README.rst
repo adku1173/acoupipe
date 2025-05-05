@@ -74,7 +74,7 @@ AcouPipe is licensed under the terms of the BSD license. See the file "LICENSE" 
 .. _SLURM: https://slurm.schedmd.com/quickstart.html
 .. _Singularity: https://sylabs.io/guides/3.0/user-guide/quick_start.html
 .. _Ray: https://docs.ray.io/en/latest
-.. _`Ray Cluster`: https://docs.ray.io/en/master/cluster/index.html
+.. _`Ray Cluster`: https://docs.ray.io/en/latest/cluster/getting-started.html
 .. _Tensorflow: https://www.tensorflow.org/
 .. _`Tensorflow Dataset API`: https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator
 .. _TFRecord: https://www.tensorflow.org/tutorials/load_data/tfrecord
