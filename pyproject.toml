@@ -122,9 +122,3 @@ include = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/acoupipe"]
 
-
-[tool.pytest.ini_options]
-env = [
-    "NUMBA_NUM_THREADS=1",
-    "OPENBLAS_NUM_THREADS=1",
-]

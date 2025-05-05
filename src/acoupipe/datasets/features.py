@@ -471,7 +471,7 @@ class LocFeature(BaseFeatureCatalog):
 
     @staticmethod
     def calc_loc2(sampler, freq_data, name):
-        return {name: freq_data.steer.grid.gpos_file}
+        return {name: freq_data.steer.grid.pos}
 
     def get_feature_func(self):
         if isinstance(self.freq_data, PowerSpectraAnalytic):
