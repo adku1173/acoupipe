@@ -1,17 +1,14 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [project]
 name = "acoupipe"
-version = "24.04" # Date based release versioning
+dynamic = ["version"]
 description = "Library for the generation of large-scale microphone array data for machine learning"
-readme = "README.rst"
-license = {file = "LICENSE.txt"}
-requires-python = ">=3.8,<=11"
+requires-python = ">=3.10,<3.13"
 authors = [
     {name = "Acoular Development Team", email = "info@acoular.org"},
 ]
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
 keywords = [
     "acoustics",
     "beamforming",
@@ -22,15 +19,18 @@ keywords = [
     "sound source characterization",
 ]
 classifiers = [
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Physics",
     "License :: OSI Approved :: BSD License",
-    "Programming Language :: Python :: 3 :: Only"    
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-	'acoular>=24.03',
-	'ray',
+	'acoular',
+	'ray[default]',
 	'h5py',
 	'tqdm',
     'pooch',
@@ -42,25 +42,35 @@ maintainers = [
 ]
 
 [project.optional-dependencies]
-dev = [
+full = [
     "tensorflow",
+]
+
+docs = [
     "ipython",
+    "graphviz",
+    "matplotlib",
+    "numpydoc",
     "ipykernel",
     "nb-clean",
-    "pre-commit",
-    "ruff==0.0.260",
     "sphinx",
     "sphinx-autoapi",
     "nbsphinx",
     "sphinx-rtd-theme",
     "sphinx-gallery",
     "sphinxcontrib.bibtex",
-    "pandas",   
-    "pandoc",
 ]
 
-full = [
+tests = [
     "tensorflow",
+    "pytest",
+    'pandas',
+]
+
+dev = [
+    "acoupipe[docs,full,tests]",
+    "hatch",
+    "ruff",
 ]
 
 
@@ -69,6 +79,47 @@ documentation = "https://adku1173.github.io/acoupipe/"
 repository = "https://github.com/adku1173/acoupipe"
 source = "https://github.com/adku1173/acoupipe"
 tracker = "https://github.com/adku1173/acoupipe/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/acoupipe/version.py"
+
+[tool.hatch.envs.hatch-static-analysis]
+dependencies = ["ruff==0.8.1"]
+
+[tool.hatch.envs.docs]
+python = "3.13"
+dependencies = [
+    "acoupipe[docs]"
+]
+
+[tool.hatch.envs.docs.scripts]
+build = ["cd docs && make html"]
+
+
+[tool.hatch.envs.tests]
+dependencies = [
+    "acoupipe[tests]"
+]
+
+[[tool.hatch.envs.tests.matrix]]
+python = ["3.11", "3.12"]
+
+[tool.hatch.envs.tests.scripts]
+import = ["python -c \"import acoupipe\""]
+test = ["python -m pytest -v --durations=10 tests"]
+
+
+[tool.hatch.build.targets.sdist]
+include = [
+  "/acoupipe",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/acoupipe"]
 
 [tool.ruff]
 src = ["src"]
@@ -83,3 +134,6 @@ select = ["B", "D", "E", "F", "I", "N", "Q", "W"]
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.format]
+quote-style = "single"

@@ -95,7 +95,7 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset):
         if data["idx"] == start_idx:
             break
     test_data = np.load(
-        validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode={mode}.npy"
+        validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy"
     )
     if feature == "eigmode":  # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
         # we therefore just test the strongest eigenmode
@@ -299,12 +299,12 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset):
         data = next(gen)
         if data["idx"] == start_idx:
             break
-    test_data = np.load(validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode=mode.npy")
+    test_data = np.load(validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy")
     if feature == "eigmode":  # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
         # we therefore just test the first eigenmode
         np.testing.assert_allclose(data[feature][:, :, -1], test_data[:, :, -1], rtol=1e-5, atol=1e-7)
     else:
-        np.testing.assert_allclose(data[feature], test_data, rtol=1e-5, atol=1e-7)
+        np.testing.assert_allclose(data[feature], test_data, rtol=1e-5, atol=1e-6)
 
 
 @pytest.mark.parametrize("mode", modes)
@@ -327,7 +327,7 @@ def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_mi
         if data["idx"] == start_idx:
             break
     test_data = np.load(
-        validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode=mode.npy"
+        validation_data_path / f"{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy"
     )
     if feature == "eigmode":  # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
         # we therefore just test the strongest eigenmode

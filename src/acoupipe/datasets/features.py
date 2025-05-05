@@ -249,18 +249,16 @@ class SpectrogramFeature(SpectraFeature):
 
     @staticmethod
     def calc_spectrogram1(sampler, freq_data, name):
-        spectrogram = np.stack(
-            list((_.copy() for _ in freq_data.result())),axis=0)
+        spectrogram = ac.tools.return_result(freq_data).reshape((-1, freq_data.num_freqs, freq_data.num_channels))
         return {name:spectrogram}
 
     @staticmethod
     def calc_spectrogram2(sampler, freq_data, fidx, name):
-        spectrogram = np.stack(
-            list((_.copy() for _ in freq_data.result())),axis=0)
+        spectrogram = ac.tools.return_result(freq_data).reshape((-1, freq_data.num_freqs, freq_data.num_channels))
         spectrogram = np.array(
-                [spectrogram[:,indices[0]:indices[1]].sum(1) for indices in fidx],
-                    dtype=complex).swapaxes(0,1)
-        return {name:spectrogram}
+                [spectrogram[:, indices[0]:indices[1]].sum(1) for indices in fidx],
+                    dtype=complex).swapaxes(0, 1)
+        return {name: spectrogram}
 
     def get_feature_func(self):
         if self.fidx is None:
@@ -772,23 +770,22 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
             return {name: np.zeros((freq_data.fftfreq().shape[0],num_mics))}
         elif len(sources) == 1:
             freq_data.source = sources[0]
-            spectrogram = SpectrogramFeature.calc_spectrogram1(sampler,freq_data, name="spectrogram")["spectrogram"]
-            strength = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0)
-            return {name: strength}
+            strength = ac.tools.return_result(source=ac.AutoPowerSpectra(source=freq_data)).mean(0)
+            return {name: strength.reshape(freq_data.num_freqs, freq_data.num_channels)}
         else:
             raise ValueError("Only one uncorrelated noise source is supported.")
 
     @staticmethod
     def calc_noise_strength_estimated1_partfreq(sampler, freq_data, fidx, name):
         sources = get_uncorrelated_noise_source_recursively(freq_data.source)
-        freq_data.fftfreq().shape[0]
         if len(sources) == 0:
             num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
             return {name: np.zeros((len(fidx),num_mics))}
         elif len(sources) == 1:
             freq_data.source = sources[0]
-            spectrogram = SpectrogramFeature.calc_spectrogram2(sampler,freq_data,fidx, name="spectrogram")["spectrogram"]
-            strength = np.real(np.real(spectrogram*spectrogram.conjugate())).mean(0)
+            strength = ac.tools.return_result(source=ac.AutoPowerSpectra(source=freq_data)).mean(0)
+            strength = strength.reshape(freq_data.num_freqs, freq_data.num_channels)
+            strength = np.array([strength[indices[0]:indices[1]].sum(0) for indices in fidx])
             return {name: strength}
         else:
             raise ValueError("Only one uncorrelated noise source is supported.")
