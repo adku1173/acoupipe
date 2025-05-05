@@ -20,17 +20,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
         python-version: ['3.12']
     steps:
       - name: Check out a copy of the repository
         uses: actions/checkout@v4
       - name: Set up hatch
         uses: ./.github/actions/setup-hatch
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update && sudo apt-get install -y pandoc
       - name: Run sphinx
         run: hatch -v run docs:build
       - name: Upload artifacts
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         uses: actions/upload-artifact@v4
         with:
           name: build-docs
