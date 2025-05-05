@@ -9,7 +9,7 @@
 .. _`Tensorflow Dataset API`: https://www.tensorflow.org/api_docs/python/tf/data/Dataset#from_generator
 .. _TFRecord: https://www.tensorflow.org/tutorials/load_data/tfrecord
 .. _Docker: https://www.docker.com/
-.. _DockerHub: https://hub.docker.com/repository/docker/adku1173/acoupipe/general
+.. _DockerHub: https://hub.docker.com/r/adku1173/acoupipe
 .. _Acoular: http://www.acoular.org
 .. _HDF5: https://docs.hdfgroup.org/hdf5/develop/_h5_g__u_g.html
 .. _Pandas: https://pandas.pydata.org/docs/

@@ -41,7 +41,7 @@ jobs:
         uses: lycheeverse/lychee-action@v1
         with:
           # Check all markdown, html and reStructuredText files in repo (default)
-          args: --base . --verbose --no-progress './**/*.md' './**/*.html' './**/*.rst'
+          args: --base . --verbose --no-progress './**/*.md' './**/*.html' './**/*.rst' --exclude http://0.0.0.0:8265/
           fail: true
 
   alls-green:
