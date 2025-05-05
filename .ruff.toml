@@ -2,7 +2,8 @@ src = ["src"]
 exclude = ["docs/source", ".git"]
 line-length = 120
 
-lint.select = [
+[lint]
+select = [
     "F", "C", "E", "R", "W", "C90", "I", "N", "D", "UP", 
     "YTT", "BLE", "B", "A", "COM", 
     "C4", "DTZ", "T10", "EM", "FA", "ISC", "ICN", 
@@ -10,7 +11,7 @@ lint.select = [
     "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "ARG", "TD", 
     "C901"
 ]
-lint.ignore = ["E501", "G004", "LOG015"]
+ignore = ["E501", "G004", "LOG015","COM812"]
 
 [lint.pydocstyle]
 convention = "numpy"
