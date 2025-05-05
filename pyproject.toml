@@ -91,7 +91,7 @@ path = "src/acoupipe/version.py"
 dependencies = ["ruff==0.8.1"]
 
 [tool.hatch.envs.docs]
-python = "3.13"
+python = "3.12"
 dependencies = [
     "acoupipe[docs]"
 ]
@@ -106,7 +106,7 @@ dependencies = [
 ]
 
 [[tool.hatch.envs.tests.matrix]]
-python = ["3.11", "3.12"]
+python = ["3.12"]
 
 [tool.hatch.envs.tests.scripts]
 import = ["python -c \"import acoupipe\""]
@@ -137,3 +137,9 @@ convention = "numpy"
 
 [tool.ruff.format]
 quote-style = "single"
+
+[tool.pytest.ini_options]
+env = [
+    "NUMBA_NUM_THREADS=1",
+    "OPENBLAS_NUM_THREADS=1",
+]

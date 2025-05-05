@@ -1,0 +1,56 @@
+name: Docs
+
+#DEPLOY NOTE: This workflow will only deploy the docs when a workflow is manually triggered from the main branch via github! 
+
+on:
+  pull_request:
+    branches: [ master ] # build docs as additional test on PRs to main
+  workflow_dispatch: # allow manual trigger for all branches
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+  
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.12']
+    steps:
+      - name: Check out a copy of the repository
+        uses: actions/checkout@v4
+      - name: Set up hatch
+        uses: ./.github/actions/setup-hatch
+      - name: Run sphinx
+        run: hatch -v run docs:build
+      - name: Upload artifacts
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-docs
+          path: ./docs/build/html
+
+  deploy:
+    needs: build
+    if: ${{ github.event_name =='workflow_dispatch' && github.ref == 'refs/heads/master' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-docs
+          path: ./docs/build/html
+      - name: Upload docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/build/html
+          force_orphan: true # This allows you to make your publish branch with only the latest commit.
+          enable_jekyll: false

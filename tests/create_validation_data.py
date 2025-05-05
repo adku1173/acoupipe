@@ -25,16 +25,17 @@ def create_miracle_dataset(mode, **kwargs):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+    parser.add_argument("--dataset", type=str, nargs="+", default=["DatasetSynthetic", "DatasetMIRACLE"])
     parser.add_argument("--features", type=str, nargs="+", default=IMPLEMENTED_FEATURES)
     parser.add_argument("--mode", type=str, nargs="+", default=["analytic", "welch", "wishart"])
-    parser.add_argument("--dataset", type=str, nargs="+", default=["DatasetSynthetic", "DatasetMIRACLE"])
+    parser.add_argument("--frequencies", nargs="+", type=int, default=[None, 1000])
+    parser.add_argument("--nums", nargs="+", type=int, default=[0, 3])
     args = parser.parse_args()
 
     print(f"Creating validation data for features {args.features} and modes {args.mode}")
 
-    frequencies = [None, 1000]
-    nums = [0, 3]
-
+    frequencies = list(args.frequencies)
+    nums = list(args.nums)
     if "DatasetSynthetic" in args.dataset:
         for mode, f, num, feature in itertools.product(args.mode, frequencies, nums, args.features):
             if f is None and num != 0:

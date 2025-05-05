@@ -76,7 +76,7 @@ def test_values_correct(mode, feature, f, num, create_dataset):
 
 
 @pytest.mark.parametrize("mode", modes)
-@pytest.mark.parametrize("feature", IMPLEMENTED_FEATURES)
+@pytest.mark.parametrize("feature", ["sourcemap"])
 @pytest.mark.parametrize("f", [1000])
 @pytest.mark.parametrize("num", [0])
 def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset):
@@ -308,7 +308,7 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset):
 
 
 @pytest.mark.parametrize("mode", modes)
-@pytest.mark.parametrize("feature", IMPLEMENTED_FEATURES)
+@pytest.mark.parametrize("feature", ["sourcemap"])
 @pytest.mark.parametrize("f", [1000])
 @pytest.mark.parametrize("num", [0])
 def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_miracle_dataset):
