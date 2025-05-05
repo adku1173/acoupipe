@@ -21,13 +21,6 @@ authors:
     family-names: "Sarradj"
     affiliation: "Department of Engineering Acoustics, TU Berlin"
     orcid: "https://orcid.org/0000-0002-0274-8456"
-contributors:
-  - given-names: "Can"
-    family-names: "Kayser"
-    type: "Other"
-  - given-names: "Jakob"
-    family-names: "Tschavoll"
-    type: "Other"
 identifiers:
   - description: "acoupipe: all versions"
     type: "doi"
