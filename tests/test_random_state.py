@@ -6,7 +6,6 @@ to the Sampler class, the random state of the random variable will be used.
 
 """
 
-
 import unittest
 
 from numpy.random import RandomState
@@ -17,18 +16,18 @@ from acoupipe.sampler import BaseSampler
 SEED = 100
 NVALUES = 100
 
-class TestSamplerState(unittest.TestCase):
 
+class TestSamplerState(unittest.TestCase):
     def _version1(self):
         n = norm()
-        n.random_state = 1 # should be overwritten
-        bs = BaseSampler(random_var=n,random_state=SEED)
+        n.random_state = 1  # should be overwritten
+        bs = BaseSampler(random_var=n, random_state=SEED)
         return bs.rvs(NVALUES)
 
     def _version2(self):
         n = norm()
-        n.random_state = 1 # should be overwritten
-        bs = BaseSampler(random_var=n,random_state=RandomState(SEED))
+        n.random_state = 1  # should be overwritten
+        bs = BaseSampler(random_var=n, random_state=RandomState(SEED))
         return bs.rvs(NVALUES)
 
     def _version3(self):
@@ -45,9 +44,10 @@ class TestSamplerState(unittest.TestCase):
 
     def test(self):
         """Test that all versions result in the same random numbers."""
-        for j,cal in enumerate([self._version2,self._version3,self._version4]):
+        for j, cal in enumerate([self._version2, self._version3, self._version4]):
             assert (self._version1() == cal()).all()
-            print(f"version 1 equal to version {j+2}")
+            print(f'version 1 equal to version {j + 2}')
 
-if __name__ == "__main__":
+
+if __name__ == '__main__':
     unittest.main()

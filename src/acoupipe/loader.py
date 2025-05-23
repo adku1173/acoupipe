@@ -1,4 +1,6 @@
 """Provides classes to load the datasets stored with :class:`~acoupipe.writer.BaseWriteDataset` derived classes."""
+
+import contextlib
 from os import path
 
 from acoular import config
@@ -7,8 +9,7 @@ from traits.api import CInt, Dict, File, Instance, List, Property, cached_proper
 
 from acoupipe.pipeline import DataGenerator
 
-config.h5library = "h5py"
-
+config.h5library = 'h5py'
 
 
 class BaseLoadDataset(DataGenerator):
@@ -18,13 +19,10 @@ class BaseLoadDataset(DataGenerator):
     """
 
     #:Full name of the file with data.
-    name = File(filter=["*"],
-        desc="name of data file")
+    name = File(filter=['*'], desc='name of data file')
 
     def load_data(self):
         """Open a dataset file and set attributes."""
-        pass
-
 
 
 class LoadH5Dataset(BaseLoadDataset):
@@ -36,68 +34,60 @@ class LoadH5Dataset(BaseLoadDataset):
     """
 
     #: Full name of the .h5 file with data.
-    name = File(filter=["*.h5"],
-        desc="name of data file")
+    name = File(filter=['*.h5'], desc='name of data file')
 
     #: Basename of the .h5 file with data, is set automatically.
-    basename = Property( depends_on = "name",
-        desc="basename of data file")
+    basename = Property(depends_on='name', desc='basename of data file')
 
     #: Number of data samples, is set automatically / read from file.
-    numsamples = CInt(0,
-        desc="number of samples in the dataset")
+    numsamples = CInt(0, desc='number of samples in the dataset')
 
     #: Names of features, is set automatically / read from file.
-    features = List(
-        desc="names of the features in the dataset")
+    features = List(desc='names of the features in the dataset')
 
     #: Number of features, is set automatically / read from file.
-    numfeatures = CInt(0,
-        desc="number of features in the dataset")
+    numfeatures = CInt(0, desc='number of features in the dataset')
 
     #: Number of features, is set automatically / read from file.
-    indices = List(
-        desc="the indices of the dataset")
+    indices = List(desc='the indices of the dataset')
 
     #: HDF5 file object
-    h5f = Instance(H5File, transient = True)
+    h5f = Instance(H5File, transient=True)
 
     #: Provides metadata stored in HDF5 file object
-    metadata = Dict(
-        desc="metadata contained in .h5 file")
+    metadata = Dict(desc='metadata contained in .h5 file')
 
     @cached_property
-    def _get_basename( self ):
+    def _get_basename(self):
         return path.splitext(path.basename(self.name))[0]
 
-    @on_trait_change("basename")
-    def load_data( self ):
+    @on_trait_change('basename')
+    def load_data(self):
         """Open the .h5 file and set attributes."""
         if not path.isfile(self.name):
             # no file there
             self.numsamples = 0
             self.numfeatures = 0
-            raise FileNotFoundError("No such file: %s" % self.name)
+            msg = f'No such file: {self.name}'
+            raise FileNotFoundError(msg)
         if self.h5f is not None:
-            try:
+            with contextlib.suppress(IOError):
                 self.h5f.close()
-            except IOError:
-                pass
-        self.h5f = H5File(self.name,mode="r")
+        self.h5f = H5File(self.name, mode='r')
         self.load_metadata()
 
-    def load_metadata( self ):
+    def load_metadata(self):
         """Load metadata from .h5 file. Only for internal use."""
         self.metadata = {}
         indices = list(self.h5f.keys())
-        if"metadata" in indices:
-            indices.remove("metadata")
-            for feature in self.h5f["/metadata"].keys():
-                self.metadata[feature] = self.h5f["/metadata"][feature][()]
-        int_indices = list(map(int,indices))
+        if 'metadata' in indices:
+            indices.remove('metadata')
+            for feature in self.h5f['/metadata']:
+                self.metadata[feature] = self.h5f['/metadata'][feature][()]
+        int_indices = list(map(int, indices))
         int_indices.sort()
-        self.indices = list(map(str,int_indices))
-        self.numsamples=len(self.indices)
+        self.indices = list(map(str, int_indices))
+        self.numsamples = len(self.indices)
         if self.numsamples > 0:
             self.numfeatures = len(self.h5f[self.indices[0]].keys())
             self.features = list(self.h5f[self.indices[0]].keys())
@@ -112,15 +102,14 @@ class LoadH5Dataset(BaseLoadDataset):
         Example to create a repeatable data set with the Tensorflow `tf.data.Dataset` API is given in
 
 
-        >>> h5data = LoadH5Dataset(name="some_dataset.h5")
+        >>> h5data = LoadH5Dataset(name='some_dataset.h5')
         >>> generator = h5data.get_dataset_generator(features=['loc'])
         >>> output_signature = {
-        ...    'loc' : tf.TensorSpec(shape=(3,None), dtype=tf.float32),
+        ...     'loc': tf.TensorSpec(shape=(3, None), dtype=tf.float32),
         ... }
         >>>
-        >>> dataset = tf.data.Dataset.from_generator(generator,
-        ...     output_signature=output_signature).repeat()
-        >>> loc = next(iter(dataset)) # return locations
+        >>> dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature).repeat()
+        >>> loc = next(iter(dataset))  # return locations
 
         Parameters
         ----------
@@ -133,21 +122,23 @@ class LoadH5Dataset(BaseLoadDataset):
         callable
             A callable that returns a generator object
         """
+
         def sample_generator():
             indices = list(self.h5f.keys())
             if features is None:
                 for idx in indices:
-                    if idx != "metadata":
-                        data = {key:value[()] for key,value in self.h5f[idx].items()}
-                        data.update({"idx":idx})
+                    if idx != 'metadata':
+                        data = {key: value[()] for key, value in self.h5f[idx].items()}
+                        data.update({'idx': idx})
                         yield data
             else:
                 for idx in indices:
-                    if idx != "metadata":
-                        data = {key:value[()] for key,value in self.h5f[idx].items() if key in features}
-                        data.update({"idx":idx})
+                    if idx != 'metadata':
+                        data = {key: value[()] for key, value in self.h5f[idx].items() if key in features}
+                        data.update({'idx': idx})
                         yield data
             return
+
         return sample_generator
 
     def get_data(self):
@@ -161,7 +152,7 @@ class LoadH5Dataset(BaseLoadDataset):
         """
         indices = list(self.h5f.keys())
         for idx in indices:
-            if idx != "metadata":
-                data = {key:value[()] for key,value in self.h5f[idx].items()}
-                data.update({"idx":idx})
+            if idx != 'metadata':
+                data = {key: value[()] for key, value in self.h5f[idx].items()}
+                data.update({'idx': idx})
                 yield data

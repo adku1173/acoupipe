@@ -41,14 +41,16 @@ def tqdm_hook(t):
 
     return update_to
 
+
 def _handle_log(fname):
-    logging.basicConfig(level=logging.INFO) # root logger
+    logging.basicConfig(level=logging.INFO)  # root logger
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
-    pipeline_log = logging.FileHandler(fname,mode="w") # log everything to file
-    pipeline_log.setFormatter(logging.Formatter(
-        "%(process)d-%(levelname)s-%(asctime)s.%(msecs)02d-%(message)s", datefmt="%Y-%m-%d,%H:%M:%S"))
-    logger.addHandler(pipeline_log) # attach handler to the root logger
+    pipeline_log = logging.FileHandler(fname, mode='w')  # log everything to file
+    pipeline_log.setFormatter(
+        logging.Formatter('%(process)d-%(levelname)s-%(asctime)s.%(msecs)02d-%(message)s', datefmt='%Y-%m-%d,%H:%M:%S'),
+    )
+    logger.addHandler(pipeline_log)  # attach handler to the root logger
 
 
 def generate_uniform_parametric_eq(num_points, max_order, rng):
@@ -73,7 +75,7 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     g = rng.uniform(low=-10.0, high=10.0)
     q = rng.uniform(low=0.1, high=1.0)
     A = np.power(10, g / 40)
-    alpha = np.sin(omega_low) * np.sqrt((A ** 2 + 1) * ((1 / q) - 1) + 2 * A)
+    alpha = np.sin(omega_low) * np.sqrt((A**2 + 1) * ((1 / q) - 1) + 2 * A)
 
     b0 = A * ((A + 1) - (A - 1) * np.cos(omega_low) + alpha)
     b1 = 2 * A * ((A - 1) - (A + 1) * np.cos(omega_low))
@@ -94,7 +96,7 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     g = rng.uniform(low=-10.0, high=10.0)
     q = rng.uniform(low=0.1, high=1.0)
     A = np.power(10, g / 40)
-    alpha = np.sin(omega_high) * np.sqrt((A ** 2 + 1) * ((1 / q) - 1) + 2 * A)
+    alpha = np.sin(omega_high) * np.sqrt((A**2 + 1) * ((1 / q) - 1) + 2 * A)
 
     b0 = A * ((A + 1) + (A - 1) * np.cos(omega_high) + alpha)
     b1 = -2 * A * ((A - 1) + (A + 1) * np.cos(omega_high))
@@ -142,7 +144,7 @@ def generate_uniform_parametric_eq(num_points, max_order, rng):
     return h, sos
 
 
-def get_frequency_index_range(freq,f,num):
+def get_frequency_index_range(freq, f, num):
     """Return the left and right indices that define the frequency range to integrate over.
 
     Parameters
@@ -163,36 +165,43 @@ def get_frequency_index_range(freq,f,num):
         # single frequency line
         ind = searchsorted(freq, f)
         if ind >= len(freq):
-            warn("Queried frequency (%g Hz) not in resolved "
-                            "frequency range. Returning zeros." % f,
-                            Warning, stacklevel = 2)
+            warn(
+                f'Queried frequency ({f:g} Hz) not in resolved frequency range. Returning zeros.',
+                Warning,
+                stacklevel=2,
+            )
             ind = None
         else:
             if freq[ind] != f:
-                warn("Queried frequency (%g Hz) not in set of "
-                        "discrete FFT sample frequencies. "
-                        "Using frequency %g Hz instead." % (f,freq[ind]),
-                        Warning, stacklevel = 2)
-        return (ind,ind+1)
+                warn(
+                    f'Queried frequency ({f:g} Hz) not in set of '
+                    'discrete FFT sample frequencies. '
+                    f'Using frequency {freq[ind]:g} Hz instead.',
+                    Warning,
+                    stacklevel=2,
+                )
+        return (ind, ind + 1)
+    # fractional octave band
+    if isinstance(num, list):
+        f1 = num[0]
+        f2 = num[-1]
     else:
-        # fractional octave band
-        if isinstance(num,list):
-            f1=num[0]
-            f2=num[-1]
-        else:
-            f1 = f*2.**(-0.5/num)
-            f2 = f*2.**(+0.5/num)
-        ind1 = searchsorted(freq, f1)
-        ind2 = searchsorted(freq, f2)
-        if ind1 == ind2:
-            warn("Queried frequency band (%g to %g Hz) does not "
-                    "include any discrete FFT sample frequencies. "
-                    "Returning zeros." % (f1,f2),
-                    Warning, stacklevel = 2)
-        return (ind1,ind2)
+        f1 = f * 2.0 ** (-0.5 / num)
+        f2 = f * 2.0 ** (+0.5 / num)
+    ind1 = searchsorted(freq, f1)
+    ind2 = searchsorted(freq, f2)
+    if ind1 == ind2:
+        warn(
+            f'Queried frequency band ({f1:g} to {f2:g} Hz) does not '
+            'include any discrete FFT sample frequencies. '
+            'Returning zeros.',
+            Warning,
+            stacklevel=2,
+        )
+    return (ind1, ind2)
 
 
-def set_pipeline_seeds(pipeline,start_idx,size,dataset="training"):
+def set_pipeline_seeds(pipeline, start_idx, size, dataset='training'):
     """Create the random seed list for each of the sampler objects that is held by the pipeline object.
 
     Parameters
@@ -206,19 +215,21 @@ def set_pipeline_seeds(pipeline,start_idx,size,dataset="training"):
     dataset : str, optional
         the data set type, by default "training". Choose from ["training","validation"]
     """
-    if dataset=="training":
+    if dataset == 'training':
         off = 0
-    elif dataset=="validation":
+    elif dataset == 'validation':
         # we assume that the training set will never be larger than 1e12 samples
-        off = int(1e12) # a general offset to ensure that validation and training seeds never match
-    elif dataset == "test":
+        off = int(1e12)  # a general offset to ensure that validation and training seeds never match
+    elif dataset == 'test':
         off = int(1e21)
-    soff = int(1e7) # offset to ensure that seeds of sampler object doesn't match
-    pipeline.random_seeds = {i : range(off+(i*soff)+start_idx, off+(i*soff)+size+start_idx) for i in list(pipeline.sampler.keys())}
+    soff = int(1e7)  # offset to ensure that seeds of sampler object doesn't match
+    pipeline.random_seeds = {
+        i: range(off + (i * soff) + start_idx, off + (i * soff) + size + start_idx)
+        for i in list(pipeline.sampler.keys())
+    }
 
 
-
-def set_filename(writer,path=".",*args):
+def set_filename(writer, path='.', *args):
     """Set the filename of the dataset.
 
     Parameters
@@ -230,25 +241,24 @@ def set_filename(writer,path=".",*args):
     *args : str
         concatenated strings to be used as the filename
     """
-    name = f"{args[0]}"
+    name = f'{args[0]}'
     for arg in args[1:]:
-        name += f"_{arg}"
-    name += f"_{datetime.now().strftime('%d-%b-%Y')}"
-    if isinstance(writer,WriteH5Dataset):
-        name += ".h5"
-    if TF_FLAG:
-        if isinstance(writer,WriteTFRecord):
-            name += ".tfrecord"
-    writer.name=join(path,name)
+        name += f'_{arg}'
+    name += f'_{datetime.now().strftime("%d-%b-%Y")}'  # noqa: DTZ005
+    if isinstance(writer, WriteH5Dataset):
+        name += '.h5'
+    if TF_FLAG and isinstance(writer, WriteTFRecord):
+        name += '.tfrecord'
+    writer.name = join(path, name)
 
 
 def complex_to_real(func):
-    def complex_to_real_wrapper(*args,**kwargs):
-        a = func(*args,**kwargs)
-        return concatenate(
-            [real(a)[...,newaxis],
-            imag(a)[...,newaxis]],axis=-1)
+    def complex_to_real_wrapper(*args, **kwargs):
+        a = func(*args, **kwargs)
+        return concatenate([real(a)[..., newaxis], imag(a)[..., newaxis]], axis=-1)
+
     return complex_to_real_wrapper
+
 
 def get_point_sources_recursively(source):
     """Recursively get all point sources from a `acoular.TimeInOut` object.
@@ -266,7 +276,7 @@ def get_point_sources_recursively(source):
     sources = []
     if isinstance(source, ac.PointSource):
         return [source]
-    elif isinstance(source, ac.SourceMixer):
+    if isinstance(source, ac.SourceMixer):
         for s in source.sources:
             sources += get_point_sources_recursively(s)
     elif isinstance(source, ac.Mixer):
@@ -277,16 +287,18 @@ def get_point_sources_recursively(source):
         return []
     return sources
 
+
 def _get_signals_recursively(source, signals):
-    if hasattr(source,"signal") and isinstance(source.signal,ac.SignalGenerator):
+    if hasattr(source, 'signal') and isinstance(source.signal, ac.SignalGenerator):
         signals.append(source.signal)
-    elif hasattr(source,"sources") or hasattr(source,"sources") and isinstance(source, ac.SamplesGenerator):
-        if hasattr(source,"sources"):
+    elif hasattr(source, 'sources') or hasattr(source, 'sources') and isinstance(source, ac.SamplesGenerator):
+        if hasattr(source, 'sources'):
             for s in source.sources:
                 signals = _get_signals_recursively(s, signals)
-        if hasattr(source,"source"):
+        if hasattr(source, 'source'):
             signals = _get_signals_recursively(source.source, signals)
     return signals
+
 
 def get_all_source_signals(source_list):
     """Get all signals from a list of `acoular.SamplesGenerator` derived objects.
@@ -305,9 +317,11 @@ def get_all_source_signals(source_list):
     signals = []
     for source in source_list:
         if not isinstance(source, ac.SamplesGenerator):
-            raise ValueError("source must be of type `acoular.SamplesGenerator`")
+            msg = 'source must be of type `acoular.SamplesGenerator`'
+            raise ValueError(msg)
         signals = _get_signals_recursively(source, signals)
     return signals
+
 
 def get_uncorrelated_noise_source_recursively(source):
     """Recursively get all uncorrelated noise sources from a `acoular.TimeInOut` object.
@@ -325,7 +339,7 @@ def get_uncorrelated_noise_source_recursively(source):
     sources = []
     if isinstance(source, ac.PointSource):
         return []
-    elif isinstance(source, ac.SourceMixer):
+    if isinstance(source, ac.SourceMixer):
         for s in source.sources:
             sources += get_uncorrelated_noise_source_recursively(s)
     elif isinstance(source, ac.Mixer):
@@ -336,7 +350,8 @@ def get_uncorrelated_noise_source_recursively(source):
         return [source]
     return sources
 
-def blockwise_transfer(ir,blocksize=None):
+
+def blockwise_transfer(ir, blocksize=None):
     """Calculate the transfer function of an impulse response in a blockwise manner.
 
     Parameters
@@ -357,11 +372,11 @@ def blockwise_transfer(ir,blocksize=None):
         blocksize = n_samples
     if n_samples % blocksize != 0:
         pad = blocksize - n_samples % blocksize
-        ir = np.pad(ir,((0,0),(0,pad)))
+        ir = np.pad(ir, ((0, 0), (0, pad)))
     n_blocks = ir.shape[-1] // blocksize
-    tf = np.zeros((n_channels, blocksize//2+1), dtype=complex)
+    tf = np.zeros((n_channels, blocksize // 2 + 1), dtype=complex)
     for i in range(n_blocks):
-        tf += np.fft.rfft(ir[:,i*blocksize:(i+1)*blocksize], axis=1)
+        tf += np.fft.rfft(ir[:, i * blocksize : (i + 1) * blocksize], axis=1)
     return tf
 
 
@@ -369,16 +384,16 @@ def blockwise_transfer(ir,blocksize=None):
 # function 'f' would have been 'wrap', and the docstring of the original f() would have been lost.
 def log_execution_time(f):
     """Log execution time during feature calculation."""
+
     @wraps(f)
     def wrap(self, *args, **kw):
-        self.logger.info("id %i: start task." %self._idx)
+        self.logger.info(f'id {self._idx}: start task.')
         start = time()
         result = f(self, *args, **kw)
         end = time()
-        self.logger.info("id %i: finished task." %self._idx)
-        # self.logger.info("%r args:[%r] took: %2.32f sec" % \
-        # (f.__name__,args,end-start))
-        self.logger.info("id %i: executing task took: %2.32f sec" % \
-        (self._idx,end-start))
+        self.logger.info(f'id {self._idx}: finished task.')
+        # self.logger.info(f"{f.__name__} args:[{args}] took: {end-start:.32f} sec")
+        self.logger.info(f'id {self._idx}: executing task took: {end - start:.32f} sec')
         return result
+
     return wrap
