@@ -35,7 +35,7 @@ the Acoular_ microphone array geometry object is initialised
 
 .. code-block:: Python
 
-    mics = MicGeom(from_file="array64_d0o686.xml")
+    mics = MicGeom(file="array64_d0o686.xml")
 
 and a SciPy_ random distribution object is generated using a preset random seed in order to guarantee reproducibility.
 
@@ -66,8 +66,8 @@ To make individual microphone positions deviate along the x-axis only, the follo
     plt.title("individual deviation on x-axis")
     for _ in range(nsamples):
         mgs.sample()
-        plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+        plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
+    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 
@@ -85,8 +85,8 @@ It is also possible to make individual microphone positions deviate along the x-
     plt.title("individual deviation on x- and y- axis")
     for _ in range(nsamples):
         mgs.sample()
-        plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+        plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
+    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 
@@ -106,8 +106,8 @@ Rotating the entire array around the z-axis is done using the *rotation vector* 
     plt.title("rotation around z-axis")
     for _ in range(nsamples):
         mgs.sample()
-        plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+        plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
+    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 
@@ -126,8 +126,8 @@ Note that the *rotation vector* attribute :code:`mgs.rvec` needs to be set to ze
     plt.title("translation of full geometry along y-axis")
     for _ in range(nsamples):
         mgs.sample()
-        plt.scatter(mics.mpos[0], mics.mpos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
+        plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
+    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 

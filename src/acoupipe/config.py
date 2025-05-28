@@ -1,6 +1,3 @@
+import importlib.util
 
-TF_FLAG = True
-try:
-    import tensorflow
-except ImportError:
-    TF_FLAG = False
+TF_FLAG = importlib.util.find_spec('tensorflow') is not None
