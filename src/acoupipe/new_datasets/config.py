@@ -34,13 +34,23 @@ class DatasetConfig(BaseModel):
         description="Configuration for the Monte Carlo model."
     )
 
+    frequency_model: Dict[str, Any] = Field(
+        default_factory=lambda: {"model_type": "fft", "fs": 13720, "block_size": 128, "overlap": "50%", "f": [], "num": 0},
+        description="Configuration for the frequency model."
+    )
+
     signal_model: Dict[str, Any] = Field(
-        default_factory=lambda: {"model_type": "wnoise", "fs": 13720, "signal_length": 5},
+        default_factory=lambda: {"model_type": "wnoise"},
         description="Configuration for the signal model."
     )
 
+    noise_model: Dict[str, Any] = Field(
+        default_factory=lambda: {"model_type": "uncorrelated-wnoise", "precision": "single", "noise_variance": 1.0},
+        description="Configuration for the noise model."
+    )
+
     propagation_model: Dict[str, Any] = Field(
-        default_factory=lambda: {"model_type": "free-field", "c": 343.0},
+        default_factory=lambda: {"model_type": "free-field", "c": 343.0, "ref":DEFAULT_MICS.pos_total[:,-1].tolist()},
         description="Configuration for the propagation model."
     )
 
@@ -75,6 +85,8 @@ class DatasetConfig(BaseModel):
                 updated_config[key] = value
             elif key in updated_config.get("monte_carlo", {}):
                 updated_config["monte_carlo"][key] = value
+            elif key in updated_config.get("frequency_model", {}):
+                updated_config["frequency_model"][key] = value
             elif key in updated_config.get("signal_model", {}):
                 updated_config["signal_model"][key] = value
             elif key in updated_config.get("propagation_model", {}):

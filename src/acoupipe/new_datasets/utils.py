@@ -1,3 +1,9 @@
+overlap_mapping = {"None": 1, "50%": 2, "75%": 4, "87.5%": 8}
+
+def get_overlap_ratio(overlap):
+    if overlap not in overlap_mapping:
+        raise ValueError(f"Invalid overlap value: {overlap}. Must be one of {list(overlap_mapping.keys())}.")
+    return overlap_mapping[overlap]
 
 
 def add_split(data, split):

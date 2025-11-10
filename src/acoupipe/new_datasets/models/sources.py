@@ -5,26 +5,12 @@ import acoular as ac
 import numpy as np
 from pydantic import BaseModel, Field
 
+from acoupipe.new_datasets.models.base import BaseModelSubConfig
 from acoupipe.new_datasets.models.environments import BasePropagationModel
 from acoupipe.new_datasets.models.signals import BaseSignalModel
 
 
-def _create_source_signals(
-    data: Dict[str, Any], env_func: Callable, fs: int, dtype: str
-) -> np.ndarray:
-    """
-    Generate white noise signals.
-
-    Args:
-        data (dict): Input data dictionary.
-        signal_length (int): Length of the signal in seconds.
-        fs (int): Sampling frequency in Hz.
-        dtype (str): Data type of the generated signals.
-
-    Returns
-    -------
-        np.ndarray: Generated signals.
-    """
+def _create_source_signals(data: Dict[str, Any], env_func: Callable, dtype: str) -> np.ndarray:
     loc = data["loc"]
     signals = data["source_signals"]
     if "noisy_mic_pos" not in data:
@@ -34,7 +20,7 @@ def _create_source_signals(
     assert loc.shape[1] == signals.shape[1], "Number of sources and signals must match."
     mic_signals = np.empty(signals.shape + (mic_pos.shape[1],), dtype=dtype)
 
-    ts = ac.TimeSamples(sample_freq=fs)
+    ts = ac.TimeSamples(sample_freq=data["fs"])
     sig = ac.GenericSignalGenerator(source=ts)
     ps = ac.PointSource(
         signal=sig, mics=ac.MicGeom(pos_total=mic_pos), env=env_func(data))
@@ -44,7 +30,7 @@ def _create_source_signals(
         mic_signals[:, i] = ac.tools.return_result(ps)
     return mic_signals
 
-class BaseSourceModel(BaseModel):
+class BaseSourceModel(BaseModelSubConfig):
     """Base class for all noise models."""
 
     model_type: str = Field(..., description="Type of noise signals to generate (e.g., 'uncorrelated-wnoise').")
@@ -65,10 +51,8 @@ class MonopoleSourceModel(BaseSourceModel):
         return partial(
             _create_source_signals,
             env_func=propagation_model_fn,
-            fs=self.signal_model.fs,
             dtype=self.signal_model.dtype,
         )
-
 
 SOURCE_MODEL_MAPPING = {
     "monopole": MonopoleSourceModel
@@ -100,7 +84,7 @@ if __name__ == "__main__":
         "nsources": 3,
         "signal_length": 5,
         "fs": 44100,
-        "dtype": "float32",
+        "precision": "single",
     }
 
     # Create a specific signal model using the factory

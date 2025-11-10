@@ -5,12 +5,10 @@ import acoular as ac
 import numpy as np
 from pydantic import BaseModel, Field
 
-from acoupipe.new_datasets.models.signals import BaseSignalModel
+from acoupipe.new_datasets.models.base import BaseModelSubConfig
 
 
-def _create_wnoise_signals(
-    data: Dict[str, Any], signal_length: float, fs: int, dtype: str
-) -> np.ndarray:
+def _create_wnoise_signals(data: Dict[str, Any], dtype: str) -> np.ndarray:
     """
     Generate white noise signals.
 
@@ -24,13 +22,12 @@ def _create_wnoise_signals(
     -------
         np.ndarray: Generated signals.
     """
-    nsam = data.get("signal_length", signal_length) * fs
-    fs = data.get("fs", fs)
-    rms = data.get("rms", np.ones((1,)))  # Default RMS value if not provided
-    noise_variance = data.get("noise_variance", 1.0)  # Default noise variance if not provided
-    rms = (rms**2).sum() * noise_variance  # Use noise_variance instead of data["noise_variance"]
-    nsrc = data["mic_pos"].shape[1]
-    seed = data.get("signal_seeds", np.arange(nsrc)) + 1000
+    fs = data["fs"]
+    rms = data["rms"]
+    nsam = int(data["signal_length"]*fs)
+    seed = data["signal_seeds"] + 1000
+    rms = (rms**2).sum() * data["noise_variance"]
+
     signal = ac.WNoiseGenerator(sample_freq=fs, num_samples=nsam, rms=rms)
     noise_source = ac.UncorrelatedNoiseSource(
             signal=signal,
@@ -41,13 +38,15 @@ def _create_wnoise_signals(
     signals[:,:] = ac.tools.return_result(noise_source).T
     return signals
 
-class BaseNoiseModel(BaseModel):
+class BaseNoiseModel(BaseModelSubConfig):
     """Base class for all noise models."""
 
     model_type: str = Field(..., description="Type of noise signals to generate (e.g., 'uncorrelated-wnoise').")
-    signal_model: BaseSignalModel
+    precision: Literal["single", "double"] = Field(
+        default="single", description="Precision of the generated signals."
+    )
 
-    def create_signals_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
+    def create_signal_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
         """Get the function to create signals."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
@@ -55,16 +54,27 @@ class BaseNoiseModel(BaseModel):
 class UncorrelatedWNoiseModel(BaseNoiseModel):
     """Model for generating white noise signals."""
 
+    # TODO: noise variance is not the correct word here
     model_type: Literal["uncorrelated-wnoise"] = "uncorrelated-wnoise"
+    noise_variance: float = Field(default=1.0, description="Variance of the noise.")
 
-    def create_signals_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
+    def create_signal_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
         """Get the function to create white noise signals."""
-        return partial(
-            _create_wnoise_signals,
-            signal_length=self.signal_model.signal_length,
-            fs=self.signal_model.fs,
-            dtype=self.signal_model.dtype,
-        )
+        return partial(_create_wnoise_signals, dtype="float32" if self.precision == "single" else "float64")
+
+    def create_noise_csm_fn(self):
+        def _create_noise_csm(
+                data: Dict[str, Any], dtype="complex64") -> np.ndarray:
+            """Create a cross-spectral matrix (CSM) of white noise signals for the desired frequencies."""
+            nmics = data["mic_pos"].shape[-1]
+            nfft = data["nfft"]
+            nfreq = len(data["f_indices"])
+            rms = (data["rms"]**2).sum() / nfft * data["noise_variance"]
+            q_matrix = np.zeros((nfreq, nmics, nmics), dtype=dtype)
+            for n in range(nfreq):
+                q_matrix[n, :, :] = np.diag(np.ones(nmics) * rms)
+            return q_matrix
+        return partial(_create_noise_csm, dtype="complex64" if self.precision == "single" else "complex128")
 
 
 NOISE_MODEL_MAPPING = {
@@ -86,6 +96,10 @@ class NoiseModel(BaseModel):
 # Example Usage
 if __name__ == "__main__":
     from acoupipe.new_datasets.models.signals import SignalModel
+    from acoupipe.new_datasets.models.spectra import FrequencyModel
+
+    freq_model = FrequencyModel
+
 
     # Input data for the factory
     input_data = {
@@ -96,7 +110,6 @@ if __name__ == "__main__":
         "model_type": "wnoise",
         "nsources": 3,
         "signal_length": 5,
-        "fs": 44100,
         "dtype": "float32",
     }
 
@@ -107,7 +120,7 @@ if __name__ == "__main__":
     noise_model = NoiseModel.configure_model(signal_model=signal_model, **input_data)
 
     # Get the signal generation function
-    fn = noise_model.create_signals_fn()
+    fn = noise_model.create_signal_fn()
 
     # Generate signals
     signals = fn({"mic_pos": np.ones((3, 10))})

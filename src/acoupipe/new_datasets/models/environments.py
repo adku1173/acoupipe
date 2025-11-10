@@ -1,35 +1,40 @@
-from functools import partial
 from typing import Any, Callable, Dict, Literal
 
 import acoular as ac
 import numpy as np
 from pydantic import BaseModel, Field
 
+from acoupipe.new_datasets.models.base import BaseModelSubConfig
+from acoupipe.new_datasets.transfer import TransferMonopole
 
-def _create_free_field_env(
-    data: Dict[str, Any], c: float
-) -> ac.Environment:
+
+def _create_free_field_env(data: Dict[str, Any]) -> ac.Environment:
+    return ac.Environment(c=data["c"])
+
+def _create_free_field_transfer(data: Dict[str, Any]) -> TransferMonopole:
     """
-    Generate white noise signals.
+    Create a transfer function for free field propagation.
 
     Args:
         data (dict): Input data dictionary.
-        signal_length (int): Length of the signal in seconds.
-        fs (int): Sampling frequency in Hz.
-        dtype (str): Data type of the generated signals.
+        c (float): Speed of sound.
 
     Returns
     -------
-        np.ndarray: Generated signals.
+        TransferMonopole: Transfer function object.
     """
-    c_value = data.get("c", c)
-    return ac.Environment(c=c_value)
+    mic_pos_total = data.get("noisy_mic_pos")
+    if mic_pos_total is None:
+        mic_pos_total = data["mic_pos"]
+    return TransferMonopole(ref=data["ref"], env=_create_free_field_env(data),
+        mics=ac.MicGeom(pos_total=mic_pos_total), grid=ac.ImportGrid(pos=data["loc"]))
 
 
-class BasePropagationModel(BaseModel):
+class BasePropagationModel(BaseModelSubConfig):
     """Base class for all signal models."""
 
     model_type: str = Field(..., description="Type of propagation model to use (e.g., 'free-field').")
+    ref: list = Field(..., description="Reference point for the transfer function.")
 
     def create_env_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
         """Get the function to create environment."""
@@ -42,9 +47,13 @@ class FreeField(BasePropagationModel):
     model_type: Literal["free-field"] = "free-field"
     c: float = Field(default=343.0, description="The number of source signals.")
 
-    def create_env_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
+    def create_env_fn(self):
         """Get the function to create white noise signals."""
-        return partial(_create_free_field_env, c=self.c)
+        return _create_free_field_env
+
+    def create_transfer_fn(self):
+        """Get the function to create transfer function."""
+        return _create_free_field_transfer
 
 
 ENV_MODEL_MAPPING = {

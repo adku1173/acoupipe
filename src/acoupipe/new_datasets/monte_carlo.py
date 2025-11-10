@@ -71,7 +71,7 @@ def mic_noise_variance_sampler_fn(data, sampler, sampler_id):
     """Draw microphone noise variance, uniform distribution."""
     sampler.random_state = default_rng(get_seed(data["idx"], sampler_id, data["split"]))
     sampler.sample()
-    data["mic_noise_variance"] = sampler.target
+    data["noise_variance"] = sampler.target
     return data
 
 def signal_length_sampler_fn(data, sampler, sampler_id):
@@ -90,11 +90,11 @@ class MonteCarloBase(ABCHasStrictTraits):
         # this is a stateless function that can be used in the map
         # function of the dataset
         split_fn = partial(add_split, split=split)
-        def map_fn(data):
+        def monte_carlo_map_fn(data):
             data = split_fn(data)
             # add some sampled parameters to the data
             return data
-        return map_fn
+        return monte_carlo_map_fn
 
     def add_ray_map(self, ray_dataset, split="training", **kwargs):
         return ray_dataset.map(self.build_map_fn(split=split),
@@ -246,7 +246,7 @@ class MonteCarloSynthetic(MonteCarloBase):
             return partial(mic_noise_variance_sampler_fn, sampler=self._mic_noise_sampler, sampler_id=5)
         else:
             def add_mic_noise(data):
-                data["mic_noise_variance"] = 0
+                data["noise_variance"] = 0
                 return data
             return add_mic_noise
 
@@ -271,8 +271,7 @@ class MonteCarloSynthetic(MonteCarloBase):
         fns.append(self._build_rms_map_fn())
         fns.append(self._build_signal_length_map_fn())
         fns.append(self._build_mic_noise_map_fn())
-
-        def map_fn(data): #TODO: restrict this function to use a single thread?
+        def map_fn(data):
             data = split_fn(data)
             for fn in fns:
                 data = fn(data)

@@ -5,10 +5,10 @@ import acoular as ac
 import numpy as np
 from pydantic import BaseModel, Field
 
+from acoupipe.new_datasets.models.base import BaseModelSubConfig
 
-def _create_wnoise_signals(
-    data: Dict[str, Any], nsources: int, signal_length: float, fs: int, dtype: str
-) -> np.ndarray:
+
+def _create_wnoise_signals(data: Dict[str, Any], dtype: str) -> np.ndarray:
     """
     Generate white noise signals.
 
@@ -22,11 +22,12 @@ def _create_wnoise_signals(
     -------
         np.ndarray: Generated signals.
     """
-    nsrc = data.get("nsources", nsources)
-    nsam = int(data.get("signal_length", signal_length) * fs)
-    fs = data.get("fs", fs)
-    rms = data.get("rms", np.ones(nsrc))  # Default RMS values if not provided
-    seeds = data.get("signal_seeds", np.arange(nsrc))  # Default seeds if not provided
+    nsrc = data["nsources"]
+    fs = data["fs"]
+    rms = data["rms"]
+    nsam = int(data["signal_length"]*fs)
+    seeds = data["signal_seeds"]
+
     signals = np.empty((nsam, nsrc), dtype=dtype)
     for i in range(nsrc):
         signals[:, i] = ac.WNoiseGenerator(
@@ -38,12 +39,12 @@ def _create_wnoise_signals(
     return signals
 
 
-class BaseSignalModel(BaseModel):
+class BaseSignalModel(BaseModelSubConfig):
     """Base class for all signal models."""
 
     model_type: str = Field(..., description="Type of signal to generate (e.g., 'wnoise').")
 
-    def create_signals_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
+    def create_signal_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
         """Get the function to create signals."""
         raise NotImplementedError("This method should be implemented by subclasses.")
 
@@ -53,19 +54,36 @@ class WhiteNoiseSignalModel(BaseSignalModel):
 
     model_type: Literal["wnoise"] = "wnoise"
     nsources: int = Field(default=1, description="The number of source signals.")
+    rms: list = Field(default=[1.], description="RMS values for each source signal.")
+    signal_seeds: list = Field(
+        default=[1], description="Seeds for the random number generator for each source signal."
+    )
     signal_length: float = Field(default=5, description="Length of the signal in seconds.")
-    fs: int = Field(default=13720, description="Sampling frequency in Hz.")
-    dtype: str = Field(default="float32", description="Data type of the generated signals.")
+    precision: Literal["single", "double"] = Field(
+        default="single", description="Precision of the generated signals."
+    )
 
-    def create_signals_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
+    def create_signal_fn(self) -> Callable[[Dict[str, Any]], np.ndarray]:
         """Get the function to create white noise signals."""
         return partial(
             _create_wnoise_signals,
-            nsources=self.nsources,
-            signal_length=self.signal_length,
-            fs=self.fs,
-            dtype=self.dtype,
+            dtype="float32" if self.precision == "single" else "float64",
         )
+
+    def create_signal_csm_fn(self):
+        def _create_signal_csm(
+                data: Dict[str, Any], dtype="complex64") -> np.ndarray:
+            """Create a cross-spectral matrix (CSM) of white noise signals for the desired frequencies."""
+            nsources = data["nsources"]
+            rms = data["rms"]
+            nfft = data["nfft"]
+            nfreq = len(data["f_indices"])
+            rms = rms**2 / nfft
+            q_matrix = np.zeros((nfreq, nsources, nsources), dtype=dtype)
+            for n in range(nfreq):
+                q_matrix[n, :, :] = np.diag(rms)
+            return q_matrix
+        return partial(_create_signal_csm, dtype="complex64" if self.precision == "single" else "complex128")
 
 
 SIGNAL_MODEL_MAPPING = {
@@ -122,10 +140,10 @@ if __name__ == "__main__":
     signal_model = SignalModel.configure_model(**input_data)
 
     # Get the signal generation function
-    create_signals_fn = signal_model.create_signals_fn()
+    create_signal_fn = signal_model.create_signal_fn()
 
     # Generate signals
-    signals = create_signals_fn(input_data)
+    signals = create_signal_fn(input_data)
     print("Generated Signals Shape:", signals.shape)
 
     # # Serialize the specific signal model to JSON
