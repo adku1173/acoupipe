@@ -1,5 +1,6 @@
-from acoular import MicGeom, __file__
 from pathlib import Path
+
+from acoular import MicGeom, __file__
 
 mics = MicGeom(file=Path(__file__).parent / 'xml' / 'tub_vogel64.xml')
 tub_vogel64 = mics.pos.copy()
