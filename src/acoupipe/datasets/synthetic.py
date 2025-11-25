@@ -479,7 +479,8 @@ class DatasetSyntheticConfig(ConfigBase):
         return ac.MicGeom(pos_total=tub_vogel64_ap1)
 
     def create_grid(self):
-        ap = self.mics.aperture
+        # round of numerical errors
+        ap = np.round(self.mics.aperture, decimals=12)
         return ac.RectGrid(
             y_min=-0.5 * ap,
             y_max=0.5 * ap,
@@ -607,7 +608,7 @@ class DatasetSyntheticConfig(ConfigBase):
         )
 
     def create_location_sampler(self):
-        ap = self.mics.aperture
+        ap = np.round(self.mics.aperture, decimals=12)
         z = self.grid.z
         location_sampler = sp.LocationSampler(
             random_var=(norm(0, 0.1688 * ap), norm(0, 0.1688 * ap), norm(z, 0)),
@@ -960,7 +961,7 @@ class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
         )
 
     def create_grid(self):
-        ap = self.mics.aperture
+        ap = np.round(self.mics.aperture, decimals=12)
         return ac.RectGrid(
             y_min=-0.5 * ap,
             y_max=0.5 * ap,
