@@ -64,7 +64,7 @@ for _i in range(5):
     Lm = ac.L_p(pm)
     # plot
     figure()
-    imshow(Lm.T, origin='lower', vmin=Lm.max() - 15, extent=rg.extend(), interpolation='bicubic')
+    imshow(Lm.T, origin='lower', vmin=Lm.max() - 15, extent=rg.extent, interpolation='bicubic')
     for src in sm.sources:
         (x, y, _) = src.loc
         plot(x, y, marker='x', color='red')

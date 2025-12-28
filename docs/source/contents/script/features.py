@@ -22,7 +22,7 @@ for i, feature in enumerate(["targetmap_analytic", "targetmap_estimated"]):
                                         split="training", size=1, f=[2000], num=0, start_idx=1)
     data_sample = next(data_generator)
 
-    extent = dataset.config.grid.extend()
+    extent = dataset.config.grid.extent
 
     # sound pressure level
     Lm = ac.L_p(data_sample[feature]).T
@@ -50,7 +50,7 @@ for i, mode in enumerate(["welch", "analytic", "wishart"]):
                                         split="training", size=1, f=[2000], num=0, start_idx=1)
     data_sample = next(data_generator)
 
-    extent = dataset.config.grid.extend()
+    extent = dataset.config.grid.extent
 
     # sound pressure level
     Lm = ac.L_p(data_sample["sourcemap"]).T
@@ -85,7 +85,7 @@ for i, mode in enumerate(["welch", "analytic", "wishart"]):
                                             split="training", size=1, f=[2000], num=0, start_idx=1)
         data_sample = next(data_generator)
 
-        extent = dataset.config.grid.extend()
+        extent = dataset.config.grid.extent
 
         # sound pressure level
         if j == 0:
@@ -121,7 +121,7 @@ for i, mode in enumerate(["welch", "analytic", "wishart"]):
                                         split="training", size=1, f=[2000], num=0, start_idx=1)
     data_sample = next(data_generator)
 
-    extent = dataset.config.grid.extend()
+    extent = dataset.config.grid.extent
 
     # sound pressure level
     csmtriu = np.real(data_sample["csmtriu"][0])
@@ -147,7 +147,7 @@ for mode in ["welch", "analytic", "wishart"]:
                                         split="training", size=1, f=[2000], num=0, start_idx=1)
     data_sample = next(data_generator)
 
-    extent = dataset.config.grid.extend()
+    extent = dataset.config.grid.extent
 
     # sound pressure level
     eigmode = data_sample["eigmode"][0]

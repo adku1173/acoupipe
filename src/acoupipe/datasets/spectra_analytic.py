@@ -4,10 +4,25 @@ from acoular.internal import digest
 from numpy import diag_indices, dot, r_, tril_indices, zeros
 from numpy.random import default_rng
 from scipy.linalg import cholesky
-from traits.api import CArray, CInt, Either, Float, Instance, Int, Property, Trait, cached_property, property_depends_on
-
+from traits.api import CArray, CInt, Either, Float, Instance, Int, Property, Trait, cached_property, property_depends_on, Map
+import numpy as np
 
 class PowerSpectraAnalytic(PowerSpectraImport):
+
+    #: equivalent degrees of freedom
+    df_eq = Property()
+
+    window = Map(
+        {
+            'Rectangular': np.ones,
+            'Hanning': np.hanning,
+            'Hamming': np.hamming,
+            'Bartlett': np.bartlett,
+            'Blackman': np.blackman,
+        },
+        default_value='Rectangular',
+    )
+
     num_samples = CInt
 
     sample_freq = Float(1.0, desc='sampling frequency')
@@ -81,6 +96,26 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         ],
     )
 
+    @property_depends_on('num_samples, block_size, overlap, window')
+    def _get_df_eq(self):
+        w = self.window_(self.block_size)
+        if self.overlap == 'None':
+            D = self.block_size
+        else:
+            D = int(self.block_size / self.overlap_)
+        K = int(self.num_blocks)
+        denom = (w @ w) ** 2
+        fac = 0.0
+        for j in range(1, K):
+            shift = j * D    
+            num = w[:-shift] @ w[shift:]   # sum_{k=0}^{L-shift-1} w[k] w[k+shift]
+            if num == 0.0:
+                break
+            rho = (num * num) / denom
+            rho *= (K - j) / K
+            fac += rho
+        return K / (1 + 2 * fac)
+
     @cached_property
     def _get_digest(self):
         return digest(self)
@@ -123,7 +158,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
                 raise ValueError(msg)
 
     def _sample_wishart(self, scale, rng):
-        df = int(self.num_blocks)
+        df = self.df_eq
         dim = scale.shape[0]
         n_tril = dim * (dim - 1) // 2
         C = cholesky(scale, lower=True)

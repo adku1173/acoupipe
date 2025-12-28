@@ -17,7 +17,7 @@ for i, scenario in enumerate(["A1", "A2", "R2"]):
                                         split="training", size=1, f=[f], num=0, start_idx=1)
     data_sample = next(data_generator)
 
-    extent = dataset.config.grid.extend()
+    extent = dataset.config.grid.extent
 
     # sound pressure level
     Lm = ac.L_p(data_sample["sourcemap"]).T
