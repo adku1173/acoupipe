@@ -6,7 +6,7 @@ from functools import partial
 from traits.api import HasPrivateTraits, Instance, Int, Property
 
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.features import BaseFeatureCollectionBuilder
+from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
@@ -39,6 +39,39 @@ class ConfigBase(HasPrivateTraits):
             dictionary containing the sampler objects
         """
         return {}
+
+    def _get_default_feature_kwargs(self, f, num):
+        """Return keyword arguments passed to default feature builder methods."""
+        return {'f': f, 'num': num}
+
+    def get_default_features(self, features, f, num):
+        """
+        Build default features using `_get_default_feature_{name}` methods.
+
+        Parameters
+        ----------
+        features : list[str]
+            Names of default features to include.
+        f : float | list[float] | None
+            Frequencies used for frequency-dependent features.
+        num : int
+            Bandwidth selector for fractional octave features.
+
+        Returns
+        -------
+        list
+            Instantiated feature catalog objects.
+        """
+        builder_kwargs = self._get_default_feature_kwargs(f, num)
+        default_features = []
+        for feature_name in features:
+            if feature_name not in ["idx", "seeds"]:
+                builder = getattr(self, f'_get_default_feature_{feature_name}', None)
+                if builder is None:
+                    msg = f'Unknown feature "{feature_name}".'
+                    raise ValueError(msg)
+                default_features.append(builder(**builder_kwargs))
+        return default_features
 
 
 class DatasetBase(HasPrivateTraits):
@@ -130,8 +163,15 @@ class DatasetBase(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        builder = BaseFeatureCollectionBuilder(features=features, f=f, num=num)
-        return builder.build()
+        # handle all custom features (BaseFeatureCatalog instances)
+        features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        if hasattr(self.config, 'get_default_features'):
+            default_feature_names = [feat for feat in features if isinstance(feat, str)]
+            features += self.config.get_default_features(default_feature_names, f, num)
+        builder = BaseFeatureCollectionBuilder(features=features)
+        if hasattr(self.config, 'get_prepare_func'):
+            builder.add_custom(self.config.get_prepare_func()) # add prepare function
+        return builder.build() # finally build the feature collection
 
     def generate(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
@@ -462,8 +502,6 @@ if TF_FLAG:
         shapes = dict(feature_collection.feature_tf_shape_mapper)  # make a copy
 
         for feature in features:
-            encoder = feature_collection.feature_tf_encoder_mapper[feature]
-
             # complex already had shape + (2,) and dtype float32 set by infer_tf_encoding,
             # so we don't have to tweak shapes here anymore
             dtype = feature_collection.feature_tf_dtype_mapper[feature]

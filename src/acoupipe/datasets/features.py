@@ -935,15 +935,6 @@ class BaseFeatureCollection(HasPrivateTraits):
     feature_tf_shape_mapper = Dict(desc='feature shape mapper')
     feature_tf_dtype_mapper = Dict(desc='feature dtype mapper')
 
-    def __init__(self):
-        HasPrivateTraits.__init__(self)
-        if TF_FLAG:
-            from acoupipe.writer import int64_feature, int_list_feature
-
-            self.feature_tf_encoder_mapper = {'idx': int64_feature, 'seeds': int_list_feature}
-            self.feature_tf_shape_mapper = {'idx': (), 'seeds': (None, 2)}
-            self.feature_tf_dtype_mapper = {'idx': 'int64', 'seeds': 'int64'}
-
     def add_feature_func(self, feature_func):
         """
         Add a feature_func to the BaseFeatureCollection.
@@ -985,7 +976,7 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
     """
 
     features = List(Instance(BaseFeatureCatalog), desc='list of feature instances')
-    feature_collection = Instance(BaseFeatureCollection, desc='BaseFeatureCollection object')
+    feature_collection = Instance(BaseFeatureCollection, args=(), desc='BaseFeatureCollection object')
 
     def add_custom(self, feature_func):
         """
@@ -1010,6 +1001,8 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
+        self._add_mapper('idx', np.int32, ())
+        self._add_mapper('seeds', np.int32, (None, 2))
         for feature in self.features:
             self.feature_collection.add_feature_func(feature.get_feature_func())
             self._add_mapper(feature.name, feature.dtype, feature.shape)

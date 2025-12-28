@@ -208,11 +208,11 @@ if TF_FLAG:
         """
         tf_dtype = tf.dtypes.as_dtype(dtype)
 
-        # Complex: encode as float32 [Re, Im] pairs along a last axis of size 2
+        # Complex -> tf.complex dtype
         if tf_dtype.is_complex:
             encoder = complex_list_feature
-            out_tf_dtype = tf.float32
-            out_shape = tuple(shape) + (2,) if shape is not None else (2,)
+            out_tf_dtype = tf_dtype
+            out_shape = tuple(shape) if shape is not None else ()
             return encoder, out_tf_dtype, out_shape
 
         # Floats -> float32 list
@@ -235,8 +235,8 @@ if TF_FLAG:
             out_tf_dtype = tf.string
             out_shape = tuple(shape) if shape is not None else ()
             return encoder, out_tf_dtype, out_shape
-
-        raise TypeError(f"Unsupported dtype {dtype!r} (tf: {tf_dtype})")
+        msg = f"Unsupported dtype {dtype!r} (tf: {tf_dtype})"
+        raise TypeError(msg)
 
     class WriteTFRecord(BaseWriteDataset):
         """Class intended to write data from :class:`~acoupipe.pipeline.BasePipeline` to a .tfrecord.

@@ -20,7 +20,7 @@ from functools import partial
 import acoular as ac
 import numpy as np
 from scipy.stats import norm, poisson
-from traits.api import Bool, Dict, Either, Enum, Float, Instance, Int, List, observe
+from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, observe
 
 import acoupipe.sampler as sp
 from acoupipe.datasets.base import ConfigBase, DatasetBase
@@ -28,7 +28,6 @@ from acoupipe.datasets.features import (
     AnalyticNoiseStrengthFeature,
     AnalyticSourceStrengthFeature,
     BaseFeatureCatalog,
-    BaseFeatureCollection,
     BaseFeatureCollectionBuilder,
     CSMFeature,
     CSMtriuFeature,
@@ -199,90 +198,14 @@ class DatasetSynthetic(DatasetBase):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        if f is None:
-            fdim = self.config.freq_data.fftfreq().shape[0]
-        elif isinstance(f, list):
-            fdim = len(f)
-        else:
-            fdim = 1
-
-        tdim = None if self.config.random_signal_length else int(self.config.signal_length * self.config.fs)
-
-        # handle all custom features (no strings)
+        # handle all custom features (BaseFeatureCatalog instances)
         custom_features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
-
-        builder = DatasetSyntheticFeatureCollectionBuilder(
-            features = custom_features,
-            feature_collection=BaseFeatureCollection(),
-            mdim=self.config.mics.num_mics,
-            tdim=tdim,
-            fdim=fdim,
-        )
-        # add prepare function
-        builder.add_custom(self.config.get_prepare_func())
-
-        # add pre-build feature functions
-        if 'time_data' in features:
-            if self.config.mode == 'welch':
-                builder.add_time_data(self.config.freq_data.source)
-            else:
-                msg = "time_data feature is not possible with modes ['analytic', 'wishart']."
-                raise ValueError(msg)
-        if 'spectrogram' in features:
-            if self.config.mode == 'welch':
-                builder.add_spectrogram(self.config.fft_spectra, f, num)
-            else:
-                msg = "spectrogram feature is not possible with modes ['analytic', 'wishart']."
-                raise ValueError(msg)
-        if 'csm' in features:
-            builder.add_csm(self.config.freq_data, f, num)
-        if 'csmtriu' in features:
-            builder.add_csmtriu(self.config.freq_data, f, num)
-        if 'eigmode' in features:
-            builder.add_eigmode(self.config.freq_data, f, num)
-        if 'sourcemap' in features:
-            builder.add_sourcemap(self.config.beamformer, f, num)
-        if 'loc' in features:
-            builder.add_loc(self.config.freq_data)
-        if 'source_strength_analytic' in features:
-            builder.add_source_strength_analytic(self.config.freq_data, f, num, steer=self.config.source_steer)
-        if 'source_strength_estimated' in features:
-            freq_data = self.config.fft_obs_spectra if self.config.mode == 'welch' else self.config.freq_data
-            builder.add_source_strength_estimated(freq_data, f, num)
-        if 'noise_strength_analytic' in features:
-            builder.add_noise_strength_analytic(self.config.freq_data, f, num)
-        if 'noise_strength_estimated' in features:
-            freq_data = self.config.fft_spectra if self.config.mode == 'welch' else self.config.freq_data
-            builder.add_noise_strength_estimated(freq_data, f, num)
-        if 'targetmap_analytic' in features:
-            builder.add_targetmap(
-                self.config.freq_data,
-                f,
-                num,
-                self.config.source_steer,
-                ref_mic=None,
-                strength_type='analytic',
-                grid=self.config.grid,
-            )
-        if 'targetmap_estimated' in features:
-            freq_data = self.config.fft_obs_spectra if self.config.mode == 'welch' else self.config.freq_data
-            builder.add_targetmap(
-                freq_data,
-                f,
-                num,
-                self.config.source_steer,
-                ref_mic=None,
-                strength_type='estimated',
-                grid=self.config.grid,
-            )
-        if 'f' in features:
-            builder.add_f(self.config.freq_data.fftfreq(), f, num)
-        if 'num' in features:
-            builder.add_num(num)
-        # finally build the feature collection
-        builder.add_features()
-        return builder.build()
-
+        # collect default features defined by name
+        default_feature_names = [feat for feat in features if isinstance(feat, str)]
+        default_features = self.config.get_default_features(default_feature_names, f, num)
+        builder = BaseFeatureCollectionBuilder(features=default_features + custom_features)
+        builder.add_custom(self.config.get_prepare_func()) # add prepare function
+        return builder.build() # finally build the feature collection
 
 def sample_rms(nsources, rng):
     """Draw sources' squared rms pressures from Rayleigh distribution."""
@@ -477,6 +400,181 @@ class DatasetSyntheticConfig(ConfigBase):
         if self.random_signal_length:
             sampler[6] = self.signal_length_sampler
         return sampler
+
+    def _get_fftfreq(self):
+        return self.freq_data.fftfreq()
+
+    def _get_fdim(self, f):
+        fftfreq = self._get_fftfreq()
+        if f is None:
+            return fftfreq.shape[0]
+        if isinstance(f, list):
+            return len(f)
+        return 1
+
+    def _get_mdim(self):
+        return self.mics.num_mics
+
+    def _get_tdim(self):
+        return None if self.random_signal_length else int(self.signal_length * self.fs)
+
+    def _get_default_feature_kwargs(self, f, num):
+        """Return keyword arguments passed to default feature builder methods."""
+        return {
+            'f': f,
+            'num': num,
+            'fdim': self._get_fdim(f),
+            'mdim': self._get_mdim(),
+            'tdim': self._get_tdim(),
+            'fftfreq': self._get_fftfreq(),
+        }
+
+    def _get_default_feature_time_data(self, **kwargs):  # noqa ARG002
+        if self.mode != 'welch':
+            msg = "time_data feature is not possible with modes ['analytic', 'wishart']."
+            raise ValueError(msg)
+        return TimeDataFeature(time_data=self.freq_data.source, dtype=np.float32, shape=(kwargs['tdim'], None))
+
+    def _get_default_feature_spectrogram(self, **kwargs):  # noqa ARG002
+        if self.mode != 'welch':
+            msg = "spectrogram feature is not possible with modes ['analytic', 'wishart']."
+            raise ValueError(msg)
+        return SpectrogramFeature(
+            freq_data=self.fft_spectra,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.complex64,
+            shape=(None, kwargs['fdim'], kwargs['mdim']),
+        )
+
+    def _get_default_feature_csm(self, **kwargs):  # noqa ARG002
+        return CSMFeature(
+            freq_data=self.freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.complex64,
+            shape=(kwargs['fdim'], kwargs['mdim'], kwargs['mdim']),
+        )
+
+    def _get_default_feature_csmtriu(self, **kwargs):  # noqa ARG002
+        return CSMtriuFeature(
+            freq_data=self.freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.float32,
+            shape=(kwargs['fdim'], kwargs['mdim'], kwargs['mdim']),
+        )
+
+    def _get_default_feature_eigmode(self, **kwargs):  # noqa ARG002
+        return EigmodeFeature(
+            freq_data=self.freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.complex64,
+            shape=(kwargs['fdim'], kwargs['mdim'], kwargs['mdim']),
+        )
+
+    def _get_default_feature_sourcemap(self, **kwargs):  # noqa ARG002
+        return SourcemapFeature(
+            beamformer=self.beamformer,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.float32,
+            shape=(kwargs['fdim'],) + self.beamformer.steer.grid.shape,
+        )
+
+    def _get_default_feature_loc(self, **kwargs):  # noqa ARG002
+        return LocFeature(freq_data=self.freq_data, dtype=np.float32, shape=(3, None))
+
+    def _get_default_feature_source_strength_analytic(self, **kwargs):  # noqa ARG002
+        return AnalyticSourceStrengthFeature(
+            freq_data=self.freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            steer=self.source_steer,
+            dtype=np.float32,
+            shape=(kwargs['fdim'], None),
+        )
+
+    def _get_default_feature_source_strength_estimated(self, **kwargs):  # noqa ARG002
+        freq_data = self.fft_obs_spectra if self.mode == 'welch' else self.freq_data
+        return EstimatedSourceStrengthFeature(
+            freq_data=freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.float32,
+            shape=(kwargs['fdim'], None),
+        )
+
+    def _get_default_feature_noise_strength_analytic(self, **kwargs):  # noqa ARG002
+        return AnalyticNoiseStrengthFeature(
+            freq_data=self.freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.float32,
+            shape=(kwargs['fdim'], kwargs['mdim']),
+        )
+
+    def _get_default_feature_noise_strength_estimated(self, **kwargs):  # noqa ARG002
+        freq_data = self.fft_spectra if self.mode == 'welch' else self.freq_data
+        return EstimatedNoiseStrengthFeature(
+            freq_data=freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            dtype=np.float32,
+            shape=(kwargs['fdim'], kwargs['mdim']),
+        )
+
+    def _get_targetmap_feature(self, strength_type, **kwargs):  # noqa ARG002
+        freq_data = self.freq_data if strength_type == 'analytic' else (self.fft_obs_spectra if self.mode == 'welch' else self.freq_data)
+        return TargetmapFeature(
+            freq_data=freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            steer=self.source_steer,
+            ref_mic=None,
+            strength_type=strength_type,
+            grid=self.grid,
+            name=f'targetmap_{strength_type}',
+            dtype=np.float32,
+            shape=(kwargs['fdim'],) + self.grid.shape,
+        )
+
+    def _get_default_feature_targetmap_analytic(self, **kwargs):  # noqa ARG002
+        return self._get_targetmap_feature('analytic', **kwargs)
+
+    def _get_default_feature_targetmap_estimated(self, **kwargs):  # noqa ARG002
+        return self._get_targetmap_feature('estimated', **kwargs)
+
+    def _get_default_feature_f(self, **kwargs):  # noqa ARG002
+        if kwargs['f'] is None:
+            all_f = kwargs['fftfreq']
+        elif isinstance(kwargs['f'], list):
+            if kwargs['num'] == 0:
+                all_f = np.array([kwargs['fftfreq'][np.searchsorted(kwargs['fftfreq'], freq)] for freq in kwargs['f']])
+            else:
+                all_f = np.array(kwargs['f'])
+        else:
+            all_f = np.array([kwargs['fftfreq'][np.searchsorted(kwargs['fftfreq'], kwargs['f'])]])
+
+        def get_f(sampler, f):  # noqa ARG001
+            return {'f': f}
+        return create_feature(
+            feature_func=partial(get_f, f=all_f),
+            name='f',
+            shape=(kwargs['fdim'],),
+            dtype=np.float32,
+        )
+
+    def _get_default_feature_num(self, **kwargs):  # noqa ARG002
+        def add_num(sampler, num):  # noqa ARG001
+            return {'num': num}
+        return create_feature(
+            feature_func=partial(add_num, num=kwargs['num']),
+            name='num',
+            shape=(),
+            dtype=np.int64,
+        )
 
     def create_env(self):
         return ac.Environment(c=343.0)
@@ -756,164 +854,6 @@ class DatasetSyntheticConfig(ConfigBase):
         else:
             prepare_func = partial(self.calc_analytic_prepare_func, beamformer=self.beamformer)
         return prepare_func
-
-
-class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
-    tdim = Either(Int(desc='time dimension'), None)
-    fdim = Int(desc='frequency dimension')
-    mdim = Int(desc='microphone dimension')
-
-    def add_time_data(self, time_data):
-        """
-        Add a time_data feature to the BaseFeatureCollection.
-
-        Parameters
-        ----------
-        time_data : str
-            source object containing the time data e.g. ac.TimeSamples class instance.
-        """
-        feature = TimeDataFeature(time_data=time_data, dtype=np.float32, shape=(self.tdim, None))
-        self.features.append(feature)
-
-    def add_spectrogram(self, freq_data, f, num):
-        feature = SpectrogramFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            dtype=np.complex64,
-            shape=(None, self.fdim, self.mdim),
-        )
-        self.features.append(feature)
-
-    def add_csm(self, freq_data, f, num):
-        feature = CSMFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            dtype=np.complex64,
-            shape=(self.fdim, self.mdim, self.mdim),
-        )
-        self.features.append(feature)
-
-    def add_csmtriu(self, freq_data, f, num):
-        feature = CSMtriuFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            dtype=np.float32,
-            shape=(self.fdim, self.mdim, self.mdim),
-        )
-        self.features.append(feature)
-
-    def add_eigmode(self, freq_data, f, num):
-        feature = EigmodeFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            dtype=np.complex64,
-            shape=(self.fdim, self.mdim, self.mdim),
-        )
-        self.features.append(feature)
-
-    def add_sourcemap(self, beamformer, f, num):
-        feature = SourcemapFeature(
-            beamformer=beamformer,
-            f=f,
-            num=num,
-            dtype=np.float32,
-            shape=(self.fdim,) + beamformer.steer.grid.shape,
-        )
-        self.features.append(feature)
-
-    def add_loc(self, freq_data):
-        feature = LocFeature(freq_data=freq_data, dtype=np.float32, shape=(3, None))
-        self.features.append(feature)
-
-    def add_source_strength_analytic(self, freq_data, f, num, steer):
-        feature = AnalyticSourceStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            steer=steer,
-            dtype=np.float32,
-            shape=(self.fdim, None),
-        )
-        self.features.append(feature)
-
-    def add_source_strength_estimated(self, freq_data, f, num):
-        feature = EstimatedSourceStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            dtype=np.float32,
-            shape=(self.fdim, None),
-        )
-        self.features.append(feature)
-
-    def add_noise_strength_analytic(self, freq_data, f, num):
-        feature = AnalyticNoiseStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            dtype=np.float32,
-            shape=(self.fdim, self.mdim),
-        )
-        self.features.append(feature)
-
-    def add_noise_strength_estimated(self, freq_data, f, num):
-        feature = EstimatedNoiseStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            dtype=np.float32,
-            shape=(self.fdim, self.mdim),
-        )
-        self.features.append(feature)
-
-    def add_targetmap(self, freq_data, f, num, steer, ref_mic, strength_type, grid):
-        name = f'targetmap_{strength_type}'
-        feature = TargetmapFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            steer=steer,
-            ref_mic=ref_mic,
-            strength_type=strength_type,
-            grid=grid,
-            name=name,
-            dtype=np.float32,
-            shape=(self.fdim,) + grid.shape,
-        )
-        self.features.append(feature)
-
-    def add_f(self, fftfreq, f, num):
-        if f is None:
-            all_f = fftfreq
-        elif isinstance(f, list):
-            all_f = np.array([fftfreq[np.searchsorted(fftfreq, freq)] for freq in f]) if num == 0 else np.array(f)
-        else:
-            all_f = np.array([fftfreq[np.searchsorted(fftfreq, f)]])
-
-        def get_f(sampler, f):  # noqa ARG001
-            return {'f': f}
-        feature = create_feature(
-            feature_func=partial(get_f, f=all_f),
-            name='f',
-            shape=(self.fdim,),
-            dtype=float,
-        )
-        self.features.append(feature)
-
-    def add_num(self, num):
-        def add_num(sampler, num):  # noqa ARG001
-            return {'num': num}
-        feature = create_feature(
-            feature_func=partial(add_num, num=num),
-            name='num',
-            shape=(),
-            dtype=int,
-        )
-        self.features.append(feature)
 
 
 
