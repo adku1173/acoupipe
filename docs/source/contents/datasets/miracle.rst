@@ -91,40 +91,23 @@ Several properties of the dataset are randomized for each source case when gener
 Example
 -------
 
-.. code-block:: python
+The following example script generates sourcemaps for several MIRACLE scenarios and is also used to create the figure below.
 
-    from acoupipe.datasets.experimental import DatasetMIRACLE
-
-    srir_dir = None  # optionally set a local path to MIRACLE SRIR files
-    dataset = DatasetMIRACLE(scenario='A1', mode='wishart', srir_dir=srir_dir)
-
-    dataset_generator = dataset.generate(size=10, f=2000, features=['sourcemap', 'loc', 'f'], split='training')
-
-    data_sample = next(dataset_generator)
-
-    import acoular as ac
-    import matplotlib.pyplot as plt
-    import numpy as np
-
-    extent = dataset.config.grid.extend()
-
-    # sound pressure level
-    Lm = ac.L_p(data_sample['sourcemap']).T
-    Lm_max = Lm.max()
-    Lm_min = Lm.max() - 20
-
-    # plot sourcemap
-    plt.figure()
-    plt.title(f'Beamforming Map (f={data_sample[\"f\"][0]} Hz, scenario={dataset.config.scenario})')
-    plt.imshow(Lm, vmax=Lm_max, vmin=Lm_min, extent=extent, origin='lower')
-    plt.colorbar(label='Sound Pressure Level (dB)')
-    # plot source locations
-    for loc in data_sample['loc'].T:
-        plt.scatter(loc[0], loc[1])
-    plt.xlabel('x (m)')
-    plt.ylabel('y (m)')
-    plt.show()
+.. literalinclude:: ../script/experimental.py
+   :language: python
+   :caption: Example usage of DatasetMIRACLE
+   :linenos:
+   :end-before: dpath
 
 The generator yields one sample at a time as a dictionary, including helper fields ``idx`` and ``seeds`` to keep data generation reproducible when running in parallel.
+
+Example sourcemaps
+------------------
+
+The resulting plots for different scenarios can look like this:
+
+.. figure:: ../../_static/exp_sourcemap_example.png
+    :width: 750
+    :align: center
 
 API reference: :class:`acoupipe.datasets.experimental.DatasetMIRACLE`
