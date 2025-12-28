@@ -239,9 +239,12 @@ if TF_FLAG:
         raise TypeError(msg)
 
     class WriteTFRecord(BaseWriteDataset):
-        """Class intended to write data from :class:`~acoupipe.pipeline.BasePipeline` to a .tfrecord.
+        """Write pipeline output to TFRecord.
 
-        TFRecord files can be consumed by TensorFlow tf.data API. Stores data in binary format.
+        Serializes samples from a :class:`~acoupipe.pipeline.BasePipeline` into the TensorFlow
+        TFRecord format, using encoder functions provided via :attr:`encoder_funcs`.
+        For features whose shapes may vary (contain ``None``), list their names in :attr:`shape_features`
+        to have the runtime shape stored as an auxiliary ``<name>_shape`` int64 feature.
         """
 
         #: Name of the file to be saved.
@@ -253,40 +256,71 @@ if TF_FLAG:
         encoder_funcs = Dict(
             key_trait=Str(),
             value_trait=Callable(),
-            desc='encoding functions to convert data yielded by the pipeline to binary format of .tfrecord file.',
+            desc='encoding functions to convert data yielded by the pipeline to binary TFRecord format',
         )
-
-        #: if True, writes an additional .txt file containing the names, types and shapes of the features stored in the
-        #: tfrecord data set.
-        write_infofile = Bool(True, desc='writes a file containing additional information about the stored features')
 
         #: Trait to set specific options to the .tfrecord file.
         options = Trait(None, tf.io.TFRecordOptions)
 
+        #: List of feature names for which the shape should be stored alongside the data (as ``<name>_shape``).
+        shape_features = List(Str, desc='features whose shapes are written along with the data')
+
+        def _encode_sample(self, features, encoders):
+            sample = dict(features)
+            for name in self.shape_features:
+                shape_key = f'{name}_shape'
+                if name in sample and shape_key not in sample:
+                    shape = sample[name].shape
+                    if not np.isrealobj(sample[name]):
+                        shape = shape + (2,)
+                    sample[shape_key] = np.array(shape, dtype=np.int64)
+                    encoders.setdefault(shape_key, int_list_feature)
+
+            encoded_features = {
+                n: encoders[n](f) for (n, f) in sample.items() if encoders.get(n)
+            }
+            return encoded_features
+
         def save(self, progress_bar=True, start_idx=1):
-            """Save output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .tfrecord format."""
+            """
+            Save pipeline output to TFRecord.
+
+            Parameters
+            ----------
+            progress_bar : bool, optional
+                Whether to display a progress bar while writing, by default True.
+            start_idx : int, optional
+                Starting sample index (used to seed the pipeline), by default 1.
+            """
+            encoders = dict(self.encoder_funcs)
             with tf.io.TFRecordWriter(self.name, options=self.options) as writer:
                 for _i, features in enumerate(self.source.get_data(progress_bar, start_idx)):
-                    encoded_features = {
-                        n: self.encoder_funcs[n](f) for (n, f) in features.items() if self.encoder_funcs.get(n)
-                    }
+                    encoded_features = self._encode_sample(features, encoders)
                     example = tf.train.Example(features=tf.train.Features(feature=encoded_features))
                     # Serialize to string and write on the file
                     writer.write(example.SerializeToString())
 
         def get_data(self, progress_bar=True, start_idx=1):
-            """Python generator that saves the data passed by the source to a `*.tfrecord` file and yields the data.
-
-            Returns
-            -------
-            Dictionary containing a sample of the data set
-            {feature_name[key] : feature[values]}.
             """
+            Stream pipeline output to TFRecord and yield samples.
+
+            Parameters
+            ----------
+            progress_bar : bool, optional
+                Whether to display a progress bar while writing, by default True.
+            start_idx : int, optional
+                Starting sample index (used to seed the pipeline), by default 1.
+
+            Yields
+            ------
+            dict
+                One sample of the dataset as a mapping of feature names to values
+                (original features only; shape metadata is written but not yielded).
+            """
+            encoders = dict(self.encoder_funcs)
             with tf.io.TFRecordWriter(self.name, options=self.options) as writer:
                 for _i, features in enumerate(self.source.get_data(progress_bar, start_idx)):
-                    encoded_features = {
-                        n: self.encoder_funcs[n](f) for (n, f) in features.items() if self.encoder_funcs.get(n)
-                    }
+                    encoded_features = self._encode_sample(features, encoders)
                     example = tf.train.Example(features=tf.train.Features(feature=encoded_features))
                     # Serialize to string and write on the file
                     writer.write(example.SerializeToString())

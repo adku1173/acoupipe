@@ -350,7 +350,15 @@ if TF_FLAG:
         feature_collection = self.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
         set_pipeline_seeds(pipeline, start_idx, size, split)
-        WriteTFRecord(name=name, source=pipeline, encoder_funcs=feature_collection.feature_tf_encoder_mapper).save(
+        # get features with varying length to handle them correctly in the TFRecord writer
+        shape_features = []
+        for feature, shape in feature_collection.feature_tf_shape_mapper.items():
+            # if more then one None in shape, we have a varying length feature
+            if list(shape).count(None) > 1:
+                shape_features.append(feature)
+
+        WriteTFRecord(name=name, source=pipeline, shape_features=shape_features,
+                      encoder_funcs=feature_collection.feature_tf_encoder_mapper).save(
             progress_bar,
             start_idx,
         )
@@ -502,29 +510,47 @@ if TF_FLAG:
         shapes = dict(feature_collection.feature_tf_shape_mapper)  # make a copy
 
         for feature in features:
-            # complex already had shape + (2,) and dtype float32 set by infer_tf_encoding,
-            # so we don't have to tweak shapes here anymore
             dtype = feature_collection.feature_tf_dtype_mapper[feature]
+            if dtype in [tf.complex64, tf.complex128]:  # complex not supported for tfrecord files
+                shapes[feature] = shapes[feature] + (2,)
+                if dtype == tf.complex64:
+                    dtype = tf.float32
+                else:
+                    dtype = tf.float64
             shape = shapes[feature]
-
             if None in shape:
                 feature_description[feature] = tf.io.VarLenFeature(dtype)
+                if list(shape).count(None) > 1:
+                    shape_key = f'{feature}_shape'
+                    feature_description[shape_key] = tf.io.FixedLenFeature((len(shape),), tf.int64)
             else:
                 feature_description[feature] = tf.io.FixedLenFeature(shape, dtype)
 
         def _parse_function(example_proto):
             data = tf.io.parse_single_example(example_proto, feature_description)
             for feature in features:
+                value = data[feature]
                 shape = shapes[feature]
-                if None in shape:
-                    shape = [s if s is not None else -1 for s in shape]
-                    data[feature] = tf.reshape(tf.sparse.to_dense(data[feature]), shape)
+                shape_key = f'{feature}_shape'
+                shape_tensor = data.get(shape_key)
+
+                # Only densify sparse tensors
+                if isinstance(value, tf.SparseTensor):
+                    value = tf.sparse.to_dense(value)
+                    if shape_tensor is not None:
+                        value = tf.reshape(value, tf.cast(shape_tensor, tf.int32))
+                    elif None in shape:
+                        target_shape = [s if s is not None else -1 for s in shape]
+                        value = tf.reshape(value, target_shape)
+                elif shape_tensor is not None:
+                    # Dynamic shape provided but value already dense
+                    value = tf.reshape(value, tf.cast(shape_tensor, tf.int32))
 
                 encoder = feature_collection.feature_tf_encoder_mapper[feature]
                 if encoder is complex_list_feature:
-                    # Reconstruct original complex tensor from [..., 2] real/imag float32
-                    data[feature] = tf.complex(data[feature][..., 0], data[feature][..., 1])
+                    value = tf.complex(value[..., 0], value[..., 1])
 
+                data[feature] = value
             return data
         return _parse_function
     DatasetBase.get_tfrecord_parser = get_tfrecord_parser

@@ -472,7 +472,7 @@ class LocFeature(BaseFeatureCatalog):
     @staticmethod
     def calc_loc1(sampler, freq_data, name):
         sources = get_point_sources_recursively(freq_data.source)
-        locs = np.array([src.loc for src in sources]).T
+        locs = np.array([src.loc[:,0] for src in sources]).T
         return {name: locs}
 
     @staticmethod
