@@ -4,7 +4,7 @@ import acoular as ac
 import numpy as np
 from numpy import array, imag, newaxis, real, triu_indices
 from numpy.linalg import eigh
-from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str
+from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
 
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
@@ -15,6 +15,8 @@ from acoupipe.datasets.utils import (
     get_uncorrelated_noise_source_recursively,
 )
 
+if TF_FLAG:
+    from acoupipe.writer import infer_tf_encoding
 
 class BaseFeatureCatalog(HasPrivateTraits):
     """BaseFeatureCatalog base class for handling feature funcs.
@@ -23,15 +25,19 @@ class BaseFeatureCatalog(HasPrivateTraits):
     ----------
     name : str
         Name of the feature.
+    dtype : callable
+        Numpy dtype of the feature.
 
     """
 
     name = Str
     dtype = Callable
+    shape = Tuple
 
     def get_feature_func(self):
         """Will return a method depending on the class parameters."""
         return
+
 
 
 class TimeDataFeature(BaseFeatureCatalog):
@@ -978,15 +984,27 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection object.
     """
 
+    features = List(Instance(BaseFeatureCatalog), desc='list of feature instances')
+
     feature_collection = Instance(BaseFeatureCollection, desc='BaseFeatureCollection object')
+
+    def add_features(self):
+        """
+        Add features of type BaseFeatureCatalog to the BaseFeatureCollection.
+        """
+        for feature in self.features:
+            self.feature_collection.add_feature_func(feature.get_feature_func())
 
     def add_custom(self, feature_func):
         """
         Add a custom feature to the BaseFeatureCollection.
 
+        The custom feature_func should be a callable that takes a sampler as input
+        and returns a dictionary of feature name and feature data.
+
         Parameters
         ----------
-        feature_func : str
+        feature_func : callable
             Feature to be added.
         """
         self.feature_collection.add_feature_func(feature_func)
@@ -1001,3 +1019,27 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
             BaseFeatureCollection object.
         """
         return self.feature_collection
+
+    def _add_mapper(self, name, dtype, shape):
+        if not TF_FLAG:
+            return
+        encoder, tf_dtype, tf_shape = infer_tf_encoding(dtype, shape)
+        self.feature_collection.feature_tf_encoder_mapper[name] = encoder
+        self.feature_collection.feature_tf_shape_mapper[name] = tf_shape
+        self.feature_collection.feature_tf_dtype_mapper[name] = tf_dtype
+
+    def add_tf_mappers(self):
+        if not TF_FLAG:
+            return
+        """
+        Add TensorFlow mappers to the BaseFeatureCollection.
+        """
+        for feature in self.features:
+            self._add_mapper(feature.name, feature.dtype, feature.shape)
+
+
+def create_feature(feature_func, name, shape, dtype):
+    class Feature(BaseFeatureCatalog):
+        def get_feature_func(self):
+            return feature_func
+    return Feature(name=name, shape=shape, dtype=dtype)

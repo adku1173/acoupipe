@@ -28,6 +28,7 @@ from acoupipe.datasets.base import ConfigBase, DatasetBase
 from acoupipe.datasets.features import (
     AnalyticNoiseStrengthFeature,
     AnalyticSourceStrengthFeature,
+    BaseFeatureCatalog,
     BaseFeatureCollection,
     BaseFeatureCollectionBuilder,
     CSMFeature,
@@ -40,6 +41,7 @@ from acoupipe.datasets.features import (
     SpectrogramFeature,
     TargetmapFeature,
     TimeDataFeature,
+    create_feature,
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
@@ -207,7 +209,11 @@ class DatasetSynthetic(DatasetBase):
 
         tdim = None if self.config.random_signal_length else int(self.config.signal_length * self.config.fs)
 
+        # handle all custom features (no strings)
+        custom_features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+
         builder = DatasetSyntheticFeatureCollectionBuilder(
+            features = custom_features,
             feature_collection=BaseFeatureCollection(),
             mdim=self.config.mics.num_mics,
             tdim=tdim,
@@ -217,7 +223,13 @@ class DatasetSynthetic(DatasetBase):
         builder.add_custom(self.config.get_prepare_func())
         builder.add_seeds(len(self.config.get_sampler()))
         builder.add_idx()
-        # add feature functions
+
+        # handle custom callable features
+        custom_feature_funcs = [feat for feat in features if callable(feat)]
+        for feat_func in custom_feature_funcs:
+            builder.add_custom(feat_func)
+
+        # add pre-build feature functions
         if 'time_data' in features:
             if self.config.mode == 'welch':
                 builder.add_time_data(self.config.freq_data.source)
@@ -274,7 +286,9 @@ class DatasetSynthetic(DatasetBase):
         if 'f' in features:
             builder.add_f(self.config.freq_data.fftfreq(), f, num)
         if 'num' in features:
-            builder.add_num(num)
+            feature = builder.add_num(num)
+        # finally build the feature collection
+        builder.add_features()
         return builder.build()
 
 
@@ -898,20 +912,10 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
             self.feature_collection.feature_tf_dtype_mapper.update({name: 'float32'})
 
     def add_seeds(self, nsampler):
-        if TF_FLAG:
-            from acoupipe.writer import int_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'seeds': int_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'seeds': (nsampler, 2)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'seeds': 'int64'})
+        self._add_mapper('seeds', dtype='int64', shape=(nsampler,))
 
     def add_idx(self):
-        if TF_FLAG:
-            from acoupipe.writer import int64_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'idx': int64_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'idx': ()})
-            self.feature_collection.feature_tf_dtype_mapper.update({'idx': 'int64'})
+        self._add_mapper('idx', dtype='int64', shape=())
 
     def add_f(self, fftfreq, f, num):
         if f is None:
@@ -923,27 +927,19 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
 
         def get_f(sampler, f):  # noqa ARG001
             return {'f': f}
-
+        return create_feature(
+            feature_func=partial(get_f, f=all_f), name='f', shape=(self.fdim,), dtype="float32")
         feature_func = partial(get_f, f=all_f)
         self.feature_collection.add_feature_func(feature_func)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'f': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'f': (self.fdim,)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'f': 'float32'})
+        self._add_mapper('f', dtype='float32', shape=(self.fdim,))
 
     def add_num(self, num):
         def add_num(sampler, num):  # noqa ARG001
             return {'num': num}
+        feature = create_feature(
+            feature_func=partial(add_num, num=num), name='num', shape=(), dtype='int64')
+        self.features.append(feature)
 
-        self.feature_collection.add_feature_func(partial(add_num, num=num))
-        if TF_FLAG:
-            from acoupipe.writer import int64_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'num': int64_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'num': ()})
-            self.feature_collection.feature_tf_dtype_mapper.update({'num': 'int64'})
 
 
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):

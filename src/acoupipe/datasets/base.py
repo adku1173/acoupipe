@@ -457,20 +457,23 @@ if TF_FLAG:
         """
         feature_collection = self.get_feature_collection(features, f, num)
         features = features + ['idx', 'seeds']
+
         feature_description = {}
-        shapes = feature_collection.feature_tf_shape_mapper
+        shapes = dict(feature_collection.feature_tf_shape_mapper)  # make a copy
+
         for feature in features:
-            if feature_collection.feature_tf_encoder_mapper[feature] == complex_list_feature:
-                dtype = tf.float32  # complex not supported for tfrecord files
-                shapes[feature] = shapes[feature] + (2,)
-            else:
-                dtype = feature_collection.feature_tf_dtype_mapper[feature]
-            if None in shapes[feature]:
+            encoder = feature_collection.feature_tf_encoder_mapper[feature]
+
+            # complex already had shape + (2,) and dtype float32 set by infer_tf_encoding,
+            # so we don't have to tweak shapes here anymore
+            dtype = feature_collection.feature_tf_dtype_mapper[feature]
+            shape = shapes[feature]
+
+            if None in shape:
                 feature_description[feature] = tf.io.VarLenFeature(dtype)
             else:
-                feature_description[feature] = tf.io.FixedLenFeature(shapes[feature], dtype)
+                feature_description[feature] = tf.io.FixedLenFeature(shape, dtype)
 
-        # create parser func
         def _parse_function(example_proto):
             data = tf.io.parse_single_example(example_proto, feature_description)
             for feature in features:
@@ -478,12 +481,12 @@ if TF_FLAG:
                 if None in shape:
                     shape = [s if s is not None else -1 for s in shape]
                     data[feature] = tf.reshape(tf.sparse.to_dense(data[feature]), shape)
-                if (
-                    feature_collection.feature_tf_encoder_mapper[feature] == complex_list_feature
-                ):  # recover complex dtype
+
+                encoder = feature_collection.feature_tf_encoder_mapper[feature]
+                if encoder is complex_list_feature:
+                    # Reconstruct original complex tensor from [..., 2] real/imag float32
                     data[feature] = tf.complex(data[feature][..., 0], data[feature][..., 1])
+
             return data
-
         return _parse_function
-
     DatasetBase.get_tfrecord_parser = get_tfrecord_parser
