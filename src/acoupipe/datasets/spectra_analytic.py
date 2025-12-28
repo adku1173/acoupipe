@@ -128,7 +128,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         n_tril = dim * (dim - 1) // 2
         C = cholesky(scale, lower=True)
         covariances = rng.normal(size=n_tril) + 1j * rng.normal(size=n_tril)
-        # diagonal elements follow random gamma distribution (according to Nagar and Gupta, 2011)
+        covariances *= (0.5) ** 0.5
         variances = r_[[rng.gamma(df - dim + i, scale=1, size=1) ** 0.5 for i in range(dim)]]
         A = zeros(C.shape, dtype=complex)
         # input the covariances
