@@ -513,10 +513,7 @@ if TF_FLAG:
             dtype = feature_collection.feature_tf_dtype_mapper[feature]
             if dtype in [tf.complex64, tf.complex128]:  # complex not supported for tfrecord files
                 shapes[feature] = shapes[feature] + (2,)
-                if dtype == tf.complex64:
-                    dtype = tf.float32
-                else:
-                    dtype = tf.float64
+                dtype = tf.float32 if dtype == tf.complex64 else tf.float64
             shape = shapes[feature]
             if None in shape:
                 feature_description[feature] = tf.io.VarLenFeature(dtype)

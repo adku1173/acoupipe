@@ -276,10 +276,9 @@ if TF_FLAG:
                     sample[shape_key] = np.array(shape, dtype=np.int64)
                     encoders.setdefault(shape_key, int_list_feature)
 
-            encoded_features = {
+            return {
                 n: encoders[n](f) for (n, f) in sample.items() if encoders.get(n)
             }
-            return encoded_features
 
         def save(self, progress_bar=True, start_idx=1):
             """
