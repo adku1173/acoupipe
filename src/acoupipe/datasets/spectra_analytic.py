@@ -118,7 +118,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         fac = 0.0
         for j in range(1, K):
             shift = j * D
-            num = w[:-shift] @ w[shift:]   # sum_{k=0}^{L-shift-1} w[k] w[k+shift]
+            num = w[:-shift] @ w[shift:]
             if num == 0.0:
                 break
             rho = (num * num) / denom
