@@ -69,7 +69,7 @@ Now, the data can be plotted, e.g. by using the `matplotlib`_ library:
     import matplotlib.pyplot as plt
     import numpy as np
 
-    extent = dataset.config.grid.extend()
+    extent = dataset.config.grid.extent
 
     # sound pressure level
     Lm = ac.L_p(data_sample['sourcemap']).T

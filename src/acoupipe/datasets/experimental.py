@@ -171,7 +171,7 @@ class DatasetMIRACLE(DatasetBase):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        extent = dataset.config.grid.extend()
+        extent = dataset.config.grid.extent
 
         # sound pressure level
         Lm = ac.L_p(data_sample['sourcemap']).T

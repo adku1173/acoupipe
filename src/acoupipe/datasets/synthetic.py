@@ -566,15 +566,13 @@ class DatasetSyntheticConfig(ConfigBase):
                 source=source,
                 **self.fft_params,
             )
-        fft_params = deepcopy(self.fft_params)
-        fft_params.pop('window')
         return PowerSpectraAnalytic(
             mode=self.mode,
             num_samples=self.signal_length * self.fs,
             sample_freq=self.fs,
             steer=self.source_steer,
             cached=False,
-            **fft_params,
+            **self.fft_params,
         )
 
     def create_mic_noise_signal(self):
