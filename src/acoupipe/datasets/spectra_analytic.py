@@ -1,11 +1,24 @@
+import numpy as np
 import numpy.fft as fft
 from acoular import PowerSpectraImport, SteeringVector
 from acoular.internal import digest
 from numpy import diag_indices, dot, r_, tril_indices, zeros
 from numpy.random import default_rng
 from scipy.linalg import cholesky
-from traits.api import CArray, CInt, Either, Float, Instance, Int, Property, Trait, cached_property, property_depends_on, Map
-import numpy as np
+from traits.api import (
+    CArray,
+    CInt,
+    Either,
+    Float,
+    Instance,
+    Int,
+    Map,
+    Property,
+    Trait,
+    cached_property,
+    property_depends_on,
+)
+
 
 class PowerSpectraAnalytic(PowerSpectraImport):
 
@@ -99,15 +112,12 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     @property_depends_on('num_samples, block_size, overlap, window')
     def _get_df_eq(self):
         w = self.window_(self.block_size)
-        if self.overlap == 'None':
-            D = self.block_size
-        else:
-            D = int(self.block_size / self.overlap_)
+        D = self.block_size if self.overlap == 'None' else int(self.block_size / self.overlap_)
         K = int(self.num_blocks)
         denom = (w @ w) ** 2
         fac = 0.0
         for j in range(1, K):
-            shift = j * D    
+            shift = j * D
             num = w[:-shift] @ w[shift:]   # sum_{k=0}^{L-shift-1} w[k] w[k+shift]
             if num == 0.0:
                 break
