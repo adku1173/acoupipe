@@ -23,7 +23,6 @@ from scipy.stats import norm, poisson
 from traits.api import Bool, Dict, Either, Enum, Float, Instance, Int, List, observe
 
 import acoupipe.sampler as sp
-from acoupipe.config import TF_FLAG
 from acoupipe.datasets.base import ConfigBase, DatasetBase
 from acoupipe.datasets.features import (
     AnalyticNoiseStrengthFeature,
@@ -221,13 +220,6 @@ class DatasetSynthetic(DatasetBase):
         )
         # add prepare function
         builder.add_custom(self.config.get_prepare_func())
-        builder.add_seeds(len(self.config.get_sampler()))
-        builder.add_idx()
-
-        # handle custom callable features
-        custom_feature_funcs = [feat for feat in features if callable(feat)]
-        for feat_func in custom_feature_funcs:
-            builder.add_custom(feat_func)
 
         # add pre-build feature functions
         if 'time_data' in features:
@@ -286,7 +278,7 @@ class DatasetSynthetic(DatasetBase):
         if 'f' in features:
             builder.add_f(self.config.freq_data.fftfreq(), f, num)
         if 'num' in features:
-            feature = builder.add_num(num)
+            builder.add_num(num)
         # finally build the feature collection
         builder.add_features()
         return builder.build()
@@ -780,120 +772,107 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
         time_data : str
             source object containing the time data e.g. ac.TimeSamples class instance.
         """
-        calc_time_data = TimeDataFeature(time_data=time_data, dtype=np.float32).get_feature_func()
-        self.feature_collection.add_feature_func(calc_time_data)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'time_data': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'time_data': (self.tdim, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'time_data': 'float32'})
+        feature = TimeDataFeature(time_data=time_data, dtype=np.float32, shape=(self.tdim, None))
+        self.features.append(feature)
 
     def add_spectrogram(self, freq_data, f, num):
-        calc_spectrogram = SpectrogramFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_spectrogram)
-        if TF_FLAG:
-            from acoupipe.writer import complex_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'spectrogram': complex_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'spectrogram': (None, self.fdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'spectrogram': 'complex64'})
+        feature = SpectrogramFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            dtype=np.complex64,
+            shape=(None, self.fdim, self.mdim),
+        )
+        self.features.append(feature)
 
     def add_csm(self, freq_data, f, num):
-        calc_csm = CSMFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_csm)
-        if TF_FLAG:
-            from acoupipe.writer import complex_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'csm': complex_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'csm': (self.fdim, self.mdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'csm': 'complex64'})
+        feature = CSMFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            dtype=np.complex64,
+            shape=(self.fdim, self.mdim, self.mdim),
+        )
+        self.features.append(feature)
 
     def add_csmtriu(self, freq_data, f, num):
-        calc_csmtriu = CSMtriuFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_csmtriu)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'csmtriu': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'csmtriu': (self.fdim, self.mdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'csmtriu': 'float32'})
+        feature = CSMtriuFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            dtype=np.float32,
+            shape=(self.fdim, self.mdim, self.mdim),
+        )
+        self.features.append(feature)
 
     def add_eigmode(self, freq_data, f, num):
-        calc_eigmode = EigmodeFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_eigmode)
-        if TF_FLAG:
-            from acoupipe.writer import complex_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'eigmode': complex_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'eigmode': (self.fdim, self.mdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'eigmode': 'complex64'})
+        feature = EigmodeFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            dtype=np.complex64,
+            shape=(self.fdim, self.mdim, self.mdim),
+        )
+        self.features.append(feature)
 
     def add_sourcemap(self, beamformer, f, num):
-        calc_sourcemap = SourcemapFeature(beamformer=beamformer, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_sourcemap)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'sourcemap': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update(
-                {'sourcemap': (self.fdim,) + beamformer.steer.grid.shape},
-            )
-            self.feature_collection.feature_tf_dtype_mapper.update({'sourcemap': 'float32'})
+        feature = SourcemapFeature(
+            beamformer=beamformer,
+            f=f,
+            num=num,
+            dtype=np.float32,
+            shape=(self.fdim,) + beamformer.steer.grid.shape,
+        )
+        self.features.append(feature)
 
     def add_loc(self, freq_data):
-        calc_loc = LocFeature(freq_data=freq_data).get_feature_func()
-        self.feature_collection.add_feature_func(calc_loc)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'loc': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'loc': (3, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'loc': 'float32'})
+        feature = LocFeature(freq_data=freq_data, dtype=np.float32, shape=(3, None))
+        self.features.append(feature)
 
     def add_source_strength_analytic(self, freq_data, f, num, steer):
-        calc_strength = AnalyticSourceStrengthFeature(freq_data=freq_data, f=f, num=num, steer=steer).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'source_strength_analytic': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'source_strength_analytic': (self.fdim, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'source_strength_analytic': 'float32'})
+        feature = AnalyticSourceStrengthFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            steer=steer,
+            dtype=np.float32,
+            shape=(self.fdim, None),
+        )
+        self.features.append(feature)
 
     def add_source_strength_estimated(self, freq_data, f, num):
-        calc_strength = EstimatedSourceStrengthFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'source_strength_estimated': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'source_strength_estimated': (self.fdim, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'source_strength_estimated': 'float32'})
+        feature = EstimatedSourceStrengthFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            dtype=np.float32,
+            shape=(self.fdim, None),
+        )
+        self.features.append(feature)
 
     def add_noise_strength_analytic(self, freq_data, f, num):
-        calc_noise = AnalyticNoiseStrengthFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_noise)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'noise_strength_analytic': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'noise_strength_analytic': (self.fdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'noise_strength_analytic': 'float32'})
+        feature = AnalyticNoiseStrengthFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            dtype=np.float32,
+            shape=(self.fdim, self.mdim),
+        )
+        self.features.append(feature)
 
     def add_noise_strength_estimated(self, freq_data, f, num):
-        calc_noise = EstimatedNoiseStrengthFeature(freq_data=freq_data, f=f, num=num).get_feature_func()
-        self.feature_collection.add_feature_func(calc_noise)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'noise_strength_estimated': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'noise_strength_estimated': (self.fdim, self.mdim)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'noise_strength_estimated': 'float32'})
+        feature = EstimatedNoiseStrengthFeature(
+            freq_data=freq_data,
+            f=f,
+            num=num,
+            dtype=np.float32,
+            shape=(self.fdim, self.mdim),
+        )
+        self.features.append(feature)
 
     def add_targetmap(self, freq_data, f, num, steer, ref_mic, strength_type, grid):
         name = f'targetmap_{strength_type}'
-        calc_targetmap = TargetmapFeature(
+        feature = TargetmapFeature(
             freq_data=freq_data,
             f=f,
             num=num,
@@ -902,20 +881,10 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
             strength_type=strength_type,
             grid=grid,
             name=name,
-        ).get_feature_func()
-        self.feature_collection.add_feature_func(calc_targetmap)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({name: float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({name: (self.fdim,) + grid.shape})
-            self.feature_collection.feature_tf_dtype_mapper.update({name: 'float32'})
-
-    def add_seeds(self, nsampler):
-        self._add_mapper('seeds', dtype='int64', shape=(nsampler,))
-
-    def add_idx(self):
-        self._add_mapper('idx', dtype='int64', shape=())
+            dtype=np.float32,
+            shape=(self.fdim,) + grid.shape,
+        )
+        self.features.append(feature)
 
     def add_f(self, fftfreq, f, num):
         if f is None:
@@ -927,17 +896,23 @@ class DatasetSyntheticFeatureCollectionBuilder(BaseFeatureCollectionBuilder):
 
         def get_f(sampler, f):  # noqa ARG001
             return {'f': f}
-        return create_feature(
-            feature_func=partial(get_f, f=all_f), name='f', shape=(self.fdim,), dtype="float32")
-        feature_func = partial(get_f, f=all_f)
-        self.feature_collection.add_feature_func(feature_func)
-        self._add_mapper('f', dtype='float32', shape=(self.fdim,))
+        feature = create_feature(
+            feature_func=partial(get_f, f=all_f),
+            name='f',
+            shape=(self.fdim,),
+            dtype=float,
+        )
+        self.features.append(feature)
 
     def add_num(self, num):
         def add_num(sampler, num):  # noqa ARG001
             return {'num': num}
         feature = create_feature(
-            feature_func=partial(add_num, num=num), name='num', shape=(), dtype='int64')
+            feature_func=partial(add_num, num=num),
+            name='num',
+            shape=(),
+            dtype=int,
+        )
         self.features.append(feature)
 
 

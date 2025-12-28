@@ -985,15 +985,7 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
     """
 
     features = List(Instance(BaseFeatureCatalog), desc='list of feature instances')
-
     feature_collection = Instance(BaseFeatureCollection, desc='BaseFeatureCollection object')
-
-    def add_features(self):
-        """
-        Add features of type BaseFeatureCatalog to the BaseFeatureCollection.
-        """
-        for feature in self.features:
-            self.feature_collection.add_feature_func(feature.get_feature_func())
 
     def add_custom(self, feature_func):
         """
@@ -1018,6 +1010,9 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
+        for feature in self.features:
+            self.feature_collection.add_feature_func(feature.get_feature_func())
+            self._add_mapper(feature.name, feature.dtype, feature.shape)
         return self.feature_collection
 
     def _add_mapper(self, name, dtype, shape):
@@ -1028,14 +1023,6 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         self.feature_collection.feature_tf_shape_mapper[name] = tf_shape
         self.feature_collection.feature_tf_dtype_mapper[name] = tf_dtype
 
-    def add_tf_mappers(self):
-        if not TF_FLAG:
-            return
-        """
-        Add TensorFlow mappers to the BaseFeatureCollection.
-        """
-        for feature in self.features:
-            self._add_mapper(feature.name, feature.dtype, feature.shape)
 
 
 def create_feature(feature_func, name, shape, dtype):
