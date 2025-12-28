@@ -21,7 +21,6 @@ from traits.api import (
 
 
 class PowerSpectraAnalytic(PowerSpectraImport):
-
     #: equivalent degrees of freedom
     df_eq = Property()
 
