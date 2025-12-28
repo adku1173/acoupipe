@@ -24,10 +24,9 @@ import numpy as np
 import pooch
 from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
-from acoupipe.config import TF_FLAG
 from acoupipe.datasets.base import DatasetBase
-from acoupipe.datasets.features import BaseFeatureCollection
-from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSyntheticFeatureCollectionBuilder
+from acoupipe.datasets.features import AnalyticSourceStrengthFeature, EstimatedSourceStrengthFeature, TargetmapFeature
+from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 from acoupipe.datasets.utils import (
     blockwise_transfer,
     get_all_source_signals,
@@ -260,135 +259,6 @@ class DatasetMIRACLE(DatasetBase):
             )
         super().__init__(tasks=tasks, config=config)
 
-    def get_feature_collection(self, features, f, num):
-        """
-        Get the feature collection of the dataset.
-
-        Returns
-        -------
-        BaseFeatureCollection
-            BaseFeatureCollection object.
-        """
-        if f is None:
-            fdim = self.config.freq_data.fftfreq().shape[0]
-        elif isinstance(f, list):
-            fdim = len(f)
-        else:
-            fdim = 1
-
-        builder = MIRACLEFeatureCollectionBuilder(
-            feature_collection=BaseFeatureCollection(),
-            tdim=int(self.config.signal_length * self.config.fs),
-            mdim=self.config.mics.num_mics,
-            fdim=fdim,
-        )
-        # add prepare function
-        builder.add_custom(self.config.get_prepare_func())
-        builder.add_seeds(len(self.config.get_sampler()))
-        builder.add_idx()
-        # add feature functions
-        if 'time_data' in features:
-            if self.config.mode == 'welch':
-                builder.add_time_data(self.config.freq_data.source)
-            else:
-                msg = "time_data feature is not possible with modes ['analytic', 'wishart']."
-                raise ValueError(msg)
-        if 'spectrogram' in features:
-            if self.config.mode == 'welch':
-                builder.add_spectrogram(self.config.fft_spectra, f, num)
-            else:
-                msg = "spectrogram feature is not possible with modes ['analytic', 'wishart']."
-                raise ValueError(msg)
-        if 'csm' in features:
-            builder.add_csm(self.config.freq_data, f, num)
-        if 'csmtriu' in features:
-            builder.add_csmtriu(self.config.freq_data, f, num)
-        if 'eigmode' in features:
-            builder.add_eigmode(self.config.freq_data, f, num)
-        if 'sourcemap' in features:
-            builder.add_sourcemap(self.config.beamformer, f, num)
-        if 'loc' in features:
-            builder.add_loc(self.config.freq_data)
-        if 'source_strength_analytic' in features:
-            builder.add_source_strength_analytic(self.config.freq_data, f, num, ref_mic=self.config.ref_mic_index)
-        if 'source_strength_estimated' in features:
-            if self.config.mode == 'welch':
-                builder.add_source_strength_estimated(
-                    self.config.fft_obs_spectra,
-                    f,
-                    num,
-                    ref_mic=self.config.ref_mic_index,
-                )
-            else:
-                builder.add_source_strength_estimated(self.config.freq_data, f, num, ref_mic=self.config.ref_mic_index)
-        if 'noise_strength_analytic' in features:
-            builder.add_noise_strength_analytic(self.config.freq_data, f, num)
-        if 'noise_strength_estimated' in features:
-            freq_data = self.config.fft_spectra if self.config.mode == 'welch' else self.config.freq_data
-            builder.add_noise_strength_estimated(freq_data, f, num)
-        if 'targetmap_analytic' in features:
-            builder.add_targetmap(
-                self.config.freq_data,
-                f,
-                num,
-                self.config.source_steer,
-                ref_mic=self.config.ref_mic_index,
-                strength_type='analytic',
-                grid=self.config.grid,
-            )
-        if 'targetmap_estimated' in features:
-            freq_data = self.config.fft_obs_spectra if self.config.mode == 'welch' else self.config.freq_data
-            builder.add_targetmap(
-                freq_data,
-                f,
-                num,
-                self.config.source_steer,
-                ref_mic=self.config.ref_mic_index,
-                strength_type='estimated',
-                grid=self.config.grid,
-            )
-        if 'f' in features:
-            builder.add_f(self.config.freq_data.fftfreq(), f, num)
-        if 'num' in features:
-            builder.add_num(num)
-        return builder.build()
-
-
-class MIRACLEFeatureCollectionBuilder(DatasetSyntheticFeatureCollectionBuilder):
-    def add_source_strength_analytic(self, freq_data, f, num, ref_mic):
-        from acoupipe.datasets.features import AnalyticSourceStrengthFeature
-
-        calc_strength = AnalyticSourceStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            ref_mic=ref_mic,
-        ).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'source_strength_analytic': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'source_strength_analytic': (self.fdim, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'source_strength_analytic': 'float32'})
-
-    def add_source_strength_estimated(self, freq_data, f, num, ref_mic):
-        from acoupipe.datasets.features import EstimatedSourceStrengthFeature
-
-        calc_strength = EstimatedSourceStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            ref_mic=ref_mic,
-        ).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'source_strength_estimated': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'source_strength_estimated': (self.fdim, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'source_strength_estimated': 'float32'})
-
 
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     """Configuration class for the DatasetMIRACLE dataset."""
@@ -472,6 +342,45 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         if self.random_signal_length:
             sampler[6] = self.signal_length_sampler
         return sampler
+
+    def _get_default_feature_source_strength_analytic(self, **kwargs):  # noqa ARG002
+        fdim = self._get_fdim(kwargs['f'])
+        return AnalyticSourceStrengthFeature(
+            freq_data=self.freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            ref_mic=self.ref_mic_index,
+            dtype=np.float32,
+            shape=(fdim, None),
+        )
+
+    def _get_default_feature_source_strength_estimated(self, **kwargs):  # noqa ARG002
+        fdim = self._get_fdim(kwargs['f'])
+        freq_data = self.fft_obs_spectra if self.mode == 'welch' else self.freq_data
+        return EstimatedSourceStrengthFeature(
+            freq_data=freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            ref_mic=self.ref_mic_index,
+            dtype=np.float32,
+            shape=(fdim, None),
+        )
+
+    def _get_targetmap_feature(self, strength_type, **kwargs):  # noqa ARG002
+        fdim = self._get_fdim(kwargs['f'])
+        freq_data = self.freq_data if strength_type == 'analytic' else (self.fft_obs_spectra if self.mode == 'welch' else self.freq_data)
+        return TargetmapFeature(
+            freq_data=freq_data,
+            f=kwargs['f'],
+            num=kwargs['num'],
+            steer=self.source_steer,
+            ref_mic=self.ref_mic_index,
+            strength_type=strength_type,
+            grid=self.grid,
+            name=f'targetmap_{strength_type}',
+            dtype=np.float32,
+            shape=(fdim,) + self.grid.shape,
+        )
 
     def create_mics(self):
         with h5.File(self.filename, 'r') as file:

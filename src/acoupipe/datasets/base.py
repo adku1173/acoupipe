@@ -164,11 +164,11 @@ class DatasetBase(HasPrivateTraits):
             BaseFeatureCollection object.
         """
         # handle all custom features (BaseFeatureCatalog instances)
-        features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        feature_instances = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
         if hasattr(self.config, 'get_default_features'):
             default_feature_names = [feat for feat in features if isinstance(feat, str)]
-            features += self.config.get_default_features(default_feature_names, f, num)
-        builder = BaseFeatureCollectionBuilder(features=features)
+            feature_instances += self.config.get_default_features(default_feature_names, f, num)
+        builder = BaseFeatureCollectionBuilder(features=feature_instances)
         if hasattr(self.config, 'get_prepare_func'):
             builder.add_custom(self.config.get_prepare_func()) # add prepare function
         return builder.build() # finally build the feature collection
