@@ -400,6 +400,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                     signal=signal,
                     mics=self.noisy_mics,
                     env=self.env,
+                    extend_signal=True,
                 ),
             )
         return sources
