@@ -64,6 +64,7 @@ docs = [
 tests = [
     "tensorflow",
     "pytest",
+    "pytest-regtest",
     'pandas',
 ]
 
@@ -121,4 +122,3 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/acoupipe"]
-

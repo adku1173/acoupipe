@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import acoular as ac
 import numpy as np
 import pytest
@@ -19,11 +17,9 @@ IMPLEMENTED_FEATURES = ['time_data', 'csm', 'csmtriu', 'sourcemap', 'eigmode', '
 ]
 TEST_SIGNAL_LENGTH = 0.5
 
-dirpath = Path(__file__).parent.absolute()
 modes = ['welch', 'analytic', 'wishart']
 frequencies = [None, 1000]
 nums = [0, 3]
-validation_data_path = Path(__file__).parent.absolute() / 'validation_data'
 start_idx = 3
 tasks = 2
 
@@ -34,7 +30,7 @@ tasks = 2
 @pytest.mark.parametrize('feature', IMPLEMENTED_FEATURES)
 @pytest.mark.parametrize('f', frequencies)
 @pytest.mark.parametrize('num', nums)
-def test_values_correct(mode, feature, f, num, create_dataset):
+def test_values_correct(mode, feature, f, num, create_dataset, snapshot):
     """Test generate method of the datasets in single task mode."""
     if f is None and num != 0:
         pytest.skip('Invalid combination of f=None and num!=0')
@@ -51,21 +47,19 @@ def test_values_correct(mode, feature, f, num, create_dataset):
         data = next(gen)
         if data['idx'] == start_idx:
             break
-    test_data = np.load(validation_data_path / f'{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy')
     if (
         feature == 'eigmode'
     ):  # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
         # we therefore just test the first eigenmode
         pytest.skip('Eigenmode test skipped due to numerical rounding errors associated with the OS')
-    else:
-        np.testing.assert_allclose(data[feature], test_data, rtol=1e-5, atol=1e-7)
+    snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
 
 
 @pytest.mark.parametrize('mode', modes)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])
 @pytest.mark.parametrize('num', [0])
-def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset):
+def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, snapshot):
     """Test generate method of the datasets in multiprocessing mode."""
     if mode == 'analytic' and '_estimated' in feature:
         pytest.skip('Feature not supported in analytic mode')
@@ -80,14 +74,13 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset):
         data = next(gen)
         if data['idx'] == start_idx:
             break
-    test_data = np.load(validation_data_path / f'{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy')
     if (
         feature == 'eigmode'
     ):  # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
         # we therefore just test the strongest eigenmode
-        np.testing.assert_allclose(data[feature][:, :, -1], test_data[:, :, -1], rtol=1e-5, atol=1e-7)
+        snapshot.check(np.asarray(data[feature][:, :, -1]), rtol=1e-5, atol=1e-7)
     else:
-        np.testing.assert_allclose(data[feature], test_data, rtol=1e-5, atol=1e-7)
+        snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
 
 
 @pytest.mark.parametrize('mode', modes)
@@ -270,7 +263,7 @@ def test_miracle_sourcemap_max(mode, num, f, create_miracle_dataset):
 @pytest.mark.parametrize('feature', IMPLEMENTED_FEATURES)
 @pytest.mark.parametrize('f', [1000])
 @pytest.mark.parametrize('num', [0])
-def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset):
+def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset, snapshot):
     """Test generate method of the datasets in single task mode."""
     if mode == 'analytic' and '_estimated' in feature:
         pytest.skip('Feature not supported in analytic mode')
@@ -285,21 +278,20 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset):
         data = next(gen)
         if data['idx'] == start_idx:
             break
-    test_data = np.load(validation_data_path / f'{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy')
     if (
         feature == 'eigmode'
     ):  # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
         # we therefore just test the first eigenmode
-        np.testing.assert_allclose(data[feature][:, :, -1], test_data[:, :, -1], rtol=1e-5, atol=1e-7)
+        snapshot.check(np.asarray(data[feature][:, :, -1]), rtol=1e-5, atol=1e-7)
     else:
-        np.testing.assert_allclose(data[feature], test_data, rtol=1e-5, atol=1e-6)
+        snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-6)
 
 
 @pytest.mark.parametrize('mode', modes)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])
 @pytest.mark.parametrize('num', [0])
-def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_miracle_dataset):
+def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_miracle_dataset, snapshot):
     """Test generate method of the datasets in multiprocessing mode."""
     if mode == 'analytic' and '_estimated' in feature:
         pytest.skip('Feature not supported in analytic mode')
@@ -314,11 +306,10 @@ def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_mi
         data = next(gen)
         if data['idx'] == start_idx:
             break
-    test_data = np.load(validation_data_path / f'{type(dataset).__name__}_{feature}_f{f}_num{num}_mode{mode}.npy')
     if (
         feature == 'eigmode'
     ):  # consists of very small values with numerical rounding errors that stem from the eigen-decomposition
         # we therefore just test the strongest eigenmode
-        np.testing.assert_allclose(data[feature][:, :, -1], test_data[:, :, -1], rtol=1e-5, atol=1e-7)
+        snapshot.check(np.asarray(data[feature][:, :, -1]), rtol=1e-5, atol=1e-7)
     else:
-        np.testing.assert_allclose(data[feature], test_data, rtol=1e-5, atol=1e-7)
+        snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
