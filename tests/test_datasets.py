@@ -1,13 +1,8 @@
-import shutil
-import tempfile
 from pathlib import Path
 
 import acoular as ac
 import numpy as np
 import pytest
-
-from acoupipe.datasets.experimental import DatasetMIRACLE
-from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
 
 IMPLEMENTED_FEATURES = ['time_data', 'csm', 'csmtriu', 'sourcemap', 'eigmode', 'spectrogram'] + [
     'seeds',
@@ -33,27 +28,6 @@ start_idx = 3
 tasks = 2
 
 # TODO: speed up tests
-
-
-@pytest.fixture
-def temp_dir():
-    """Fixture to create and clean up a temporary directory."""
-    test_dir = Path(tempfile.mkdtemp())
-    yield test_dir
-    shutil.rmtree(test_dir)
-
-
-@pytest.fixture
-def create_dataset():
-    """Fixture to create a DatasetSynthetic instance."""
-
-    def _create_dataset(full=False, tasks=1, **kwargs):
-        if full:
-            return DatasetSynthetic(tasks=tasks, **kwargs)
-        config = DatasetSyntheticTestConfig(**kwargs)
-        return DatasetSynthetic(config=config, tasks=tasks, **kwargs)
-
-    return _create_dataset
 
 
 @pytest.mark.parametrize('mode', modes)
@@ -245,16 +219,6 @@ def test_eigvalsum_equal_csm(mode, create_dataset):
     eig, eigvec = np.linalg.eigh(data['csm'][0])
     eig_eig = np.linalg.norm(data['eigmode'][0], axis=0)
     np.testing.assert_allclose(eig_eig, np.abs(eig), rtol=1e-5, atol=1e-7)
-
-
-@pytest.fixture
-def create_miracle_dataset():
-    """Fixture to create a DatasetMIRACLE instance."""
-
-    def _create_dataset(tasks=1, **kwargs):
-        return DatasetMIRACLE(tasks=tasks, **kwargs)
-
-    return _create_dataset
 
 
 @pytest.mark.parametrize('mode', modes)
