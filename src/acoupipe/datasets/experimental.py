@@ -29,7 +29,6 @@ from acoupipe.datasets.base import DatasetBase
 from acoupipe.datasets.features import BaseFeatureCollection
 from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSyntheticFeatureCollectionBuilder
 from acoupipe.datasets.utils import (
-    blockwise_transfer,
     get_all_source_signals,
     get_uncorrelated_noise_source_recursively,
 )
@@ -117,7 +116,7 @@ class DatasetMIRACLE(DatasetBase):
 
         ===================== ========================================
         Sampling Rate         fs=32,000 Hz
-        Block size            256 Samples
+        Block size            1024 Samples
         Block overlap         50 %
         Windowing             von Hann / Hanning
         ===================== ========================================
@@ -402,7 +401,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     snap_to_grid = Enum(True, desc='snap source positions to measured grid')
     fs = Enum(32000, desc='sampling frequency')
     fft_params = Dict(
-        {'block_size': 256, 'overlap': '50%', 'window': 'Hanning', 'precision': 'complex64'},
+        {'block_size': 1024, 'overlap': '50%', 'window': 'Hanning', 'precision': 'complex64'},
         desc='FFT parameters',
     )
 
@@ -422,6 +421,12 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         else:
             msg = f'Invalid scenario {self.scenario}.'
             raise ValueError(msg)
+
+    @observe('fft_params.items', post_init=False)
+    def _validate_fixed_blocksize(self, event):
+        if self.fft_params['block_size'] != 1024:
+            msg = 'DatasetMIRACLE currently only supports a fixed block size of 1024 samples.'
+            raise NotImplementedError(msg)
 
     @observe(
         'mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, ref_mic_index, filename',
@@ -541,7 +546,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             for i in range(nsources):
                 ir_idx = np.where(np.sum(loc_sampler.grid.pos - loc[:, i][:, np.newaxis], axis=0) == 0)
                 assert len(ir_idx) == 1
-                tf = blockwise_transfer(file['data/impulse_response'][ir_idx[0][0]], freq_data.block_size).T
+                ir = file['data/impulse_response'][ir_idx[0][0]].T
+                tf = np.fft.rfft(ir, n=freq_data.block_size, axis=0)
                 transfer[:, :, i] = tf / tf[:, ref_mic][:, np.newaxis]  # reference mic based normalization
             # adjust freq_data
             freq_data.custom_transfer = transfer
@@ -585,26 +591,18 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             nsources = loc.shape[1]
             prms_sq = rms_sampler.target[:nsources] ** 2  # squared sound pressure RMS at reference position
             # apply parameters
-            mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
-            if mic_noise:
-                mic_noise_signal = mic_noise[0].signal
-                if signal_length_sampler is not None:
-                    mic_noise_signal.num_samples = signal_length_sampler.target * freq_data.sample_freq
-                if noise_sampler is not None:
-                    noise_signal_ratio = noise_sampler.target  # normalized noise variance
-                    noise_prms_sq = prms_sq.sum() * noise_signal_ratio
-                    mic_noise_signal.rms = np.sqrt(noise_prms_sq)
-                    mic_noise_signal.seed = seed_sampler.target + 1000
             subset_sources = sources[:nsources]
+            prms_sq_sum = 0
             for i, src in enumerate(subset_sources):
                 ir_idx = np.where(np.sum(loc_sampler.grid.pos - loc[:, i][:, np.newaxis], axis=0) == 0)
                 assert len(ir_idx) == 1
-                tf = blockwise_transfer(file['data/impulse_response'][ir_idx[0][0]]).T
-                tf /= tf[:, ref_mic][:, np.newaxis]  # reference mic based normalization
-                # ifft to get kernel
-                src.kernel = np.fft.irfft(tf, axis=0)
+                src.kernel = file['data/impulse_response'][ir_idx[0][0]].T
                 src.signal.seed = seed_sampler.target + i
-                src.signal.rms = np.sqrt(prms_sq[i])
+                h_ref = src.kernel[:, ref_mic]  # shape (N,)
+                ref_gain = np.sum(h_ref**2)
+                src_var = prms_sq[i] / ref_gain
+                prms_sq_sum += prms_sq[i]
+                src.signal.rms = np.sqrt(src_var)
                 src.loc = (loc[0, i], loc[1, i], loc[2, i])
             freq_data.source.sources = subset_sources  # apply subset of sources
             fft_spectra.source = freq_data.source  # only for spectrogram feature
@@ -614,6 +612,16 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 src.mics = obs
                 src.kernel = src.kernel[:, ref_mic][:, np.newaxis]
             fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
+
+            mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
+            if mic_noise:
+                mic_noise_signal = mic_noise[0].signal
+                if signal_length_sampler is not None:
+                    mic_noise_signal.num_samples = signal_length_sampler.target * freq_data.sample_freq
+                if noise_sampler is not None:
+                    noise_signal_ratio = noise_sampler.target  # normalized noise variance
+                    mic_noise_signal.rms = np.sqrt(prms_sq_sum * noise_signal_ratio)
+                    mic_noise_signal.seed = seed_sampler.target + 1000
         return {}
 
     def get_prepare_func(self):

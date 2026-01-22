@@ -351,35 +351,6 @@ def get_uncorrelated_noise_source_recursively(source):
     return sources
 
 
-def blockwise_transfer(ir, blocksize=None):
-    """Calculate the transfer function of an impulse response in a blockwise manner.
-
-    Parameters
-    ----------
-    ir : ndarray, shape (n_channels,n_samples)
-        Impulse response.
-    blocksize : int, optional
-        Block size for the FFT. The default is None which means that the blocksize is equal
-        to the length of the impulse response.
-
-    Returns
-    -------
-    tf : ndarray, shape (n_channels, n_samples)
-        Power spectrum of the impulse response.
-    """
-    n_channels, n_samples = ir.shape
-    if blocksize is None:
-        blocksize = n_samples
-    if n_samples % blocksize != 0:
-        pad = blocksize - n_samples % blocksize
-        ir = np.pad(ir, ((0, 0), (0, pad)))
-    n_blocks = ir.shape[-1] // blocksize
-    tf = np.zeros((n_channels, blocksize // 2 + 1), dtype=complex)
-    for i in range(n_blocks):
-        tf += np.fft.rfft(ir[:, i * blocksize : (i + 1) * blocksize], axis=1)
-    return tf
-
-
 # Without the use of this decorator factory (wraps), the name of the
 # function 'f' would have been 'wrap', and the docstring of the original f() would have been lost.
 def log_execution_time(f):
