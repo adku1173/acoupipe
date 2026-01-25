@@ -3,59 +3,93 @@
 DatasetMIRACLE
 ==============
 
-``DatasetMIRACLE`` is a microphone array dataset generator using experimentally measured spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset. The generator follows the same workflow as :class:`acoupipe.datasets.synthetic.DatasetSynthetic`, but uses measured transfer functions / impulse responses instead of analytic ones. Multi-source scenarios with possibly closing neighboring sources are realized by superimposing signals that have been convolved with the provided SRIRs.
+``DatasetMIRACLE`` is an experimental (semi-synthetic) microphone array data generator that
+builds multi-source source cases by convolving synthetic source signals with **measured**
+spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset. The workflow is
+analogous to :class:`~acoupipe.datasets.synthetic.DatasetSynthetic`, but the propagation
+operator is given by measured SRIRs instead of an analytic free-field model.
+
+Multi-source scenes are realized by superposition of individually convolved source signals.
+By default, AcouPipe follows the same statistical scene model as in the synthetic generator
+(Poisson-distributed number of sources, normally distributed source positions, Rayleigh-
+distributed source strengths).
 
 .. figure:: ../../_static/msm_miracle.png
     :width: 750
     :align: center
 
-    Measurement setup ``R2`` from the `MIRACLE`_ dataset.
+    Measurement setup ``R2`` from the `MIRACLE`_ dataset (reflective ground plate).
 
+
+What the MIRACLE SRIRs represent
+--------------------------------
+
+The MIRACLE dataset provides large-scale SRIR measurements acquired with a planar
+64-channel array (Vogel spiral, aperture 1.47 m) in the anechoic chamber of TU Berlin.
+A reflective environment is realized in one scenario by inserting a ground plate between
+source and array. 
+
+In addition to SRIRs, MIRACLE provides metadata relevant for learning and benchmarking,
+including experimentally obtained loudspeaker directivity information and validated/offset-
+corrected source positions. 
 
 Scenarios
 ---------
 
-The MIRACLE dataset provides SRIRs from different measurement setups with the same microphone array, selectable via the :code:`scenario` parameter. The underlying measurement setup for :code:`scenario="R2"` is shown above.
+MIRACLE provides SRIRs for four measurement scenarios. In AcouPipe, the scenario is
+selected via the ``scenario`` parameter of :class:`~acoupipe.datasets.experimental.DatasetMIRACLE`.
 
-.. list-table:: Available scenarios
+The table below summarizes the spatial sampling and environmental configuration. Note that
+the number of available single-channel SRIRs per scenario is given by
+``(# sources) × (64 microphones)``, and the full dataset comprises **856,128** single-channel
+impulse responses across all scenarios. 
+
+.. list-table:: Available MIRACLE scenarios (SRIR grids and meta-data)
     :header-rows: 1
-    :widths: 5 10 10 10 10 10 10
+    :widths: 6 14 10 10 10 10 10 10
 
     *   - Scenario
-        - Download Size
         - Environment
         - c0
-        - # SRIRs
-        - Source-plane dist.
-        - Spatial sampling
+        - # sources
+        - dx = dy
+        - dz
+        - Δx = Δy
+        - Notes
     *   - A1
-        - 1.1 GB
-        - Anechoic
-        - 344.7 m/s
-        - 4096
-        - 73.4 cm
-        - 23.3 mm
-    *   - D1
-        - 300 MB
         - Anechoic
         - 344.8 m/s
-        - 4096
+        - 64 × 64 = 4096
+        - 146.7 cm
         - 73.4 cm
-        - 5.0 mm
-    *   - A2
-        - 1.1 GB
+        - 23.3 mm
+        - short distance
+    *   - D1
         - Anechoic
         - 345.0 m/s
-        - 4096
+        - 33 × 33 = 1089
+        - 16.0 cm
+        - 73.4 cm
+        - 5.0 mm
+        - dense local grid
+    *   - A2
+        - Anechoic
+        - 345.3 m/s
+        - 64 × 64 = 4096
+        - 146.7 cm
         - 146.7 cm
         - 23.3 mm
+        - long distance
     *   - R2
-        - 1.1 GB
-        - Reflective Ground
-        - 345.2 m/s
-        - 4096
+        - Reflective ground plate
+        - 345.4 m/s
+        - 64 × 64 = 4096
+        - 146.7 cm
         - 146.7 cm
         - 23.3 mm
+        - specular reflection
+
+
 
 
 Default FFT parameters
@@ -66,32 +100,40 @@ The underlying default FFT parameters are:
 .. table:: FFT Parameters
 
     ===================== ========================================
-    Sampling Rate         fs=32,000 Hz
-    Block size            256 Samples
+    Sampling Rate         fs = 32,000 Hz
+    Block size            256 samples
     Block overlap         50 %
     Windowing             von Hann / Hanning
     ===================== ========================================
+
+.. note::
+
+    The FFT settings relate to feature extraction (e.g., CSM / beamforming) and can be
+    overridden in your generation pipeline if required.
 
 
 Randomized properties
 ---------------------
 
-Several properties of the dataset are randomized for each source case when generating the data. This includes the number of sources, their positions, and strength. Their respective distributions are closely related to :cite:`Herold2017`. Uncorrelated white noise is added to the microphone channels by default. Note that the source positions are sampled from a grid according to the spatial sampling of the MIRACLE dataset.
+Several properties of the dataset are randomized for each source case when generating data.
+This includes the number of sources, their positions, and their strengths. By default, source
+positions are sampled from the discrete source grid of the selected MIRACLE scenario.
 
-.. table:: Randomized properties
+.. table:: Randomized properties (defaults)
 
     ==================================================================   ===================================================
-    No. of Sources                                                       Poisson distributed (:math:`\lambda=3`)
-    Source Positions [m]                                                 Bivariate normal distributed (:math:`\sigma = 0.1688 d_a`)
-    Source Strength (:math:`[{Pa}^2]` at reference position)               Rayleigh distributed (:math:`\sigma_{R}=5`)
-    Relative Noise Variance                                              Uniform distributed (:math:`10^{-6}`, :math:`0.1`)
+    No. of sources                                                       Poisson distributed (:math:`\lambda = 3`)
+    Source positions                                                     Bivariate normal distributed (:math:`\sigma = 0.1688 d_a`)
+    Source strength (:math:`[{Pa}^2]` at reference position)              Rayleigh distributed (:math:`\sigma_R = 5`)
+    Relative noise variance                                              Uniform distributed (:math:`10^{-6}`, :math:`0.1`)
     ==================================================================   ===================================================
 
 
 Example
 -------
 
-The following example script generates sourcemaps for several MIRACLE scenarios and is also used to create the figure below.
+The following example script generates sourcemaps for several MIRACLE scenarios and is also
+used to create the figure below.
 
 .. literalinclude:: ../script/experimental.py
    :language: python
@@ -99,15 +141,12 @@ The following example script generates sourcemaps for several MIRACLE scenarios 
    :linenos:
    :end-before: dpath
 
-The generator yields one sample at a time as a dictionary, including helper fields ``idx`` and ``seeds`` to keep data generation reproducible when running in parallel.
+The generator yields one sample at a time as a dictionary, including helper fields ``idx`` and
+``seeds`` to keep data generation reproducible when running in parallel.
 
 Example sourcemaps
 ------------------
 
-The resulting plots for different scenarios can look like this:
-
 .. figure:: ../../_static/exp_sourcemap_example.png
     :width: 750
     :align: center
-
-API reference: :class:`acoupipe.datasets.experimental.DatasetMIRACLE`

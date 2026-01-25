@@ -21,12 +21,17 @@ Currently, AcouPipe provides two default classes to generate microphone array da
    :width: 600
    :align: center
 
-* **DatasetMIRACLE** relies on a large-scale set of measured spatial room impulse responses from the `MIRACLE dataset <https://depositonce.tu-berlin.de/items/b079fd1c-999f-42cb-afd2-bcd34de6180b>`_, acquired at the TU Berlin anechoic chamber, and synthetic source signals resulting in a realistic and quasi-infinite dataset.
+* **DatasetMIRACLE** relies on a large-scale set of measured spatial room impulse responses from the `MIRACLE dataset <https://doi.org/10.14279/depositonce-20837>`_, acquired at the TU Berlin anechoic chamber, and synthetic source signals resulting in a realistic and quasi-infinite dataset.
 
 .. figure:: docs/source/_static/msm_miracle.png
    :width: 600
    :align: center
 
+* **DatasetSRIRACHA** relies on a large-scale set of spatial room impulse responses from the `SRIRACHA dataset <https://doi.org/10.14279/depositonce-23943>`_ that were measured with the same microphone array as in the MIRACLE dataset, but in a reverberant shoebox room.
+
+.. figure:: docs/source/_static/sriracha_t60-measurement.png
+   :width: 600
+   :align: center
 
 Data Generation 
 ===============
@@ -51,9 +56,9 @@ See the latest performance benchmarks on `DatasetSynthetic` for the most computa
 Citation 
 ========
 
-Users can cite the package in their contributions by referring to `Kujawski and Sarradj, (2023) <https://doi.org/10.1007/s11042-023-16947-w>`_:
+Users can cite the package and the data in their contributions by referring to `Kujawski and Sarradj, (2023) <https://doi.org/10.1007/s11042-023-16947-w>`_:
 
-.. code-block:: 
+.. code-block:: bibtex
 
    @article{Kujawski2023,
    author = {Kujawski,Adam and Pelling, Art J. R. and Jekosch, Simon and Sarradj,Ennes},
@@ -62,6 +67,32 @@ Users can cite the package in their contributions by referring to `Kujawski and 
    year = {2023},
    doi = {10.1007/s11042-023-16947-w}
    }
+
+@article{Kujawski2024,
+      author = {Kujawski, Adam and Pelling, Art J. R. and Sarradj, Ennes},
+      title = {MIRACLE - a Microphone Array Impulse Response Dataset for Acoustic Learning},
+      year = {2024},
+      journal = {EURASIP Journal on Audio, Speech, and Music Processing},
+      volume = {2024},
+      number = {1},
+      pages = {32},
+      issn = {1687-4722},
+      doi = {10.1186/s13636-024-00352-8},
+      language = {en},
+}
+
+@misc{Pelling2025,
+    title = {{{SRIRACHA}}: {{Shoebox Room Impulse Response Archive}} with {{Varying Absorption}}},
+    author = {Pelling, Art J. R. and Kujawski, Adam and Sarradj, Ennes},
+    year = 2025,
+    month = jul,
+    publisher = {Technische Universit\"at Berlin},
+    doi = {10.14279/DEPOSITONCE-23943},
+    urldate = {2025-10-30},
+    collaborator = {Bergh{\"a}user, Lin M. and Tschakert, Roman and Jana, Ole},
+    copyright = {Creative Commons Attribution Share Alike 4.0 International},
+    langid = {en}
+}
 
 License
 =======
