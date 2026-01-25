@@ -440,7 +440,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     def create_source_grid(self):
         with h5.File(self.filename, 'r') as file:
-            gpos_file = file['data/location/source_raw'][()].T
+            gpos_file = file['data/location/source'][()].T
         return ac.ImportGrid(pos=gpos_file)
 
     @staticmethod
