@@ -259,11 +259,17 @@ class DatasetMIRACLE(DatasetBase):
         super().__init__(tasks=tasks, config=config)
 
 
+MIRACLE_SCENARIOS = ['A1', 'D1', 'A2', 'R2']
+SRIRACHA_SCENARIOS = ['SR1', 'SR1-C1', 'SR1-C2', 'SR1-C3', 'SR1-C4', 'SR1-D',
+                      'SR2', 'SR2-C1', 'SR2-C2', 'SR2-C3', 'SR2-C4', 'SR2-D',
+                      'SRA1', 'SRA1-C1', 'SRA1-C2', 'SRA1-C3', 'SRA1-C4', 'SRA1-D',
+                      'SRA2', 'SRA2-C1', 'SRA2-C2', 'SRA2-C3', 'SRA2-C4', 'SRA2-D']
+
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     """Configuration class for the DatasetMIRACLE dataset."""
 
     srir_dir = Either(Instance(Path), Str, None)
-    scenario = Either('A1', 'D1', 'A2', 'R2', default='A1', desc='experimental configuration')
+    scenario = Either(MIRACLE_SCENARIOS, default='A1', desc='experimental configuration')
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc='reference microphone index (default: index of the centermost mic)')
@@ -285,10 +291,16 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 url=link_address[self.scenario],
                 fname=self.scenario + '.h5',
                 path=self.srir_dir,
-                known_hash=file_hash[self.scenario],
+                known_hash=file_hash.get(self.scenario),
                 progressbar=True,
             )
         else:
+            # check if available locally
+            if self.srir_dir is not None:
+                local_path = Path(self.srir_dir) / (self.scenario + '.h5')
+                if local_path.is_file():
+                    self._filename = str(local_path)
+                    return
             msg = f'Invalid scenario {self.scenario}.'
             raise ValueError(msg)
 
@@ -428,7 +440,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     def create_source_grid(self):
         with h5.File(self.filename, 'r') as file:
-            gpos_file = file['data/location/source'][()].T
+            gpos_file = file['data/location/source_raw'][()].T
         return ac.ImportGrid(pos=gpos_file)
 
     @staticmethod
@@ -453,10 +465,12 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             nummics = beamformer.steer.mics.num_mics
             # finding the SRIR matching the location
             transfer = np.empty((nfft, nummics, nsources), dtype=complex)
+            loc_array = loc_sampler.grid.pos
             for i in range(nsources):
-                ir_idx = np.where(np.sum(loc_sampler.grid.pos - loc[:, i][:, np.newaxis], axis=0) == 0)
-                assert len(ir_idx) == 1
-                ir = file['data/impulse_response'][ir_idx[0][0]].T
+                distances = np.linalg.norm(loc_array - loc[:, i][:, np.newaxis], axis=0)
+                ir_idx = np.argmin(distances)
+                assert distances[ir_idx] < 1e-6  # Ensure it's a close match
+                ir = file['data/impulse_response'][ir_idx].T
                 tf = np.fft.rfft(ir, n=freq_data.block_size, axis=0)
                 transfer[:, :, i] = tf / tf[:, ref_mic][:, np.newaxis]  # reference mic based normalization
             # adjust freq_data
@@ -503,10 +517,12 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             # apply parameters
             subset_sources = sources[:nsources]
             prms_sq_sum = 0
+            loc_array = loc_sampler.grid.pos
             for i, src in enumerate(subset_sources):
-                ir_idx = np.where(np.sum(loc_sampler.grid.pos - loc[:, i][:, np.newaxis], axis=0) == 0)
-                assert len(ir_idx) == 1
-                src.kernel = file['data/impulse_response'][ir_idx[0][0]].T
+                distances = np.linalg.norm(loc_array - loc[:, i][:, np.newaxis], axis=0)
+                ir_idx = np.argmin(distances)
+                assert distances[ir_idx] < 1e-6  # Ensure it's a close match
+                src.kernel = file['data/impulse_response'][ir_idx], freq_data.block_size.T
                 src.signal.seed = seed_sampler.target + i
                 h_ref = src.kernel[:, ref_mic]  # shape (N,)
                 ref_gain = np.sum(h_ref**2)
@@ -554,3 +570,71 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 ref_mic=self.ref_mic_index,
             )
         return prepare_func
+
+
+class DatasetSRIRACHA(DatasetMIRACLE):
+    """A microphone array dataset generator using experimentally measured data from the SRIRACHA dataset."""
+    def __init__(
+        self,
+        srir_dir=None,
+        scenario='SRA1',
+        ref_mic_index=63,
+        mode='welch',
+        mic_sig_noise=True,
+        random_signal_length=False,
+        signal_length=5,
+        min_nsources=1,
+        max_nsources=10,
+        tasks=1,
+        config=None,
+    ):
+        """Initialize the DatasetMIRACLE object.
+
+        Input parameters are passed to the DatasetMIRACLEConfig object, which creates
+        all necessary objects for the simulation of microphone array data.
+
+        Parameters
+        ----------
+        srir_dir : str, optional
+            Path to the directory where the SRIR files are stored. Default is None, which
+            sets the path to the `pooch.os_cache` directory. The SRIR files are downloaded from the
+            `MIRACLE`_ dataset if they are not found in the directory.
+        scenario : str, optional
+            Scenario of the dataset. Possible values are "A1", "D1", "A2", "R2".
+        ref_mic_index : int, optional
+            Index of the microphone that is used as reference observation point.
+            Default is 63, which is the index of the centermost microphone.
+        mode : str, optional
+            Mode of the dataset. Possible values are "analytic", "welch", "wishart".
+            Default is "welch".
+        mic_sig_noise : bool, optional
+            Add uncorrelated noise to the microphone signals. Default is True.
+        signal_length : float, optional
+            Length of the signal in seconds. Default is 5.
+        min_nsources : int, optional
+            Minimum number of sources per sample. Default is 1.
+        max_nsources : int, optional
+            Maximum number of sources per sample. Default is 10.
+        tasks : int, optional
+            Number of parallel processes. Default is 1.
+        config : DatasetMIRACLEConfig, optional
+            DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
+        """
+        if config is None:
+            config = DatasetSRIRACHAConfig(
+                mode=mode,
+                random_signal_length=random_signal_length,
+                signal_length=signal_length,
+                min_nsources=min_nsources,
+                max_nsources=max_nsources,
+                srir_dir=srir_dir,
+                scenario=scenario,
+                ref_mic_index=ref_mic_index,
+                mic_sig_noise=mic_sig_noise,
+            )
+        super().__init__(tasks=tasks, config=config)
+
+
+class DatasetSRIRACHAConfig(DatasetMIRACLEConfig):
+    """Configuration class for the DatasetSRIRACHA dataset."""
+    scenario = Either(*SRIRACHA_SCENARIOS, default='SRA1', desc='experimental configuration')
