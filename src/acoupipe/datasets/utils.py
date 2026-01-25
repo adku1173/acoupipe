@@ -65,27 +65,29 @@ def calc_transfer(ir, fs, blocksize, fftfreq, time_axis=-1):
     nfft = 1 << (max(L, blocksize) - 1).bit_length()
 
     # Zero-pad IRs to nfft (never truncate)
-    if L < nfft:
+    if nfft > L:
         pad_width = [(0, 0)] * ir.ndim
         pad_width[-1] = (0, nfft - L)
-        ir = np.pad(ir, pad_width, mode="constant")
+        ir = np.pad(ir, pad_width, mode='constant')
 
     # One-sided FFT with window matching the (zero-padded) length (i.e., use full nfft)
     H = np.fft.rfft(ir, n=nfft, axis=-1)  # shape: (..., nfft//2+1)
-    fgrid = np.fft.rfftfreq(nfft, d=1.0 / fs)
+    np.fft.rfftfreq(nfft, d=1.0 / fs)
 
     if np.any(fftfreq < 0.0) or np.any(fftfreq > fs / 2.0):
-        raise ValueError("Requested frequencies must satisfy 0 <= f <= fs/2.")
+        msg = 'Requested frequencies must satisfy 0 <= f <= fs/2.'
+        raise ValueError(msg)
 
     # Map to nearest bin; require exact (within tolerance) grid match
     idx_float = fftfreq * nfft / fs
     idx = np.rint(idx_float).astype(int)
     tol = 1e-9
     if np.max(np.abs(idx_float - idx)) > tol:
-        raise ValueError(
-            "Some requested frequencies are not on the FFT grid. "
-            "Provide integer bin indices (recommended), or choose f that matches k*fs/nfft."
+        msg = (
+            'Some requested frequencies are not on the FFT grid. '
+            'Provide integer bin indices (recommended), or choose f that matches k*fs/nfft.'
         )
+        raise ValueError(msg)
 
     H_sel = np.take(H, idx, axis=-1)
     return H_sel.T

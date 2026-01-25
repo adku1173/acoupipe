@@ -746,50 +746,53 @@ class DatasetSyntheticConfig(ConfigBase):
         return sp.ContainerSampler(random_func=sample_signal_length)
 
     @staticmethod
-    def calc_welch_prepare_func(sampler, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
-        # restore sampler and acoular objects
+    def _prepare_noise_params(sampler, prms_sq):
+        noise_sampler = sampler.get(5)
+        if noise_sampler is not None:
+            noise_signal_ratio = noise_sampler.target  # normalized noise variance
+            return prms_sq.sum() * noise_signal_ratio
+        return None
+
+    @staticmethod
+    def _prepare_mics(sampler, mics):
         micgeom_sampler = sampler.get(1)
+        if micgeom_sampler is None:
+            return mics
+        return micgeom_sampler.target
+
+    @staticmethod
+    def _prepare_source_params(sampler, fs):
         seed_sampler = sampler.get(2)
         rms_sampler = sampler.get(3)
         loc_sampler = sampler.get(4)
-        noise_sampler = sampler.get(5)
         signal_length_sampler = sampler.get(6)
-
-        freq_data = beamformer.freq_data
-
-        noisy_mics = (
-            micgeom_sampler.target if micgeom_sampler is not None else beamformer.steer.mics
-        )  # use the original mics (without noise)
-
-        if signal_length_sampler is not None:
-            # adjust source signals, noise signal length
-            signals = get_all_source_signals(sources)
-            for signal in signals:
-                signal.num_samples = signal_length_sampler.target * freq_data.sample_freq
-        # sample parameters
         loc = loc_sampler.target
-        nsources = loc.shape[1]
-        prms_sq = rms_sampler.target[:nsources] ** 2  # squared sound pressure RMS at reference position
-        # apply parameters
-        mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
-        if mic_noise:
-            mic_noise_signal = mic_noise[0].signal
-            if signal_length_sampler is not None:
-                mic_noise_signal.num_samples = signal_length_sampler.target * freq_data.sample_freq
-            if noise_sampler is not None:
-                noise_signal_ratio = noise_sampler.target  # normalized noise variance
-                noise_prms_sq = prms_sq.sum() * noise_signal_ratio
-                mic_noise_signal.rms = np.sqrt(noise_prms_sq)
-                mic_noise_signal.seed = seed_sampler.target + 1000
-                freq_data.source.source.mics = noisy_mics
-        subset_sources = sources[:nsources]
-        source_steer.grid = ac.ImportGrid(pos=loc)  # set source locations
+        rms_sq = rms_sampler.target[: loc.shape[1]] ** 2
+        source_seeds = [seed_sampler.target + i for i in range(loc.shape[1])]
+        num_samples = signal_length_sampler.target * fs if signal_length_sampler is not None else None
+        return loc, rms_sq, source_seeds, num_samples
+
+    @staticmethod
+    def _prepare_signals_welch(prms_sq, sources, num_samples, source_seeds, source_steer):
+        signals = get_all_source_signals(sources)
+        for i, signal in enumerate(signals):
+            signal.seed = source_seeds[i]
+            signal.rms = np.sqrt(prms_sq[i]) * source_steer.r0[i]
+            if num_samples is not None:
+                signal.num_samples = num_samples
+        return signals
+
+    @staticmethod
+    def _prepare_sources_welch(sources, loc, mics):
+        # set source locations
+        subset_sources = sources[: loc.shape[1]]
         for i, src in enumerate(subset_sources):
-            src.signal.seed = seed_sampler.target + i
-            # weight the RMS with the distance to the reference position
-            src.signal.rms = np.sqrt(prms_sq[i]) * source_steer.r0[i]
             src.loc = (loc[0, i], loc[1, i], loc[2, i])  # apply wishart locations
-            src.mics = noisy_mics
+            src.mics = mics
+        return subset_sources
+
+    @staticmethod
+    def _prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs):
         freq_data.source.sources = subset_sources  # apply subset of sources
         fft_spectra.source = freq_data.source  # only for spectrogram feature
         # update observation point
@@ -797,53 +800,74 @@ class DatasetSyntheticConfig(ConfigBase):
         for src in obs_sources:
             src.mics = obs
         fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
+
+    @staticmethod
+    def _prepare_noise_welch(sampler, prms_sq, seed, freq_data, num_samples, mics):
+        noise_prms_sq = DatasetSyntheticConfig._prepare_noise_params(sampler, prms_sq)
+        mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if mic_noise:
+            mic_noise_signal = mic_noise[0].signal
+            mic_noise_signal.num_samples = num_samples
+            if noise_prms_sq is not None:
+                mic_noise_signal.rms = np.sqrt(noise_prms_sq)
+                mic_noise_signal.seed = seed
+                freq_data.source.source.mics = mics
+
+    @staticmethod
+    def _prepare_spectra_wishart(
+        mics, freq_data, loc, prms_sq, source_seeds, noise_prms_sq, num_samples, custom_transfer=None
+    ):
+        nfft = freq_data.fftfreq().shape[0]
+        if num_samples is not None:
+            freq_data.num_samples = num_samples
+        freq_data.steer.grid = ac.ImportGrid(pos=loc)  # set source locations
+        freq_data.steer.mics = mics
+        freq_data.seed = source_seeds[0]
+        freq_data.Q = np.repeat(np.diag(prms_sq / nfft)[np.newaxis, :, :], nfft, axis=0)
+        if noise_prms_sq is not None:
+            sig_identity = np.eye(mics.num_mics)[np.newaxis, :, :] * (noise_prms_sq / nfft)
+            freq_data.noise = np.repeat(sig_identity, nfft, axis=0)
+        else:
+            freq_data.noise = None
+        freq_data.custom_transfer = custom_transfer
+
+    @staticmethod
+    def calc_welch_prepare_func(sampler, mics, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
+        cf = DatasetSyntheticConfig
+        freq_data = beamformer.freq_data
+        mics = cf._prepare_mics(sampler, mics)
+        loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
+        source_steer.grid = ac.ImportGrid(pos=loc)
+        subset_sources = cf._prepare_sources_welch(sources, loc, mics)
+        signals = cf._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds, source_steer)
+        num_samples = signals[0].num_samples
+        cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
+        cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
         return {}
 
     @staticmethod
-    def calc_analytic_prepare_func(sampler, beamformer):
-        # restore sampler and acoular objects
-        micgeom_sampler = sampler.get(1)
-        seed_sampler = sampler.get(2)
-        rms_sampler = sampler.get(3)
-        loc_sampler = sampler.get(4)
-        noise_sampler = sampler.get(5)
-        signal_length_sampler = sampler.get(6)
-
-        freq_data = beamformer.freq_data
-
-        noisy_mics = (
-            micgeom_sampler.target if micgeom_sampler is not None else beamformer.steer.mics
-        )  # use the original mics (without noise)
-
-        if signal_length_sampler is not None:
-            freq_data.num_samples = signal_length_sampler.target * freq_data.sample_freq
-
-        nfft = freq_data.fftfreq().shape[0]
-        # sample parameters
-        loc = loc_sampler.target
-        nsources = loc.shape[1]
-        freq_data.steer.grid = ac.ImportGrid(pos=loc)  # set source locations
-        freq_data.steer.mics = noisy_mics  # set mic locations
-        freq_data.seed = seed_sampler.target
-        # change source strength
-        prms_sq = rms_sampler.target[:nsources] ** 2  # squared sound pressure RMS at reference position
-        prms_sq_per_freq = prms_sq / nfft  # prms_sq_per_freq
-        freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
-        # add noise to freq_data
-        if noise_sampler is not None:
-            noise_signal_ratio = noise_sampler.target  # normalized noise variance
-            noise_prms_sq = prms_sq.sum() * noise_signal_ratio
-            noise_prms_sq_per_freq = noise_prms_sq / nfft
-            nperf = np.diag(np.array([noise_prms_sq_per_freq] * beamformer.steer.mics.num_mics))
-            freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
-        else:
-            freq_data.noise = None
+    def calc_analytic_prepare_func(sampler, mics, freq_data):
+        cf = DatasetSyntheticConfig
+        mics = DatasetSyntheticConfig._prepare_mics(sampler, mics)
+        loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
+        noise_prms_sq = DatasetSyntheticConfig._prepare_noise_params(sampler, prms_sq)
+        # set Wishart simulator
+        cf._prepare_spectra_wishart(
+            mics,
+            freq_data,
+            loc,
+            prms_sq,
+            source_seeds,
+            noise_prms_sq,
+            num_samples,
+        )
         return {}
 
     def get_prepare_func(self):
         if self.mode == 'welch':
             prepare_func = partial(
                 self.calc_welch_prepare_func,
+                mics=self.mics,
                 beamformer=self.beamformer,
                 sources=self.sources,
                 source_steer=self.source_steer,
@@ -852,7 +876,7 @@ class DatasetSyntheticConfig(ConfigBase):
                 obs=self.obs,
             )
         else:
-            prepare_func = partial(self.calc_analytic_prepare_func, beamformer=self.beamformer)
+            prepare_func = partial(self.calc_analytic_prepare_func, mics=self.mics, freq_data=self.beamformer.freq_data)
         return prepare_func
 
 
