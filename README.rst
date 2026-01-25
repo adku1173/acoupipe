@@ -29,7 +29,7 @@ Currently, AcouPipe provides two default classes to generate microphone array da
 
 * **DatasetSRIRACHA** relies on a large-scale set of spatial room impulse responses from the `SRIRACHA dataset <https://doi.org/10.14279/depositonce-23943>`_ that were measured with the same microphone array as in the MIRACLE dataset, but in a reverberant shoebox room.
 
-.. figure:: docs/source/_static/sriracha_t60-measurement.png
+.. figure:: docs/source/_static/sriracha_t60-measurement.jpg
    :width: 600
    :align: center
 
