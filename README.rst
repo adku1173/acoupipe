@@ -68,31 +68,31 @@ Users can cite the package and the data in their contributions by referring to `
    doi = {10.1007/s11042-023-16947-w}
    }
 
-@article{Kujawski2024,
-      author = {Kujawski, Adam and Pelling, Art J. R. and Sarradj, Ennes},
-      title = {MIRACLE - a Microphone Array Impulse Response Dataset for Acoustic Learning},
-      year = {2024},
-      journal = {EURASIP Journal on Audio, Speech, and Music Processing},
-      volume = {2024},
-      number = {1},
-      pages = {32},
-      issn = {1687-4722},
-      doi = {10.1186/s13636-024-00352-8},
-      language = {en},
-}
+   @article{Kujawski2024,
+         author = {Kujawski, Adam and Pelling, Art J. R. and Sarradj, Ennes},
+         title = {MIRACLE - a Microphone Array Impulse Response Dataset for Acoustic Learning},
+         year = {2024},
+         journal = {EURASIP Journal on Audio, Speech, and Music Processing},
+         volume = {2024},
+         number = {1},
+         pages = {32},
+         issn = {1687-4722},
+         doi = {10.1186/s13636-024-00352-8},
+         language = {en},
+   }
 
-@misc{Pelling2025,
-    title = {{{SRIRACHA}}: {{Shoebox Room Impulse Response Archive}} with {{Varying Absorption}}},
-    author = {Pelling, Art J. R. and Kujawski, Adam and Sarradj, Ennes},
-    year = 2025,
-    month = jul,
-    publisher = {Technische Universit\"at Berlin},
-    doi = {10.14279/DEPOSITONCE-23943},
-    urldate = {2025-10-30},
-    collaborator = {Bergh{\"a}user, Lin M. and Tschakert, Roman and Jana, Ole},
-    copyright = {Creative Commons Attribution Share Alike 4.0 International},
-    langid = {en}
-}
+   @misc{Pelling2025,
+      title = {{{SRIRACHA}}: {{Shoebox Room Impulse Response Archive}} with {{Varying Absorption}}},
+      author = {Pelling, Art J. R. and Kujawski, Adam and Sarradj, Ennes},
+      year = 2025,
+      month = jul,
+      publisher = {Technische Universit\"at Berlin},
+      doi = {10.14279/DEPOSITONCE-23943},
+      urldate = {2025-10-30},
+      collaborator = {Bergh{\"a}user, Lin M. and Tschakert, Roman and Jana, Ole},
+      copyright = {Creative Commons Attribution Share Alike 4.0 International},
+      langid = {en}
+   }
 
 License
 =======
