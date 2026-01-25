@@ -7,26 +7,30 @@ from acoupipe.datasets.experimental import DatasetMIRACLE, DatasetSRIRACHA
 from acoupipe.datasets.synthetic import DatasetSynthetic
 
 f = 2000
+mode = "wishart"
+max_nsources = 10
 sriracha_path = "/home/kujawski/Documents/Projekte/DFG/AP5/miracle2/data/published"
+mic_sig_noise = False
 
 fig, axs = plt.subplots(2, 4, figsize=(12, 9), sharey=True, sharex=True)
 axs = axs.ravel()
-fig.suptitle(f"Sourcemap ($f={f}$ Hz, 1/3 octave)", fontsize=12)
+fig.suptitle(f"Sourcemap ($f={f}$ Hz)", fontsize=12)
 
-for i, scenario in enumerate(["Synthetic", "A1", "SRA1", "SR1", "A2", "R2", "SRA2", "SR2"]):
+for i, scenario in enumerate(["SR2","Synthetic", "A1", "SRA1", "SR1", "A2", "R2", "SRA2"]):
 #for i, scenario in enumerate(["A1"]):
     if scenario == "Synthetic":
-        dataset = DatasetSynthetic(mode="wishart")
+        dataset = DatasetSynthetic(mode=mode, random_signal_length=False,  max_nsources=max_nsources, mic_sig_noise=mic_sig_noise)
     elif scenario in ["A1", "A2", "R2"]:
-        dataset = DatasetMIRACLE(scenario=scenario, mode="wishart", srir_dir=sriracha_path)
+        dataset = DatasetMIRACLE(scenario=scenario, mode=mode,  max_nsources=max_nsources, mic_sig_noise=mic_sig_noise)
     else:
-        dataset = DatasetSRIRACHA(scenario=scenario, mode="wishart", srir_dir=sriracha_path)
+        dataset = DatasetSRIRACHA(scenario=scenario, mode=mode, srir_dir=sriracha_path, max_nsources=max_nsources, mic_sig_noise=mic_sig_noise)
+    print(f"Processing dataset: {dataset.__class__.__name__}, scenario: {scenario}")
     data_generator = dataset.generate(
         features=["sourcemap", "loc", "f"],
         split="training",
         size=1,
         f=[f],
-        num=1,
+        num=0,
         start_idx=2,
     )
     data_sample = next(data_generator)
@@ -36,7 +40,7 @@ for i, scenario in enumerate(["Synthetic", "A1", "SRA1", "SR1", "A2", "R2", "SRA
     # sound pressure level
     Lm = ac.L_p(data_sample["sourcemap"]).T
     Lm_max = Lm.max()
-    Lm_min = Lm.max() - 10
+    Lm_min = Lm.max() - 20
 
     if scenario == "Synthetic":
         title = f"{dataset.__class__.__name__}"

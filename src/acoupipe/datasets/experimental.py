@@ -30,6 +30,7 @@ from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 from acoupipe.datasets.utils import (
     get_all_source_signals,
     get_uncorrelated_noise_source_recursively,
+    calc_transfer,
 )
 
 link_address = {
@@ -115,7 +116,7 @@ class DatasetMIRACLE(DatasetBase):
 
         ===================== ========================================
         Sampling Rate         fs=32,000 Hz
-        Block size            1024 Samples
+        Block size            256 Samples
         Block overlap         50 %
         Windowing             von Hann / Hanning
         ===================== ========================================
@@ -297,18 +298,20 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         else:
             # check if available locally
             if self.srir_dir is not None:
+                # check if srir dir exists
+                if not Path(self.srir_dir).is_dir():
+                    msg = f'srir_dir {self.srir_dir} does not exist.'
+                    raise ValueError(msg)
+
                 local_path = Path(self.srir_dir) / (self.scenario + '.h5')
                 if local_path.is_file():
                     self._filename = str(local_path)
                     return
+                else:
+                    msg = f'File {local_path} does not exist.'
+                    raise ValueError(msg)
             msg = f'Invalid scenario {self.scenario}.'
             raise ValueError(msg)
-
-    @observe('fft_params.items', post_init=False)
-    def _validate_fixed_blocksize(self, event):
-        if self.fft_params['block_size'] != 1024:
-            msg = 'DatasetMIRACLE currently only supports a fixed block size of 1024 samples.'
-            raise NotImplementedError(msg)
 
     @observe(
         'mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, ref_mic_index, filename',
@@ -458,7 +461,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             if signal_length_sampler is not None:
                 freq_data.num_samples = signal_length_sampler.target * freq_data.sample_freq
 
-            nfft = freq_data.fftfreq().shape[0]
+            fftfreq = freq_data.fftfreq()
+            nfft = fftfreq.shape[0]
             # sample parameters
             loc = loc_sampler.target
             nsources = loc.shape[1]
@@ -466,19 +470,21 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             # finding the SRIR matching the location
             transfer = np.empty((nfft, nummics, nsources), dtype=complex)
             loc_array = loc_sampler.grid.pos
+            ir_ref_gain = np.zeros(nsources)
             for i in range(nsources):
                 distances = np.linalg.norm(loc_array - loc[:, i][:, np.newaxis], axis=0)
                 ir_idx = np.argmin(distances)
                 assert distances[ir_idx] < 1e-6  # Ensure it's a close match
-                ir = file['data/impulse_response'][ir_idx].T
-                tf = np.fft.rfft(ir, n=freq_data.block_size, axis=0)
-                transfer[:, :, i] = tf / tf[:, ref_mic][:, np.newaxis]  # reference mic based normalization
+                ir = file['data/impulse_response'][ir_idx]
+                ir_ref_gain[i] = np.sum(ir[ref_mic]**2)   
+                transfer[:, :, i] = calc_transfer(
+                    ir, freq_data.sample_freq, freq_data.block_size, fftfreq)
             # adjust freq_data
             freq_data.custom_transfer = transfer
             freq_data.steer.grid = ac.ImportGrid(pos=loc)  # set source locations
             freq_data.seed = seed_sampler.target
             # change source strength
-            prms_sq = rms_sampler.target[:nsources] ** 2  # squared sound pressure RMS at reference position
+            prms_sq = rms_sampler.target[:nsources] ** 2 / ir_ref_gain
             prms_sq_per_freq = prms_sq / nfft  # prms_sq_per_freq
             freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
             # add noise to freq_data
@@ -522,7 +528,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 distances = np.linalg.norm(loc_array - loc[:, i][:, np.newaxis], axis=0)
                 ir_idx = np.argmin(distances)
                 assert distances[ir_idx] < 1e-6  # Ensure it's a close match
-                src.kernel = file['data/impulse_response'][ir_idx], freq_data.block_size.T
+                src.kernel = file['data/impulse_response'][ir_idx].T
                 src.signal.seed = seed_sampler.target + i
                 h_ref = src.kernel[:, ref_mic]  # shape (N,)
                 ref_gain = np.sum(h_ref**2)
@@ -576,8 +582,8 @@ class DatasetSRIRACHA(DatasetMIRACLE):
     """A microphone array dataset generator using experimentally measured data from the SRIRACHA dataset."""
     def __init__(
         self,
+        scenario,
         srir_dir=None,
-        scenario='SRA1',
         ref_mic_index=63,
         mode='welch',
         mic_sig_noise=True,
@@ -637,4 +643,4 @@ class DatasetSRIRACHA(DatasetMIRACLE):
 
 class DatasetSRIRACHAConfig(DatasetMIRACLEConfig):
     """Configuration class for the DatasetSRIRACHA dataset."""
-    scenario = Either(*SRIRACHA_SCENARIOS, default='SRA1', desc='experimental configuration')
+    scenario = Either(*SRIRACHA_SCENARIOS, desc='experimental configuration')
