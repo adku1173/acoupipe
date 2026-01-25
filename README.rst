@@ -2,45 +2,117 @@
 AcouPipe
 ================================================================================
 
+**AcouPipe** is a Python toolbox for generating *large-scale, configurable* microphone array datasets
+for **acoustical source localization and characterization** with Acoular_. It is designed for
+machine-learning workflows, enabling reproducible dataset generation with physically meaningful
+signal models and measurement-based propagation.
 
-**AcouPipe** is a Python toolbox for generating unique acoustical source localization and characterization datasets with Acoular_ that can be used for training of deep neural networks and machine learning. 
+Key features
+============
 
-AcouPipe supports distributed computation with Ray_ and comes with two default datasets, which enables to create data for machine learning on the fly! A pre-built Docker container can be downloaded from DockerHub_.
+- **On-the-fly dataset synthesis**
+- **Multiple propagation backends**
+  - free-field propagation
+  - measured RIR-based propagation
+- **Distributed computation** with Ray_ for scalable generation and feature extraction.
+- **Efficient storage** of machine-learning features (rather than raw multichannel time data).
 
-The toolbox **documentation** can be found `here <https://adku1173.github.io/acoupipe/>`_.
+
+Documentation
+=============
+
+The full documentation (API reference, examples, and dataset descriptions) is available here:
+`https://adku1173.github.io/acoupipe/ <https://adku1173.github.io/acoupipe/>`_.
 
 
-Datasets 
-===============
+Installation
+============
 
-Currently, AcouPipe provides two default classes to generate microphone array datasets:
+AcouPipe is typically installed from source:
 
-* **DatasetSynthetic** is a simple and fast method that relies on synthetic white noise signals and spatially stationary sources in anechoic conditions. 
+.. code-block:: bash
 
-.. figure:: docs/source/_static/msm_layout.png
-   :width: 600
-   :align: center
+   git clone https://github.com/adku1173/acoupipe.git
+   cd acoupipe
+   pip install -e .
 
-* **DatasetMIRACLE** relies on a large-scale set of measured spatial room impulse responses from the `MIRACLE dataset <https://doi.org/10.14279/depositonce-20837>`_, acquired at the TU Berlin anechoic chamber, and synthetic source signals resulting in a realistic and quasi-infinite dataset.
 
-.. figure:: docs/source/_static/msm_miracle.png
-   :width: 600
-   :align: center
+Datasets
+========
 
-* **DatasetSRIRACHA** relies on a large-scale set of spatial room impulse responses from the `SRIRACHA dataset <https://doi.org/10.14279/depositonce-23943>`_ that were measured with the same microphone array as in the MIRACLE dataset, but in a reverberant shoebox room.
+AcouPipe provides three default dataset generators:
 
-.. figure:: docs/source/_static/sriracha_t60-measurement.jpg
-   :width: 600
-   :align: center
+* **DatasetSynthetic**
+  A simple and fast baseline that relies on synthetic (e.g., white-noise) source signals and spatially
+  stationary sources in anechoic conditions. This is well suited for rapid prototyping and ablation studies.
 
-Data Generation 
-===============
+  .. figure:: docs/source/_static/msm_layout.png
+     :width: 600
+     :align: center
 
-Instead of raw time-data, only the necessary input features for machine learning are stored.
+* **DatasetMIRACLE**
+  Uses measured SRIRs from the `MIRACLE dataset <https://doi.org/10.14279/depositonce-20837>`_
+  (TU Berlin anechoic chamber) combined with synthetic source signals, resulting in a realistic
+  and quasi-infinite dataset with measurement-based propagation.
 
-This allows the user to create data sets of manageable size that are portable, or even to create data on the fly, and facilitate reproducible research.
+  .. figure:: docs/source/_static/msm_miracle.png
+     :width: 600
+     :align: center
 
-See the latest performance benchmarks on `DatasetSynthetic` for the most computational demanding features:
+* **DatasetSRIRACHA**
+  Uses measured SRIRs from the `SRIRACHA dataset <https://doi.org/10.14279/depositonce-23943>`_,
+  recorded with the same planar microphone array as MIRACLE, but in a reverberant shoebox room with
+  varying absorption conditions.
+
+  .. figure:: docs/source/_static/sriracha_t60-measurement.jpg
+     :width: 600
+     :align: center
+
+
+Data generation philosophy
+=========================
+
+Instead of storing raw multichannel time signals, AcouPipe stores only the **machine-learning-relevant
+features** required by the training pipeline (e.g., source maps, time data, cross-spectral matrices, etc.)
+This reduces storage requirements and enables:
+
+- generation of **portable** datasets of manageable size,
+- **on-the-fly** data generation during training,
+- **reproducibility** via stored random seeds and deterministic pipelines.
+
+Quick start
+===========
+
+The dataset classes are Python iterables that yield one sample at a time (dictionary-based),
+which integrates well with PyTorch / TensorFlow input pipelines. Simply choose one of the dataset generator classes.
+Each class provides methods to store data directly to disk in HDF5 format or as TFRecords. In addition, AcouPipe
+supports distributed dataset generation with Ray_, which allows to use multiple CPU cores or cluster nodes for
+faster data generation.
+
+.. code-block:: python
+
+   from acoupipe.datasets.synthetic import DatasetSynthetic
+
+   # instantiate dataset class 
+   # The cross-spectral-matrix (CSM) used to calculate the sourcemap feature will be
+   # sampled from a Wishart distribution (mode="wishart")
+   # Computation for each dataset sample will be distributed over 2 tasks (tasks=2)
+   dataset = DatasetSynthetic(mode="wishart", tasks=2)
+
+   # generator that creates beamforming maps for 10 different source cases at a frequency of 2000 Hz 
+   # additionally, extract source locations ("loc" feature)
+   data_generator = dataset.generate(
+      features=["sourcemap","loc"], split="training", size=10, f=[2000], num=0)
+                                       
+   data_sample = next(data_generator) # obtain first source case sample 
+   print(data_sample.keys())  # dict_keys(['sourcemap', 'loc', 'f'])
+
+
+Performance benchmarks (DatasetSynthetic)
+-----------------------------------------
+
+The plots below show performance results for computationally demanding feature configurations of
+``DatasetSynthetic``:
 
 .. image:: docs/source/_static/compute4_all_features-over-tasks_DatasetSynthetic_f4000.png
    :width: 100%
@@ -51,54 +123,52 @@ See the latest performance benchmarks on `DatasetSynthetic` for the most computa
    :align: center
 
 
-
-
-Citation 
+Citation
 ========
 
-Users can cite the package and the data in their contributions by referring to `Kujawski and Sarradj, (2023) <https://doi.org/10.1007/s11042-023-16947-w>`_:
+If you use AcouPipe and/or the associated datasets in scientific work, please cite:
+
+- the AcouPipe framework paper,
+- the MIRACLE dataset paper (if you use DatasetMIRACLE),
+- the SRIRACHA dataset record (if you use DatasetSRIRACHA).
 
 .. code-block:: bibtex
 
    @article{Kujawski2023,
-   author = {Kujawski,Adam and Pelling, Art J. R. and Jekosch, Simon and Sarradj,Ennes},
-   title = {A framework for generating large-scale microphone array data for machine learning},
-   journal = {Multimedia Tools and Applications},
-   year = {2023},
-   doi = {10.1007/s11042-023-16947-w}
+     author  = {Kujawski, Adam and Pelling, Art J. R. and Jekosch, Simon and Sarradj, Ennes},
+     title   = {A framework for generating large-scale microphone array data for machine learning},
+     journal = {Multimedia Tools and Applications},
+     year    = {2023},
+     doi     = {10.1007/s11042-023-16947-w}
    }
 
    @article{Kujawski2024,
-         author = {Kujawski, Adam and Pelling, Art J. R. and Sarradj, Ennes},
-         title = {MIRACLE - a Microphone Array Impulse Response Dataset for Acoustic Learning},
-         year = {2024},
-         journal = {EURASIP Journal on Audio, Speech, and Music Processing},
-         volume = {2024},
-         number = {1},
-         pages = {32},
-         issn = {1687-4722},
-         doi = {10.1186/s13636-024-00352-8},
-         language = {en},
+     author  = {Kujawski, Adam and Pelling, Art J. R. and Sarradj, Ennes},
+     title   = {MIRACLE - a Microphone Array Impulse Response Dataset for Acoustic Learning},
+     journal = {EURASIP Journal on Audio, Speech, and Music Processing},
+     year    = {2024},
+     volume  = {2024},
+     number  = {1},
+     pages   = {32},
+     doi     = {10.1186/s13636-024-00352-8}
    }
 
    @misc{Pelling2025,
-      title = {{{SRIRACHA}}: {{Shoebox Room Impulse Response Archive}} with {{Varying Absorption}}},
-      author = {Pelling, Art J. R. and Kujawski, Adam and Sarradj, Ennes},
-      year = 2025,
-      month = jul,
-      publisher = {Technische Universit\"at Berlin},
-      doi = {10.14279/DEPOSITONCE-23943},
-      urldate = {2025-10-30},
-      collaborator = {Bergh{\"a}user, Lin M. and Tschakert, Roman and Jana, Ole},
-      copyright = {Creative Commons Attribution Share Alike 4.0 International},
-      langid = {en}
+     title     = {{{SRIRACHA}}: {{Shoebox Room Impulse Response Archive}} with {{Varying Absorption}}},
+     author    = {Pelling, Art J. R. and Kujawski, Adam and Sarradj, Ennes},
+     year      = {2025},
+     month     = jul,
+     publisher = {Technische Universit\"at Berlin},
+     doi       = {10.14279/DEPOSITONCE-23943}
    }
+
 
 License
 =======
 
-AcouPipe is licensed under the terms of the BSD license. See the file "LICENSE" for more information.
-
+- **AcouPipe (code)** is licensed under the BSD license. See the file ``LICENSE`` for details.
+- **MIRACLE** and **SRIRACHA** are distributed under their respective dataset licenses (see the dataset landing
+  pages/metadata); please ensure compliance before using the measured SRIRs in downstream work.
 
 
 .. Links:
@@ -115,5 +185,3 @@ AcouPipe is licensed under the terms of the BSD license. See the file "LICENSE" 
 .. _Pandas: https://pandas.pydata.org/docs/
 .. _h5py: https://docs.h5py.org/en/stable/
 .. _tqdm: https://github.com/tqdm/tqdm
-
-
