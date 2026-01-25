@@ -150,3 +150,11 @@ Example sourcemaps
 .. figure:: ../../_static/exp_sourcemap_example.png
     :width: 750
     :align: center
+
+
+
+License and access
+------------------
+
+MIRACLE is distributed under **CC BY-NC-SA 4.0** (non-commercial). Please ensure your intended use complies
+with the license terms.
