@@ -9,7 +9,6 @@ from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, In
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import (
-    blockwise_transfer,
     get_frequency_index_range,
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
@@ -505,8 +504,8 @@ class AnalyticSourceStrengthFeature(SpectraFeature):
         strength = np.zeros((nfft, len(sources)))
         for j, source in enumerate(sources):
             if isinstance(source, ac.PointSourceConvolve):
-                ir = source.kernel[:, ref_mic].copy()
-                tf = blockwise_transfer(ir[np.newaxis], blocksize=freq_data.block_size).squeeze()
+                ir = source.kernel[:, ref_mic][np.newaxis, :]
+                tf = np.fft.rfft(ir, n=freq_data.block_size, axis=1).squeeze()
                 strength[:, j] = np.real(tf * tf.conjugate()) * source.signal.rms**2 / nfft
             elif isinstance(source, ac.PointSource):
                 if isinstance(source.signal, ac.WNoiseGenerator):
