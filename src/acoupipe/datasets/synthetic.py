@@ -44,7 +44,8 @@ from acoupipe.datasets.features import (
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import get_all_source_signals, get_uncorrelated_noise_source_recursively
-
+from acoupipe.datasets.ir import get_ir_pyroom_acoustics
+from acoupipe.datasets.utils import calc_transfer
 
 class DatasetSynthetic(DatasetBase):
     r"""`DatasetSynthetic` is a purely synthetic microphone array source case generator.
@@ -879,6 +880,101 @@ class DatasetSyntheticConfig(ConfigBase):
             prepare_func = partial(self.calc_analytic_prepare_func, mics=self.mics, freq_data=self.beamformer.freq_data)
         return prepare_func
 
+
+class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
+    """Configuration for the ISM dataset."""
+
+    @staticmethod
+    def _prepare_ir(sampler, mics, freq_data, loc, ref_loc, domain='frequency'):
+        fftfreq = freq_data.fftfreq()
+        nfft = freq_data.fftfreq().shape[0]
+        nsources = loc.shape[1]
+        num_mics = mics.num_mics
+
+        # we don't use a chunk cache here, since we access the data only once
+        # finding the SRIR matching the location
+        if domain == 'frequency':
+            transfer = np.empty((nfft, num_mics, nsources), dtype=complex)
+
+        rdim = [6.22, 3.85, 3.07]
+        rt60 = 1.
+        # calculate center of the area spanned by mics and sources
+        ref_loc = np.atleast_2d(ref_loc).T
+        all_pos = np.hstack((mics.pos_total, loc, ref_loc))
+        center = 0.5 * (np.min(all_pos, axis=1) + np.max(all_pos, axis=1))[:, np.newaxis]
+        # shift center to center of the room
+        room_center = np.array([[rdim[0] / 2], [rdim[1] / 2], [rdim[2] / 2]]) - center
+        # shift positions to center of the room
+        mloc = np.hstack((mics.pos, ref_loc)) + room_center
+        sloc = loc + room_center
+        #: missing speed of sound
+        irs = get_ir_pyroom_acoustics(freq_data.sample_freq, rdim, mloc, sloc, rt60)
+        ir_ref_gain = np.zeros(nsources)
+        # get longest ir length
+        max_ir_len = max([irs[j][i].shape[0] for i in range(nsources) for j in range(num_mics)])
+        # pad irs to same length
+        irs_padded = np.zeros((num_mics, nsources, max_ir_len))
+        for i in range(nsources):
+            ir_ref_gain[i] = np.sum(irs[-1][i] ** 2)
+            for j in range(num_mics):
+                ir = irs[j][i]
+                irs_padded[j, i, : ir.shape[0]] = ir
+            if domain == 'frequency':
+                transfer[:, :, i] = calc_transfer(irs_padded[:, i, :], freq_data.sample_freq, freq_data.block_size, fftfreq)
+        if domain == 'time':
+            return irs_padded, ir_ref_gain
+        return transfer, ir_ref_gain
+
+
+    @staticmethod
+    def calc_analytic_prepare_func(sampler, mics, freq_data):
+        cf = DatasetSyntheticConfig
+        cism = DatasetSyntheticISMConfig
+        mics = cf._prepare_mics(sampler, mics)
+        loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
+        ref_loc = freq_data.steer.ref
+        transfer, ir_ref_gain = cism._prepare_ir(sampler, mics, freq_data, loc, ref_loc)
+        noise_prms_sq = cf._prepare_noise_params(sampler, prms_sq)
+        cf._prepare_spectra_wishart(
+            mics,
+            freq_data,
+            loc,
+            prms_sq / ir_ref_gain,
+            source_seeds,
+            noise_prms_sq,
+            num_samples,
+            custom_transfer=transfer,
+        )
+        return {}
+
+
+class DatasetSyntheticISM(DatasetSynthetic):
+    """Dataset class for the ISM dataset."""
+
+    def __init__(self, config=None, **kwargs):
+        """
+        Parameters
+        ----------
+        config : DatasetSyntheticISMConfig
+            Configuration object. Defaults to None. If None, a default configuration
+            object is created.
+        kwargs : dict
+            Additional keyword arguments passed to the DatasetSynthetic constructor.
+        """
+        if config is None:
+            config = DatasetSyntheticISMConfig(
+                mode='analytic',
+                signal_length=5,
+                fs=13720,
+                min_nsources=1,
+                max_nsources=10,
+                mic_pos_noise=True,
+                mic_sig_noise=True,
+                snap_to_grid=False,
+                random_signal_length=False,
+            )
+        super().__init__(config=config, **kwargs)
+            
 
 
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):

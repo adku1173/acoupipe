@@ -472,7 +472,6 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         fftfreq = freq_data.fftfreq()
         nfft = freq_data.fftfreq().shape[0]
         nsources = loc.shape[1]
-        mics = cf._prepare_mics(sampler, mics)
         num_mics = mics.num_mics
 
         # we don't use a chunk cache here, since we access the data only once
@@ -521,6 +520,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     def calc_analytic_prepare_func(sampler, mics, freq_data, filename, ref_mic):
         cf = DatasetSyntheticConfig
         cfm = DatasetMIRACLEConfig
+        mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         transfer, ir_ref_gain = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic)
         noise_prms_sq = cf._prepare_noise_params(sampler, prms_sq)
