@@ -488,8 +488,9 @@ class DatasetSyntheticConfig(ConfigBase):
         return LocFeature(freq_data=self.freq_data, dtype=np.float32, shape=(3, None))
 
     def _get_default_feature_source_strength_analytic(self, **kwargs):  # noqa ARG002
+        freq_data = self.fft_obs_spectra if self.mode == 'welch' else self.freq_data
         return AnalyticSourceStrengthFeature(
-            freq_data=self.freq_data,
+            freq_data=freq_data,
             f=kwargs['f'],
             num=kwargs['num'],
             steer=self.source_steer,

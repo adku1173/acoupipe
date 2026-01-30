@@ -25,10 +25,9 @@ from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
 from acoupipe.datasets.base import DatasetBase
 from acoupipe.datasets.features import AnalyticSourceStrengthFeature, EstimatedSourceStrengthFeature, TargetmapFeature
-from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSyntheticISMConfig
+from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 from acoupipe.datasets.utils import (
     calc_transfer,
-    get_all_source_signals,
 )
 
 link_address = {
@@ -382,45 +381,6 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         if self.random_signal_length:
             sampler[6] = self.signal_length_sampler
         return sampler
-
-    def _get_default_feature_source_strength_analytic(self, **kwargs):  # noqa ARG002
-        fdim = self._get_fdim(kwargs['f'])
-        return AnalyticSourceStrengthFeature(
-            freq_data=self.freq_data,
-            f=kwargs['f'],
-            num=kwargs['num'],
-            ref_mic=self.ref_mic_index,
-            dtype=np.float32,
-            shape=(fdim, None),
-        )
-
-    def _get_default_feature_source_strength_estimated(self, **kwargs):  # noqa ARG002
-        fdim = self._get_fdim(kwargs['f'])
-        freq_data = self.fft_obs_spectra if self.mode == 'welch' else self.freq_data
-        return EstimatedSourceStrengthFeature(
-            freq_data=freq_data,
-            f=kwargs['f'],
-            num=kwargs['num'],
-            ref_mic=self.ref_mic_index,
-            dtype=np.float32,
-            shape=(fdim, None),
-        )
-
-    def _get_targetmap_feature(self, strength_type, **kwargs):  # noqa ARG002
-        fdim = self._get_fdim(kwargs['f'])
-        freq_data = self.freq_data if strength_type == 'analytic' else (self.fft_obs_spectra if self.mode == 'welch' else self.freq_data)
-        return TargetmapFeature(
-            freq_data=freq_data,
-            f=kwargs['f'],
-            num=kwargs['num'],
-            steer=self.source_steer,
-            ref_mic=self.ref_mic_index,
-            strength_type=strength_type,
-            grid=self.grid,
-            name=f'targetmap_{strength_type}',
-            dtype=np.float32,
-            shape=(fdim,) + self.grid.shape,
-        )
 
     def create_mics(self):
         with h5.File(self.filename, 'r') as file:
