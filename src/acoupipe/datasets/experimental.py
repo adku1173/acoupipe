@@ -491,8 +491,17 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 if domain == 'frequency':
                     transfer[:, :, i] = calc_transfer(ir, freq_data.sample_freq, freq_data.block_size, fftfreq)
         if domain == 'time':
-            return irs, ir_ref_gain
+            irs_array = np.stack(irs, axis=1)
+            return irs_array, ir_ref_gain
         return transfer, ir_ref_gain
+
+    @staticmethod
+    def _prepare_ir_kernel(ir, sources, ref_sources, ref_mic):
+        for i, src in enumerate(sources):
+            src.kernel = ir[:, i, :].T
+        for i, src in enumerate(ref_sources):
+            src.kernel = ir[ref_mic, i, :].T[:, np.newaxis]
+
 
     @staticmethod
     def calc_analytic_prepare_func(sampler, mics, freq_data, filename, ref_mic):
@@ -520,16 +529,17 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     ):
         cf = DatasetSyntheticConfig
         cfm = DatasetMIRACLEConfig
-        cism = DatasetSyntheticISMConfig
         freq_data = beamformer.freq_data
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         ir, ir_ref_gain = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic, 'time')
-        subset_sources = cism._prepare_sources_welch(sources, loc, mics, ir)
-        signals = cism._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds, ir_ref_gain)
+        subset_sources = cf._prepare_sources_welch(sources, loc, mics)
+        signals = cf._prepare_signals_welch(prms_sq/ir_ref_gain, subset_sources, num_samples, source_seeds)
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
+        cfm._prepare_ir_kernel(
+            ir, freq_data.source.sources, fft_obs_spectra.source.sources, ref_mic)         
         return {}
 
     def get_prepare_func(self):

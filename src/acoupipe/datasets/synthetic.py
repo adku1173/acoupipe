@@ -774,11 +774,11 @@ class DatasetSyntheticConfig(ConfigBase):
         return loc, rms_sq, source_seeds, num_samples
 
     @staticmethod
-    def _prepare_signals_welch(prms_sq, sources, num_samples, source_seeds, source_steer):
+    def _prepare_signals_welch(prms_sq, sources, num_samples, source_seeds):
         signals = get_all_source_signals(sources)
         for i, signal in enumerate(signals):
             signal.seed = source_seeds[i]
-            signal.rms = np.sqrt(prms_sq[i]) * source_steer.r0[i]
+            signal.rms = np.sqrt(prms_sq[i])
             if num_samples is not None:
                 signal.num_samples = num_samples
         return signals
@@ -840,7 +840,7 @@ class DatasetSyntheticConfig(ConfigBase):
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         source_steer.grid = ac.ImportGrid(pos=loc)
         subset_sources = cf._prepare_sources_welch(sources, loc, mics)
-        signals = cf._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds, source_steer)
+        signals = cf._prepare_signals_welch(prms_sq*source_steer.r0**2, subset_sources, num_samples, source_seeds)
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
@@ -929,10 +929,10 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         # get longest ir length
         max_ir_len = max([irs[j][i].shape[0] for i in range(nsources) for j in range(num_mics)])
         # pad irs to same length
-        irs_padded = np.zeros((num_mics, nsources, max_ir_len))
+        irs_padded = np.zeros((num_mics+1, nsources, max_ir_len))
         for i in range(nsources):
             ir_ref_gain[i] = np.sum(irs[-1][i] ** 2)
-            for j in range(num_mics):
+            for j in range(num_mics+1):
                 ir = irs[j][i]
                 irs_padded[j, i, : ir.shape[0]] = ir
             if domain == 'frequency':
@@ -942,26 +942,11 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         return transfer, ir_ref_gain
 
     @staticmethod
-    def _prepare_sources_welch(sources, loc, mics, irs):
-        # set source locations
-        nsources = loc.shape[1]
-        subset_sources = sources[:nsources]
-        for i, src in enumerate(subset_sources):
-            src.kernel = irs[i].T
-            src.loc = (loc[0, i], loc[1, i], loc[2, i])  # apply wishart locations
-            src.mics = mics
-        return subset_sources
-
-    @staticmethod
-    def _prepare_signals_welch(prms_sq, sources, num_samples, source_seeds, ir_ref_gain):
-        signals = get_all_source_signals(sources)
-        for i, signal in enumerate(signals):
-            signal.seed = source_seeds[i]
-            signal.rms = np.sqrt(prms_sq[i] / ir_ref_gain[i])
-            if num_samples is not None:
-                signal.num_samples = num_samples
-        return signals
-
+    def _prepare_ir_kernel(ir, sources, ref_sources):
+        for i, src in enumerate(sources):
+            src.kernel = ir[:-1, i, :].T
+        for i, src in enumerate(ref_sources):
+            src.kernel = ir[-1, i, :].T[:, np.newaxis]
 
     @staticmethod
     def calc_analytic_prepare_func(sampler, mics, freq_data, room_params):
@@ -994,11 +979,13 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         ir, ir_ref_gain = cism._prepare_ir(mics, freq_data, loc, obs.pos.squeeze(), room_params, 'time')
-        subset_sources = cism._prepare_sources_welch(sources, loc, mics, ir)
-        signals = cism._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds, ir_ref_gain)
+        subset_sources = cf._prepare_sources_welch(sources, loc, mics)
+        signals = cf._prepare_signals_welch(prms_sq/ir_ref_gain, subset_sources, num_samples, source_seeds)
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
+        cism._prepare_ir_kernel(
+            ir, freq_data.source.sources, fft_obs_spectra.source.sources) 
         return {}
 
     def get_prepare_func(self):
