@@ -24,7 +24,6 @@ import pooch
 from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
 from acoupipe.datasets.base import DatasetBase
-from acoupipe.datasets.features import AnalyticSourceStrengthFeature, EstimatedSourceStrengthFeature, TargetmapFeature
 from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 from acoupipe.datasets.utils import (
     calc_transfer,
@@ -481,7 +480,10 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             num_samples,
             custom_transfer=transfer,
         )
-        return {}
+        return {
+            'loc': loc,
+            'prms_sq': prms_sq,
+        }
 
     @staticmethod
     def calc_welch_prepare_func(
@@ -500,7 +502,10 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
         cfm._prepare_ir_kernel(
             ir, freq_data.source.sources, fft_obs_spectra.source.sources, ref_mic)         
-        return {}
+        return {
+            'loc': loc,
+            'prms_sq': prms_sq,
+        }
 
     def get_prepare_func(self):
         if self.mode == 'welch':
