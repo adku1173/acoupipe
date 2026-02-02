@@ -438,7 +438,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             if domain == 'frequency':
                 transfer = np.empty((nfft, num_mics, nsources), dtype=complex)
             loc_array = sampler.get(4).grid.pos
-            ir_ref_gain = np.zeros(nsources)
+            h_norm = np.zeros(nsources)
             irs = []
             for i in range(nsources):
                 distances = np.linalg.norm(loc_array - loc[:, i][:, np.newaxis], axis=0)
@@ -446,13 +446,18 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 assert distances[ir_idx] < 1e-6  # Ensure it's a close match
                 ir = file['data/impulse_response'][ir_idx]
                 irs.append(ir)
-                ir_ref_gain[i] = np.sum(ir[ref_mic] ** 2)
+                h_norm[i] = np.sum(ir[ref_mic] ** 2)
                 if domain == 'frequency':
                     transfer[:, :, i] = calc_transfer(ir, freq_data.sample_freq, freq_data.block_size, fftfreq)
-        if domain == 'time':
-            irs_array = np.stack(irs, axis=1)
-            return irs_array, ir_ref_gain
-        return transfer, ir_ref_gain
+        if domain == 'frequency':
+            # calc transfer norm
+            transfer /= np.sqrt(h_norm[np.newaxis, np.newaxis, :])
+            return transfer
+        else:
+            # normalize irs
+            irs = np.array(irs).transpose(1, 0, 2)  # mics x sources x time
+            irs /= np.sqrt(h_norm[np.newaxis, :, np.newaxis])
+            return irs
 
     @staticmethod
     def _prepare_ir_kernel(ir, sources, ref_sources, ref_mic):
@@ -461,28 +466,28 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         for i, src in enumerate(ref_sources):
             src.kernel = ir[ref_mic, i, :].T[:, np.newaxis]
 
-
     @staticmethod
     def calc_analytic_prepare_func(sampler, mics, freq_data, filename, ref_mic):
         cf = DatasetSyntheticConfig
         cfm = DatasetMIRACLEConfig
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
-        transfer, ir_ref_gain = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic)
+        H = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic)
         noise_prms_sq = cf._prepare_noise_params(sampler, prms_sq)
         cf._prepare_spectra_wishart(
             mics,
             freq_data,
             loc,
-            prms_sq / ir_ref_gain,
+            prms_sq,
             source_seeds,
             noise_prms_sq,
             num_samples,
-            custom_transfer=transfer,
+            custom_transfer=H,
         )
         return {
             'loc': loc,
             'prms_sq': prms_sq,
+            'h_sq': np.real(H[:, ref_mic, :] * H[:, ref_mic, :].conj()),
         }
 
     @staticmethod
@@ -494,17 +499,20 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         freq_data = beamformer.freq_data
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
-        ir, ir_ref_gain = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic, 'time')
+        ir = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic, 'time')
         subset_sources = cf._prepare_sources_welch(sources, loc, mics)
-        signals = cf._prepare_signals_welch(prms_sq/ir_ref_gain, subset_sources, num_samples, source_seeds)
+        signals = cf._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds)
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
         cfm._prepare_ir_kernel(
             ir, freq_data.source.sources, fft_obs_spectra.source.sources, ref_mic)         
+        # calc ref transfer for prms_sq_f
+        H_ref = calc_transfer(ir[ref_mic, :, :], freq_data.sample_freq, freq_data.block_size, freq_data.fftfreq())
         return {
             'loc': loc,
             'prms_sq': prms_sq,
+            'h_sq': np.real(H_ref * H_ref.conj()),
         }
 
     def get_prepare_func(self):

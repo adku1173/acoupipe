@@ -318,7 +318,7 @@ class DatasetSyntheticConfig(ConfigBase):
     snap_to_grid = Bool(False, desc='snap source locations to grid')
     random_signal_length = Bool(False, desc='randomize signal length')
     fft_params = Dict(
-        {'block_size': 128, 'overlap': '50%', 'window': 'Hanning', 'precision': 'complex64'},
+        {'block_size': 128, 'overlap': 'None', 'window': 'Rectangular', 'precision': 'complex64'},
         desc='FFT parameters',
     )
     # acoular pipeline traits
@@ -844,6 +844,7 @@ class DatasetSyntheticConfig(ConfigBase):
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
+        nfft = freq_data.fftfreq().shape[0]
         return {
             'loc': loc,
             'prms_sq': prms_sq,
@@ -865,6 +866,7 @@ class DatasetSyntheticConfig(ConfigBase):
             noise_prms_sq,
             num_samples,
         )
+        nfft = freq_data.fftfreq().shape[0]
         return {
             'loc': loc,
             'prms_sq': prms_sq,
@@ -940,22 +942,27 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         sloc = loc + room_center
         #: missing speed of sound
         irs = get_ir_pyroom_acoustics(freq_data.sample_freq, rdim, mloc, sloc, rt60)
-        ir_ref_gain = np.zeros(nsources)
+        h_norm = np.zeros(nsources)
         # get longest ir length
         max_ir_len = max([irs[j][i].shape[0] for i in range(nsources) for j in range(num_mics)])
         # pad irs to same length
         irs_padded = np.zeros((num_mics+1, nsources, max_ir_len))
         for i in range(nsources):
-            ir_ref_gain[i] = np.sum(irs[-1][i] ** 2)
+            h_norm[i] = np.sum(irs[-1][i] ** 2)
             for j in range(num_mics+1):
                 ir = irs[j][i]
                 irs_padded[j, i, : ir.shape[0]] = ir
             if domain == 'frequency':
                 transfer[:, :, i] = calc_transfer(irs_padded[:, i, :], freq_data.sample_freq, freq_data.block_size, fftfreq)
-        if domain == 'time':
-            return irs_padded, ir_ref_gain
-        return transfer, ir_ref_gain
-
+                # normalize by ref norm
+        if domain == 'frequency':
+            transfer /= np.sqrt(h_norm[np.newaxis, np.newaxis, :])
+            return transfer
+        else:
+            # normalize irs
+            irs_padded /= np.sqrt(h_norm[np.newaxis, :, np.newaxis])
+            return irs_padded
+        
     @staticmethod
     def _prepare_ir_kernel(ir, sources, ref_sources):
         for i, src in enumerate(sources):
@@ -970,13 +977,13 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         ref_loc = freq_data.steer.ref
-        H, ir_ref_mag = cism._prepare_ir(mics, freq_data, loc, ref_loc, room_params=room_params, domain='frequency')
+        H = cism._prepare_ir(mics, freq_data, loc, ref_loc, room_params=room_params, domain='frequency')
         noise_prms_sq = cf._prepare_noise_params(sampler, prms_sq)
         cf._prepare_spectra_wishart(
             mics,
             freq_data,
             loc,
-            prms_sq / ir_ref_mag,
+            prms_sq,
             source_seeds,
             noise_prms_sq,
             num_samples,
@@ -985,6 +992,7 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         return {
             'loc': loc,
             'prms_sq': prms_sq,
+            'h_sq': np.real(H[:, -1, :] * H[:, -1, :].conj()),
         }
 
     @staticmethod
@@ -994,21 +1002,25 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         cf = DatasetSyntheticConfig
         cism = DatasetSyntheticISMConfig
         freq_data = beamformer.freq_data
+        fftfreq = freq_data.fftfreq()
+
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
-        ir, ir_ref_gain = cism._prepare_ir(mics, freq_data, loc, obs.pos.squeeze(), room_params, 'time')
+        ir = cism._prepare_ir(mics, freq_data, loc, obs.pos.squeeze(), room_params, 'time')
         subset_sources = cf._prepare_sources_welch(sources, loc, mics)
-        signals = cf._prepare_signals_welch(prms_sq/ir_ref_gain, subset_sources, num_samples, source_seeds)
+        signals = cf._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds)
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
         cism._prepare_ir_kernel(
             ir, freq_data.source.sources, fft_obs_spectra.source.sources) 
+        # calc ref transfer for prms_sq_f
+        H_ref = calc_transfer(ir[-1, :, :], freq_data.sample_freq, freq_data.block_size, fftfreq)
         return {
             'loc': loc,
             'prms_sq': prms_sq,
+            'h_sq': np.real(H_ref * H_ref.conj()),
         }
-
 
     def get_prepare_func(self):
         room_params = {
