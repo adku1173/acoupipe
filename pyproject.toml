@@ -64,10 +64,13 @@ docs = [
 
 lint = ["ruff==0.14.2"]
 
-tests = [
-    "tensorflow",
+test = [
+    "diff_cover",
     "pytest",
+    "pytest-cov",
+    "pyyaml",
     'pandas',
+    "tensorflow",
 ]
 
 dev = [
