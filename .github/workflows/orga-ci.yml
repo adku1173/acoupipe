@@ -2,6 +2,8 @@ name: Acoular 👁️ Organizational CI
 permissions:
   contents: read
 on:
+  push:
+    branches: [ master, dev ]
   pull_request:
     branches: [ master, dev ]
 

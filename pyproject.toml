@@ -29,10 +29,10 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-	'acoular',
-	'ray[default]',
-	'h5py',
-	'tqdm',
+    'acoular',
+    'ray[default]',
+    'h5py',
+    'tqdm',
     'pooch',
 ]
 maintainers = [
@@ -45,6 +45,7 @@ full = [
     "tensorflow",
 ]
 
+[dependency-groups]
 docs = [
     "ipython",
     "graphviz",
@@ -61,6 +62,8 @@ docs = [
     "pandoc"
 ]
 
+lint = ["ruff==0.14.2"]
+
 tests = [
     "tensorflow",
     "pytest",
@@ -68,9 +71,9 @@ tests = [
 ]
 
 dev = [
-    "acoupipe[docs,full,tests]",
-    "hatch",
-    "ruff",
+    {include-group = "docs"},
+    {include-group = "lint"},
+    {include-group = "test"},
 ]
 
 
@@ -80,6 +83,7 @@ repository = "https://github.com/adku1173/acoupipe"
 source = "https://github.com/adku1173/acoupipe"
 tracker = "https://github.com/adku1173/acoupipe/issues"
 
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -87,38 +91,8 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 path = "src/acoupipe/version.py"
 
-[tool.hatch.envs.hatch-static-analysis]
-dependencies = ["ruff==0.11.1"]
-config-path = ".ruff.toml"
-
-[tool.hatch.envs.docs]
-python = "3.12"
-dependencies = [
-    "acoupipe[docs]"
-]
-
-[tool.hatch.envs.docs.scripts]
-build = ["cd docs && make html"]
-
-
-[tool.hatch.envs.tests]
-dependencies = [
-    "acoupipe[tests]"
-]
-
-[[tool.hatch.envs.tests.matrix]]
-python = ["3.12"]
-
-[tool.hatch.envs.tests.scripts]
-import = ["python -c \"import acoupipe\""]
-test = ["python -m pytest -v --durations=10 tests"]
-
-
 [tool.hatch.build.targets.sdist]
-include = [
-  "/acoupipe",
-]
+include = ["acoupipe"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/acoupipe"]
-

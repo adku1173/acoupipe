@@ -1,50 +1,22 @@
-name: Docs
-
-#DEPLOY NOTE: This workflow will only deploy the docs when a workflow is manually triggered from the main branch via github! 
-
-on:
-  pull_request:
-    branches: [ master, dev ] # build docs as additional test on PRs to main
-  workflow_dispatch: # allow manual trigger for all branches
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-  
+name: "Manual: Docs 📝 Build 🛠️ & Deploy"
+run-name: Build Docs 🛠️ & Publish to GitHub Pages 📝
 permissions:
-  contents: write
+  contents: read
+on:
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.12']
-    steps:
-      - name: Check out a copy of the repository
-        uses: actions/checkout@v4
-      - name: Set up hatch
-        uses: ./.github/actions/setup-hatch
-      - name: Install Pandoc
-        run: |
-          sudo apt-get update && sudo apt-get install -y pandoc
-      - name: Run sphinx
-        run: hatch -v run docs:build
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-docs
-          path: ./docs/build/html
+    uses: acoular/ci/.github/workflows/docs.yml@main
 
   deploy:
     needs: build
-    if: ${{ github.event_name =='workflow_dispatch' && github.ref == 'refs/heads/master' }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: build-docs
           path: ./docs/build/html
