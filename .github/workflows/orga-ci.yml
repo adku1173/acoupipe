@@ -28,5 +28,8 @@ jobs:
     with:
       extra_args: "--exclude http://0.0.0.0:8265/"
 
+  pypi:
+   uses: acoular/ci/.github/workflows/pypi.yml@main
+
   tests:
     uses: acoular/ci/.github/workflows/tests.yml@main
