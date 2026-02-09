@@ -43,9 +43,19 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.utils import get_all_source_signals, get_uncorrelated_noise_source_recursively
-from acoupipe.datasets.ir import get_ir_pyroom_acoustics
-from acoupipe.datasets.utils import calc_transfer
+from acoupipe.datasets.utils import calc_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
+
+try:
+    import gpuRIR as grir
+except ImportError:
+    grir = None
+
+
+if grir is None:
+    from acoupipe.datasets.ir import get_ir_pyroom_acoustics as get_ir
+else:
+    from acoupipe.datasets.ir import get_ir_gpurir as get_ir
+
 
 class DatasetSynthetic(DatasetBase):
     r"""`DatasetSynthetic` is a purely synthetic microphone array source case generator.
@@ -205,10 +215,11 @@ class DatasetSynthetic(DatasetBase):
         default_feature_names = [feat for feat in features if isinstance(feat, str)]
         default_features = self.config.get_default_features(default_feature_names, f, num)
         builder = BaseFeatureCollectionBuilder(features=default_features + custom_features)
-        builder.add_custom(self.config.get_prepare_func()) # add prepare function
-        feature_collection = builder.build() # finally build the feature collection
-        builder.add_custom(self.config.get_cleanup_func(features)) # add cleanup function
+        builder.add_custom(self.config.get_prepare_func())  # add prepare function
+        feature_collection = builder.build()  # finally build the feature collection
+        builder.add_custom(self.config.get_cleanup_func(features))  # add cleanup function
         return feature_collection
+
 
 def sample_rms(nsources, rng):
     """Draw sources' squared rms pressures from Rayleigh distribution."""
@@ -528,7 +539,11 @@ class DatasetSyntheticConfig(ConfigBase):
         )
 
     def _get_targetmap_feature(self, strength_type, **kwargs):  # noqa ARG002
-        freq_data = self.freq_data if strength_type == 'analytic' else (self.fft_obs_spectra if self.mode == 'welch' else self.freq_data)
+        freq_data = (
+            self.freq_data
+            if strength_type == 'analytic'
+            else (self.fft_obs_spectra if self.mode == 'welch' else self.freq_data)
+        )
         return TargetmapFeature(
             freq_data=freq_data,
             f=kwargs['f'],
@@ -560,6 +575,7 @@ class DatasetSyntheticConfig(ConfigBase):
 
         def get_f(sampler, f):  # noqa ARG001
             return {'f': f}
+
         return create_feature(
             feature_func=partial(get_f, f=all_f),
             name='f',
@@ -570,6 +586,7 @@ class DatasetSyntheticConfig(ConfigBase):
     def _get_default_feature_num(self, **kwargs):  # noqa ARG002
         def add_num(sampler, num):  # noqa ARG001
             return {'num': num}
+
         return create_feature(
             feature_func=partial(add_num, num=kwargs['num']),
             name='num',
@@ -840,7 +857,7 @@ class DatasetSyntheticConfig(ConfigBase):
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         source_steer.grid = ac.ImportGrid(pos=loc)
         subset_sources = cf._prepare_sources_welch(sources, loc, mics)
-        signals = cf._prepare_signals_welch(prms_sq*source_steer.r0**2, subset_sources, num_samples, source_seeds)
+        signals = cf._prepare_signals_welch(prms_sq * source_steer.r0**2, subset_sources, num_samples, source_seeds)
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
@@ -895,6 +912,7 @@ class DatasetSyntheticConfig(ConfigBase):
             for key in keys_to_remove:
                 del data[key]
             return data
+
         return cleanup_func
 
 
@@ -918,7 +936,7 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         return sources
 
     @staticmethod
-    def _prepare_ir(mics, freq_data, loc, ref_loc, room_params, domain='frequency'):
+    def _prepare_ir(mics, freq_data, loc, ref_loc, room_params, c, domain='frequency'):
         fftfreq = freq_data.fftfreq()
         nfft = freq_data.fftfreq().shape[0]
         nsources = loc.shape[1]
@@ -927,10 +945,10 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         # we don't use a chunk cache here, since we access the data only once
         # finding the SRIR matching the location
         if domain == 'frequency':
-            transfer = np.empty((nfft, num_mics+1, nsources), dtype=complex)
+            transfer = np.empty((nfft, num_mics + 1, nsources), dtype=complex)
 
-        rdim = room_params["room_size"]
-        rt60 = room_params["rt60"]
+        rdim = room_params['room_size']
+        rt60 = room_params['rt60']
         # calculate center of the area spanned by mics and sources
         ref_loc = np.atleast_2d(ref_loc).T
         all_pos = np.hstack((mics.pos_total, loc, ref_loc))
@@ -941,28 +959,29 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         mloc = np.hstack((mics.pos, ref_loc)) + room_center
         sloc = loc + room_center
         #: missing speed of sound
-        irs = get_ir_pyroom_acoustics(freq_data.sample_freq, rdim, mloc, sloc, rt60)
+        irs = get_ir(freq_data.sample_freq, rdim, mloc, sloc, rt60)
         h_norm = np.zeros(nsources)
         # get longest ir length
         max_ir_len = max([irs[j][i].shape[0] for i in range(nsources) for j in range(num_mics)])
         # pad irs to same length
-        irs_padded = np.zeros((num_mics+1, nsources, max_ir_len))
+        irs_padded = np.zeros((num_mics + 1, nsources, max_ir_len))
         for i in range(nsources):
             h_norm[i] = np.sum(irs[-1][i] ** 2)
-            for j in range(num_mics+1):
+            for j in range(num_mics + 1):
                 ir = irs[j][i]
                 irs_padded[j, i, : ir.shape[0]] = ir
             if domain == 'frequency':
-                transfer[:, :, i] = calc_transfer(irs_padded[:, i, :], freq_data.sample_freq, freq_data.block_size, fftfreq)
+                transfer[:, :, i] = calc_transfer(
+                    irs_padded[:, i, :], freq_data.sample_freq, freq_data.block_size, fftfreq
+                )
                 # normalize by ref norm
         if domain == 'frequency':
             transfer /= np.sqrt(h_norm[np.newaxis, np.newaxis, :])
             return transfer
-        else:
-            # normalize irs
-            irs_padded /= np.sqrt(h_norm[np.newaxis, :, np.newaxis])
-            return irs_padded
-        
+        # normalize irs
+        irs_padded /= np.sqrt(h_norm[np.newaxis, :, np.newaxis])
+        return irs_padded
+
     @staticmethod
     def _prepare_ir_kernel(ir, sources, ref_sources):
         for i, src in enumerate(sources):
@@ -975,9 +994,10 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         cf = DatasetSyntheticConfig
         cism = DatasetSyntheticISMConfig
         mics = cf._prepare_mics(sampler, mics)
+        c = freq_data.steer.env.c
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         ref_loc = freq_data.steer.ref
-        H = cism._prepare_ir(mics, freq_data, loc, ref_loc, room_params=room_params, domain='frequency')
+        H = cism._prepare_ir(mics, freq_data, loc, ref_loc, room_params=room_params, c=c, domain='frequency')
         noise_prms_sq = cf._prepare_noise_params(sampler, prms_sq)
         cf._prepare_spectra_wishart(
             mics,
@@ -996,9 +1016,7 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         }
 
     @staticmethod
-    def calc_welch_prepare_func(
-        sampler, mics, beamformer, sources, fft_spectra, fft_obs_spectra, obs, room_params
-    ):
+    def calc_welch_prepare_func(sampler, mics, beamformer, sources, fft_spectra, fft_obs_spectra, obs, room_params):
         cf = DatasetSyntheticConfig
         cism = DatasetSyntheticISMConfig
         freq_data = beamformer.freq_data
@@ -1006,14 +1024,14 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
 
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
-        ir = cism._prepare_ir(mics, freq_data, loc, obs.pos.squeeze(), room_params, 'time')
+        c = sources[0].env.c
+        ir = cism._prepare_ir(mics, freq_data, loc, obs.pos.squeeze(), room_params, domain='time', c=c)
         subset_sources = cf._prepare_sources_welch(sources, loc, mics)
         signals = cf._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds)
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
-        cism._prepare_ir_kernel(
-            ir, freq_data.source.sources, fft_obs_spectra.source.sources) 
+        cism._prepare_ir_kernel(ir, freq_data.source.sources, fft_obs_spectra.source.sources)
         # calc ref transfer for prms_sq_f
         H_ref = calc_transfer(ir[-1, :, :], freq_data.sample_freq, freq_data.block_size, fftfreq)
         return {
@@ -1024,8 +1042,8 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
 
     def get_prepare_func(self):
         room_params = {
-            "room_size": self.room_size,
-            "rt60": self.rt60,
+            'room_size': self.room_size,
+            'rt60': self.rt60,
         }
         if self.mode == 'welch':
             prepare_func = partial(
@@ -1039,7 +1057,12 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
                 room_params=room_params,
             )
         else:
-            prepare_func = partial(self.calc_analytic_prepare_func, mics=self.mics, freq_data=self.beamformer.freq_data, room_params=room_params)
+            prepare_func = partial(
+                self.calc_analytic_prepare_func,
+                mics=self.mics,
+                freq_data=self.beamformer.freq_data,
+                room_params=room_params,
+            )
         return prepare_func
 
 
@@ -1047,7 +1070,7 @@ class DatasetSyntheticISM(DatasetSynthetic):
     """Dataset class for the ISM dataset."""
 
     def __init__(
-                    self,
+        self,
         mode='welch',
         mic_pos_noise=True,
         mic_sig_noise=True,
@@ -1085,8 +1108,6 @@ class DatasetSyntheticISM(DatasetSynthetic):
                 rt60=rt60,
             )
         super().__init__(config=config, tasks=tasks, logger=logger)
-        
-            
 
 
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
