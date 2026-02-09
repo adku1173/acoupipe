@@ -3,7 +3,7 @@
 import logging
 from functools import partial
 
-from traits.api import HasPrivateTraits, Instance, Int, Property
+from traits.api import Dict, HasPrivateTraits, Instance, Int, Property
 
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
@@ -65,7 +65,7 @@ class ConfigBase(HasPrivateTraits):
         builder_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
-            if feature_name not in ["idx", "seeds"]:
+            if feature_name not in ['idx', 'seeds']:
                 builder = getattr(self, f'_get_default_feature_{feature_name}', None)
                 if builder is None:
                     msg = f'Unknown feature "{feature_name}".'
@@ -88,6 +88,7 @@ class DatasetBase(HasPrivateTraits):
 
     config = Instance(ConfigBase, desc='configuration object')
     tasks = Property(desc='number of parallel tasks for data generation')
+    remote_args = Dict({})
     #: logger instance to log calculation times for each data sample
     logger = Property(desc='Logger instance to log timing statistics')
 
@@ -95,12 +96,13 @@ class DatasetBase(HasPrivateTraits):
     _logger = Instance(logging.Logger, desc='Internal logger instance')
     _tasks = Int(1, desc='number of parallel tasks for data generation')
 
-    def __init__(self, config=None, tasks=1, logger=None):
+    def __init__(self, config=None, tasks=1, remote_args=None, logger=None):
         HasPrivateTraits.__init__(self)
         self.tasks = tasks
         if config is None:
             config = ConfigBase()
         self.config = config
+        self.remote_args = remote_args or {}
         self.logger = logger
 
     def _get_logger(self):
@@ -132,7 +134,7 @@ class DatasetBase(HasPrivateTraits):
 
     def get_pipeline_instance(self):
         if self.tasks > 1:
-            return DistributedPipeline(numworkers=self.tasks)
+            return DistributedPipeline(numworkers=self.tasks, remote_args=self.remote_args)
         return BasePipeline()
 
     def _generate(self, pipeline, progress_bar, start_idx):
@@ -170,8 +172,8 @@ class DatasetBase(HasPrivateTraits):
             feature_instances += self.config.get_default_features(default_feature_names, f, num)
         builder = BaseFeatureCollectionBuilder(features=feature_instances)
         if hasattr(self.config, 'get_prepare_func'):
-            builder.add_custom(self.config.get_prepare_func()) # add prepare function
-        return builder.build() # finally build the feature collection
+            builder.add_custom(self.config.get_prepare_func())  # add prepare function
+        return builder.build()  # finally build the feature collection
 
     def generate(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
@@ -357,8 +359,12 @@ if TF_FLAG:
             if list(shape).count(None) > 1:
                 shape_features.append(feature)
 
-        WriteTFRecord(name=name, source=pipeline, shape_features=shape_features,
-                      encoder_funcs=feature_collection.feature_tf_encoder_mapper).save(
+        WriteTFRecord(
+            name=name,
+            source=pipeline,
+            shape_features=shape_features,
+            encoder_funcs=feature_collection.feature_tf_encoder_mapper,
+        ).save(
             progress_bar,
             start_idx,
         )
@@ -549,5 +555,7 @@ if TF_FLAG:
 
                 data[feature] = value
             return data
+
         return _parse_function
+
     DatasetBase.get_tfrecord_parser = get_tfrecord_parser

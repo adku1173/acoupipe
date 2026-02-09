@@ -207,6 +207,7 @@ class DatasetMIRACLE(DatasetBase):
         min_nsources=1,
         max_nsources=10,
         tasks=1,
+        remote_args=None,
         config=None,
     ):
         """Initialize the DatasetMIRACLE object.
@@ -238,6 +239,8 @@ class DatasetMIRACLE(DatasetBase):
             Maximum number of sources per sample. Default is 10.
         tasks : int, optional
             Number of parallel processes. Default is 1.
+        remote_args : dict, optional
+            Dictionary of keyword arguments passed to the remote actors when using Ray for parallelization. Defaults to None.
         config : DatasetMIRACLEConfig, optional
             DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
         """
@@ -253,7 +256,7 @@ class DatasetMIRACLE(DatasetBase):
                 ref_mic_index=ref_mic_index,
                 mic_sig_noise=mic_sig_noise,
             )
-        super().__init__(tasks=tasks, config=config)
+        super().__init__(tasks=tasks, remote_args=remote_args, config=config)
 
 
 MIRACLE_SCENARIOS = ['A1', 'D1', 'A2', 'R2']
@@ -453,11 +456,10 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             # calc transfer norm
             transfer /= np.sqrt(h_norm[np.newaxis, np.newaxis, :])
             return transfer
-        else:
-            # normalize irs
-            irs = np.array(irs).transpose(1, 0, 2)  # mics x sources x time
-            irs /= np.sqrt(h_norm[np.newaxis, :, np.newaxis])
-            return irs
+        # normalize irs
+        irs = np.array(irs).transpose(1, 0, 2)  # mics x sources x time
+        irs /= np.sqrt(h_norm[np.newaxis, :, np.newaxis])
+        return irs
 
     @staticmethod
     def _prepare_ir_kernel(ir, sources, ref_sources, ref_mic):
@@ -505,8 +507,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
-        cfm._prepare_ir_kernel(
-            ir, freq_data.source.sources, fft_obs_spectra.source.sources, ref_mic)         
+        cfm._prepare_ir_kernel(ir, freq_data.source.sources, fft_obs_spectra.source.sources, ref_mic)
         # calc ref transfer for prms_sq_f
         H_ref = calc_transfer(ir[ref_mic, :, :], freq_data.sample_freq, freq_data.block_size, freq_data.fftfreq())
         return {

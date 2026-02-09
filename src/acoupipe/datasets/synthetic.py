@@ -147,6 +147,7 @@ class DatasetSynthetic(DatasetBase):
         min_nsources=1,
         max_nsources=10,
         tasks=1,
+        remote_args=None,
         logger=None,
         config=None,
     ):
@@ -180,6 +181,8 @@ class DatasetSynthetic(DatasetBase):
             Maximum number of sources in the dataset. Defaults to 10.
         tasks : int
             Number of parallel tasks. Defaults to 1.
+        remote_args : dict
+            Dictionary of keyword arguments passed to the remote actors when using Ray for parallelization. Defaults to None.
         logger : logging.Logger
             Logger object. Defaults to None.
         config : DatasetSyntheticConfig
@@ -198,7 +201,7 @@ class DatasetSynthetic(DatasetBase):
                 snap_to_grid=snap_to_grid,
                 random_signal_length=random_signal_length,
             )
-        super().__init__(config=config, tasks=tasks, logger=logger)
+        super().__init__(config=config, tasks=tasks, logger=logger, remote_args=remote_args)
 
     def get_feature_collection(self, features, f, num):
         """
@@ -1082,6 +1085,7 @@ class DatasetSyntheticISM(DatasetSynthetic):
         max_nsources=10,
         rt60=2.0,
         tasks=1,
+        remote_args=None,
         logger=None,
         config=None,
     ):
@@ -1107,7 +1111,7 @@ class DatasetSyntheticISM(DatasetSynthetic):
                 random_signal_length=random_signal_length,
                 rt60=rt60,
             )
-        super().__init__(config=config, tasks=tasks, logger=logger)
+        super().__init__(config=config, tasks=tasks, remote_args=remote_args, logger=logger)
 
 
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):

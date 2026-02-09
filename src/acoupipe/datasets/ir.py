@@ -69,5 +69,10 @@ def get_ir_gpurir(sample_freq, room_dim, mloc, sloc, rt60, c=343.0, **kwargs):
             c=c,
             **kwargs,
         )
-        rirs.append(rir.squeeze())
+        # remove microphone dimension (be carfull if only one source is simulated, as the output shape will be different)
+        rir = rir.squeeze()
+        # at least 2D (num_sources, num_samples) should be preserved
+        if rir.ndim == 1:
+            rir = rir[np.newaxis, :]
+        rirs.append(rir)
     return rirs
