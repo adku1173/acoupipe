@@ -43,18 +43,8 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
+from acoupipe.datasets.ir import get_ir
 from acoupipe.datasets.utils import calc_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
-
-try:
-    import gpuRIR as grir
-except ImportError:
-    grir = None
-
-
-if grir is None:
-    from acoupipe.datasets.ir import get_ir_pyroom_acoustics as get_ir
-else:
-    from acoupipe.datasets.ir import get_ir_gpurir as get_ir
 
 
 class DatasetSynthetic(DatasetBase):

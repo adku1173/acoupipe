@@ -74,7 +74,10 @@ class LoadH5Dataset(BaseLoadDataset):
             with contextlib.suppress(IOError):
                 self.h5f.close()
         self.h5f = H5File(self.name, mode='r')
-        self.load_metadata()
+        try:
+            self.load_metadata()
+        except Exception as e:
+            print(f'Error loading metadata from {self.name}: {e}')
 
     def load_metadata(self):
         """Load metadata from .h5 file. Only for internal use."""

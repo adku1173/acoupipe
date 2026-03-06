@@ -1,6 +1,13 @@
-import gpuRIR as grir
 import numpy as np
 import pyroomacoustics as pra
+
+
+def _load_gpurir():
+    try:
+        import gpuRIR as grir
+    except (ImportError, OSError) as exc:
+        raise ImportError('gpuRIR is not available.') from exc
+    return grir
 
 
 def sabine(room_size=None, alpha=None):
@@ -50,7 +57,16 @@ def get_ir_pyroom_acoustics(sample_freq, room_dim, mloc, sloc, rt60, use_rand_is
     return room.rir
 
 
+def get_ir(sample_freq, room_dim, mloc, sloc, rt60, c=343.0, **kwargs):
+    """Get impulse responses with gpuRIR when available, otherwise use pyroomacoustics."""
+    try:
+        return get_ir_gpurir(sample_freq, room_dim, mloc, sloc, rt60, c=c, **kwargs)
+    except ImportError:
+        return get_ir_pyroom_acoustics(sample_freq, room_dim, mloc, sloc, rt60, c=c)
+
+
 def get_ir_gpurir(sample_freq, room_dim, mloc, sloc, rt60, c=343.0, **kwargs):
+    grir = _load_gpurir()
     alpha, _ = pra.inverse_sabine(rt60, room_dim, c=c)
     beta = np.sqrt(1 - alpha**2).tolist()
     beta_list = [beta] * 6

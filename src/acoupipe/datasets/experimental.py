@@ -440,7 +440,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             # finding the SRIR matching the location
             if domain == 'frequency':
                 transfer = np.empty((nfft, num_mics, nsources), dtype=complex)
-            loc_array = sampler.get(4).grid.pos
+            loc_array = file['data/location/source'][()].T
             h_norm = np.zeros(nsources)
             irs = []
             for i in range(nsources):

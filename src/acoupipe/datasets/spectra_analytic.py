@@ -162,9 +162,9 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         if nfftfreq != self.Q.shape[0]:
             msg = 'The number of frequencies must match the number of rows in the source strengths matrix!'
             raise ValueError(msg)
-            if self.noise is not None and nfftfreq != self.noise.shape[0]:
-                msg = 'The number of frequencies must match the number of rows in the noise matrix!'
-                raise ValueError(msg)
+        if self.noise is not None and nfftfreq != self.noise.shape[0]:
+            msg = 'The number of frequencies must match the number of rows in the noise matrix!'
+            raise ValueError(msg)
 
     def _sample_wishart(self, scale, rng):
         df = self.df_eq
