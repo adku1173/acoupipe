@@ -43,6 +43,10 @@ link_address = {
     'SR2-C2': 'https://depositonce.tu-berlin.de/bitstreams/12e6d24a-5d55-415c-b461-fa10d850c63c/download',
     'SR2-C3': 'https://depositonce.tu-berlin.de/bitstreams/b64c3d35-c337-4003-859d-e747bdbe2a3f/download',
     'SR2-C4': 'https://depositonce.tu-berlin.de/bitstreams/272bd891-3463-4459-be03-9a66aa916841/download',
+    'SR2-D': 'https://depositonce.tu-berlin.de/bitstreams/ec51a7e5-818d-463c-8f77-342c3bde27d8/download',
+    'SRA1-C1': 'https://depositonce.tu-berlin.de/bitstreams/bfbda52e-4776-4499-a52f-92c01dd0f632/download',
+    'SRA1-C2': 'https://depositonce.tu-berlin.de/bitstreams/f67da2d7-5c57-4ddc-8230-3f275563c497/download',
+    'SRA1-C3': 'https://depositonce.tu-berlin.de/bitstreams/ff5cb621-402d-43a6-8ff8-bbbd8d8ae170/download',
 }
 
 file_hash = {
@@ -59,6 +63,10 @@ file_hash = {
     'SR2-C2': 'b1fffa4beb5ed8946cff71986ba6be102bae7ee65a84d566ad08e3303f8a78e4',
     'SR2-C3': 'aeb2923e9c014b32138f944e3dd269ff3705858c380f8d0e7d4d382b56ce6886',
     'SR2-C4': 'c4558478f46bf141d581976127f41419237dba590af3580962e513d1a010fbba',
+    'SR2-D': 'f3b7015e4e2ee8b3787c8c4857f92409b55a63f1f8a73e4d916aa5e07289d945',
+    'SRA1-C1': '1ebec4c77a5dd481611c41ac1b774df82e6df3db23ae098715b0e263b8e74a9c',
+    'SRA1-C2': '5c8d97cd1e2a86ab5b41b8dea1ad4a6518062d41d53ae7114f7d1c4de0c63294',
+    'SRA1-C3': '724d8ac9c09be45c5efdc6845c21f3079bfd1a19a1030ba9dd57cff1ac2942d7'
 }
 
 

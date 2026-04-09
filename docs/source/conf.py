@@ -26,6 +26,7 @@ extensions = [
     #"sphinx_autodoc_typehints",  #
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
+    "sphinx_design",  # tab-set and other design elements
     "traits.util.trait_documenter",
     #"numpydoc", #conda install -c anaconda numpydoc
     "nbsphinx", # allows to include jupyter notebooks into rst documentation

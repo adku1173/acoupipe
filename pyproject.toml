@@ -51,6 +51,7 @@ docs = [
     "nb-clean",
     "sphinx",
     "sphinx-autoapi",
+    "sphinx-design",
     "nbsphinx",
     "pydata-sphinx-theme",
     "sphinx-gallery",
