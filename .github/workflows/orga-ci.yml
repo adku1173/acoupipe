@@ -23,5 +23,10 @@ jobs:
   linting:
     uses: acoular/ci/.github/workflows/linting.yml@main
 
+  links:
+    uses: acoular/ci/.github/workflows/links.yml@main
+    with:
+      extra_args: "--exclude http://0.0.0.0:8265/"
+
   tests:
     uses: acoular/ci/.github/workflows/tests.yml@main

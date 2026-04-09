@@ -59,7 +59,7 @@ docs = [
 ]
 
 lint = [
-    "ruff==0.11.1",
+    "ruff==0.14.2",
 ]
 
 unsupported = [
@@ -67,10 +67,13 @@ unsupported = [
 ]
 
 test = [
-    "tensorflow",
+    "diff_cover",
     "pytest",
+    "pytest-cov",
     "pytest-regtest",
+    "pyyaml",
     "pandas",
+    "tensorflow",
 ]
 
 dev = [
