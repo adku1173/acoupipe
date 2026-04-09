@@ -854,7 +854,6 @@ class DatasetSyntheticConfig(ConfigBase):
         num_samples = signals[0].num_samples
         cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
         cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
-        nfft = freq_data.fftfreq().shape[0]
         return {
             'loc': loc,
             'prms_sq': prms_sq,
@@ -876,7 +875,6 @@ class DatasetSyntheticConfig(ConfigBase):
             noise_prms_sq,
             num_samples,
         )
-        nfft = freq_data.fftfreq().shape[0]
         return {
             'loc': loc,
             'prms_sq': prms_sq,
@@ -901,7 +899,7 @@ class DatasetSyntheticConfig(ConfigBase):
     def get_cleanup_func(self, features):
         def cleanup_func(sampler, data):
             # remove all items not in features
-            keys_to_remove = [key for key in data.keys() if key not in features]
+            keys_to_remove = [key for key in data if key not in features]
             for key in keys_to_remove:
                 del data[key]
             return data

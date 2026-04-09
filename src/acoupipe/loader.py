@@ -76,8 +76,8 @@ class LoadH5Dataset(BaseLoadDataset):
         self.h5f = H5File(self.name, mode='r')
         try:
             self.load_metadata()
-        except Exception as e:
-            print(f'Error loading metadata from {self.name}: {e}')
+        except Exception as e:  # noqa: PERF203, BLE001
+            print(f'Error loading metadata from {self.name}: {e}')  # noqa: T201
 
     def load_metadata(self):
         """Load metadata from .h5 file. Only for internal use."""

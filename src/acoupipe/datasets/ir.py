@@ -2,7 +2,6 @@ import importlib
 
 import numpy as np
 
-
 UNSUPPORTED_IR_MESSAGE = (
     'Impulse-response-backed synthetic datasets are an unsupported developer-only feature. '
     "Install the optional dependency 'pyroomacoustics' manually to use them."
