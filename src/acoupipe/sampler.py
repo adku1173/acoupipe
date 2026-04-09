@@ -463,7 +463,7 @@ class PointSourceSampler(LocationSampler):
     def sample_loc(self, loc):
         """Sample a single target location (internal use)."""
         loc_axs = self.ldir.nonzero()[0]  # get axes to sample
-        loc[loc_axs,0] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
+        loc[loc_axs, 0] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
         return loc
 
     def rvs(self, size=1):

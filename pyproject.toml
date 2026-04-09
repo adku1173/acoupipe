@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
 	'acoular>=26.1',
-	'ray[default]',
+	'ray[default]; sys_platform != "win32"',
 	'h5py',
 	'tqdm',
     'pooch',

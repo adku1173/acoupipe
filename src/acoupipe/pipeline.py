@@ -356,7 +356,6 @@ class SamplerActor:
 
 class ActorHandler:
     def __init__(self, numworkers, sampler, feature_func, remote_args=None):
-
         self.actors = [
             SamplerActor.options(**(remote_args or {})).remote(
                 sampler=sampler,

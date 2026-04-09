@@ -158,14 +158,13 @@ if TF_FLAG:
         arr = np.asarray(value)
 
         # Unicode -> bytes
-        if arr.dtype.kind == "U":
-            arr = arr.astype("S")
+        if arr.dtype.kind == 'U':
+            arr = arr.astype('S')
 
         # Flatten and ensure bytes
         flat = arr.reshape(-1)
         flat = [bytes(x) for x in flat]
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=flat))
-
 
     def int_list_feature(value):
         """int64_list from scalar or array-like of ints/bools."""
@@ -174,14 +173,12 @@ if TF_FLAG:
         arr = np.asarray(value, dtype=np.int64).reshape(-1)
         return tf.train.Feature(int64_list=tf.train.Int64List(value=arr))
 
-
     def float_list_feature(value):
         """float_list from scalar or array-like of floats."""
         if tf.is_tensor(value):
             value = value.numpy()
         arr = np.asarray(value, dtype=np.float32).reshape(-1)
         return tf.train.Feature(float_list=tf.train.FloatList(value=arr))
-
 
     def complex_list_feature(value):
         """float_list from scalar or array-like of complex values.
@@ -235,7 +232,7 @@ if TF_FLAG:
             out_tf_dtype = tf.string
             out_shape = tuple(shape) if shape is not None else ()
             return encoder, out_tf_dtype, out_shape
-        msg = f"Unsupported dtype {dtype!r} (tf: {tf_dtype})"
+        msg = f'Unsupported dtype {dtype!r} (tf: {tf_dtype})'
         raise TypeError(msg)
 
     class WriteTFRecord(BaseWriteDataset):
@@ -276,9 +273,7 @@ if TF_FLAG:
                     sample[shape_key] = np.array(shape, dtype=np.int64)
                     encoders.setdefault(shape_key, int_list_feature)
 
-            return {
-                n: encoders[n](f) for (n, f) in sample.items() if encoders.get(n)
-            }
+            return {n: encoders[n](f) for (n, f) in sample.items() if encoders.get(n)}
 
         def save(self, progress_bar=True, start_idx=1):
             """
