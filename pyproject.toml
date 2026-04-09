@@ -41,40 +41,6 @@ maintainers = [
     {name = "Art Pelling", email = "a.pelling@tu-berlin.de"},
 ]
 
-[project.optional-dependencies]
-full = [
-    "tensorflow",
-]
-
-docs = [
-    "ipython",
-    "graphviz",
-    "matplotlib",
-    "numpydoc",
-    "ipykernel",
-    "nb-clean",
-    "sphinx",
-    "sphinx-autoapi",
-    "nbsphinx",
-    "sphinx-rtd-theme",
-    "sphinx-gallery",
-    "sphinxcontrib.bibtex",
-    "pandoc"
-]
-
-tests = [
-    "tensorflow",
-    "pytest",
-    "pytest-regtest",
-    'pandas',
-]
-
-dev = [
-    "acoupipe[docs,full,tests]",
-    "hatch",
-    "ruff",
-]
-
 [dependency-groups]
 docs = [
     "ipython",
@@ -111,7 +77,6 @@ dev = [
     {include-group = "docs"},
     {include-group = "lint"},
     {include-group = "test"},
-    "hatch",
 ]
 
 
@@ -128,31 +93,17 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 path = "src/acoupipe/version.py"
 
-[tool.hatch.envs.hatch-static-analysis]
-dependencies = ["ruff==0.11.1"]
-config-path = ".ruff.toml"
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple/"
+publish-url = "https://upload.pypi.org/legacy/"
+explicit = true
 
-[tool.hatch.envs.docs]
-python = "3.13"
-dependencies = [
-    "acoupipe[docs]"
-]
-
-[tool.hatch.envs.docs.scripts]
-build = ["cd docs && make html"]
-
-
-[tool.hatch.envs.tests]
-dependencies = [
-    "acoupipe[tests]"
-]
-
-[[tool.hatch.envs.tests.matrix]]
-python = ["3.10", "3.11", "3.12", "3.13"]
-
-[tool.hatch.envs.tests.scripts]
-import = ["python -c \"import acoupipe\""]
-test = ["python -m pytest -v --durations=10 tests"]
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
 
 [tool.pytest.ini_options]
 testpaths = [
