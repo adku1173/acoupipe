@@ -175,7 +175,7 @@ class DatasetBase(HasPrivateTraits):
             builder.add_custom(self.config.get_prepare_func())  # add prepare function
         return builder.build()  # finally build the feature collection
 
-    def generate(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=True):
+    def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
 
         Parameters
@@ -183,7 +183,7 @@ class DatasetBase(HasPrivateTraits):
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
         split : str
-            Split name for the dataset ('training', 'validation' or 'test').
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         size : int
             Size of the dataset (number of source cases).
         f : float
@@ -232,19 +232,19 @@ class DatasetBase(HasPrivateTraits):
         set_pipeline_seeds(pipeline, start_idx, size, split)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
-    def save_h5(self, features, split, size, name, f=None, num=0, start_idx=0, progress_bar=True):
+    def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Save dataset to a HDF5 file.
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
-        split : str
-            Split name for the dataset ('training', 'validation' or 'test').
         size : int
             Size of the dataset (number of source cases).
         name : str
             Name of the HDF5 file.
+        split : str
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
             The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
@@ -297,19 +297,19 @@ if TF_FLAG:
 
     from acoupipe.writer import WriteTFRecord, complex_list_feature
 
-    def save_tfrecord(self, features, split, size, name, f=None, num=0, start_idx=0, progress_bar=True):
+    def save_tfrecord(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Save dataset to a .tfrecord file.
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
-        split : str
-            Split name for the dataset ('training', 'validation' or 'test').
         size : int
             Size of the dataset (number of source cases).
         name : str
             Name of the TFRecord file.
+        split : str
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
             The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
@@ -409,17 +409,17 @@ if TF_FLAG:
 
     DatasetBase.get_output_signature = get_output_signature
 
-    def get_tf_dataset(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=False):
+    def get_tf_dataset(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=False):
         """Get a TensorFlow dataset from the generated data.
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
-        split : str
-            Split name for the dataset ('training', 'validation' or 'test').
         size : int
             Size of the dataset (number of source cases).
+        split : str
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
             The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer

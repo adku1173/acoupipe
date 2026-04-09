@@ -12,5 +12,6 @@ Datasets
     DatasetMIRACLE <datasets/miracle>
     DatasetSRIRACHA <datasets/sriracha>
     datasets/features
+    datasets/store
     jupyter/modify
 

@@ -9,7 +9,7 @@ from acoupipe.datasets.synthetic import DatasetSynthetic
 f = 2000
 mode = "wishart"
 max_nsources = 10
-sriracha_path = "/home/kujawski/Documents/Projekte/DFG/AP5/miracle2/data/published"
+sriracha_path = None
 mic_sig_noise = False
 
 fig, axs = plt.subplots(2, 4, figsize=(12, 9), sharey=True, sharex=True)

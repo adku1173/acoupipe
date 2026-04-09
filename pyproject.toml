@@ -52,7 +52,7 @@ docs = [
     "sphinx",
     "sphinx-autoapi",
     "nbsphinx",
-    "sphinx-rtd-theme",
+    "pydata-sphinx-theme",
     "sphinx-gallery",
     "sphinxcontrib.bibtex",
     "pandoc",

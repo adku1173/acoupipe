@@ -1,6 +1,3 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# -- Path setup --------------------------------------------------------------
 from pathlib import Path
 
 import acoupipe as ap
@@ -20,6 +17,8 @@ release = f"{ap.__version__}"
 # -- General configuration ---------------------------------------------------
 
 extensions = [
+    "IPython.sphinxext.ipython_directive",  # Execute code during doc build
+    "IPython.sphinxext.ipython_console_highlighting",  # IPython syntax highlighting
     "sphinx.ext.napoleon",  # needed to use google or numpy docstrings in python functions instead of rst
     "autoapi.extension",  # automatically create the module documentation
     "sphinx.ext.coverage",
@@ -48,15 +47,39 @@ bibtex_bibfiles = ["bib/refs.bib"]
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = "sphinx_rtd_theme"
-
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
+html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+html_context = {
+    "github_user": "adku1173",
+    "github_repo": "acoupipe",
+    "github_version": "master",
+    "doc_path": "docs/source",
+}
+html_theme_options = {
+    "logo": {
+        "alt_text": "AcouPipe - Home",
+        "text": "AcouPipe",
+    },
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/adku1173/acoupipe",
+            "icon": "fa-brands fa-square-github",
+        },
+        {
+            "name": "PyPI",
+            "url": "https://pypi.org/project/acoupipe",
+            "icon": "fa-brands fa-python",
+        },
+    ],
+    "pygments_light_style": "tango",
+    "pygments_dark_style": "monokai",
+    "header_links_before_dropdown": 5,
+    "use_edit_page_button": True,
+}
+html_last_updated_fmt = "%b %d, %Y"
+html_copy_source = False
+html_css_files = ["css/custom_pydata_sphinx_theme.css"]
 
 
 latex_elements = {

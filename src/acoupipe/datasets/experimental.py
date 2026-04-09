@@ -34,6 +34,15 @@ link_address = {
     'A2': 'https://depositonce.tu-berlin.de/bitstreams/cbb462d7-cb28-4803-98d8-84b03aad0d5f/download',
     'D1': 'https://depositonce.tu-berlin.de/bitstreams/86680ee5-ae0c-4b38-8ef8-805652a21ded/download',
     'R2': 'https://depositonce.tu-berlin.de/bitstreams/0fc5f5a4-a2f7-4eb7-b796-7114260e5e86/download',
+    'SR1-C1': 'https://depositonce.tu-berlin.de/bitstreams/75b3da38-9f7f-4b30-8967-3da1b0f29e9f/download',
+    'SR1-C2': 'https://depositonce.tu-berlin.de/bitstreams/8651dc9d-ec9c-4504-b301-7b5536fb74f3/download',
+    'SR1-C3': 'https://depositonce.tu-berlin.de/bitstreams/7c840fc0-90d5-40c1-8528-356b808560c8/download',
+    'SR1-C4': 'https://depositonce.tu-berlin.de/bitstreams/5bbf3409-205e-451b-abda-c16e90004f2a/download',
+    'SR1-D': 'https://depositonce.tu-berlin.de/bitstreams/412b04ec-6852-417f-ab85-3e847133860e/download',
+    'SR2-C1': 'https://depositonce.tu-berlin.de/bitstreams/bff1df6c-2672-4352-aa80-34bb2aa7dfd1/download',
+    'SR2-C2': 'https://depositonce.tu-berlin.de/bitstreams/12e6d24a-5d55-415c-b461-fa10d850c63c/download',
+    'SR2-C3': 'https://depositonce.tu-berlin.de/bitstreams/b64c3d35-c337-4003-859d-e747bdbe2a3f/download',
+    'SR2-C4': 'https://depositonce.tu-berlin.de/bitstreams/272bd891-3463-4459-be03-9a66aa916841/download',
 }
 
 file_hash = {
@@ -41,6 +50,15 @@ file_hash = {
     'A2': 'c021cc57bb51237283c5303e235495edfea75b1f0eaba4a8f988942b9913e7ff',
     'D1': 'd888201065a43f436080da470f025c245b1a8030e08ea7a9dce1dc6b160761ee',
     'R2': '479af6bfdd403c855d53304b291c4878c1f8d4a4482836de77677c03ffb6bbaa',
+    'SR1-C1': 'b969ae330c585fc2ba4f1ccf9b8fb5be7756cd2b25d5762149705791964d721a',
+    'SR1-C2': 'c5db8fb0530bc723c84cb1cde8ab60efb3ba52b2d25fd44601b36dedbf5726cf',
+    'SR1-C3': '4850dc71bce9862269718d9190197718699c0cdf75b3e12255c717e7bc2b2d28',
+    'SR1-C4': '8b0b2734ff4ad7c0065c39df135905d21c6d15c5e019d2cdc91ccd6686c67cc2',
+    'SR1-D': '59bdc474a910fe2099a003cd3873e624c0d03aed52e249093882a3755407453e',
+    'SR2-C1': '3f08bfbd8933212650543630ef200777a02b391710ea4d0af7802f2a29f87a0d',
+    'SR2-C2': 'b1fffa4beb5ed8946cff71986ba6be102bae7ee65a84d566ad08e3303f8a78e4',
+    'SR2-C3': 'aeb2923e9c014b32138f944e3dd269ff3705858c380f8d0e7d4d382b56ce6886',
+    'SR2-C4': 'c4558478f46bf141d581976127f41419237dba590af3580962e513d1a010fbba',
 }
 
 
