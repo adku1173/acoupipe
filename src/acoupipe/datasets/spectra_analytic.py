@@ -144,6 +144,9 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     def _get_num_blocks(self):
         return self.overlap_ * self.num_samples / self.block_size - self.overlap_ + 1
 
+    def _get_num_channels(self):
+        return self.steer.mics.num_mics
+
     def _validate_custom_transfer(self):
         nfftfreq = self.fftfreq().shape[0]
         numsources = self.Q.shape[1]

@@ -43,7 +43,7 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.ir import get_ir
+from acoupipe.datasets.ir import get_ir, require_ir_support
 from acoupipe.datasets.utils import calc_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
 
 
@@ -910,7 +910,7 @@ class DatasetSyntheticConfig(ConfigBase):
 
 
 class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
-    """Configuration for the ISM dataset."""
+    """Unsupported developer-only configuration for impulse-response-based synthetic scenes."""
 
     rt60 = Float(2.0, desc='reverberation time T60 in seconds')
     room_size = List([6, 4, 3], desc='room dimensions [x, y, z] in meters')
@@ -1060,7 +1060,7 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
 
 
 class DatasetSyntheticISM(DatasetSynthetic):
-    """Dataset class for the ISM dataset."""
+    """Unsupported developer-only dataset class for impulse-response-based synthetic scenes."""
 
     def __init__(
         self,
@@ -1088,6 +1088,7 @@ class DatasetSyntheticISM(DatasetSynthetic):
         kwargs : dict
             Additional keyword arguments passed to the DatasetSynthetic constructor.
         """
+        require_ir_support()
         if config is None:
             config = DatasetSyntheticISMConfig(
                 mode=mode,

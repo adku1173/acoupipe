@@ -3,7 +3,7 @@
 name = "acoupipe"
 dynamic = ["version"]
 description = "Library for the generation of large-scale microphone array data for machine learning"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.14"
 authors = [
     {name = "Acoular Development Team", email = "info@acoular.org"},
 ]
@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
 	'acoular',
@@ -74,6 +75,45 @@ dev = [
     "ruff",
 ]
 
+[dependency-groups]
+docs = [
+    "ipython",
+    "graphviz",
+    "matplotlib",
+    "numpydoc",
+    "ipykernel",
+    "nb-clean",
+    "sphinx",
+    "sphinx-autoapi",
+    "nbsphinx",
+    "sphinx-rtd-theme",
+    "sphinx-gallery",
+    "sphinxcontrib.bibtex",
+    "pandoc",
+]
+
+lint = [
+    "ruff==0.11.1",
+]
+
+unsupported = [
+    "pyroomacoustics",
+]
+
+test = [
+    "tensorflow",
+    "pytest",
+    "pytest-regtest",
+    "pandas",
+]
+
+dev = [
+    {include-group = "docs"},
+    {include-group = "lint"},
+    {include-group = "test"},
+    "hatch",
+]
+
 
 [project.urls]
 documentation = "https://adku1173.github.io/acoupipe/"
@@ -93,7 +133,7 @@ dependencies = ["ruff==0.11.1"]
 config-path = ".ruff.toml"
 
 [tool.hatch.envs.docs]
-python = "3.12"
+python = "3.13"
 dependencies = [
     "acoupipe[docs]"
 ]
@@ -108,11 +148,16 @@ dependencies = [
 ]
 
 [[tool.hatch.envs.tests.matrix]]
-python = ["3.12"]
+python = ["3.10", "3.11", "3.12", "3.13"]
 
 [tool.hatch.envs.tests.scripts]
 import = ["python -c \"import acoupipe\""]
 test = ["python -m pytest -v --durations=10 tests"]
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
 
 
 [tool.hatch.build.targets.sdist]

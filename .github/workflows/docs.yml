@@ -21,12 +21,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.12']
+        python-version: ['3.13']
     steps:
       - name: Check out a copy of the repository
         uses: actions/checkout@v4
       - name: Set up hatch
         uses: ./.github/actions/setup-hatch
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install Pandoc
         run: |
           sudo apt-get update && sudo apt-get install -y pandoc

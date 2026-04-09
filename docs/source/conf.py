@@ -38,8 +38,10 @@ autoapi_type = "python"
 autoapi_dirs = [src_dir / "acoupipe"]
 autoapi_add_toctree_entry = False  # no seperate index.rst file created by autoapi
 autoapi_options = ["show-inheritance"]
-autoapi_skip_classes = ["DatasetSyntheticTestConfig", "sample_rms", "sample_mic_noise_variance",
-    "signal_seed", "DatasetSyntheticFeatureCollectionBuilder", "ActorHandler", "SamplerActor","log_execution_time", "bytes_feature"]
+autoapi_skip_classes = ["DatasetSyntheticTestConfig", "DatasetSyntheticISM", "DatasetSyntheticISMConfig",
+    "sample_rms", "sample_mic_noise_variance", "signal_seed", "DatasetSyntheticFeatureCollectionBuilder",
+    "ActorHandler", "SamplerActor", "log_execution_time", "bytes_feature"]
+autoapi_skip_modules = ["acoupipe.datasets.ir"]
 autoapi_python_class_content = "both"
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]
@@ -74,7 +76,9 @@ with open("contents/links.rst") as f:
 
 # skip certain classes
 def skip_classes(app, what, name, obj, skip, options):
-    if what == "class":
+    if what == "module":
+        skip = any([name.endswith(module_name) for module_name in autoapi_skip_modules])
+    elif what == "class":
         skip = any([name.endswith(cls_name) for cls_name in autoapi_skip_classes])
     elif what == "function":
         skip = any([name.endswith(cls_name) for cls_name in autoapi_skip_classes])
