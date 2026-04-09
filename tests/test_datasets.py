@@ -15,7 +15,7 @@ IMPLEMENTED_FEATURES = ['time_data', 'csm', 'csmtriu', 'sourcemap', 'eigmode', '
     'targetmap_analytic',
     'targetmap_estimated',
 ]
-TEST_SIGNAL_LENGTH = 0.5
+TEST_SIGNAL_LENGTH = 2.0
 
 modes = ['welch', 'analytic', 'wishart']
 frequencies = [None, 1000]

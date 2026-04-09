@@ -30,7 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-	'acoular',
+	'acoular>=26.1',
 	'ray[default]',
 	'h5py',
 	'tqdm',

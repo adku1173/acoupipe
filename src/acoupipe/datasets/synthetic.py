@@ -41,9 +41,9 @@ from acoupipe.datasets.features import (
     TimeDataFeature,
     create_feature,
 )
+from acoupipe.datasets.ir import get_ir, require_ir_support
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.ir import get_ir, require_ir_support
 from acoupipe.datasets.utils import calc_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
 
 
@@ -322,7 +322,7 @@ class DatasetSyntheticConfig(ConfigBase):
     snap_to_grid = Bool(False, desc='snap source locations to grid')
     random_signal_length = Bool(False, desc='randomize signal length')
     fft_params = Dict(
-        {'block_size': 128, 'overlap': 'None', 'window': 'Rectangular', 'precision': 'complex64'},
+        {'block_size': 128, 'overlap': '50%', 'window': 'Hanning', 'precision': 'complex64'},
         desc='FFT parameters',
     )
     # acoular pipeline traits

@@ -18,6 +18,7 @@ if TF_FLAG:
     from acoupipe.writer import infer_tf_encoding
 import inspect
 
+
 class BaseFeatureCatalog(HasPrivateTraits):
     """BaseFeatureCatalog base class for handling feature funcs.
 
@@ -37,7 +38,6 @@ class BaseFeatureCatalog(HasPrivateTraits):
     def get_feature_func(self):
         """Will return a method depending on the class parameters."""
         return
-
 
 
 class TimeDataFeature(BaseFeatureCatalog):
@@ -77,7 +77,7 @@ class TargetmapFeature(BaseFeatureCatalog):
         loc = data['loc']
         # check if data signature exists iwth inspect
         sig = inspect.signature(strength_callable)
-        if "data" in sig.parameters:
+        if 'data' in sig.parameters:
             strength = list(strength_callable(sampler=None, data=data).values())[0]
         else:
             strength = list(strength_callable(sampler=None).values())[0]
@@ -102,10 +102,10 @@ class TargetmapFeature(BaseFeatureCatalog):
         else:
             strength_feature = EstimatedSourceStrengthFeature
         strength_callable = strength_feature(
-                freq_data=self.freq_data,
-                f=self.f,
-                num=self.num,
-            ).get_feature_func()
+            freq_data=self.freq_data,
+            f=self.f,
+            num=self.num,
+        ).get_feature_func()
         return partial(
             self.get_targetmap,
             grid=self.grid,
@@ -464,12 +464,13 @@ class LocFeature(BaseFeatureCatalog):
     def get_feature_func(self):
         def get_loc(sampler, data, name):
             return {name: data['loc']}
+
         return partial(get_loc, name=self.name)
 
 
 class AnalyticSourceStrengthFeature(SpectraFeature):
     name = Str('source_strength_analytic')
-   
+
     @staticmethod
     def calc_source_strength_analytic(sampler, data, freq_data, fidx, name):
         nfft = freq_data.fftfreq().shape[0]
@@ -507,7 +508,7 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
         init_source = freq_data.source
         sources = get_point_sources_recursively(init_source)
         nfft = freq_data.fftfreq().shape[0]
-        
+
         if fidx is None:
             strength = np.zeros((nfft, len(sources)))
             for j, src in enumerate(sources):
@@ -533,13 +534,12 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
                 fidx=self.fidx,
                 name=self.name,
             )
-        else:
-            return partial(
-                self.calc_source_strength_estimated,
-                freq_data=self.freq_data,
-                fidx=self.fidx,
-                name=self.name,
-            )
+        return partial(
+            self.calc_source_strength_estimated,
+            freq_data=self.freq_data,
+            fidx=self.fidx,
+            name=self.name,
+        )
 
 
 class AnalyticNoiseStrengthFeature(SpectraFeature):
@@ -806,9 +806,9 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         self.feature_collection.feature_tf_dtype_mapper[name] = tf_dtype
 
 
-
 def create_feature(feature_func, name, shape, dtype):
     class Feature(BaseFeatureCatalog):
         def get_feature_func(self):
             return feature_func
+
     return Feature(name=name, shape=shape, dtype=dtype)

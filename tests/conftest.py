@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+
 from acoular import ImportGrid, MicGeom, SteeringVector
 from scipy.stats import norm
 
