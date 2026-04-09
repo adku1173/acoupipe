@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
 	'acoular>=26.1',
-	'ray[default]; sys_platform != "win32"',
+	'ray[default]',
 	'h5py',
 	'tqdm',
     'pooch',
@@ -107,6 +107,15 @@ name = "testpypi"
 url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
 explicit = true
+
+# Ensure cross-platform compatibility: require Windows AMD64 support
+# This forces uv to resolve dependencies that have wheels for Windows
+[tool.uv]
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+]
 
 [tool.pytest.ini_options]
 testpaths = [
