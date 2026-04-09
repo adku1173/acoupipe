@@ -66,7 +66,7 @@ file_hash = {
     'SR2-D': 'f3b7015e4e2ee8b3787c8c4857f92409b55a63f1f8a73e4d916aa5e07289d945',
     'SRA1-C1': '1ebec4c77a5dd481611c41ac1b774df82e6df3db23ae098715b0e263b8e74a9c',
     'SRA1-C2': '5c8d97cd1e2a86ab5b41b8dea1ad4a6518062d41d53ae7114f7d1c4de0c63294',
-    'SRA1-C3': '724d8ac9c09be45c5efdc6845c21f3079bfd1a19a1030ba9dd57cff1ac2942d7'
+    'SRA1-C3': '724d8ac9c09be45c5efdc6845c21f3079bfd1a19a1030ba9dd57cff1ac2942d7',
 }
 
 
