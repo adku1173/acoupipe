@@ -3,10 +3,9 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from acoular import ImportGrid, MicGeom, SteeringVector
 import numpy as np
 import pytest
-
-from acoular import ImportGrid, MicGeom, SteeringVector
 from scipy.stats import norm
 
 from acoupipe.datasets.experimental import DatasetMIRACLE
