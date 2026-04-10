@@ -2,8 +2,6 @@ name: AcouPipe 🎵 Organizational CI
 permissions:
   contents: read
 on:
-  push:
-    branches: [ master, dev ]
   pull_request:
     branches: [ master, dev ]
 
@@ -25,7 +23,6 @@ jobs:
     uses: acoular/ci/.github/workflows/docs.yml@main
 
   github:
-    if: github.event_name == 'pull_request'
     uses: acoular/ci/.github/workflows/github.yml@main
 
   linting:
