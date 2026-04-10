@@ -56,7 +56,7 @@ def test_values_correct(mode, feature, f, num, create_dataset, snapshot):
 
 
 @pytest.mark.multiprocessing
-@pytest.mark.skipif(os.environ.get('CI') == 'true', reason="Skip multiprocessing tests in CI")
+@pytest.mark.skipif(os.environ.get('CI') == 'true', reason='Skip multiprocessing tests in CI')
 @pytest.mark.parametrize('mode', modes)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])
@@ -294,7 +294,7 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset, s
 
 
 @pytest.mark.multiprocessing
-@pytest.mark.skipif(os.environ.get('CI') == 'true', reason="Skip multiprocessing tests in CI")
+@pytest.mark.skipif(os.environ.get('CI') == 'true', reason='Skip multiprocessing tests in CI')
 @pytest.mark.parametrize('mode', modes)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])
