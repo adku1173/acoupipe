@@ -26,6 +26,11 @@ class ConfigBase(HasPrivateTraits):
         this function has to be manually defined in a dataset subclass.
         It includes the sampler objects as values. The key defines the idx in the sample order.
 
+        Examples
+        --------
+        >>> ConfigBase().get_sampler()
+        {}
+
         e.g.:
 
         .. code-block:: python
