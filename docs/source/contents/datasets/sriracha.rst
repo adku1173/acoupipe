@@ -211,7 +211,7 @@ Example
 
     from acoupipe.datasets.experimental import DatasetSRIRACHA
 
-    ds = DatasetSRIRACHA(scenario="SRA2")
+    ds = DatasetSRIRACHA(scenario="SRA2-D")
 
 
 
