@@ -120,6 +120,7 @@ required-environments = [
 
 [tool.pytest.ini_options]
 testpaths = "tests"
+pythonpath = ["src"]
 addopts = "-v --durations=10 --cov-report=html --cov-report=term-missing"
 filterwarnings = [
     #"error", # treat warnings as errors
