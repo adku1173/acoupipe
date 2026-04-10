@@ -104,15 +104,16 @@ class LoadH5Dataset(BaseLoadDataset):
 
         Example to create a repeatable data set with the Tensorflow `tf.data.Dataset` API is given in
 
+        .. code-block:: python
 
-        >>> h5data = LoadH5Dataset(name='some_dataset.h5')
-        >>> generator = h5data.get_dataset_generator(features=['loc'])
-        >>> output_signature = {
-        ...     'loc': tf.TensorSpec(shape=(3, None), dtype=tf.float32),
-        ... }
-        >>>
-        >>> dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature).repeat()
-        >>> loc = next(iter(dataset))  # return locations
+            h5data = LoadH5Dataset(name='some_dataset.h5')
+            generator = h5data.get_dataset_generator(features=['loc'])
+            output_signature = {
+                'loc': tf.TensorSpec(shape=(3, None), dtype=tf.float32),
+            }
+            dataset = tf.data.Dataset.from_generator(
+                generator, output_signature=output_signature).repeat()
+            loc = next(iter(dataset))  # return locations
 
         Parameters
         ----------
