@@ -95,7 +95,9 @@ def test_save_h5(mode, feature, num, f, temp_dir, create_dataset):
         pytest.skip('Feature not supported in non-welch mode')
 
     dataset = create_dataset(mode)
-    dataset.save_h5(split='training', num=num, f=f, size=2, features=[feature], name=temp_dir / 'test.h5', progress_bar=False)
+    dataset.save_h5(
+        split='training', num=num, f=f, size=2, features=[feature], name=temp_dir / 'test.h5', progress_bar=False
+    )
 
 
 @pytest.mark.parametrize('mode', modes)
