@@ -1,6 +1,6 @@
+from acoular import ImportGrid
 import numpy as np
 import pytest
-from acoular import ImportGrid
 
 
 def change_seed(psa):

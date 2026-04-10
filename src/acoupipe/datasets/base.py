@@ -3,10 +3,10 @@
 import logging
 from functools import partial
 
-from traits.api import HasPrivateTraits, Instance, Int, Property
+from traits.api import Dict, HasPrivateTraits, Instance, Int, Property
 
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.features import BaseFeatureCollectionBuilder
+from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
@@ -26,12 +26,20 @@ class ConfigBase(HasPrivateTraits):
         this function has to be manually defined in a dataset subclass.
         It includes the sampler objects as values. The key defines the idx in the sample order.
 
+        Examples
+        --------
+        >>> ConfigBase().get_sampler()
+        {}
+
         e.g.:
-        >>> sampler = {
-        >>>     0 : BaseSampler(...),
-        >>>     1 : BaseSampler(...),
-        >>>     ...
-        >>> }
+
+        .. code-block:: python
+
+            sampler = {
+                0 : BaseSampler(...),
+                1 : BaseSampler(...),
+                ...
+            }
 
         Returns
         -------
@@ -39,6 +47,39 @@ class ConfigBase(HasPrivateTraits):
             dictionary containing the sampler objects
         """
         return {}
+
+    def _get_default_feature_kwargs(self, f, num):
+        """Return keyword arguments passed to default feature builder methods."""
+        return {'f': f, 'num': num}
+
+    def get_default_features(self, features, f, num):
+        """
+        Build default features using `_get_default_feature_{name}` methods.
+
+        Parameters
+        ----------
+        features : list[str]
+            Names of default features to include.
+        f : float | list[float] | None
+            Frequencies used for frequency-dependent features.
+        num : int
+            Bandwidth selector for fractional octave features.
+
+        Returns
+        -------
+        list
+            Instantiated feature catalog objects.
+        """
+        builder_kwargs = self._get_default_feature_kwargs(f, num)
+        default_features = []
+        for feature_name in features:
+            if feature_name not in ['idx', 'seeds']:
+                builder = getattr(self, f'_get_default_feature_{feature_name}', None)
+                if builder is None:
+                    msg = f'Unknown feature "{feature_name}".'
+                    raise ValueError(msg)
+                default_features.append(builder(**builder_kwargs))
+        return default_features
 
 
 class DatasetBase(HasPrivateTraits):
@@ -55,6 +96,7 @@ class DatasetBase(HasPrivateTraits):
 
     config = Instance(ConfigBase, desc='configuration object')
     tasks = Property(desc='number of parallel tasks for data generation')
+    remote_args = Dict({})
     #: logger instance to log calculation times for each data sample
     logger = Property(desc='Logger instance to log timing statistics')
 
@@ -62,12 +104,13 @@ class DatasetBase(HasPrivateTraits):
     _logger = Instance(logging.Logger, desc='Internal logger instance')
     _tasks = Int(1, desc='number of parallel tasks for data generation')
 
-    def __init__(self, config=None, tasks=1, logger=None):
+    def __init__(self, config=None, tasks=1, remote_args=None, logger=None):
         HasPrivateTraits.__init__(self)
         self.tasks = tasks
         if config is None:
             config = ConfigBase()
         self.config = config
+        self.remote_args = remote_args or {}
         self.logger = logger
 
     def _get_logger(self):
@@ -99,7 +142,7 @@ class DatasetBase(HasPrivateTraits):
 
     def get_pipeline_instance(self):
         if self.tasks > 1:
-            return DistributedPipeline(numworkers=self.tasks)
+            return DistributedPipeline(numworkers=self.tasks, remote_args=self.remote_args)
         return BasePipeline()
 
     def _generate(self, pipeline, progress_bar, start_idx):
@@ -130,10 +173,17 @@ class DatasetBase(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        builder = BaseFeatureCollectionBuilder(features=features, f=f, num=num)
-        return builder.build()
+        # handle all custom features (BaseFeatureCatalog instances)
+        feature_instances = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        if hasattr(self.config, 'get_default_features'):
+            default_feature_names = [feat for feat in features if isinstance(feat, str)]
+            feature_instances += self.config.get_default_features(default_feature_names, f, num)
+        builder = BaseFeatureCollectionBuilder(features=feature_instances)
+        if hasattr(self.config, 'get_prepare_func'):
+            builder.add_custom(self.config.get_prepare_func())  # add prepare function
+        return builder.build()  # finally build the feature collection
 
-    def generate(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=True):
+    def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
 
         Parameters
@@ -141,7 +191,7 @@ class DatasetBase(HasPrivateTraits):
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
         split : str
-            Split name for the dataset ('training', 'validation' or 'test').
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         size : int
             Size of the dataset (number of source cases).
         f : float
@@ -170,18 +220,22 @@ class DatasetBase(HasPrivateTraits):
 
         Examples
         --------
-        Generate features iteratively.
+        Generate features iteratively (example below requires a dataset configuration).
 
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
-        >>> # define the features
-        >>> features = ['csm', 'source_strength_analytic', 'loc']
-        >>> f = 1000
-        >>> num = 3
-        >>> # generate the dataset
-        >>> generator = DatasetSynthetic().generate(
-                f=f, num=num, split="training", size=2, features=features)
-        >>> # iterate over the dataset
-        >>> for data in generator:
+        .. code-block:: python
+
+            from acoupipe.datasets.synthetic import DatasetSynthetic
+
+            # define the features
+            features = ['csm', 'source_strength_analytic', 'loc']
+            f = 1000
+            num = 3
+
+            # generate the dataset
+            generator = DatasetSynthetic().generate(f=f, num=num, split='training', size=2, features=features)
+
+            # iterate over the dataset
+            for data in generator:
                 print(data)
         """
         pipeline = self.get_pipeline_instance()
@@ -190,19 +244,19 @@ class DatasetBase(HasPrivateTraits):
         set_pipeline_seeds(pipeline, start_idx, size, split)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
-    def save_h5(self, features, split, size, name, f=None, num=0, start_idx=0, progress_bar=True):
+    def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Save dataset to a HDF5 file.
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
-        split : str
-            Split name for the dataset ('training', 'validation' or 'test').
         size : int
             Size of the dataset (number of source cases).
         name : str
             Name of the HDF5 file.
+        split : str
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
             The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
@@ -228,16 +282,21 @@ class DatasetBase(HasPrivateTraits):
 
         Examples
         --------
-        Save features to a HDF5 file.
+        Save features to a HDF5 file (example requires proper file path).
 
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
-        >>> # define the features
-        >>> features = ['csm', 'source_strength_analytic', 'loc']
-        >>> f = 1000
-        >>> num = 3
-        >>> # save the dataset
-        >>> dataset = DatasetSynthetic().save_h5(
-                f=f, num=num, split="training", size=10, features=features,name="/tmp/example.h5")
+        .. code-block:: python
+
+            from acoupipe.datasets.synthetic import DatasetSynthetic
+
+            # define the features
+            features = ['csm', 'source_strength_analytic', 'loc']
+            f = 1000
+            num = 3
+
+            # save the dataset
+            dataset = DatasetSynthetic().save_h5(
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.h5'
+            )
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
@@ -255,19 +314,19 @@ if TF_FLAG:
 
     from acoupipe.writer import WriteTFRecord, complex_list_feature
 
-    def save_tfrecord(self, features, split, size, name, f=None, num=0, start_idx=0, progress_bar=True):
+    def save_tfrecord(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Save dataset to a .tfrecord file.
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
-        split : str
-            Split name for the dataset ('training', 'validation' or 'test').
         size : int
             Size of the dataset (number of source cases).
         name : str
             Name of the TFRecord file.
+        split : str
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
             The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
@@ -293,16 +352,21 @@ if TF_FLAG:
 
         Examples
         --------
-        Save features to a TFRecord file.
+        Save features to a TFRecord file (example requires proper file path).
 
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
-        >>> # define the features
-        >>> features = ['csm', 'source_strength_analytic', 'loc']
-        >>> f = 1000
-        >>> num = 3
-        >>> # save the dataset
-        >>> dataset = DatasetSynthetic().save_tfrecord(
-                f=f, num=num, split="training", size=10, features=features,name="/tmp/example.tfrecord")
+        .. code-block:: python
+
+            from acoupipe.datasets.synthetic import DatasetSynthetic
+
+            # define the features
+            features = ['csm', 'source_strength_analytic', 'loc']
+            f = 1000
+            num = 3
+
+            # save the dataset
+            dataset = DatasetSynthetic().save_tfrecord(
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
+            )
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
@@ -310,7 +374,19 @@ if TF_FLAG:
         feature_collection = self.get_feature_collection(features, f, num)
         pipeline.features = feature_collection.get_feature_funcs()
         set_pipeline_seeds(pipeline, start_idx, size, split)
-        WriteTFRecord(name=name, source=pipeline, encoder_funcs=feature_collection.feature_tf_encoder_mapper).save(
+        # get features with varying length to handle them correctly in the TFRecord writer
+        shape_features = []
+        for feature, shape in feature_collection.feature_tf_shape_mapper.items():
+            # if more then one None in shape, we have a varying length feature
+            if list(shape).count(None) > 1:
+                shape_features.append(feature)
+
+        WriteTFRecord(
+            name=name,
+            source=pipeline,
+            shape_features=shape_features,
+            encoder_funcs=feature_collection.feature_tf_encoder_mapper,
+        ).save(
             progress_bar,
             start_idx,
         )
@@ -355,17 +431,17 @@ if TF_FLAG:
 
     DatasetBase.get_output_signature = get_output_signature
 
-    def get_tf_dataset(self, features, split, size, f=None, num=0, start_idx=0, progress_bar=False):
+    def get_tf_dataset(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=False):
         """Get a TensorFlow dataset from the generated data.
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. The features "seeds" and "idx" are always included.
-        split : str
-            Split name for the dataset ('training', 'validation' or 'test').
         size : int
             Size of the dataset (number of source cases).
+        split : str
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
             The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
@@ -440,48 +516,74 @@ if TF_FLAG:
 
         Examples
         --------
-        >>> from acoupipe.datasets.synthetic import DatasetSynthetic
-        >>> # define the features
-        >>> features = ['csm', 'source_strength_analytic', 'loc']
-        >>> f = 1000
-        >>> num = 3
-        >>> # save the dataset
-        >>> dataset = DatasetSynthetic().save_tfrecord(
-                f=f, num=num, split="training", size=10, features=features,name="/tmp/example.tfrecord")
-        >>> # parse the dataset
-        >>> parser = dataset.get_tfrecord_parser(features, f, num)
-        >>> dataset = tf.data.TFRecordDataset('/tmp/example.tfrecord')
-        >>> dataset = iter(dataset.map(parser))
-        >>> data = next(dataset)
+        (Example requires proper dataset and file paths)
+
+        .. code-block:: python
+
+            from acoupipe.datasets.synthetic import DatasetSynthetic
+
+            # define the features
+            features = ['csm', 'source_strength_analytic', 'loc']
+            f = 1000
+            num = 3
+
+            # save the dataset
+            dataset = DatasetSynthetic().save_tfrecord(
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
+            )
+
+            # parse the dataset
+            parser = dataset.get_tfrecord_parser(features, f, num)
+            dataset = tf.data.TFRecordDataset('/tmp/example.tfrecord')
+            dataset = iter(dataset.map(parser))
+            data = next(dataset)
 
         """
         feature_collection = self.get_feature_collection(features, f, num)
         features = features + ['idx', 'seeds']
-        feature_description = {}
-        shapes = feature_collection.feature_tf_shape_mapper
-        for feature in features:
-            if feature_collection.feature_tf_encoder_mapper[feature] == complex_list_feature:
-                dtype = tf.float32  # complex not supported for tfrecord files
-                shapes[feature] = shapes[feature] + (2,)
-            else:
-                dtype = feature_collection.feature_tf_dtype_mapper[feature]
-            if None in shapes[feature]:
-                feature_description[feature] = tf.io.VarLenFeature(dtype)
-            else:
-                feature_description[feature] = tf.io.FixedLenFeature(shapes[feature], dtype)
 
-        # create parser func
+        feature_description = {}
+        shapes = dict(feature_collection.feature_tf_shape_mapper)  # make a copy
+
+        for feature in features:
+            dtype = feature_collection.feature_tf_dtype_mapper[feature]
+            if dtype in [tf.complex64, tf.complex128]:  # complex not supported for tfrecord files
+                shapes[feature] = shapes[feature] + (2,)
+                dtype = tf.float32 if dtype == tf.complex64 else tf.float64
+            shape = shapes[feature]
+            if None in shape:
+                feature_description[feature] = tf.io.VarLenFeature(dtype)
+                if list(shape).count(None) > 1:
+                    shape_key = f'{feature}_shape'
+                    feature_description[shape_key] = tf.io.FixedLenFeature((len(shape),), tf.int64)
+            else:
+                feature_description[feature] = tf.io.FixedLenFeature(shape, dtype)
+
         def _parse_function(example_proto):
             data = tf.io.parse_single_example(example_proto, feature_description)
             for feature in features:
+                value = data[feature]
                 shape = shapes[feature]
-                if None in shape:
-                    shape = [s if s is not None else -1 for s in shape]
-                    data[feature] = tf.reshape(tf.sparse.to_dense(data[feature]), shape)
-                if (
-                    feature_collection.feature_tf_encoder_mapper[feature] == complex_list_feature
-                ):  # recover complex dtype
-                    data[feature] = tf.complex(data[feature][..., 0], data[feature][..., 1])
+                shape_key = f'{feature}_shape'
+                shape_tensor = data.get(shape_key)
+
+                # Only densify sparse tensors
+                if isinstance(value, tf.SparseTensor):
+                    value = tf.sparse.to_dense(value)
+                    if shape_tensor is not None:
+                        value = tf.reshape(value, tf.cast(shape_tensor, tf.int32))
+                    elif None in shape:
+                        target_shape = [s if s is not None else -1 for s in shape]
+                        value = tf.reshape(value, target_shape)
+                elif shape_tensor is not None:
+                    # Dynamic shape provided but value already dense
+                    value = tf.reshape(value, tf.cast(shape_tensor, tf.int32))
+
+                encoder = feature_collection.feature_tf_encoder_mapper[feature]
+                if encoder is complex_list_feature:
+                    value = tf.complex(value[..., 0], value[..., 1])
+
+                data[feature] = value
             return data
 
         return _parse_function

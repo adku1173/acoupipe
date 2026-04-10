@@ -4,16 +4,19 @@ import acoular as ac
 import numpy as np
 from numpy import array, imag, newaxis, real, triu_indices
 from numpy.linalg import eigh
-from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str
+from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
 
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import (
-    blockwise_transfer,
     get_frequency_index_range,
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
+
+if TF_FLAG:
+    from acoupipe.writer import infer_tf_encoding
+import inspect
 
 
 class BaseFeatureCatalog(HasPrivateTraits):
@@ -23,11 +26,14 @@ class BaseFeatureCatalog(HasPrivateTraits):
     ----------
     name : str
         Name of the feature.
+    dtype : callable
+        Numpy dtype of the feature.
 
     """
 
     name = Str
     dtype = Callable
+    shape = Tuple
 
     def get_feature_func(self):
         """Will return a method depending on the class parameters."""
@@ -62,18 +68,19 @@ class TargetmapFeature(BaseFeatureCatalog):
     freq_data = Instance(ac.BaseSpectra, desc='cross spectral matrix calculation class')
     f = Either(None, Float, List(Float), desc='frequency')
     num = Int
-    steer = Instance(
-        ac.SteeringVector,
-        desc='steering vector object defining the path between the sources and the microphones',
-    )
     ref_mic = Either(Int, None, default=None, desc='reference microphone index')
     strength_type = Either('analytic', 'estimated', desc='source strength type')
     grid = Instance(ac.Grid, desc='grid')
 
     @staticmethod
-    def get_targetmap(sampler, grid, loc_callable, strength_callable, name):
-        loc = list(loc_callable(sampler=None).values())[0]
-        strength = list(strength_callable(sampler=None).values())[0]
+    def get_targetmap(sampler, data, grid, strength_callable, name):
+        loc = data['loc']
+        # check if data signature exists iwth inspect
+        sig = inspect.signature(strength_callable)
+        if 'data' in sig.parameters:
+            strength = list(strength_callable(sampler=None, data=data).values())[0]
+        else:
+            strength = list(strength_callable(sampler=None).values())[0]
         # create target map
         if type(grid) is ac.RectGrid:
             loc = loc[:2]
@@ -90,26 +97,18 @@ class TargetmapFeature(BaseFeatureCatalog):
         return {name: target_map}
 
     def get_feature_func(self):
-        loc_callable = LocFeature(freq_data=self.freq_data).get_feature_func()
         if self.strength_type == 'analytic':
-            strength_callable = AnalyticSourceStrengthFeature(
-                freq_data=self.freq_data,
-                f=self.f,
-                num=self.num,
-                steer=self.steer,
-                ref_mic=self.ref_mic,
-            ).get_feature_func()
+            strength_feature = AnalyticSourceStrengthFeature
         else:
-            strength_callable = EstimatedSourceStrengthFeature(
-                freq_data=self.freq_data,
-                f=self.f,
-                num=self.num,
-                ref_mic=self.ref_mic,
-            ).get_feature_func()
+            strength_feature = EstimatedSourceStrengthFeature
+        strength_callable = strength_feature(
+            freq_data=self.freq_data,
+            f=self.f,
+            num=self.num,
+        ).get_feature_func()
         return partial(
             self.get_targetmap,
             grid=self.grid,
-            loc_callable=loc_callable,
             strength_callable=strength_callable,
             name=self.name,
         )
@@ -461,149 +460,34 @@ class EigmodeFeature(SpectraFeature):
 
 class LocFeature(BaseFeatureCatalog):
     name = Str('loc')
-    freq_data = Instance(ac.BaseSpectra, desc='cross spectral matrix calculation class')
-
-    @staticmethod
-    def calc_loc1(sampler, freq_data, name):
-        sources = get_point_sources_recursively(freq_data.source)
-        locs = np.array([src.loc for src in sources]).T
-        return {name: locs}
-
-    @staticmethod
-    def calc_loc2(sampler, freq_data, name):
-        return {name: freq_data.steer.grid.pos}
 
     def get_feature_func(self):
-        if isinstance(self.freq_data, PowerSpectraAnalytic):
-            return partial(self.calc_loc2, freq_data=self.freq_data, name=self.name)
-        if isinstance(self.freq_data, ac.BaseSpectra):
-            return partial(self.calc_loc1, freq_data=self.freq_data, name=self.name)
-        msg = f'Unknown freq_data type {self.freq_data.__class__.__name__}.'
-        raise NotImplementedError(msg)
+        def get_loc(sampler, data, name):
+            return {name: data['loc']}
+
+        return partial(get_loc, name=self.name)
 
 
 class AnalyticSourceStrengthFeature(SpectraFeature):
     name = Str('source_strength_analytic')
-    cross_strength = Enum(False)  # can later be extended for sources' cross-power values
-    freq_data = Instance(ac.BaseSpectra, desc='cross spectral matrix calculation class')
-    steer = Instance(
-        ac.SteeringVector,
-        desc='steering vector object defining the path between the sources and the microphones',
-    )
-    ref_mic = Either(Int, None, default=None, desc='reference microphone index')
 
     @staticmethod
-    def calc_source_strength_analytic1_fullfreq(sampler, freq_data, steer, ref_mic, name):
-        sources = get_point_sources_recursively(freq_data.source)
+    def calc_source_strength_analytic(sampler, data, freq_data, fidx, name):
         nfft = freq_data.fftfreq().shape[0]
-        strength = np.zeros((nfft, len(sources)))
-        for j, source in enumerate(sources):
-            if isinstance(source, ac.PointSourceConvolve):
-                ir = source.kernel[:, ref_mic].copy()
-                tf = blockwise_transfer(ir[np.newaxis], blocksize=freq_data.block_size).squeeze()
-                strength[:, j] = np.real(tf * tf.conjugate()) * source.signal.rms**2 / nfft
-            elif isinstance(source, ac.PointSource):
-                if isinstance(source.signal, ac.WNoiseGenerator):
-                    strength[:, j] = np.ones(nfft) * (source.signal.rms / steer.r0[j]) ** 2 / nfft
-                else:
-                    msg = f'Cannot handle source signal type {source.signal.__class__.__name__}.'
-                    raise NotImplementedError(msg)
-            else:
-                msg = f'Cannot handle source type {source.__class__.__name__}.'
-                raise NotImplementedError(msg)
-        return {name: strength}
-
-    @staticmethod
-    def calc_source_strength_analytic1_partfreq(sampler, freq_data, fidx, name, steer, ref_mic):
-        strength = AnalyticSourceStrengthFeature.calc_source_strength_analytic1_fullfreq(
-            sampler,
-            freq_data,
-            steer,
-            ref_mic,
-            name,
-        )[name]
+        strength = np.tile(data['prms_sq'] / nfft, (nfft, 1))
+        if data.get('h_sq') is not None:
+            strength *= data['h_sq']
+        if fidx is None:
+            return {name: strength}
         return {name: np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])}
 
-    @staticmethod
-    def calc_source_strength_analytic2_fullfreq(sampler, freq_data, name):
-        freqs = freq_data.fftfreq()
-        strength = np.stack([freq_data.Q[i].diagonal() for i in range(freqs.shape[0])], axis=0)
-        return {name: np.real(strength)}
-
-    @staticmethod
-    def calc_source_strength_analytic2_partfreq(sampler, freq_data, fidx, name):
-        strength = np.array([freq_data.Q[indices[0] : indices[1]].sum(0).diagonal() for indices in fidx], dtype=complex)
-        return {name: np.real(strength)}
-
-    @staticmethod
-    def calc_source_strength_analytic_custom_transfer_fullfreq(sampler, freq_data, ref_mic, name):
-        freqs = freq_data.fftfreq()
-        strength = np.real(np.stack([freq_data.Q[i].diagonal() for i in range(freqs.shape[0])], axis=0))
-        transfer = freq_data.custom_transfer[:, ref_mic].copy()
-        transfer *= transfer.conjugate()
-        strength = strength * np.real(transfer)
-        return {name: strength}
-
-    @staticmethod
-    def calc_source_strength_analytic_custom_transfer_partfreq(sampler, freq_data, fidx, ref_mic, name):
-        full_strength = AnalyticSourceStrengthFeature.calc_source_strength_analytic_custom_transfer_fullfreq(
-            sampler,
-            freq_data,
-            ref_mic,
-            name,
-        )[name]
-        strength = np.array([full_strength[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=float)
-        return {name: strength}
-
     def get_feature_func(self):
-        if isinstance(self.freq_data, PowerSpectraAnalytic):
-            self.set_freq_limits()
-            if self.fidx is None:
-                if self.ref_mic is None:
-                    return partial(
-                        self.calc_source_strength_analytic2_fullfreq,
-                        freq_data=self.freq_data,
-                        name=self.name,
-                    )
-                return partial(
-                    self.calc_source_strength_analytic_custom_transfer_fullfreq,
-                    freq_data=self.freq_data,
-                    ref_mic=self.ref_mic,
-                    name=self.name,
-                )
-            if self.ref_mic is None:
-                return partial(
-                    self.calc_source_strength_analytic2_partfreq,
-                    freq_data=self.freq_data,
-                    fidx=self.fidx,
-                    name=self.name,
-                )
-            return partial(
-                self.calc_source_strength_analytic_custom_transfer_partfreq,
-                freq_data=self.freq_data,
-                fidx=self.fidx,
-                ref_mic=self.ref_mic,
-                name=self.name,
-            )
-        if isinstance(self.freq_data, ac.BaseSpectra):
-            if self.fidx is None:
-                return partial(
-                    self.calc_source_strength_analytic1_fullfreq,
-                    freq_data=self.freq_data,
-                    steer=self.steer,
-                    ref_mic=self.ref_mic,
-                    name=self.name,
-                )
-            return partial(
-                self.calc_source_strength_analytic1_partfreq,
-                freq_data=self.freq_data,
-                fidx=self.fidx,
-                steer=self.steer,
-                ref_mic=self.ref_mic,
-                name=self.name,
-            )
-        msg = f'No feature function with freq_data type {self.freq_data.__class__.__name__}.'
-        raise NotImplementedError(msg)
+        return partial(
+            self.calc_source_strength_analytic,
+            freq_data=self.freq_data,
+            fidx=self.fidx,
+            name=self.name,
+        )
 
 
 class EstimatedSourceStrengthFeature(SpectraFeature):
@@ -611,145 +495,51 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
     ref_mic = Either(Int, None, default=None, desc='reference microphone index')
 
     @staticmethod
-    def calc_source_strength_estimated1_fullfreq(sampler, freq_data, name):
+    def calc_source_strength_estimated_wishart(sampler, data, freq_data, fidx, name):
+        strength = np.stack([freq_data._Q[i].diagonal().real for i in range(freq_data.fftfreq().shape[0])], axis=0)
+        if data.get('h_sq') is not None:
+            strength *= data['h_sq']
+        if fidx is None:
+            return {name: strength}
+        return {name: np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])}
+
+    @staticmethod
+    def calc_source_strength_estimated(sampler, freq_data, fidx, name):
         init_source = freq_data.source
         sources = get_point_sources_recursively(init_source)
         nfft = freq_data.fftfreq().shape[0]
-        strength = np.zeros((nfft, len(sources)))
-        for j, src in enumerate(sources):
-            freq_data.source = src
-            spectrogram = SpectrogramFeature.calc_spectrogram1(sampler, freq_data, name='spectrogram')['spectrogram']
-            strength[:, j] = np.real(np.real(spectrogram * spectrogram.conjugate())).mean(0).squeeze()
+
+        if fidx is None:
+            strength = np.zeros((nfft, len(sources)))
+            for j, src in enumerate(sources):
+                freq_data.source = src
+                strength[:, j] = np.real(freq_data.csm[:, 0, 0])
+        else:
+            strength = np.zeros((len(fidx), len(sources)))
+            for j, src in enumerate(sources):
+                freq_data.source = src
+                csm = freq_data.csm[:]
+                strength[:, j] = np.real(
+                    np.array([csm[indices[0] : indices[1]].sum(0).diagonal() for indices in fidx], dtype=complex),
+                ).reshape((-1,))
         freq_data.source = init_source  # reset source in case of subsequent feature calculation
-        return {name: strength}
-
-    @staticmethod
-    def calc_source_strength_estimated1_partfreq(sampler, freq_data, fidx, name):
-        init_source = freq_data.source
-        sources = get_point_sources_recursively(init_source)
-        strength = np.zeros((len(fidx), len(sources)))
-        for j, src in enumerate(sources):
-            freq_data.source = src
-            spectrogram = SpectrogramFeature.calc_spectrogram2(sampler, freq_data, fidx, name='spectrogram')[
-                'spectrogram'
-            ]
-            strength[:, j] = np.real(np.real(spectrogram * spectrogram.conjugate())).mean(0).squeeze()
-        freq_data.source = init_source  # reset source in case of subsequent feature calculation
-        return {name: strength}
-
-    @staticmethod
-    def calc_source_strength_estimated2_fullfreq(sampler, freq_data, name):
-        freqs = freq_data.fftfreq()
-        strength = np.stack([freq_data._Q[i].diagonal() for i in range(freqs.shape[0])], axis=0)
-        return {name: np.real(strength)}
-
-    @staticmethod
-    def calc_source_strength_estimated2_partfreq(sampler, freq_data, fidx, name):
-        strength = np.array(
-            [freq_data._Q[indices[0] : indices[1]].sum(0).diagonal() for indices in fidx],
-            dtype=complex,
-        )
-        return {name: np.real(strength)}
-
-    @staticmethod
-    def calc_source_strength_estimated3_fullfreq(sampler, freq_data, name):
-        init_source = freq_data.source
-        sources = get_point_sources_recursively(init_source)
-        nfft = freq_data.fftfreq().shape[0]
-        strength = np.zeros((nfft, len(sources)))
-        for j, src in enumerate(sources):
-            freq_data.source = src
-            strength[:, j] = np.real(freq_data.csm[:, 0, 0])
-        freq_data.source = init_source  # reset source in case of subsequent feature calculation
-        return {name: strength}
-
-    @staticmethod
-    def calc_source_strength_estimated3_partfreq(sampler, freq_data, fidx, name):
-        init_source = freq_data.source
-        sources = get_point_sources_recursively(init_source)
-        strength = np.zeros((len(fidx), len(sources)))
-        for j, src in enumerate(sources):
-            freq_data.source = src
-            csm = freq_data.csm[:]
-            strength[:, j] = np.real(
-                np.array([csm[indices[0] : indices[1]].sum(0).diagonal() for indices in fidx], dtype=complex),
-            ).reshape((-1,))
-        freq_data.source = init_source  # reset source in case of subsequent feature calculation
-        return {name: strength}
-
-    @staticmethod
-    def calc_source_strength_estimated_custom_transfer_fullfreq(sampler, freq_data, ref_mic, name):
-        freqs = freq_data.fftfreq()
-        strength = np.real(np.stack([freq_data._Q[i].diagonal() for i in range(freqs.shape[0])], axis=0))
-        transfer = freq_data.custom_transfer[:, ref_mic].copy()
-        transfer *= transfer.conjugate()
-        strength = strength * np.real(transfer)
-        return {name: strength}
-
-    @staticmethod
-    def calc_source_strength_estimated_custom_transfer_partfreq(sampler, freq_data, fidx, ref_mic, name):
-        full_strength = EstimatedSourceStrengthFeature.calc_source_strength_estimated_custom_transfer_fullfreq(
-            sampler,
-            freq_data,
-            ref_mic,
-            name,
-        )[name]
-        strength = np.array([full_strength[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=float)
         return {name: strength}
 
     def get_feature_func(self):
+        self.set_freq_limits()
         if isinstance(self.freq_data, PowerSpectraAnalytic):
-            self.set_freq_limits()
-            if self.fidx is None:
-                if self.ref_mic is None:
-                    return partial(
-                        self.calc_source_strength_estimated2_fullfreq,
-                        freq_data=self.freq_data,
-                        name=self.name,
-                    )
-                return partial(
-                    self.calc_source_strength_estimated_custom_transfer_fullfreq,
-                    freq_data=self.freq_data,
-                    ref_mic=self.ref_mic,
-                    name=self.name,
-                )
-            if self.ref_mic is None:
-                return partial(
-                    self.calc_source_strength_estimated2_partfreq,
-                    freq_data=self.freq_data,
-                    fidx=self.fidx,
-                    name=self.name,
-                )
             return partial(
-                self.calc_source_strength_estimated_custom_transfer_partfreq,
-                freq_data=self.freq_data,
-                fidx=self.fidx,
-                ref_mic=self.ref_mic,
-                name=self.name,
-            )
-
-        if isinstance(self.freq_data, ac.PowerSpectra):
-            self.set_freq_limits()
-            if self.fidx is None:
-                return partial(self.calc_source_strength_estimated3_fullfreq, freq_data=self.freq_data, name=self.name)
-            return partial(
-                self.calc_source_strength_estimated3_partfreq,
+                self.calc_source_strength_estimated_wishart,
                 freq_data=self.freq_data,
                 fidx=self.fidx,
                 name=self.name,
             )
-
-        if isinstance(self.freq_data, ac.RFFT):
-            if self.fidx is None:
-                return partial(self.calc_source_strength_estimated1_fullfreq, freq_data=self.freq_data, name=self.name)
-            return partial(
-                self.calc_source_strength_estimated1_partfreq,
-                freq_data=self.freq_data,
-                fidx=self.fidx,
-                name=self.name,
-            )
-        msg = f'Unsupported freq_data type {self.freq_data.__class__}.'
-        raise NotImplementedError(msg)
+        return partial(
+            self.calc_source_strength_estimated,
+            freq_data=self.freq_data,
+            fidx=self.fidx,
+            name=self.name,
+        )
 
 
 class AnalyticNoiseStrengthFeature(SpectraFeature):
@@ -929,15 +719,6 @@ class BaseFeatureCollection(HasPrivateTraits):
     feature_tf_shape_mapper = Dict(desc='feature shape mapper')
     feature_tf_dtype_mapper = Dict(desc='feature dtype mapper')
 
-    def __init__(self):
-        HasPrivateTraits.__init__(self)
-        if TF_FLAG:
-            from acoupipe.writer import int64_feature, int_list_feature
-
-            self.feature_tf_encoder_mapper = {'idx': int64_feature, 'seeds': int_list_feature}
-            self.feature_tf_shape_mapper = {'idx': (), 'seeds': (None, 2)}
-            self.feature_tf_dtype_mapper = {'idx': 'int64', 'seeds': 'int64'}
-
     def add_feature_func(self, feature_func):
         """
         Add a feature_func to the BaseFeatureCollection.
@@ -962,7 +743,12 @@ class BaseFeatureCollection(HasPrivateTraits):
         def calc_features(sampler, feature_funcs):
             data = {}
             for ffunc in feature_funcs:
-                data.update(ffunc(sampler=sampler))
+                # Check if ffunc accepts a 'data' parameter
+                sig = inspect.signature(ffunc)
+                if 'data' in sig.parameters:
+                    data.update(ffunc(sampler=sampler, data=data))
+                else:
+                    data.update(ffunc(sampler=sampler))
             return data
 
         return partial(calc_features, feature_funcs=self.feature_funcs)
@@ -978,15 +764,19 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection object.
     """
 
-    feature_collection = Instance(BaseFeatureCollection, desc='BaseFeatureCollection object')
+    features = List(Instance(BaseFeatureCatalog), desc='list of feature instances')
+    feature_collection = Instance(BaseFeatureCollection, args=(), desc='BaseFeatureCollection object')
 
     def add_custom(self, feature_func):
         """
         Add a custom feature to the BaseFeatureCollection.
 
+        The custom feature_func should be a callable that takes a sampler as input
+        and returns a dictionary of feature name and feature data.
+
         Parameters
         ----------
-        feature_func : str
+        feature_func : callable
             Feature to be added.
         """
         self.feature_collection.add_feature_func(feature_func)
@@ -1000,4 +790,25 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
+        self._add_mapper('idx', np.int32, ())
+        self._add_mapper('seeds', np.int32, (None, 2))
+        for feature in self.features:
+            self.feature_collection.add_feature_func(feature.get_feature_func())
+            self._add_mapper(feature.name, feature.dtype, feature.shape)
         return self.feature_collection
+
+    def _add_mapper(self, name, dtype, shape):
+        if not TF_FLAG:
+            return
+        encoder, tf_dtype, tf_shape = infer_tf_encoding(dtype, shape)
+        self.feature_collection.feature_tf_encoder_mapper[name] = encoder
+        self.feature_collection.feature_tf_shape_mapper[name] = tf_shape
+        self.feature_collection.feature_tf_dtype_mapper[name] = tf_dtype
+
+
+def create_feature(feature_func, name, shape, dtype):
+    class Feature(BaseFeatureCatalog):
+        def get_feature_func(self):
+            return feature_func
+
+    return Feature(name=name, shape=shape, dtype=dtype)

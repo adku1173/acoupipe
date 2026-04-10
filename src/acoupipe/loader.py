@@ -74,7 +74,10 @@ class LoadH5Dataset(BaseLoadDataset):
             with contextlib.suppress(IOError):
                 self.h5f.close()
         self.h5f = H5File(self.name, mode='r')
-        self.load_metadata()
+        try:
+            self.load_metadata()
+        except Exception as e:  # noqa: PERF203, BLE001
+            print(f'Error loading metadata from {self.name}: {e}')  # noqa: T201
 
     def load_metadata(self):
         """Load metadata from .h5 file. Only for internal use."""
@@ -101,15 +104,15 @@ class LoadH5Dataset(BaseLoadDataset):
 
         Example to create a repeatable data set with the Tensorflow `tf.data.Dataset` API is given in
 
+        .. code-block:: python
 
-        >>> h5data = LoadH5Dataset(name='some_dataset.h5')
-        >>> generator = h5data.get_dataset_generator(features=['loc'])
-        >>> output_signature = {
-        ...     'loc': tf.TensorSpec(shape=(3, None), dtype=tf.float32),
-        ... }
-        >>>
-        >>> dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature).repeat()
-        >>> loc = next(iter(dataset))  # return locations
+            h5data = LoadH5Dataset(name='some_dataset.h5')
+            generator = h5data.get_dataset_generator(features=['loc'])
+            output_signature = {
+                'loc': tf.TensorSpec(shape=(3, None), dtype=tf.float32),
+            }
+            dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature).repeat()
+            loc = next(iter(dataset))  # return locations
 
         Parameters
         ----------

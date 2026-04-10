@@ -460,11 +460,10 @@ class PointSourceSampler(LocationSampler):
                 msg = 'Elements in target must be instances of class acoular.PointSource'
                 raise AttributeError(msg)
 
-    def sample_loc(self, target):
+    def sample_loc(self, loc):
         """Sample a single target location (internal use)."""
         loc_axs = self.ldir.nonzero()[0]  # get axes to sample
-        loc = np.array(target.loc)
-        loc[loc_axs] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
+        loc[loc_axs, 0] = self.ldir[loc_axs].squeeze() * self.rvs(size=loc_axs.size)
         return loc
 
     def rvs(self, size=1):
@@ -475,11 +474,12 @@ class PointSourceSampler(LocationSampler):
         """Random sampling of :class:`acoular.PointSource` locations."""
         if self.ldir.any():
             for target in self.target:
-                new_loc = self.sample_loc(target)
+                loc = target.loc.copy()
+                new_loc = self.sample_loc(loc)
                 while self._bounds_violated(new_loc):
-                    new_loc = self.sample_loc(target)
+                    new_loc = self.sample_loc(loc)
                 else:
-                    target.loc = tuple(new_loc)
+                    target.loc = new_loc
 
 
 class MicGeomSampler(BaseSampler):

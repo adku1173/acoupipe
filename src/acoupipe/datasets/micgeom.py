@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from acoular import MicGeom, __file__
+import acoular as ac
 
-mics = MicGeom(file=Path(__file__).parent / 'xml' / 'tub_vogel64.xml')
+mics = ac.MicGeom(file=Path(ac.__file__).parent / 'xml' / 'tub_vogel64.xml')
 tub_vogel64 = mics.pos.copy()
 tub_vogel64_ap1 = tub_vogel64 / mics.aperture

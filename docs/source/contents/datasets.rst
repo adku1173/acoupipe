@@ -10,6 +10,8 @@ Datasets
     datasets/quickstart
     DatasetSynthetic <datasets/synthetic>
     DatasetMIRACLE <datasets/miracle>
+    DatasetSRIRACHA <datasets/sriracha>
     datasets/features
+    datasets/store
     jupyter/modify
 

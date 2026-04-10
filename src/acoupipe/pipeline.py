@@ -313,6 +313,10 @@ class SamplerActor:
     """Actor class to sample data."""
 
     def __init__(self, sampler, feature_func):
+        # IMPORTANT: do NOT import gpuRIR before this point anywhere.
+        gpu_ids = ray.get_gpu_ids()  # e.g. [3]
+        logging.error(f'ray.get_gpu_ids() = {gpu_ids}, CUDA_VISIBLE_DEVICES = {os.environ.get("CUDA_VISIBLE_DEVICES")}')
+
         self.sampler = sampler
         self.feature_func = feature_func
         self.sampler_order = list(self.sampler.keys())
@@ -351,9 +355,9 @@ class SamplerActor:
 
 
 class ActorHandler:
-    def __init__(self, numworkers, sampler, feature_func):
+    def __init__(self, numworkers, sampler, feature_func, remote_args=None):
         self.actors = [
-            SamplerActor.remote(
+            SamplerActor.options(**(remote_args or {})).remote(
                 sampler=sampler,
                 feature_func=feature_func,
             )
@@ -382,6 +386,9 @@ class DistributedPipeline(BasePipeline):
     #: number of workers to be used for parallel calculation (usually number of CPUs).
     #: each worker is associated with a stateless task.
     numworkers = Int(1, desc='number of tasks to be performed in parallel (usually number of CPUs)')
+
+    #: additional arguments to be passed to ray remote tasks, e.g. num_gpus for GPU resource allocation (e.g. num_gpus=0.25 for 1 GPU per 4 tasks)
+    remote_args = Dict()
 
     def _log_execution_time(self, task_index, times, pid):
         self.logger.info(f'id {task_index} on pid {pid}: scheduling task took: {times[1] - times[0]:.32f} sec')
@@ -447,7 +454,7 @@ class DistributedPipeline(BasePipeline):
         feature_func = self.features if callable(self.features) else self.features[0]
         task_dict = {}
         finished_tasks = 0
-        with ActorHandler(nworkers, self.sampler, feature_func) as actors:
+        with ActorHandler(nworkers, self.sampler, feature_func, remote_args=self.remote_args) as actors:
             for actor in actors:
                 self._update_sample_index_and_seeds(seed_iter)
                 self._sample_and_schedule_task(actor, task_dict)

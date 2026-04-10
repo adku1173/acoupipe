@@ -1,6 +1,6 @@
+from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
 import numpy as np
 import pytest
-from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
 from numpy import array
 from numpy.random import RandomState, default_rng
 from numpy.testing import assert_almost_equal
