@@ -13,12 +13,18 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    with:
+      src_dir: "src/acoupipe"
 
   tests:
     uses: acoular/ci/.github/workflows/tests.yml@main
+    with:
+      src_dir: "src/acoupipe"
 
   docs:
     uses: acoular/ci/.github/workflows/docs.yml@main
+    with:
+      src_dir: "src/acoupipe"
 
   github:
     uses: acoular/ci/.github/workflows/github.yml@main
