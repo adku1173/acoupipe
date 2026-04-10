@@ -220,16 +220,15 @@ class DatasetBase(HasPrivateTraits):
         .. code-block:: python
 
             from acoupipe.datasets.synthetic import DatasetSynthetic
-            
+
             # define the features
             features = ['csm', 'source_strength_analytic', 'loc']
             f = 1000
             num = 3
-            
+
             # generate the dataset
-            generator = DatasetSynthetic().generate(
-                f=f, num=num, split="training", size=2, features=features)
-            
+            generator = DatasetSynthetic().generate(f=f, num=num, split='training', size=2, features=features)
+
             # iterate over the dataset
             for data in generator:
                 print(data)
@@ -283,16 +282,16 @@ class DatasetBase(HasPrivateTraits):
         .. code-block:: python
 
             from acoupipe.datasets.synthetic import DatasetSynthetic
-            
+
             # define the features
             features = ['csm', 'source_strength_analytic', 'loc']
             f = 1000
             num = 3
-            
+
             # save the dataset
             dataset = DatasetSynthetic().save_h5(
-                f=f, num=num, split="training", size=10, features=features,
-                name="/tmp/example.h5")
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.h5'
+            )
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
@@ -353,16 +352,16 @@ if TF_FLAG:
         .. code-block:: python
 
             from acoupipe.datasets.synthetic import DatasetSynthetic
-            
+
             # define the features
             features = ['csm', 'source_strength_analytic', 'loc']
             f = 1000
             num = 3
-            
+
             # save the dataset
             dataset = DatasetSynthetic().save_tfrecord(
-                f=f, num=num, split="training", size=10, features=features,
-                name="/tmp/example.tfrecord")
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
+            )
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
@@ -517,17 +516,17 @@ if TF_FLAG:
         .. code-block:: python
 
             from acoupipe.datasets.synthetic import DatasetSynthetic
-            
+
             # define the features
             features = ['csm', 'source_strength_analytic', 'loc']
             f = 1000
             num = 3
-            
+
             # save the dataset
             dataset = DatasetSynthetic().save_tfrecord(
-                f=f, num=num, split="training", size=10, features=features,
-                name="/tmp/example.tfrecord")
-            
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
+            )
+
             # parse the dataset
             parser = dataset.get_tfrecord_parser(features, f, num)
             dataset = tf.data.TFRecordDataset('/tmp/example.tfrecord')

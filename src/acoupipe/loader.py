@@ -111,8 +111,7 @@ class LoadH5Dataset(BaseLoadDataset):
             output_signature = {
                 'loc': tf.TensorSpec(shape=(3, None), dtype=tf.float32),
             }
-            dataset = tf.data.Dataset.from_generator(
-                generator, output_signature=output_signature).repeat()
+            dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature).repeat()
             loc = next(iter(dataset))  # return locations
 
         Parameters
