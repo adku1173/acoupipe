@@ -25,6 +25,7 @@ jobs:
     uses: acoular/ci/.github/workflows/docs.yml@main
 
   github:
+    if: github.event_name == 'pull_request'
     uses: acoular/ci/.github/workflows/github.yml@main
 
   linting:
