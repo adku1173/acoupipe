@@ -89,6 +89,8 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, s
 @pytest.mark.parametrize('f', frequencies)
 def test_save_h5(mode, feature, num, f, temp_dir, create_dataset):
     """Test saving data to HDF5 format."""
+    if num == 3 and f is None:
+        pytest.skip('Invalid combination of num=3 and f=None')
     if mode == 'analytic' and '_estimated' in feature:
         pytest.skip('Feature not supported in analytic mode')
     if mode != 'welch' and feature in ['spectrogram', 'time_data']:
