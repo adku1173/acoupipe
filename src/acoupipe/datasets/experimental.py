@@ -47,6 +47,13 @@ link_address = {
     'SRA1-C1': 'https://depositonce.tu-berlin.de/bitstreams/bfbda52e-4776-4499-a52f-92c01dd0f632/download',
     'SRA1-C2': 'https://depositonce.tu-berlin.de/bitstreams/f67da2d7-5c57-4ddc-8230-3f275563c497/download',
     'SRA1-C3': 'https://depositonce.tu-berlin.de/bitstreams/ff5cb621-402d-43a6-8ff8-bbbd8d8ae170/download',
+    'SRA1-C4': 'https://depositonce.tu-berlin.de/bitstreams/24c0f12b-dbdd-4c23-8825-6657ed7249e4/download',
+    'SRA1-D': 'https://depositonce.tu-berlin.de/bitstreams/7950399f-e1be-4067-b672-b1c2b255a33b/download',
+    'SRA2-C1': 'https://depositonce.tu-berlin.de/bitstreams/aa9d52fd-e7eb-4f38-93d8-e22733c8311f/download',
+    'SRA2-C2': 'https://depositonce.tu-berlin.de/bitstreams/acb8baf0-7442-4faf-895d-7862004ffadc/download',
+    'SRA2-C3': 'https://depositonce.tu-berlin.de/bitstreams/7351f03d-243b-4c52-97da-b9b45cdce6d4/download',
+    'SRA2-C4': 'https://depositonce.tu-berlin.de/bitstreams/8b33b41b-51ca-44f6-a6b9-dac887d0dc7e/download',
+    'SRA2-D': 'https://depositonce.tu-berlin.de/bitstreams/61016fe8-96fe-463d-9441-d4c39b0a9898/download'
 }
 
 file_hash = {
@@ -67,8 +74,14 @@ file_hash = {
     'SRA1-C1': '1ebec4c77a5dd481611c41ac1b774df82e6df3db23ae098715b0e263b8e74a9c',
     'SRA1-C2': '5c8d97cd1e2a86ab5b41b8dea1ad4a6518062d41d53ae7114f7d1c4de0c63294',
     'SRA1-C3': '724d8ac9c09be45c5efdc6845c21f3079bfd1a19a1030ba9dd57cff1ac2942d7',
+    'SRA1-C4': '5fb3025e76ad673f695ac68ad0f6074a54bf246e6bb6b087d3acab41cb22a87e',
+    'SRA1-D': '9402a16fd11e4f3bafd4cbfb2a26221276606d20690de2991c5dcfa0aa4f1e03',
+    'SRA2-C1': 'faaa89bf24b79250639eb24228b42444387890cf82f50d78a45c3f296b22e93e',
+    'SRA2-C2': '6ac3c13f03b02a2167167edefc9b565e627c8773acf8d5030be5e98d95be74de',
+    'SRA2-C3': 'fa20e12f83f4c7686ac106b2f2a1223adf94a0e3b3db4da8f0ccc263697f334f',
+    'SRA2-C4': '76ba1aab9937d952ebcaffafd3db9e9d45ab2f8974d3f7e210589d439d1a0d54',
+    'SRA2-D': '5885ed123c6ebbaf819634051a5b777a5fd3e0fc916cc12631c96b30aa5204b9'
 }
-
 
 class DatasetMIRACLE(DatasetBase):
     r"""A microphone array dataset generator using experimentally measured data.

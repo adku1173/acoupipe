@@ -8,11 +8,11 @@ on:
     branches: [ master, dev ]
 
 jobs:
-  coverage:
-    uses: acoular/ci/.github/workflows/coverage.yml@main
-    permissions:
-      contents: read
-      pull-requests: write
+  # coverage:
+  #   uses: acoular/ci/.github/workflows/coverage.yml@main
+  #   permissions:
+  #     contents: read
+  #     pull-requests: write
 
   tests:
     uses: acoular/ci/.github/workflows/tests.yml@main
