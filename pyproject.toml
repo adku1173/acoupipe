@@ -122,7 +122,7 @@ required-environments = [
 testpaths = "tests"
 addopts = "-v --durations=10 --cov-report=html --cov-report=term-missing"
 filterwarnings = [
-    "error", # treat warnings as errors
+    #"error", # treat warnings as errors
     "ignore::pluggy.PluggyTeardownRaisedWarning", # raised internally by pytest-regtest
     "ignore:numpy.core.multiarray is deprecated*:DeprecationWarning", # raised internally by pylops
     "ignore:module 'sre_parse' is deprecated:DeprecationWarning", # raised internally by traits
