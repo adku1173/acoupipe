@@ -23,5 +23,3 @@ __pycache__/
 tests/throughput/results/*.png
 .venv/*
 *.sif
-uv.lock
-uv.lock
