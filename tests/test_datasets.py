@@ -1,3 +1,5 @@
+import os
+
 import acoular as ac
 import numpy as np
 import pytest
@@ -22,8 +24,6 @@ frequencies = [None, 1000]
 nums = [0, 3]
 start_idx = 3
 tasks = 2
-
-# TODO: speed up tests
 
 
 @pytest.mark.parametrize('mode', modes)
@@ -55,6 +55,8 @@ def test_values_correct(mode, feature, f, num, create_dataset, snapshot):
     snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
 
 
+@pytest.mark.multiprocessing
+@pytest.mark.skipif(os.environ.get('CI') == 'true', reason="Skip multiprocessing tests in CI")
 @pytest.mark.parametrize('mode', modes)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])
@@ -291,6 +293,8 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset, s
         snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-6)
 
 
+@pytest.mark.multiprocessing
+@pytest.mark.skipif(os.environ.get('CI') == 'true', reason="Skip multiprocessing tests in CI")
 @pytest.mark.parametrize('mode', modes)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])

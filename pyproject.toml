@@ -122,6 +122,9 @@ required-environments = [
 testpaths = "tests"
 pythonpath = ["src"]
 addopts = "-v --durations=10 --cov-report=html --cov-report=term-missing"
+markers = [
+    "multiprocessing: marks tests that require multiprocessing (deselect with '-m \"not multiprocessing\"')",
+]
 filterwarnings = [
     #"error", # treat warnings as errors
     "ignore::pluggy.PluggyTeardownRaisedWarning", # raised internally by pytest-regtest
