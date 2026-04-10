@@ -3,16 +3,16 @@ from pathlib import Path
 import acoular as ac
 import matplotlib.pyplot as plt
 
-from acoupipe.datasets.experimental import DatasetSRIRACHA
+from acoupipe.datasets.experimental import DatasetMIRACLE
 
 f = 2000
 
 fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True, sharex=True)
 fig.suptitle(f"Sourcemap ($f={f}$ Hz)", fontsize=12)
 
-for i, scenario in enumerate(["SRA2-D"]):
+for i, scenario in enumerate([ "A1", "A2", "R2"]):
 
-    dataset = DatasetSRIRACHA(scenario=scenario, mode="wishart")
+    dataset = DatasetMIRACLE(scenario=scenario, mode="wishart")
     data_generator = dataset.generate(
         features=["sourcemap", "loc", "f"],
         split="training",
