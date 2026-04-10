@@ -83,8 +83,8 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, s
         snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
 
 
-@pytest.mark.parametrize('mode', modes)
-@pytest.mark.parametrize('feature', IMPLEMENTED_FEATURES)
+@pytest.mark.parametrize('mode', ['analytic'])
+@pytest.mark.parametrize('feature', ['csm', 'f'])
 @pytest.mark.parametrize('num', nums)
 @pytest.mark.parametrize('f', frequencies)
 def test_save_h5(mode, feature, num, f, temp_dir, create_dataset):

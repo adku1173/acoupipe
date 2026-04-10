@@ -132,9 +132,6 @@ filterwarnings = [
     # Suppress warnings about unclosed files in tables at the end of the tests
     "ignore:Closing remaining open file*:tables.exceptions.UnclosedFileWarning",
 ]
-env = [
-    "OPENBLAS_NUM_THREADS=1",
-]
 
 [tool.hatch.build.targets.sdist]
 include = [
