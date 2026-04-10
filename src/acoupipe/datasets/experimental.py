@@ -53,7 +53,7 @@ link_address = {
     'SRA2-C2': 'https://depositonce.tu-berlin.de/bitstreams/acb8baf0-7442-4faf-895d-7862004ffadc/download',
     'SRA2-C3': 'https://depositonce.tu-berlin.de/bitstreams/7351f03d-243b-4c52-97da-b9b45cdce6d4/download',
     'SRA2-C4': 'https://depositonce.tu-berlin.de/bitstreams/8b33b41b-51ca-44f6-a6b9-dac887d0dc7e/download',
-    'SRA2-D': 'https://depositonce.tu-berlin.de/bitstreams/61016fe8-96fe-463d-9441-d4c39b0a9898/download'
+    'SRA2-D': 'https://depositonce.tu-berlin.de/bitstreams/61016fe8-96fe-463d-9441-d4c39b0a9898/download',
 }
 
 file_hash = {
@@ -80,8 +80,9 @@ file_hash = {
     'SRA2-C2': '6ac3c13f03b02a2167167edefc9b565e627c8773acf8d5030be5e98d95be74de',
     'SRA2-C3': 'fa20e12f83f4c7686ac106b2f2a1223adf94a0e3b3db4da8f0ccc263697f334f',
     'SRA2-C4': '76ba1aab9937d952ebcaffafd3db9e9d45ab2f8974d3f7e210589d439d1a0d54',
-    'SRA2-D': '5885ed123c6ebbaf819634051a5b777a5fd3e0fc916cc12631c96b30aa5204b9'
+    'SRA2-D': '5885ed123c6ebbaf819634051a5b777a5fd3e0fc916cc12631c96b30aa5204b9',
 }
+
 
 class DatasetMIRACLE(DatasetBase):
     r"""A microphone array dataset generator using experimentally measured data.

@@ -28,12 +28,48 @@ The full documentation (API reference, examples, and dataset descriptions) is av
 Installation
 ============
 
-AcouPipe is typically installed from source:
+AcouPipe is currently available as a source-only package and is not published on PyPI or Conda.
+It supports Python ``>=3.10,<3.14``.
+
+First, clone the repository:
 
 .. code-block:: bash
 
    git clone https://github.com/adku1173/acoupipe.git
    cd acoupipe
+
+We recommend installing AcouPipe inside a virtual environment.
+
+Using ``uv``
+------------
+
+If you use `uv <https://docs.astral.sh/uv/#installation>`_, create an environment with:
+
+.. code-block:: bash
+
+   uv venv
+
+Then install AcouPipe from source:
+
+.. code-block:: bash
+
+   uv pip install -e .
+
+Using ``pip`` and ``venv``
+--------------------------
+
+Create and activate a virtual environment:
+
+.. code-block:: bash
+
+   python3 -m venv my-env
+   source my-env/bin/activate  # Linux/macOS
+   my-env\Scripts\activate     # Windows
+
+Then install AcouPipe from source:
+
+.. code-block:: bash
+
    pip install -e .
 
 
@@ -44,7 +80,7 @@ AcouPipe provides three default dataset generators:
 
 * **DatasetSynthetic**
   A simple and fast baseline that relies on synthetic (e.g., white-noise) source signals and spatially
-  stationary sources in anechoic conditions. This is well suited for rapid prototyping and ablation studies.
+  stationary sources under anechoic conditions. 
 
   .. figure:: docs/source/_static/msm_layout.png
      :width: 600
@@ -53,7 +89,7 @@ AcouPipe provides three default dataset generators:
 * **DatasetMIRACLE**
   Uses measured SRIRs from the `MIRACLE dataset <https://doi.org/10.14279/depositonce-20837>`_
   (TU Berlin anechoic chamber) combined with synthetic source signals, resulting in a realistic
-  and quasi-infinite dataset with measurement-based propagation.
+  and quasi-infinite dataset.
 
   .. figure:: docs/source/_static/msm_miracle.png
      :width: 600
@@ -62,7 +98,8 @@ AcouPipe provides three default dataset generators:
 * **DatasetSRIRACHA**
   Uses measured SRIRs from the `SRIRACHA dataset <https://doi.org/10.14279/depositonce-23943>`_,
   recorded with the same planar microphone array as MIRACLE, but in a reverberant shoebox room with
-  varying absorption conditions.
+  varying absorption conditions. The dataset exposes eight main measurement scenarios that combine two
+  source-receiver plane distances, two source arrangements, and two room absorption settings.
 
   .. figure:: docs/source/_static/sriracha_t60-measurement.jpg
      :width: 600
@@ -70,7 +107,7 @@ AcouPipe provides three default dataset generators:
 
 
 Data generation philosophy
-=========================
+==========================
 
 Instead of storing raw multichannel time signals, AcouPipe stores only the **machine-learning-relevant
 features** required by the training pipeline (e.g., source maps, time data, cross-spectral matrices, etc.)
@@ -102,10 +139,33 @@ faster data generation.
    # generator that creates beamforming maps for 10 different source cases at a frequency of 2000 Hz 
    # additionally, extract source locations ("loc" feature)
    data_generator = dataset.generate(
-      features=["sourcemap","loc"], split="training", size=10, f=[2000], num=0)
+      features=["sourcemap","loc"], size=10, f=[2000], num=0)
                                        
    data_sample = next(data_generator) # obtain first source case sample 
    print(data_sample.keys())  # dict_keys(['sourcemap', 'loc', 'f'])
+
+For reverberant scenes with measured room acoustics, AcouPipe also provides
+``DatasetSRIRACHA`` in ``acoupipe.datasets.experimental``. The scenario name encodes the room
+configuration (``SR`` empty, ``SRA`` absorbent), the source-receiver plane distance (``1`` near,
+``2`` far), and an optional dense local grid (``-D``).
+
+.. code-block:: python
+
+   from acoupipe.datasets.experimental import DatasetSRIRACHA
+
+   srir_dir = None  # or path to local SRIRACHA HDF5 files
+
+   dataset = DatasetSRIRACHA(
+      scenario="SRA2-D",
+      mode="wishart",
+      srir_dir=srir_dir,
+   )
+
+   data_generator = dataset.generate(
+      features=["sourcemap", "loc", "f"], split="training", size=10, f=[2000], num=0)
+
+If ``srir_dir`` is left as ``None``, AcouPipe downloads the required SRIRACHA data into the cache
+directory managed by ``pooch``.
 
 
 Performance benchmarks (DatasetSynthetic)
@@ -167,8 +227,9 @@ License
 =======
 
 - **AcouPipe (code)** is licensed under the BSD license. See the file ``LICENSE`` for details.
-- **MIRACLE** and **SRIRACHA** are distributed under their respective dataset licenses (see the dataset landing
-  pages/metadata); please ensure compliance before using the measured SRIRs in downstream work.
+- **MIRACLE** and **SRIRACHA** are distributed under their respective dataset licenses. SRIRACHA is
+  released under **CC BY-NC-SA 4.0**; please ensure compliance before using the measured SRIRs in
+  downstream work.
 
 
 .. Links:
