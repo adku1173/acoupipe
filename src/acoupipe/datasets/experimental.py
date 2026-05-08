@@ -20,7 +20,7 @@ from pathlib import Path
 import acoular as ac
 import h5py as h5
 import numpy as np
-import pooch
+from irdl import get_miracle
 from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
 from acoupipe.datasets.base import DatasetBase
@@ -29,63 +29,9 @@ from acoupipe.datasets.utils import (
     calc_transfer,
 )
 
-link_address = {
-    'A1': 'https://depositonce.tu-berlin.de/bitstreams/67156d9c-224d-4d07-b923-be0240e7b48d/download',
-    'A2': 'https://depositonce.tu-berlin.de/bitstreams/cbb462d7-cb28-4803-98d8-84b03aad0d5f/download',
-    'D1': 'https://depositonce.tu-berlin.de/bitstreams/86680ee5-ae0c-4b38-8ef8-805652a21ded/download',
-    'R2': 'https://depositonce.tu-berlin.de/bitstreams/0fc5f5a4-a2f7-4eb7-b796-7114260e5e86/download',
-    'SR1-C1': 'https://depositonce.tu-berlin.de/bitstreams/75b3da38-9f7f-4b30-8967-3da1b0f29e9f/download',
-    'SR1-C2': 'https://depositonce.tu-berlin.de/bitstreams/8651dc9d-ec9c-4504-b301-7b5536fb74f3/download',
-    'SR1-C3': 'https://depositonce.tu-berlin.de/bitstreams/7c840fc0-90d5-40c1-8528-356b808560c8/download',
-    'SR1-C4': 'https://depositonce.tu-berlin.de/bitstreams/5bbf3409-205e-451b-abda-c16e90004f2a/download',
-    'SR1-D': 'https://depositonce.tu-berlin.de/bitstreams/412b04ec-6852-417f-ab85-3e847133860e/download',
-    'SR2-C1': 'https://depositonce.tu-berlin.de/bitstreams/bff1df6c-2672-4352-aa80-34bb2aa7dfd1/download',
-    'SR2-C2': 'https://depositonce.tu-berlin.de/bitstreams/12e6d24a-5d55-415c-b461-fa10d850c63c/download',
-    'SR2-C3': 'https://depositonce.tu-berlin.de/bitstreams/b64c3d35-c337-4003-859d-e747bdbe2a3f/download',
-    'SR2-C4': 'https://depositonce.tu-berlin.de/bitstreams/272bd891-3463-4459-be03-9a66aa916841/download',
-    'SR2-D': 'https://depositonce.tu-berlin.de/bitstreams/ec51a7e5-818d-463c-8f77-342c3bde27d8/download',
-    'SRA1-C1': 'https://depositonce.tu-berlin.de/bitstreams/bfbda52e-4776-4499-a52f-92c01dd0f632/download',
-    'SRA1-C2': 'https://depositonce.tu-berlin.de/bitstreams/f67da2d7-5c57-4ddc-8230-3f275563c497/download',
-    'SRA1-C3': 'https://depositonce.tu-berlin.de/bitstreams/ff5cb621-402d-43a6-8ff8-bbbd8d8ae170/download',
-    'SRA1-C4': 'https://depositonce.tu-berlin.de/bitstreams/24c0f12b-dbdd-4c23-8825-6657ed7249e4/download',
-    'SRA1-D': 'https://depositonce.tu-berlin.de/bitstreams/7950399f-e1be-4067-b672-b1c2b255a33b/download',
-    'SRA2-C1': 'https://depositonce.tu-berlin.de/bitstreams/aa9d52fd-e7eb-4f38-93d8-e22733c8311f/download',
-    'SRA2-C2': 'https://depositonce.tu-berlin.de/bitstreams/acb8baf0-7442-4faf-895d-7862004ffadc/download',
-    'SRA2-C3': 'https://depositonce.tu-berlin.de/bitstreams/7351f03d-243b-4c52-97da-b9b45cdce6d4/download',
-    'SRA2-C4': 'https://depositonce.tu-berlin.de/bitstreams/8b33b41b-51ca-44f6-a6b9-dac887d0dc7e/download',
-    'SRA2-D': 'https://depositonce.tu-berlin.de/bitstreams/61016fe8-96fe-463d-9441-d4c39b0a9898/download',
-}
-
-file_hash = {
-    'A1': 'b0e053319fabad6964e2275f4bcd2dcfc6f0dc5f463e0324b7ad107e76612f88',
-    'A2': 'c021cc57bb51237283c5303e235495edfea75b1f0eaba4a8f988942b9913e7ff',
-    'D1': 'd888201065a43f436080da470f025c245b1a8030e08ea7a9dce1dc6b160761ee',
-    'R2': '479af6bfdd403c855d53304b291c4878c1f8d4a4482836de77677c03ffb6bbaa',
-    'SR1-C1': 'b969ae330c585fc2ba4f1ccf9b8fb5be7756cd2b25d5762149705791964d721a',
-    'SR1-C2': 'c5db8fb0530bc723c84cb1cde8ab60efb3ba52b2d25fd44601b36dedbf5726cf',
-    'SR1-C3': '4850dc71bce9862269718d9190197718699c0cdf75b3e12255c717e7bc2b2d28',
-    'SR1-C4': '8b0b2734ff4ad7c0065c39df135905d21c6d15c5e019d2cdc91ccd6686c67cc2',
-    'SR1-D': '59bdc474a910fe2099a003cd3873e624c0d03aed52e249093882a3755407453e',
-    'SR2-C1': '3f08bfbd8933212650543630ef200777a02b391710ea4d0af7802f2a29f87a0d',
-    'SR2-C2': 'b1fffa4beb5ed8946cff71986ba6be102bae7ee65a84d566ad08e3303f8a78e4',
-    'SR2-C3': 'aeb2923e9c014b32138f944e3dd269ff3705858c380f8d0e7d4d382b56ce6886',
-    'SR2-C4': 'c4558478f46bf141d581976127f41419237dba590af3580962e513d1a010fbba',
-    'SR2-D': 'f3b7015e4e2ee8b3787c8c4857f92409b55a63f1f8a73e4d916aa5e07289d945',
-    'SRA1-C1': '1ebec4c77a5dd481611c41ac1b774df82e6df3db23ae098715b0e263b8e74a9c',
-    'SRA1-C2': '5c8d97cd1e2a86ab5b41b8dea1ad4a6518062d41d53ae7114f7d1c4de0c63294',
-    'SRA1-C3': '724d8ac9c09be45c5efdc6845c21f3079bfd1a19a1030ba9dd57cff1ac2942d7',
-    'SRA1-C4': '5fb3025e76ad673f695ac68ad0f6074a54bf246e6bb6b087d3acab41cb22a87e',
-    'SRA1-D': '9402a16fd11e4f3bafd4cbfb2a26221276606d20690de2991c5dcfa0aa4f1e03',
-    'SRA2-C1': 'faaa89bf24b79250639eb24228b42444387890cf82f50d78a45c3f296b22e93e',
-    'SRA2-C2': '6ac3c13f03b02a2167167edefc9b565e627c8773acf8d5030be5e98d95be74de',
-    'SRA2-C3': 'fa20e12f83f4c7686ac106b2f2a1223adf94a0e3b3db4da8f0ccc263697f334f',
-    'SRA2-C4': '76ba1aab9937d952ebcaffafd3db9e9d45ab2f8974d3f7e210589d439d1a0d54',
-    'SRA2-D': '5885ed123c6ebbaf819634051a5b777a5fd3e0fc916cc12631c96b30aa5204b9',
-}
-
 
 class DatasetMIRACLE(DatasetBase):
-    r"""A microphone array dataset generator using experimentally measured data.
+    """A microphone array dataset generator using experimentally measured data.
 
     DatasetSynthetic relies on measured spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset.
 
@@ -179,7 +125,7 @@ class DatasetMIRACLE(DatasetBase):
     This is a quick example on how to use the :class:`acoupipe.datasets.experimental.DatasetMIRACLE` dataset for generation of source cases
     with multiple sources. First, import the class and instantiate. One can either specify the path, where the SRIR files from the MIRACLE_
     project are stored, or one can set `srir_dir=None`. The latter will download the corresponding SRIR dataset into a pre-defined cache directory determined
-    by the `pooch` library.
+    by the `irdl` library.
 
     .. code-block:: python
 
@@ -239,6 +185,7 @@ class DatasetMIRACLE(DatasetBase):
         self,
         srir_dir=None,
         scenario='A1',
+        dataset_split=None,
         ref_mic_index=63,
         mode='welch',
         mic_sig_noise=True,
@@ -259,10 +206,13 @@ class DatasetMIRACLE(DatasetBase):
         ----------
         srir_dir : str, optional
             Path to the directory where the SRIR files are stored. Default is None, which
-            sets the path to the `pooch.os_cache` directory. The SRIR files are downloaded from the
-            `MIRACLE`_ dataset if they are not found in the directory.
+            sets the path to the `irdl` cache directory (overridable via the ``IRDL_DATA_DIR`` environment
+           variable). The SRIR files are downloaded from the `MIRACLE`_ dataset if not already present.
         scenario : str, optional
             Scenario of the dataset. Possible values are "A1", "D1", "A2", "R2".
+        dataset_split : str or None, optional
+            Artificial dataset split. One of "C1", "C2", "C3", "C4", or None (full dataset).
+            Not allowed in combination with scenario "D1". Default is None.
         ref_mic_index : int, optional
             Index of the microphone that is used as reference observation point.
             Default is 63, which is the index of the centermost microphone.
@@ -293,6 +243,7 @@ class DatasetMIRACLE(DatasetBase):
                 max_nsources=max_nsources,
                 srir_dir=srir_dir,
                 scenario=scenario,
+                dataset_split=dataset_split,
                 ref_mic_index=ref_mic_index,
                 mic_sig_noise=mic_sig_noise,
             )
@@ -333,6 +284,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     srir_dir = Either(Instance(Path), Str, None)
     scenario = Either(MIRACLE_SCENARIOS, default='A1', desc='experimental configuration')
+    dataset_split = Either(None, 'C1', 'C2', 'C3', 'C4', default=None, desc='artificial dataset split')
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc='reference microphone index (default: index of the centermost mic)')
@@ -348,34 +300,16 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         return self._filename
 
     def set_filename(self):
-        """Set the filename of the SRIR file according to the scenario and srir_dir."""
-        if link_address.get(self.scenario) is not None:
-            self._filename = pooch.retrieve(
-                url=link_address[self.scenario],
-                fname=self.scenario + '.h5',
-                path=self.srir_dir,
-                known_hash=file_hash.get(self.scenario),
-                progressbar=True,
-            )
-        else:
-            # check if available locally
-            if self.srir_dir is not None:
-                # check if srir dir exists
-                if not Path(self.srir_dir).is_dir():
-                    msg = f'srir_dir {self.srir_dir} does not exist.'
-                    raise ValueError(msg)
-
-                local_path = Path(self.srir_dir) / (self.scenario + '.h5')
-                if local_path.is_file():
-                    self._filename = str(local_path)
-                    return
-                msg = f'File {local_path} does not exist.'
-                raise ValueError(msg)
-            msg = f'Invalid scenario {self.scenario}.'
-            raise ValueError(msg)
-
+        """Resolve the SRIR file path, downloading via :mod:`irdl` if necessary."""
+        self._filename = str(get_miracle(
+            scenario=self.scenario,
+            dataset_split=self.dataset_split,
+            cache_dir=self.srir_dir,
+            output_format='hdf5',
+        ))
+       
     @observe(
-        'mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, ref_mic_index, filename',
+        'mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, dataset_split, ref_mic_index, filename',
         post_init=True,
     )
     def recreate_acoular_pipeline(self, event):

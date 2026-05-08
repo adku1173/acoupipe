@@ -3,7 +3,7 @@
 name = "acoupipe"
 dynamic = ["version"]
 description = "Library for the generation of large-scale microphone array data for machine learning"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11,<3.14"
 authors = [
     {name = "Acoular Development Team", email = "info@acoular.org"},
 ]
@@ -34,7 +34,7 @@ dependencies = [
 	'ray[default]',
 	'h5py',
 	'tqdm',
-    'pooch',
+    'irdl',
 ]
 maintainers = [
     {name = "Adam Kujawski", email = "adam.kujawski@tu-berlin.de"},
