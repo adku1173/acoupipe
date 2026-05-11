@@ -307,7 +307,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             cache_dir=self.srir_dir,
             output_format='hdf5',
         ))
-       
+
     @observe(
         'mode, signal_length, max_nsources, mic_sig_noise, fft_params.items, scenario, dataset_split, ref_mic_index, filename',
         post_init=True,
