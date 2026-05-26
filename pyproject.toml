@@ -67,7 +67,7 @@ unsupported = [
     "pyroomacoustics",
 ]
 
-test = [
+tests = [
     "diff_cover",
     "pytest",
     "pytest-cov",
@@ -80,7 +80,7 @@ test = [
 dev = [
     {include-group = "docs"},
     {include-group = "lint"},
-    {include-group = "test"},
+    {include-group = "tests"},
 ]
 
 
