@@ -31,7 +31,7 @@ from acoupipe.datasets.utils import (
 
 
 class DatasetMIRACLE(DatasetBase):
-    """A microphone array dataset generator using experimentally measured data.
+    r"""A microphone array dataset generator using experimentally measured data.
 
     DatasetSynthetic relies on measured spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset.
 
