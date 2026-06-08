@@ -148,7 +148,7 @@ docs = [
 lint = [
     { name = "ruff" },
 ]
-test = [
+tests = [
     { name = "diff-cover" },
     { name = "pandas", version = "2.3.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "pandas", version = "3.0.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
@@ -213,7 +213,7 @@ docs = [
     { name = "sphinxcontrib-bibtex" },
 ]
 lint = [{ name = "ruff", specifier = "==0.14.2" }]
-test = [
+tests = [
     { name = "diff-cover" },
     { name = "pandas" },
     { name = "pytest" },
@@ -3228,14 +3228,14 @@ wheels = [
 
 [[package]]
 name = "plumbum"
-version = "2.0.0"
+version = "2.0.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions", marker = "python_full_version < '3.13'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f8/b1/c691f998ca49768d26d92eea77a4c3dca4603c5bff1e3440a54a832ac479/plumbum-2.0.0.tar.gz", hash = "sha256:73aceeb20bd08a55a9e919828f995685aa9dd4cfd454158c2878d25ee0fa9024", size = 378026 }
+sdist = { url = "https://files.pythonhosted.org/packages/0c/6a/1d1b143420fcdfc8902f2db6b7d1d2325211461c5f2a43c849de7afad688/plumbum-2.0.1.tar.gz", hash = "sha256:61623f856dcb09eb20dcd5aa708dfb3cd04b6f4ab10224d39303b163bb1c4c61", size = 377668 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/71/5d/0a9a61081972840faaff51d4571dd294a4cb73a1c5722cc3158c8a857a6e/plumbum-2.0.0-py3-none-any.whl", hash = "sha256:4bc91d72625a85a90ed0fd358575eb7afe3bc265b53edf47e642e644bc821d32", size = 164248 },
+    { url = "https://files.pythonhosted.org/packages/59/2d/d741fbbbcba7eb6f9f1a829373c558114d59cb882b95f941aa0dc060861f/plumbum-2.0.1-py3-none-any.whl", hash = "sha256:27a454980f91689aae8f18242a36daaf2636219171cf0e6a849744aa1d6fff85", size = 164460 },
 ]
 
 [[package]]
