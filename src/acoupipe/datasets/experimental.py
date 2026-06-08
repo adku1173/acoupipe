@@ -20,7 +20,7 @@ from pathlib import Path
 import acoular as ac
 import h5py as h5
 import numpy as np
-from irdl import get_miracle
+from irdl import MiracleDataset, SrirachaDataset
 from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
 from acoupipe.datasets.base import DatasetBase
@@ -302,7 +302,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     def set_filename(self):
         """Resolve the SRIR file path, downloading via :mod:`irdl` if necessary."""
         self._filename = str(
-            get_miracle(
+            MiracleDataset.get(
                 scenario=self.scenario,
                 dataset_split=self.dataset_split,
                 cache_dir=self.srir_dir,
@@ -578,6 +578,17 @@ class DatasetSRIRACHA(DatasetMIRACLE):
                 mic_sig_noise=mic_sig_noise,
             )
         super().__init__(tasks=tasks, config=config)
+
+    def set_filename(self):
+        """Resolve the SRIR file path, downloading via :mod:`irdl` if necessary."""
+        self._filename = str(
+            SrirachaDataset.get(
+                scenario=self.scenario,
+                dataset_split=self.dataset_split,
+                cache_dir=self.srir_dir,
+                output_format='hdf5',
+            )
+        )
 
 
 class DatasetSRIRACHAConfig(DatasetMIRACLEConfig):
