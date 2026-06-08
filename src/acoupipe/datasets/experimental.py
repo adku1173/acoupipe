@@ -14,7 +14,6 @@
 
 """
 
-from copy import deepcopy
 from functools import partial
 from pathlib import Path
 
@@ -24,14 +23,10 @@ import numpy as np
 import pooch
 from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
-from acoupipe.config import TF_FLAG
 from acoupipe.datasets.base import DatasetBase
-from acoupipe.datasets.features import BaseFeatureCollection
-from acoupipe.datasets.synthetic import DatasetSyntheticConfig, DatasetSyntheticFeatureCollectionBuilder
+from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 from acoupipe.datasets.utils import (
-    blockwise_transfer,
-    get_all_source_signals,
-    get_uncorrelated_noise_source_recursively,
+    calc_transfer,
 )
 
 link_address = {
@@ -39,6 +34,26 @@ link_address = {
     'A2': 'https://depositonce.tu-berlin.de/bitstreams/cbb462d7-cb28-4803-98d8-84b03aad0d5f/download',
     'D1': 'https://depositonce.tu-berlin.de/bitstreams/86680ee5-ae0c-4b38-8ef8-805652a21ded/download',
     'R2': 'https://depositonce.tu-berlin.de/bitstreams/0fc5f5a4-a2f7-4eb7-b796-7114260e5e86/download',
+    'SR1-C1': 'https://depositonce.tu-berlin.de/bitstreams/75b3da38-9f7f-4b30-8967-3da1b0f29e9f/download',
+    'SR1-C2': 'https://depositonce.tu-berlin.de/bitstreams/8651dc9d-ec9c-4504-b301-7b5536fb74f3/download',
+    'SR1-C3': 'https://depositonce.tu-berlin.de/bitstreams/7c840fc0-90d5-40c1-8528-356b808560c8/download',
+    'SR1-C4': 'https://depositonce.tu-berlin.de/bitstreams/5bbf3409-205e-451b-abda-c16e90004f2a/download',
+    'SR1-D': 'https://depositonce.tu-berlin.de/bitstreams/412b04ec-6852-417f-ab85-3e847133860e/download',
+    'SR2-C1': 'https://depositonce.tu-berlin.de/bitstreams/bff1df6c-2672-4352-aa80-34bb2aa7dfd1/download',
+    'SR2-C2': 'https://depositonce.tu-berlin.de/bitstreams/12e6d24a-5d55-415c-b461-fa10d850c63c/download',
+    'SR2-C3': 'https://depositonce.tu-berlin.de/bitstreams/b64c3d35-c337-4003-859d-e747bdbe2a3f/download',
+    'SR2-C4': 'https://depositonce.tu-berlin.de/bitstreams/272bd891-3463-4459-be03-9a66aa916841/download',
+    'SR2-D': 'https://depositonce.tu-berlin.de/bitstreams/ec51a7e5-818d-463c-8f77-342c3bde27d8/download',
+    'SRA1-C1': 'https://depositonce.tu-berlin.de/bitstreams/bfbda52e-4776-4499-a52f-92c01dd0f632/download',
+    'SRA1-C2': 'https://depositonce.tu-berlin.de/bitstreams/f67da2d7-5c57-4ddc-8230-3f275563c497/download',
+    'SRA1-C3': 'https://depositonce.tu-berlin.de/bitstreams/ff5cb621-402d-43a6-8ff8-bbbd8d8ae170/download',
+    'SRA1-C4': 'https://depositonce.tu-berlin.de/bitstreams/24c0f12b-dbdd-4c23-8825-6657ed7249e4/download',
+    'SRA1-D': 'https://depositonce.tu-berlin.de/bitstreams/7950399f-e1be-4067-b672-b1c2b255a33b/download',
+    'SRA2-C1': 'https://depositonce.tu-berlin.de/bitstreams/aa9d52fd-e7eb-4f38-93d8-e22733c8311f/download',
+    'SRA2-C2': 'https://depositonce.tu-berlin.de/bitstreams/acb8baf0-7442-4faf-895d-7862004ffadc/download',
+    'SRA2-C3': 'https://depositonce.tu-berlin.de/bitstreams/7351f03d-243b-4c52-97da-b9b45cdce6d4/download',
+    'SRA2-C4': 'https://depositonce.tu-berlin.de/bitstreams/8b33b41b-51ca-44f6-a6b9-dac887d0dc7e/download',
+    'SRA2-D': 'https://depositonce.tu-berlin.de/bitstreams/61016fe8-96fe-463d-9441-d4c39b0a9898/download',
 }
 
 file_hash = {
@@ -46,6 +61,26 @@ file_hash = {
     'A2': 'c021cc57bb51237283c5303e235495edfea75b1f0eaba4a8f988942b9913e7ff',
     'D1': 'd888201065a43f436080da470f025c245b1a8030e08ea7a9dce1dc6b160761ee',
     'R2': '479af6bfdd403c855d53304b291c4878c1f8d4a4482836de77677c03ffb6bbaa',
+    'SR1-C1': 'b969ae330c585fc2ba4f1ccf9b8fb5be7756cd2b25d5762149705791964d721a',
+    'SR1-C2': 'c5db8fb0530bc723c84cb1cde8ab60efb3ba52b2d25fd44601b36dedbf5726cf',
+    'SR1-C3': '4850dc71bce9862269718d9190197718699c0cdf75b3e12255c717e7bc2b2d28',
+    'SR1-C4': '8b0b2734ff4ad7c0065c39df135905d21c6d15c5e019d2cdc91ccd6686c67cc2',
+    'SR1-D': '59bdc474a910fe2099a003cd3873e624c0d03aed52e249093882a3755407453e',
+    'SR2-C1': '3f08bfbd8933212650543630ef200777a02b391710ea4d0af7802f2a29f87a0d',
+    'SR2-C2': 'b1fffa4beb5ed8946cff71986ba6be102bae7ee65a84d566ad08e3303f8a78e4',
+    'SR2-C3': 'aeb2923e9c014b32138f944e3dd269ff3705858c380f8d0e7d4d382b56ce6886',
+    'SR2-C4': 'c4558478f46bf141d581976127f41419237dba590af3580962e513d1a010fbba',
+    'SR2-D': 'f3b7015e4e2ee8b3787c8c4857f92409b55a63f1f8a73e4d916aa5e07289d945',
+    'SRA1-C1': '1ebec4c77a5dd481611c41ac1b774df82e6df3db23ae098715b0e263b8e74a9c',
+    'SRA1-C2': '5c8d97cd1e2a86ab5b41b8dea1ad4a6518062d41d53ae7114f7d1c4de0c63294',
+    'SRA1-C3': '724d8ac9c09be45c5efdc6845c21f3079bfd1a19a1030ba9dd57cff1ac2942d7',
+    'SRA1-C4': '5fb3025e76ad673f695ac68ad0f6074a54bf246e6bb6b087d3acab41cb22a87e',
+    'SRA1-D': '9402a16fd11e4f3bafd4cbfb2a26221276606d20690de2991c5dcfa0aa4f1e03',
+    'SRA2-C1': 'faaa89bf24b79250639eb24228b42444387890cf82f50d78a45c3f296b22e93e',
+    'SRA2-C2': '6ac3c13f03b02a2167167edefc9b565e627c8773acf8d5030be5e98d95be74de',
+    'SRA2-C3': 'fa20e12f83f4c7686ac106b2f2a1223adf94a0e3b3db4da8f0ccc263697f334f',
+    'SRA2-C4': '76ba1aab9937d952ebcaffafd3db9e9d45ab2f8974d3f7e210589d439d1a0d54',
+    'SRA2-D': '5885ed123c6ebbaf819634051a5b777a5fd3e0fc916cc12631c96b30aa5204b9',
 }
 
 
@@ -171,7 +206,7 @@ class DatasetMIRACLE(DatasetBase):
         import matplotlib.pyplot as plt
         import numpy as np
 
-        extent = dataset.config.grid.extend()
+        extent = dataset.config.grid.extent
 
         # sound pressure level
         Lm = ac.L_p(data_sample['sourcemap']).T
@@ -212,6 +247,7 @@ class DatasetMIRACLE(DatasetBase):
         min_nsources=1,
         max_nsources=10,
         tasks=1,
+        remote_args=None,
         config=None,
     ):
         """Initialize the DatasetMIRACLE object.
@@ -243,6 +279,8 @@ class DatasetMIRACLE(DatasetBase):
             Maximum number of sources per sample. Default is 10.
         tasks : int, optional
             Number of parallel processes. Default is 1.
+        remote_args : dict, optional
+            Dictionary of keyword arguments passed to the remote actors when using Ray for parallelization. Defaults to None.
         config : DatasetMIRACLEConfig, optional
             DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
         """
@@ -258,143 +296,43 @@ class DatasetMIRACLE(DatasetBase):
                 ref_mic_index=ref_mic_index,
                 mic_sig_noise=mic_sig_noise,
             )
-        super().__init__(tasks=tasks, config=config)
-
-    def get_feature_collection(self, features, f, num):
-        """
-        Get the feature collection of the dataset.
-
-        Returns
-        -------
-        BaseFeatureCollection
-            BaseFeatureCollection object.
-        """
-        if f is None:
-            fdim = self.config.freq_data.fftfreq().shape[0]
-        elif isinstance(f, list):
-            fdim = len(f)
-        else:
-            fdim = 1
-
-        builder = MIRACLEFeatureCollectionBuilder(
-            feature_collection=BaseFeatureCollection(),
-            tdim=int(self.config.signal_length * self.config.fs),
-            mdim=self.config.mics.num_mics,
-            fdim=fdim,
-        )
-        # add prepare function
-        builder.add_custom(self.config.get_prepare_func())
-        builder.add_seeds(len(self.config.get_sampler()))
-        builder.add_idx()
-        # add feature functions
-        if 'time_data' in features:
-            if self.config.mode == 'welch':
-                builder.add_time_data(self.config.freq_data.source)
-            else:
-                msg = "time_data feature is not possible with modes ['analytic', 'wishart']."
-                raise ValueError(msg)
-        if 'spectrogram' in features:
-            if self.config.mode == 'welch':
-                builder.add_spectrogram(self.config.fft_spectra, f, num)
-            else:
-                msg = "spectrogram feature is not possible with modes ['analytic', 'wishart']."
-                raise ValueError(msg)
-        if 'csm' in features:
-            builder.add_csm(self.config.freq_data, f, num)
-        if 'csmtriu' in features:
-            builder.add_csmtriu(self.config.freq_data, f, num)
-        if 'eigmode' in features:
-            builder.add_eigmode(self.config.freq_data, f, num)
-        if 'sourcemap' in features:
-            builder.add_sourcemap(self.config.beamformer, f, num)
-        if 'loc' in features:
-            builder.add_loc(self.config.freq_data)
-        if 'source_strength_analytic' in features:
-            builder.add_source_strength_analytic(self.config.freq_data, f, num, ref_mic=self.config.ref_mic_index)
-        if 'source_strength_estimated' in features:
-            if self.config.mode == 'welch':
-                builder.add_source_strength_estimated(
-                    self.config.fft_obs_spectra,
-                    f,
-                    num,
-                    ref_mic=self.config.ref_mic_index,
-                )
-            else:
-                builder.add_source_strength_estimated(self.config.freq_data, f, num, ref_mic=self.config.ref_mic_index)
-        if 'noise_strength_analytic' in features:
-            builder.add_noise_strength_analytic(self.config.freq_data, f, num)
-        if 'noise_strength_estimated' in features:
-            freq_data = self.config.fft_spectra if self.config.mode == 'welch' else self.config.freq_data
-            builder.add_noise_strength_estimated(freq_data, f, num)
-        if 'targetmap_analytic' in features:
-            builder.add_targetmap(
-                self.config.freq_data,
-                f,
-                num,
-                self.config.source_steer,
-                ref_mic=self.config.ref_mic_index,
-                strength_type='analytic',
-                grid=self.config.grid,
-            )
-        if 'targetmap_estimated' in features:
-            freq_data = self.config.fft_obs_spectra if self.config.mode == 'welch' else self.config.freq_data
-            builder.add_targetmap(
-                freq_data,
-                f,
-                num,
-                self.config.source_steer,
-                ref_mic=self.config.ref_mic_index,
-                strength_type='estimated',
-                grid=self.config.grid,
-            )
-        if 'f' in features:
-            builder.add_f(self.config.freq_data.fftfreq(), f, num)
-        if 'num' in features:
-            builder.add_num(num)
-        return builder.build()
+        super().__init__(tasks=tasks, remote_args=remote_args, config=config)
 
 
-class MIRACLEFeatureCollectionBuilder(DatasetSyntheticFeatureCollectionBuilder):
-    def add_source_strength_analytic(self, freq_data, f, num, ref_mic):
-        from acoupipe.datasets.features import AnalyticSourceStrengthFeature
-
-        calc_strength = AnalyticSourceStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            ref_mic=ref_mic,
-        ).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'source_strength_analytic': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'source_strength_analytic': (self.fdim, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'source_strength_analytic': 'float32'})
-
-    def add_source_strength_estimated(self, freq_data, f, num, ref_mic):
-        from acoupipe.datasets.features import EstimatedSourceStrengthFeature
-
-        calc_strength = EstimatedSourceStrengthFeature(
-            freq_data=freq_data,
-            f=f,
-            num=num,
-            ref_mic=ref_mic,
-        ).get_feature_func()
-        self.feature_collection.add_feature_func(calc_strength)
-        if TF_FLAG:
-            from acoupipe.writer import float_list_feature
-
-            self.feature_collection.feature_tf_encoder_mapper.update({'source_strength_estimated': float_list_feature})
-            self.feature_collection.feature_tf_shape_mapper.update({'source_strength_estimated': (self.fdim, None)})
-            self.feature_collection.feature_tf_dtype_mapper.update({'source_strength_estimated': 'float32'})
+MIRACLE_SCENARIOS = ['A1', 'D1', 'A2', 'R2']
+SRIRACHA_SCENARIOS = [
+    'SR1',
+    'SR1-C1',
+    'SR1-C2',
+    'SR1-C3',
+    'SR1-C4',
+    'SR1-D',
+    'SR2',
+    'SR2-C1',
+    'SR2-C2',
+    'SR2-C3',
+    'SR2-C4',
+    'SR2-D',
+    'SRA1',
+    'SRA1-C1',
+    'SRA1-C2',
+    'SRA1-C3',
+    'SRA1-C4',
+    'SRA1-D',
+    'SRA2',
+    'SRA2-C1',
+    'SRA2-C2',
+    'SRA2-C3',
+    'SRA2-C4',
+    'SRA2-D',
+]
 
 
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     """Configuration class for the DatasetMIRACLE dataset."""
 
     srir_dir = Either(Instance(Path), Str, None)
-    scenario = Either('A1', 'D1', 'A2', 'R2', default='A1', desc='experimental configuration')
+    scenario = Either(MIRACLE_SCENARIOS, default='A1', desc='experimental configuration')
     filename = Property()
     _filename = Str
     ref_mic_index = Int(63, desc='reference microphone index (default: index of the centermost mic)')
@@ -402,7 +340,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     snap_to_grid = Enum(True, desc='snap source positions to measured grid')
     fs = Enum(32000, desc='sampling frequency')
     fft_params = Dict(
-        {'block_size': 256, 'overlap': '50%', 'window': 'Hanning', 'precision': 'complex64'},
+        {'block_size': 1024, 'overlap': '50%', 'window': 'Hanning', 'precision': 'complex64'},
         desc='FFT parameters',
     )
 
@@ -416,10 +354,23 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 url=link_address[self.scenario],
                 fname=self.scenario + '.h5',
                 path=self.srir_dir,
-                known_hash=file_hash[self.scenario],
+                known_hash=file_hash.get(self.scenario),
                 progressbar=True,
             )
         else:
+            # check if available locally
+            if self.srir_dir is not None:
+                # check if srir dir exists
+                if not Path(self.srir_dir).is_dir():
+                    msg = f'srir_dir {self.srir_dir} does not exist.'
+                    raise ValueError(msg)
+
+                local_path = Path(self.srir_dir) / (self.scenario + '.h5')
+                if local_path.is_file():
+                    self._filename = str(local_path)
+                    return
+                msg = f'File {local_path} does not exist.'
+                raise ValueError(msg)
             msg = f'Invalid scenario {self.scenario}.'
             raise ValueError(msg)
 
@@ -491,6 +442,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                     signal=signal,
                     mics=self.noisy_mics,
                     env=self.env,
+                    extend_signal=True,
                 ),
             )
         return sources
@@ -517,110 +469,99 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         return ac.ImportGrid(pos=gpos_file)
 
     @staticmethod
-    def calc_analytic_prepare_func(sampler, beamformer, filename, ref_mic):
+    def _prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic, domain='frequency'):
+        fftfreq = freq_data.fftfreq()
+        nfft = freq_data.fftfreq().shape[0]
+        nsources = loc.shape[1]
+        num_mics = mics.num_mics
+
         # we don't use a chunk cache here, since we access the data only once
         with h5.File(filename, 'r', rdcc_nbytes=0) as file:
-            seed_sampler = sampler.get(2)
-            rms_sampler = sampler.get(3)
-            loc_sampler = sampler.get(4)
-            noise_sampler = sampler.get(5)
-            signal_length_sampler = sampler.get(6)
-
-            freq_data = beamformer.freq_data
-
-            if signal_length_sampler is not None:
-                freq_data.num_samples = signal_length_sampler.target * freq_data.sample_freq
-
-            nfft = freq_data.fftfreq().shape[0]
-            # sample parameters
-            loc = loc_sampler.target
-            nsources = loc.shape[1]
-            nummics = beamformer.steer.mics.num_mics
             # finding the SRIR matching the location
-            transfer = np.empty((nfft, nummics, nsources), dtype=complex)
+            if domain == 'frequency':
+                transfer = np.empty((nfft, num_mics, nsources), dtype=complex)
+            loc_array = file['data/location/source'][()].T
+            h_norm = np.zeros(nsources)
+            irs = []
             for i in range(nsources):
-                ir_idx = np.where(np.sum(loc_sampler.grid.pos - loc[:, i][:, np.newaxis], axis=0) == 0)
-                assert len(ir_idx) == 1
-                tf = blockwise_transfer(file['data/impulse_response'][ir_idx[0][0]], freq_data.block_size).T
-                transfer[:, :, i] = tf / tf[:, ref_mic][:, np.newaxis]  # reference mic based normalization
-            # adjust freq_data
-            freq_data.custom_transfer = transfer
-            freq_data.steer.grid = ac.ImportGrid(pos=loc)  # set source locations
-            freq_data.seed = seed_sampler.target
-            # change source strength
-            prms_sq = rms_sampler.target[:nsources] ** 2  # squared sound pressure RMS at reference position
-            prms_sq_per_freq = prms_sq / nfft  # prms_sq_per_freq
-            freq_data.Q = np.stack([np.diag(prms_sq_per_freq) for _ in range(nfft)], axis=0)
-            # add noise to freq_data
-            if noise_sampler is not None:
-                noise_signal_ratio = noise_sampler.target  # normalized noise variance
-                noise_prms_sq = prms_sq.sum() * noise_signal_ratio
-                noise_prms_sq_per_freq = noise_prms_sq / nfft
-                nperf = np.diag(np.array([noise_prms_sq_per_freq] * nummics))
-                freq_data.noise = np.stack([nperf for _ in range(nfft)], axis=0)
-            else:
-                freq_data.noise = None
-        return {}
+                distances = np.linalg.norm(loc_array - loc[:, i][:, np.newaxis], axis=0)
+                ir_idx = np.argmin(distances)
+                assert distances[ir_idx] < 1e-6  # Ensure it's a close match
+                ir = file['data/impulse_response'][ir_idx]
+                irs.append(ir)
+                h_norm[i] = np.sum(ir[ref_mic] ** 2)
+                if domain == 'frequency':
+                    transfer[:, :, i] = calc_transfer(ir, freq_data.sample_freq, freq_data.block_size, fftfreq)
+        if domain == 'frequency':
+            # calc transfer norm
+            transfer /= np.sqrt(h_norm[np.newaxis, np.newaxis, :])
+            return transfer
+        # normalize irs
+        irs = np.array(irs).transpose(1, 0, 2)  # mics x sources x time
+        irs /= np.sqrt(h_norm[np.newaxis, :, np.newaxis])
+        return irs
 
     @staticmethod
-    def calc_welch_prepare_func(sampler, beamformer, sources, fft_spectra, fft_obs_spectra, obs, filename, ref_mic):
-        # we don't use a chunk cache here, since we access the data only once
-        with h5.File(filename, 'r', rdcc_nbytes=0) as file:
-            # restore sampler and acoular objects
-            seed_sampler = sampler.get(2)
-            rms_sampler = sampler.get(3)
-            loc_sampler = sampler.get(4)
-            noise_sampler = sampler.get(5)
-            signal_length_sampler = sampler.get(6)
+    def _prepare_ir_kernel(ir, sources, ref_sources, ref_mic):
+        for i, src in enumerate(sources):
+            src.kernel = ir[:, i, :].T
+        for i, src in enumerate(ref_sources):
+            src.kernel = ir[ref_mic, i, :].T[:, np.newaxis]
 
-            freq_data = beamformer.freq_data
+    @staticmethod
+    def calc_analytic_prepare_func(sampler, mics, freq_data, filename, ref_mic):
+        cf = DatasetSyntheticConfig
+        cfm = DatasetMIRACLEConfig
+        mics = cf._prepare_mics(sampler, mics)
+        loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
+        H = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic)
+        noise_prms_sq = cf._prepare_noise_params(sampler, prms_sq)
+        cf._prepare_spectra_wishart(
+            mics,
+            freq_data,
+            loc,
+            prms_sq,
+            source_seeds,
+            noise_prms_sq,
+            num_samples,
+            custom_transfer=H,
+        )
+        return {
+            'loc': loc,
+            'prms_sq': prms_sq,
+            'h_sq': np.real(H[:, ref_mic, :] * H[:, ref_mic, :].conj()),
+        }
 
-            if signal_length_sampler is not None:
-                # adjust source signals, noise signal length
-                signals = get_all_source_signals(sources)
-                for signal in signals:
-                    signal.num_samples = signal_length_sampler.target * freq_data.sample_freq
-            # sample parameters
-            loc = loc_sampler.target
-            nsources = loc.shape[1]
-            prms_sq = rms_sampler.target[:nsources] ** 2  # squared sound pressure RMS at reference position
-            # apply parameters
-            mic_noise = get_uncorrelated_noise_source_recursively(freq_data.source)
-            if mic_noise:
-                mic_noise_signal = mic_noise[0].signal
-                if signal_length_sampler is not None:
-                    mic_noise_signal.num_samples = signal_length_sampler.target * freq_data.sample_freq
-                if noise_sampler is not None:
-                    noise_signal_ratio = noise_sampler.target  # normalized noise variance
-                    noise_prms_sq = prms_sq.sum() * noise_signal_ratio
-                    mic_noise_signal.rms = np.sqrt(noise_prms_sq)
-                    mic_noise_signal.seed = seed_sampler.target + 1000
-            subset_sources = sources[:nsources]
-            for i, src in enumerate(subset_sources):
-                ir_idx = np.where(np.sum(loc_sampler.grid.pos - loc[:, i][:, np.newaxis], axis=0) == 0)
-                assert len(ir_idx) == 1
-                tf = blockwise_transfer(file['data/impulse_response'][ir_idx[0][0]]).T
-                tf /= tf[:, ref_mic][:, np.newaxis]  # reference mic based normalization
-                # ifft to get kernel
-                src.kernel = np.fft.irfft(tf, axis=0)
-                src.signal.seed = seed_sampler.target + i
-                src.signal.rms = np.sqrt(prms_sq[i])
-                src.loc = (loc[0, i], loc[1, i], loc[2, i])
-            freq_data.source.sources = subset_sources  # apply subset of sources
-            fft_spectra.source = freq_data.source  # only for spectrogram feature
-            # update observation point
-            obs_sources = deepcopy(subset_sources)
-            for src in obs_sources:
-                src.mics = obs
-                src.kernel = src.kernel[:, ref_mic][:, np.newaxis]
-            fft_obs_spectra.source = ac.SourceMixer(sources=obs_sources)
-        return {}
+    @staticmethod
+    def calc_welch_prepare_func(
+        sampler, mics, beamformer, sources, fft_spectra, fft_obs_spectra, obs, filename, ref_mic
+    ):
+        cf = DatasetSyntheticConfig
+        cfm = DatasetMIRACLEConfig
+        freq_data = beamformer.freq_data
+        mics = cf._prepare_mics(sampler, mics)
+        loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
+        ir = cfm._prepare_ir(sampler, mics, freq_data, filename, loc, ref_mic, 'time')
+        subset_sources = cf._prepare_sources_welch(sources, loc, mics)
+        signals = cf._prepare_signals_welch(prms_sq, subset_sources, num_samples, source_seeds)
+        num_samples = signals[0].num_samples
+        cf._prepare_spectra_welch(subset_sources, freq_data, fft_spectra, fft_obs_spectra, obs)
+        cf._prepare_noise_welch(sampler, prms_sq, source_seeds[0] + 1000, freq_data, num_samples, mics)
+        cfm._prepare_ir_kernel(ir, freq_data.source.sources, fft_obs_spectra.source.sources, ref_mic)
+        # calc ref transfer for prms_sq_f
+        H_ref = calc_transfer(ir[ref_mic, :, :], freq_data.sample_freq, freq_data.block_size, freq_data.fftfreq())
+        return {
+            'loc': loc,
+            'prms_sq': prms_sq,
+            'h_sq': np.real(H_ref * H_ref.conj()),
+        }
 
     def get_prepare_func(self):
         if self.mode == 'welch':
             prepare_func = partial(
                 self.calc_welch_prepare_func,
                 beamformer=self.beamformer,
+                mics=self.mics,
                 sources=self.sources,
                 fft_spectra=self.fft_spectra,
                 fft_obs_spectra=self.fft_obs_spectra,
@@ -631,8 +572,79 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         else:
             prepare_func = partial(
                 self.calc_analytic_prepare_func,
-                beamformer=self.beamformer,
+                mics=self.mics,
+                freq_data=self.freq_data,
                 filename=self.filename,
                 ref_mic=self.ref_mic_index,
             )
         return prepare_func
+
+
+class DatasetSRIRACHA(DatasetMIRACLE):
+    """A microphone array dataset generator using experimentally measured data from the SRIRACHA dataset."""
+
+    def __init__(
+        self,
+        scenario,
+        srir_dir=None,
+        ref_mic_index=63,
+        mode='welch',
+        mic_sig_noise=True,
+        random_signal_length=False,
+        signal_length=5,
+        min_nsources=1,
+        max_nsources=10,
+        tasks=1,
+        config=None,
+    ):
+        """Initialize the DatasetMIRACLE object.
+
+        Input parameters are passed to the DatasetMIRACLEConfig object, which creates
+        all necessary objects for the simulation of microphone array data.
+
+        Parameters
+        ----------
+        srir_dir : str, optional
+            Path to the directory where the SRIR files are stored. Default is None, which
+            sets the path to the `pooch.os_cache` directory. The SRIR files are downloaded from the
+            `MIRACLE`_ dataset if they are not found in the directory.
+        scenario : str, optional
+            Scenario of the dataset. Possible values are "A1", "D1", "A2", "R2".
+        ref_mic_index : int, optional
+            Index of the microphone that is used as reference observation point.
+            Default is 63, which is the index of the centermost microphone.
+        mode : str, optional
+            Mode of the dataset. Possible values are "analytic", "welch", "wishart".
+            Default is "welch".
+        mic_sig_noise : bool, optional
+            Add uncorrelated noise to the microphone signals. Default is True.
+        signal_length : float, optional
+            Length of the signal in seconds. Default is 5.
+        min_nsources : int, optional
+            Minimum number of sources per sample. Default is 1.
+        max_nsources : int, optional
+            Maximum number of sources per sample. Default is 10.
+        tasks : int, optional
+            Number of parallel processes. Default is 1.
+        config : DatasetMIRACLEConfig, optional
+            DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
+        """
+        if config is None:
+            config = DatasetSRIRACHAConfig(
+                mode=mode,
+                random_signal_length=random_signal_length,
+                signal_length=signal_length,
+                min_nsources=min_nsources,
+                max_nsources=max_nsources,
+                srir_dir=srir_dir,
+                scenario=scenario,
+                ref_mic_index=ref_mic_index,
+                mic_sig_noise=mic_sig_noise,
+            )
+        super().__init__(tasks=tasks, config=config)
+
+
+class DatasetSRIRACHAConfig(DatasetMIRACLEConfig):
+    """Configuration class for the DatasetSRIRACHA dataset."""
+
+    scenario = Either(*SRIRACHA_SCENARIOS, desc='experimental configuration')

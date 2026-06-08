@@ -3,8 +3,6 @@ name: Docs
 #DEPLOY NOTE: This workflow will only deploy the docs when a workflow is manually triggered from the main branch via github! 
 
 on:
-  pull_request:
-    branches: [ master, dev ] # build docs as additional test on PRs to main
   workflow_dispatch: # allow manual trigger for all branches
 
 concurrency:
@@ -21,17 +19,19 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.12']
+        python-version: ['3.13']
     steps:
       - name: Check out a copy of the repository
         uses: actions/checkout@v4
-      - name: Set up hatch
-        uses: ./.github/actions/setup-hatch
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install Pandoc
         run: |
           sudo apt-get update && sudo apt-get install -y pandoc
       - name: Run sphinx
-        run: hatch -v run docs:build
+        run: uv run make -C docs html
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:

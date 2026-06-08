@@ -8,9 +8,10 @@ Datasets
     :maxdepth: 1
 
     datasets/quickstart
-    Synthetic Datasets <../autoapi/acoupipe/datasets/synthetic/index>
-    Experimental Datasets <../autoapi/acoupipe/datasets/experimental/index>
+    DatasetSynthetic <datasets/synthetic>
+    DatasetMIRACLE <datasets/miracle>
+    DatasetSRIRACHA <datasets/sriracha>
     datasets/features
+    datasets/store
     jupyter/modify
-
 

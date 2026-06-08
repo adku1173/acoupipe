@@ -1,13 +1,40 @@
+import numpy as np
 import numpy.fft as fft
 from acoular import PowerSpectraImport, SteeringVector
 from acoular.internal import digest
 from numpy import diag_indices, dot, r_, tril_indices, zeros
 from numpy.random import default_rng
 from scipy.linalg import cholesky
-from traits.api import CArray, CInt, Either, Float, Instance, Int, Property, Trait, cached_property, property_depends_on
+from traits.api import (
+    CArray,
+    CInt,
+    Either,
+    Float,
+    Instance,
+    Int,
+    Map,
+    Property,
+    Trait,
+    cached_property,
+    property_depends_on,
+)
 
 
 class PowerSpectraAnalytic(PowerSpectraImport):
+    #: equivalent degrees of freedom
+    df_eq = Property()
+
+    window = Map(
+        {
+            'Rectangular': np.ones,
+            'Hanning': np.hanning,
+            'Hamming': np.hamming,
+            'Bartlett': np.bartlett,
+            'Blackman': np.blackman,
+        },
+        default_value='Rectangular',
+    )
+
     num_samples = CInt
 
     sample_freq = Float(1.0, desc='sampling frequency')
@@ -81,6 +108,23 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         ],
     )
 
+    @property_depends_on('num_samples, block_size, overlap, window')
+    def _get_df_eq(self):
+        w = self.window_(self.block_size)
+        D = self.block_size if self.overlap == 'None' else int(self.block_size / self.overlap_)
+        K = int(self.num_blocks)
+        denom = (w @ w) ** 2
+        fac = 0.0
+        for j in range(1, K):
+            shift = j * D
+            num = w[:-shift] @ w[shift:]
+            if num == 0.0:
+                break
+            rho = (num * num) / denom
+            rho *= (K - j) / K
+            fac += rho
+        return K / (1 + 2 * fac)
+
     @cached_property
     def _get_digest(self):
         return digest(self)
@@ -100,6 +144,9 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     def _get_num_blocks(self):
         return self.overlap_ * self.num_samples / self.block_size - self.overlap_ + 1
 
+    def _get_num_channels(self):
+        return self.steer.mics.num_mics
+
     def _validate_custom_transfer(self):
         nfftfreq = self.fftfreq().shape[0]
         numsources = self.Q.shape[1]
@@ -118,17 +165,17 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         if nfftfreq != self.Q.shape[0]:
             msg = 'The number of frequencies must match the number of rows in the source strengths matrix!'
             raise ValueError(msg)
-            if self.noise is not None and nfftfreq != self.noise.shape[0]:
-                msg = 'The number of frequencies must match the number of rows in the noise matrix!'
-                raise ValueError(msg)
+        if self.noise is not None and nfftfreq != self.noise.shape[0]:
+            msg = 'The number of frequencies must match the number of rows in the noise matrix!'
+            raise ValueError(msg)
 
     def _sample_wishart(self, scale, rng):
-        df = int(self.num_blocks)
+        df = self.df_eq
         dim = scale.shape[0]
         n_tril = dim * (dim - 1) // 2
         C = cholesky(scale, lower=True)
         covariances = rng.normal(size=n_tril) + 1j * rng.normal(size=n_tril)
-        # diagonal elements follow random gamma distribution (according to Nagar and Gupta, 2011)
+        covariances *= np.sqrt(0.5)
         variances = r_[[rng.gamma(df - dim + i, scale=1, size=1) ** 0.5 for i in range(dim)]]
         A = zeros(C.shape, dtype=complex)
         # input the covariances

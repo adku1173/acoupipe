@@ -1,6 +1,6 @@
+from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
 import numpy as np
 import pytest
-from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
 from numpy import array
 from numpy.random import RandomState, default_rng
 from numpy.testing import assert_almost_equal
@@ -11,15 +11,12 @@ from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.sampler import (
     BaseSampler,
     ContainerSampler,
-    LocationSampler,
     MicGeomSampler,
     NumericAttributeSampler,
     PointSourceSampler,
     SetSampler,
     SourceSetSampler,
 )
-
-from .pipeline_value_test import get_distributed_pipeline, get_pipeline
 
 SAMPLER_CLASSES = [
     BaseSampler,
@@ -30,7 +27,6 @@ SAMPLER_CLASSES = [
     ContainerSampler,
     MicGeomSampler,
 ]
-PIPELINE_CLASSES = [BasePipeline, DistributedPipeline]
 STATES = [1, RandomState(1), default_rng(1)]
 
 FLOAT_SET = [0.1, 0.2, 0.3, 0.4]  # a set with floats for testing
@@ -46,27 +42,6 @@ class Target:
     """Class that is used in Sampler tests."""
 
     attribute = 0
-
-
-def create_test_method(target_instance):
-    """Method used to test ContainerSampler class."""
-
-    def sample_method(random_state):
-        target_instance.attribute = random_state.random()
-
-    return sample_method
-
-
-@pytest.fixture
-def location_sampler():
-    return LocationSampler(
-        random_var=(norm(0, 0.1688), norm(0, 0.1688), norm(0.5, 0)),
-        x_bounds=(-0.5, 0.5),
-        y_bounds=(-0.5, 0.5),
-        z_bounds=(0.5, 0.5),
-        nsources=3,
-        random_state=np.random.RandomState(1),
-    )
 
 
 def test_location_sampler_mindist(location_sampler):
@@ -137,13 +112,6 @@ def test_source_set_sampler(equal_value, nsources, expected_setsize):
         assert sampler.target[0].sources != sampler.target[1].sources
 
 
-@pytest.fixture
-def numeric_attribute_sampler():
-    sampler = NumericAttributeSampler(random_var=norm(loc=0, scale=0.1688), random_state=5, attribute='attribute')
-    sampler.target = [Target() for _ in range(10)]
-    return sampler
-
-
 def test_numeric_attribute_sampler_order(numeric_attribute_sampler):
     """Assert that ordering of numeric samples works."""
     sampler = numeric_attribute_sampler
@@ -169,14 +137,6 @@ def test_numeric_attribute_sampler_normalization(numeric_attribute_sampler):
     sampler.sample()
     l = [t.attribute for t in sampler.target]
     assert max(l) == 1.0
-
-
-@pytest.fixture
-def container_sampler():
-    target = Target()
-    sampler = ContainerSampler()
-    sampler.random_func = create_test_method(target)
-    return sampler, target
 
 
 @pytest.mark.parametrize(
@@ -243,14 +203,6 @@ def test_sampler_seeding(cls, state):
         cls(random_state=state)
 
 
-@pytest.fixture
-def base_pipeline():
-    size = 1
-    pipeline = get_pipeline(size)
-    test_seeds = {1: range(1, 1 + size), 2: range(2, 2 + size), 3: range(3, 3 + size), 4: range(4, 4 + size)}
-    return pipeline, test_seeds
-
-
 def test_pipeline_without_explicit_seeds(base_pipeline):
     pipeline, _ = base_pipeline
     data = next(pipeline.get_data(progress_bar=False))
@@ -300,14 +252,6 @@ def test_invalid_pipeline_funcs(base_pipeline, finput):
     pipeline = BasePipeline(numsamples=2, features=finput)
     with pytest.raises(ValueError):
         next(pipeline.get_data(progress_bar=False))
-
-
-@pytest.fixture
-def distributed_pipeline():
-    size = 3
-    pipeline = get_distributed_pipeline(size, 2)  # two workers
-    test_seeds = {1: range(1, 1 + size), 2: range(2, 2 + size), 3: range(3, 3 + size), 4: range(4, 4 + size)}
-    return pipeline, test_seeds
 
 
 def test_distributed_pipeline_without_explicit_seeds(distributed_pipeline):

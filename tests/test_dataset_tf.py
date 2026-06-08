@@ -1,12 +1,6 @@
-import shutil
-import tempfile
-from pathlib import Path
-
 import numpy as np
 import pytest
 import tensorflow as tf
-
-from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
 
 IMPLEMENTED_FEATURES = ['time_data', 'csm', 'csmtriu', 'sourcemap', 'eigmode', 'spectrogram'] + [
     'seeds',
@@ -25,27 +19,6 @@ modes = ['welch', 'analytic', 'wishart']
 frequencies = [None, 1000]
 nums = [0, 3]
 start_idx = 3
-
-
-@pytest.fixture
-def temp_dir():
-    """Fixture to create and clean up a temporary directory."""
-    test_dir = Path(tempfile.mkdtemp())
-    yield test_dir
-    shutil.rmtree(test_dir)
-
-
-@pytest.fixture
-def create_dataset():
-    """Fixture to create a DatasetSynthetic instance."""
-
-    def _create_dataset(full=False, tasks=1, **kwargs):
-        if full:
-            return DatasetSynthetic(tasks=tasks, **kwargs)
-        config = DatasetSyntheticTestConfig(**kwargs)
-        return DatasetSynthetic(config=config, tasks=tasks, **kwargs)
-
-    return _create_dataset
 
 
 @pytest.mark.parametrize('mode', modes)

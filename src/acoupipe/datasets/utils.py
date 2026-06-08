@@ -18,6 +18,81 @@ from warnings import warn
 from numpy import concatenate, imag, newaxis, real, searchsorted
 
 
+def calc_transfer(ir, fs, blocksize, fftfreq, time_axis=-1):
+    """
+    Compute one-sided transfer functions H(f) from (measured) impulse responses on a
+    target rFFT bin grid defined by `blocksize`, returning only `fftfreq`.
+
+    The function enforces that the FFT length is a power-of-two by zero-padding the
+    impulse responses to nfft = 2**ceil(log2(max(L, blocksize))), where L is the IR length.
+
+    Parameters
+    ----------
+    ir : ndarray
+        Impulse responses. The time axis is given by `time_axis`.
+        Common shapes are (n_channels, n_samples) with time_axis=1,
+        or (n_samples, n_channels) with time_axis=0.
+    fs : float
+        Sampling frequency in Hz.
+    blocksize : int
+        Target block size defining the desired rFFT bin grid (power-of-two).
+        The associated bin centers are f_k = k*fs/blocksize, k=0..blocksize//2.
+    fftfreq : array_like of int or float, optional
+        Desired frequency bins to return.
+
+        - If integer dtype: interpreted as rFFT bin indices on the `blocksize` grid,
+          i.e., k in [0, blocksize//2]. This case is exact because both blocksize and
+          nfft are powers-of-two, hence nfft/blocksize is integer and mapping is exact.
+        - If float dtype: interpreted as frequencies in Hz. Values are mapped to the
+          nearest rFFT bin of the computed FFT grid; a ValueError is raised if the
+          frequency is not (approximately) on the grid.
+
+        If None, all one-sided bins of the computed FFT are returned.
+    time_axis : int, optional
+        Axis of `ir` corresponding to time samples. Default: -1.
+
+    Returns
+    -------
+    H_sel : ndarray (complex)
+        One-sided transfer function values at the requested bins. The returned array
+        has the same shape as `ir`, except the time axis is replaced by a frequency axis.
+        If fftfreq is None, this frequency axis has length nfft//2+1.
+        Otherwise, it has length len(fftfreq).
+    """
+    L = ir.shape[time_axis]
+
+    # Select FFT length: power-of-two >= max(L, blocksize)
+    nfft = 1 << (max(L, blocksize) - 1).bit_length()
+
+    # Zero-pad IRs to nfft (never truncate)
+    if nfft > L:
+        pad_width = [(0, 0)] * ir.ndim
+        pad_width[-1] = (0, nfft - L)
+        ir = np.pad(ir, pad_width, mode='constant')
+
+    # One-sided FFT with window matching the (zero-padded) length (i.e., use full nfft)
+    H = np.fft.rfft(ir, n=nfft, axis=-1)  # shape: (..., nfft//2+1)
+    np.fft.rfftfreq(nfft, d=1.0 / fs)
+
+    if np.any(fftfreq < 0.0) or np.any(fftfreq > fs / 2.0):
+        msg = 'Requested frequencies must satisfy 0 <= f <= fs/2.'
+        raise ValueError(msg)
+
+    # Map to nearest bin; require exact (within tolerance) grid match
+    idx_float = fftfreq * nfft / fs
+    idx = np.rint(idx_float).astype(int)
+    tol = 1e-9
+    if np.max(np.abs(idx_float - idx)) > tol:
+        msg = (
+            'Some requested frequencies are not on the FFT grid. '
+            'Provide integer bin indices (recommended), or choose f that matches k*fs/nfft.'
+        )
+        raise ValueError(msg)
+
+    H_sel = np.take(H, idx, axis=-1)
+    return H_sel.T
+
+
 def tqdm_hook(t):
     """Wrap tqdm instance according to https://github.com/tqdm/tqdm/blob/master/examples/tqdm_wget.py."""
     last_b = [0]
@@ -349,35 +424,6 @@ def get_uncorrelated_noise_source_recursively(source):
     elif isinstance(source, ac.UncorrelatedNoiseSource):
         return [source]
     return sources
-
-
-def blockwise_transfer(ir, blocksize=None):
-    """Calculate the transfer function of an impulse response in a blockwise manner.
-
-    Parameters
-    ----------
-    ir : ndarray, shape (n_channels,n_samples)
-        Impulse response.
-    blocksize : int, optional
-        Block size for the FFT. The default is None which means that the blocksize is equal
-        to the length of the impulse response.
-
-    Returns
-    -------
-    tf : ndarray, shape (n_channels, n_samples)
-        Power spectrum of the impulse response.
-    """
-    n_channels, n_samples = ir.shape
-    if blocksize is None:
-        blocksize = n_samples
-    if n_samples % blocksize != 0:
-        pad = blocksize - n_samples % blocksize
-        ir = np.pad(ir, ((0, 0), (0, pad)))
-    n_blocks = ir.shape[-1] // blocksize
-    tf = np.zeros((n_channels, blocksize // 2 + 1), dtype=complex)
-    for i in range(n_blocks):
-        tf += np.fft.rfft(ir[:, i * blocksize : (i + 1) * blocksize], axis=1)
-    return tf
 
 
 # Without the use of this decorator factory (wraps), the name of the

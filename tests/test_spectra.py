@@ -1,18 +1,6 @@
+from acoular import ImportGrid
 import numpy as np
 import pytest
-from acoular import ImportGrid, MicGeom, SteeringVector
-
-from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-
-mg = MicGeom(
-    pos_total=np.array(
-        [
-            [-0.68526741, -0.7593943, -1.99918406, 0.08414458],
-            [-0.60619132, 1.20374544, -0.27378946, -1.38583541],
-            [0.32909911, 0.56201909, -0.24697204, -0.68677001],
-        ]
-    )
-)
 
 
 def change_seed(psa):
@@ -57,21 +45,6 @@ def change_Q(psa):
 def change_steer(psa):
     psa.steer.grid = ImportGrid(pos=np.random.normal(size=(3, 3)))
     return psa
-
-
-@pytest.fixture
-def psa():
-    psa_instance = PowerSpectraAnalytic(
-        block_size=256,
-        overlap='50%',
-        sample_freq=51200,
-        num_samples=51200,
-        steer=SteeringVector(mics=mg, grid=ImportGrid(pos=np.random.normal(size=(3, 3)))),
-    )
-    nfft = psa_instance.fftfreq()
-    psa_instance.Q = np.stack([np.eye(3, dtype=complex) * 0.1 for _ in range(nfft.shape[0])])
-    psa_instance.noise = np.stack([np.eye(mg.num_mics, dtype=complex) for _ in range(nfft.shape[0])])
-    return psa_instance
 
 
 @pytest.mark.parametrize(

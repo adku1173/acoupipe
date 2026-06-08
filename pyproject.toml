@@ -3,7 +3,7 @@
 name = "acoupipe"
 dynamic = ["version"]
 description = "Library for the generation of large-scale microphone array data for machine learning"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.10,<3.14"
 authors = [
     {name = "Acoular Development Team", email = "info@acoular.org"},
 ]
@@ -27,9 +27,10 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-	'acoular',
+	'acoular>=26.1',
 	'ray[default]',
 	'h5py',
 	'tqdm',
@@ -40,11 +41,7 @@ maintainers = [
     {name = "Art Pelling", email = "a.pelling@tu-berlin.de"},
 ]
 
-[project.optional-dependencies]
-full = [
-    "tensorflow",
-]
-
+[dependency-groups]
 docs = [
     "ipython",
     "graphviz",
@@ -54,23 +51,36 @@ docs = [
     "nb-clean",
     "sphinx",
     "sphinx-autoapi",
+    "sphinx-design",
     "nbsphinx",
-    "sphinx-rtd-theme",
+    "pydata-sphinx-theme",
     "sphinx-gallery",
     "sphinxcontrib.bibtex",
-    "pandoc"
+    "pandoc",
+]
+
+lint = [
+    "ruff==0.14.2",
+]
+
+unsupported = [
+    "pyroomacoustics",
 ]
 
 tests = [
-    "tensorflow",
+    "diff_cover",
     "pytest",
-    'pandas',
+    "pytest-cov",
+    "pytest-regtest",
+    "pyyaml",
+    "pandas",
+    "tensorflow",
 ]
 
 dev = [
-    "acoupipe[docs,full,tests]",
-    "hatch",
-    "ruff",
+    {include-group = "docs"},
+    {include-group = "lint"},
+    {include-group = "tests"},
 ]
 
 
@@ -87,32 +97,36 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 path = "src/acoupipe/version.py"
 
-[tool.hatch.envs.hatch-static-analysis]
-dependencies = ["ruff==0.11.1"]
-config-path = ".ruff.toml"
+[[tool.uv.index]]
+name = "pypi"
+url = "https://pypi.org/simple/"
+publish-url = "https://upload.pypi.org/legacy/"
+explicit = true
 
-[tool.hatch.envs.docs]
-python = "3.12"
-dependencies = [
-    "acoupipe[docs]"
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = "tests"
+pythonpath = ["src"]
+addopts = "-v --durations=10 --cov-report=html --cov-report=term-missing"
+markers = [
+    "multiprocessing: marks tests that require multiprocessing (deselect with '-m \"not multiprocessing\"')",
 ]
-
-[tool.hatch.envs.docs.scripts]
-build = ["cd docs && make html"]
-
-
-[tool.hatch.envs.tests]
-dependencies = [
-    "acoupipe[tests]"
+filterwarnings = [
+    #"error", # treat warnings as errors
+    "ignore::pluggy.PluggyTeardownRaisedWarning", # raised internally by pytest-regtest
+    "ignore:numpy.core.multiarray is deprecated*:DeprecationWarning", # raised internally by pylops
+    "ignore:module 'sre_parse' is deprecated:DeprecationWarning", # raised internally by traits
+    "ignore:module 'sre_constants' is deprecated:DeprecationWarning", # raised internally by traits
+    "ignore:The TBB threading layer requires TBB version:numba.core.errors.NumbaWarning", # raised internally by numba
+    "ignore:FNV hashing is not implemented in Numba:UserWarning", # raised internally by numba
+    # Suppress warnings about unclosed files in tables at the end of the tests
+    "ignore:Closing remaining open file*:tables.exceptions.UnclosedFileWarning",
 ]
-
-[[tool.hatch.envs.tests.matrix]]
-python = ["3.12"]
-
-[tool.hatch.envs.tests.scripts]
-import = ["python -c \"import acoupipe\""]
-test = ["python -m pytest -v --durations=10 tests"]
-
 
 [tool.hatch.build.targets.sdist]
 include = [
@@ -121,4 +135,3 @@ include = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/acoupipe"]
-

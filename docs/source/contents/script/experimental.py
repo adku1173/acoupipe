@@ -5,19 +5,24 @@ import matplotlib.pyplot as plt
 
 from acoupipe.datasets.experimental import DatasetMIRACLE
 
-f = 4000
+f = 2000
 
 fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True, sharex=True)
 fig.suptitle(f"Sourcemap ($f={f}$ Hz)", fontsize=12)
 
-for i, scenario in enumerate(["A1", "A2", "R2"]):
+for i, scenario in enumerate([ "A1", "A2", "R2"]):
 
     dataset = DatasetMIRACLE(scenario=scenario, mode="wishart")
-    data_generator = dataset.generate(features=["sourcemap","loc", "f"],
-                                        split="training", size=1, f=[f], num=0, start_idx=1)
+    data_generator = dataset.generate(
+        features=["sourcemap", "loc", "f"],
+        split="training",
+        size=1,
+        f=[f],
+        num=0,
+    )
     data_sample = next(data_generator)
 
-    extent = dataset.config.grid.extend()
+    extent = dataset.config.grid.extent
 
     # sound pressure level
     Lm = ac.L_p(data_sample["sourcemap"]).T
