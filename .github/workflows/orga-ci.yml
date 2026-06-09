@@ -24,7 +24,6 @@ jobs:
   docs:
     uses: acoular/ci/.github/workflows/docs.yml@main
     with:
-      src_dir: "src/acoupipe"
       setup_portaudio: false
 
   github:
