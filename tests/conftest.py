@@ -64,9 +64,10 @@ def create_dataset():
 
 @pytest.fixture
 def create_miracle_dataset():
-    """Create a DatasetMIRACLE instance for tests."""
+    """Create a DatasetMIRACLE instance for tests using the smaller D1 scenario by default."""
 
     def _create_dataset(tasks=1, **kwargs):
+        kwargs.setdefault('scenario', 'D1')
         return DatasetMIRACLE(tasks=tasks, **kwargs)
 
     return _create_dataset

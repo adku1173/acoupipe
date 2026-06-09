@@ -4,6 +4,8 @@ import acoular as ac
 import numpy as np
 import pytest
 
+from acoupipe.datasets.experimental import DatasetMIRACLEConfig
+
 IMPLEMENTED_FEATURES = ['time_data', 'csm', 'csmtriu', 'sourcemap', 'eigmode', 'spectrogram'] + [
     'seeds',
     'idx',
@@ -218,6 +220,14 @@ def test_eigvalsum_equal_csm(mode, create_dataset):
     eig, eigvec = np.linalg.eigh(data['csm'][0])
     eig_eig = np.linalg.norm(data['eigmode'][0], axis=0)
     np.testing.assert_allclose(eig_eig, np.abs(eig), rtol=1e-5, atol=1e-7)
+
+
+def test_miracle_test_fixture_defaults_to_d1(create_miracle_dataset, monkeypatch):
+    monkeypatch.setattr(DatasetMIRACLEConfig, 'create_acoular_pipeline', lambda self: None)
+
+    dataset = create_miracle_dataset()
+
+    assert dataset.config.scenario == 'D1'
 
 
 @pytest.mark.parametrize('mode', modes)
