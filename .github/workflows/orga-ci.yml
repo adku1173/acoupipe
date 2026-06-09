@@ -13,14 +13,18 @@ jobs:
       pull-requests: write
     with:
       src_dir: "src/acoupipe"
+      setup_portaudio: false
 
   tests:
     uses: acoular/ci/.github/workflows/tests.yml@main
     with:
       src_dir: "src/acoupipe"
-
+      setup_portaudio: false
+      
   docs:
     uses: acoular/ci/.github/workflows/docs.yml@main
+    with:
+      setup_portaudio: false
 
   github:
     uses: acoular/ci/.github/workflows/github.yml@main
