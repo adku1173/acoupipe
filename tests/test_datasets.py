@@ -35,8 +35,6 @@ def test_values_correct(mode, feature, f, num, create_dataset, snapshot):
     snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
 
 
-
-
 @pytest.mark.parametrize('mode', MODES)
 @pytest.mark.parametrize('feature', IMPLEMENTED_FEATURES)
 @pytest.mark.parametrize('num', NUMS)
@@ -232,4 +230,3 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset, s
         snapshot.check(np.asarray(data[feature][:, :, -1]), rtol=1e-5, atol=1e-7)
     else:
         snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-6)
-

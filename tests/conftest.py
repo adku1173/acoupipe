@@ -19,8 +19,6 @@ from acoupipe.writer import WriteH5Dataset
 from .pipeline_value_test import get_pipeline
 
 
-
-
 class _AttributeTarget:
     """Simple target used in sampler fixtures."""
 
@@ -60,13 +58,7 @@ def create_dummy_dataset():
     """Create a DatasetDummy instance for fast testing without expensive calculations."""
 
     def _create_dataset(mode='welch', mic_sig_noise=True, use_cache=True, cache_dir=None, **kwargs):
-        return DatasetDummy(
-            mode=mode,
-            mic_sig_noise=mic_sig_noise,
-            use_cache=use_cache,
-            cache_dir=cache_dir,
-            **kwargs
-        )
+        return DatasetDummy(mode=mode, mic_sig_noise=mic_sig_noise, use_cache=use_cache, cache_dir=cache_dir, **kwargs)
 
     return _create_dataset
 

@@ -42,4 +42,3 @@ def get_pipeline(nsamples):
         sampler={1: nas, 2: mgs, 3: pss, 4: sms}, numsamples=nsamples, features=lambda sampler: {'data': True}
     )
     return pipeline
-

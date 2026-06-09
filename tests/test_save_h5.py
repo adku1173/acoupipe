@@ -22,6 +22,7 @@ def temp_dir():
     import tempfile
     import shutil
     from pathlib import Path
+
     test_dir = Path(tempfile.mkdtemp())
     yield test_dir
     shutil.rmtree(test_dir)
@@ -38,13 +39,7 @@ def test_save_h5(feature, num, f, dummy_dataset, temp_dir):
         pytest.skip('Feature not supported in analytic mode')
 
     dummy_dataset.save_h5(
-        split='training',
-        num=num,
-        f=f,
-        size=2,
-        features=[feature],
-        name=temp_dir / 'test.h5',
-        progress_bar=False
+        split='training', num=num, f=f, size=2, features=[feature], name=temp_dir / 'test.h5', progress_bar=False
     )
 
 
@@ -52,18 +47,12 @@ def test_save_h5(feature, num, f, dummy_dataset, temp_dir):
 def test_save_and_load_h5(feature, dummy_dataset, temp_dir):
     """Test saving and loading HDF5 files with dummy dataset."""
     import h5py
-    
+
     # Generate and save
     dummy_dataset.save_h5(
-        features=[feature],
-        size=2,
-        name=temp_dir / 'test.h5',
-        split='training',
-        f=1000,
-        num=0,
-        progress_bar=False
+        features=[feature], size=2, name=temp_dir / 'test.h5', split='training', f=1000, num=0, progress_bar=False
     )
-    
+
     # Load and verify
     h5_path = temp_dir / 'test.h5'
     with h5py.File(h5_path, 'r') as f:

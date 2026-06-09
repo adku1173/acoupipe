@@ -14,11 +14,13 @@ from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS
 @pytest.fixture
 def create_dataset():
     """Create a DatasetSynthetic instance for tests."""
+
     def _create_dataset(full=False, tasks=1, **kwargs):
         if full:
             return DatasetSynthetic(tasks=tasks, **kwargs)
         config = DatasetSyntheticTestConfig(**kwargs)
         return DatasetSynthetic(config=config, tasks=tasks, **kwargs)
+
     return _create_dataset
 
 
@@ -28,6 +30,7 @@ def temp_dir():
     import tempfile
     import shutil
     from pathlib import Path
+
     test_dir = Path(tempfile.mkdtemp())
     yield test_dir
     shutil.rmtree(test_dir)
@@ -40,7 +43,7 @@ def temp_dir():
 @pytest.mark.parametrize('mic_sig_noise', [True, False])
 def test_get_tf_dataset(mode, feature, num, f, mic_sig_noise, create_dataset, temp_dir):
     """Test if a TensorFlow dataset can be constructed from the pipeline.
-    
+
     This test uses the real dataset because it tests pipeline-to-TensorFlow integration,
     which depends on the actual pipeline implementation.
     """
@@ -52,13 +55,6 @@ def test_get_tf_dataset(mode, feature, num, f, mic_sig_noise, create_dataset, te
         pytest.skip('Feature not supported in non-welch mode')
 
     dataset = create_dataset(mode, mic_sig_noise=mic_sig_noise)
-    dataset = dataset.get_tf_dataset(
-        split='training',
-        size=1,
-        progress_bar=False,
-        f=f,
-        num=num,
-        features=[feature]
-    )
+    dataset = dataset.get_tf_dataset(split='training', size=1, progress_bar=False, f=f, num=num, features=[feature])
     data = next(iter(dataset))
     assert feature in data.keys()
