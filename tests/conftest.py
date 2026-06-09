@@ -12,8 +12,10 @@ from .constants import MIC_GEOM
 from .dummy_dataset import DatasetDummy
 from acoupipe.datasets.experimental import DatasetMIRACLE
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
+from acoupipe.datasets.synthetic import DatasetSynthetic
 from acoupipe.sampler import ContainerSampler, LocationSampler, NumericAttributeSampler
+from tests.miracle_test_config import DatasetMIRACLETestConfig
+from tests.synthetic_test_config import DatasetSyntheticTestConfig
 from acoupipe.writer import WriteH5Dataset
 
 from .pipeline_value_test import get_pipeline
@@ -67,9 +69,12 @@ def create_dummy_dataset():
 def create_miracle_dataset():
     """Create a DatasetMIRACLE instance for tests using the smaller D1 scenario by default."""
 
-    def _create_dataset(tasks=1, **kwargs):
+    def _create_dataset(full=True, tasks=1, **kwargs):
         kwargs.setdefault('scenario', 'D1')
-        return DatasetMIRACLE(tasks=tasks, **kwargs)
+        if full:
+            return DatasetMIRACLE(tasks=tasks, **kwargs)
+        config = DatasetMIRACLETestConfig(**kwargs)
+        return DatasetMIRACLE(config=config, tasks=tasks, **kwargs)
 
     return _create_dataset
 

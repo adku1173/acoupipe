@@ -38,7 +38,7 @@ autoapi_type = "python"
 autoapi_dirs = [src_dir / "acoupipe"]
 autoapi_add_toctree_entry = False  # no seperate index.rst file created by autoapi
 autoapi_options = ["show-inheritance"]
-autoapi_skip_classes = ["DatasetSyntheticTestConfig", "DatasetSyntheticISM", "DatasetSyntheticISMConfig",
+autoapi_skip_classes = ["DatasetSyntheticISM", "DatasetSyntheticISMConfig",
     "sample_rms", "sample_mic_noise_variance", "signal_seed", "DatasetSyntheticFeatureCollectionBuilder",
     "ActorHandler", "SamplerActor", "log_execution_time", "bytes_feature"]
 autoapi_skip_modules = ["acoupipe.datasets.ir"]

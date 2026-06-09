@@ -7,8 +7,9 @@ using the real dataset, as they test the actual pipeline implementation.
 import numpy as np
 import pytest
 
-from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
+from acoupipe.datasets.synthetic import DatasetSynthetic
 from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS
+from tests.synthetic_test_config import DatasetSyntheticTestConfig
 
 
 @pytest.fixture

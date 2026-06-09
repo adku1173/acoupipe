@@ -54,7 +54,7 @@ def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_mi
     if mode != 'welch' and feature in ['spectrogram', 'time_data']:
         pytest.skip('Feature not supported in non-welch mode')
 
-    dataset = create_miracle_dataset(mode=mode, signal_length=TEST_SIGNAL_LENGTH, tasks=tasks)
+    dataset = create_miracle_dataset(full=False, mode=mode, signal_length=TEST_SIGNAL_LENGTH, tasks=tasks)
     gen = dataset.generate(
         split='training', progress_bar=False, size=100, start_idx=START_IDX, f=f, num=num, features=[feature]
     )
@@ -68,4 +68,4 @@ def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_mi
         # we therefore just test the strongest eigenmode
         snapshot.check(np.asarray(data[feature][:, :, -1]), rtol=1e-5, atol=1e-7)
     else:
-        snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
+        snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-6)

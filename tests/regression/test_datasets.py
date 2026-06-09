@@ -174,15 +174,16 @@ def test_miracle_csm_prmssq(mode, mic_sig_noise, num, f, create_miracle_dataset)
     if num == 3 and f is None:
         pytest.skip('Invalid combination of num=3 and f=None')
 
-    dataset = create_miracle_dataset(mode=mode, mic_sig_noise=mic_sig_noise, max_nsources=1)
+    dataset = create_miracle_dataset(full=False, mode=mode, mic_sig_noise=mic_sig_noise, max_nsources=1)
     gen = dataset.generate(f=f, num=num, features=features, split='training', size=1, progress_bar=False)
     data = next(gen)
-    csm_psq = data['csm'][:, 63, 63].sum()
+    # Use microphone index 0 (valid for 4-microphone test config)
+    csm_psq = data['csm'][:, 0, 0].sum()
     if mode != 'analytic':
-        noise_psq = data['noise_strength_estimated'][:, 63].sum()
+        noise_psq = data['noise_strength_estimated'][:, 0].sum()
         sig_psq = data['source_strength_estimated'][:].sum()
     else:
-        noise_psq = data['noise_strength_analytic'][:, 63].sum()
+        noise_psq = data['noise_strength_analytic'][:, 0].sum()
         sig_psq = data['source_strength_analytic'][:].sum()
     if mode != 'analytic':
         assert csm_psq == pytest.approx(noise_psq + sig_psq, rel=1e-1, abs=1e-1)
@@ -196,7 +197,7 @@ def test_miracle_csm_prmssq(mode, mic_sig_noise, num, f, create_miracle_dataset)
 def test_miracle_sourcemap_max(mode, num, f, create_miracle_dataset):
     """A plausibility test. Tolerance is large -> loudspeaker not a perfect monopole."""
     features = ['sourcemap', 'source_strength_estimated', 'source_strength_analytic']
-    dataset = create_miracle_dataset(mode=mode, max_nsources=1, mic_sig_noise=False)
+    dataset = create_miracle_dataset(full=False, mode=mode, max_nsources=1, mic_sig_noise=False)
     gen = dataset.generate(f=f, num=num, features=features, split='training', size=1, progress_bar=False)
     data = next(gen)
     sourcemap_max = ac.L_p(data['sourcemap'].max())
@@ -215,7 +216,7 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset, s
     if mode != 'welch' and feature in ['spectrogram', 'time_data']:
         pytest.skip('Feature not supported in non-welch mode')
 
-    dataset = create_miracle_dataset(mode=mode, signal_length=TEST_SIGNAL_LENGTH)
+    dataset = create_miracle_dataset(full=False, mode=mode, signal_length=TEST_SIGNAL_LENGTH)
     gen = dataset.generate(
         split='training', progress_bar=False, size=10000, start_idx=START_IDX, f=f, num=num, features=[feature]
     )
