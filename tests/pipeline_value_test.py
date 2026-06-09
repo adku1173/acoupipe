@@ -7,18 +7,11 @@ from scipy.stats import norm, rayleigh
 
 from acoupipe.pipeline import BasePipeline
 from acoupipe.sampler import MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
-
-pos_total = array(
-    [
-        [-0.68526741, -0.7593943, -1.99918406, 0.08414458],
-        [-0.60619132, 1.20374544, -0.27378946, -1.38583541],
-        [0.32909911, 0.56201909, -0.24697204, -0.68677001],
-    ]
-)
+from tests.constants import POS_TOTAL
 
 
 def get_pipeline(nsamples):
-    mg = MicGeom(pos_total=pos_total)
+    mg = MicGeom(pos_total=POS_TOTAL)
     wn_list = []
     ps_list = []
     for i in range(2):

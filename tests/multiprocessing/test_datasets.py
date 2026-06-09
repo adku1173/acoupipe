@@ -3,7 +3,10 @@ import os
 import numpy as np
 import pytest
 
-from tests.test_datasets import TEST_SIGNAL_LENGTH, modes, start_idx, tasks
+from tests.constants import MODES, START_IDX, TEST_SIGNAL_LENGTH
+
+# tasks is defined locally in this file
+tasks = 2
 
 
 pytestmark = [
@@ -12,7 +15,7 @@ pytestmark = [
 ]
 
 
-@pytest.mark.parametrize('mode', modes)
+@pytest.mark.parametrize('mode', MODES)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])
 @pytest.mark.parametrize('num', [0])
@@ -29,7 +32,7 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, s
     )
     while True:
         data = next(gen)
-        if data['idx'] == start_idx:
+        if data['idx'] == START_IDX:
             break
     if (
         feature == 'eigmode'
@@ -40,7 +43,7 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, s
         snapshot.check(np.asarray(data[feature]), rtol=1e-5, atol=1e-7)
 
 
-@pytest.mark.parametrize('mode', modes)
+@pytest.mark.parametrize('mode', MODES)
 @pytest.mark.parametrize('feature', ['sourcemap'])
 @pytest.mark.parametrize('f', [1000])
 @pytest.mark.parametrize('num', [0])
@@ -57,7 +60,7 @@ def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_mi
     )
     while True:
         data = next(gen)
-        if data['idx'] == start_idx:
+        if data['idx'] == START_IDX:
             break
     if (
         feature == 'eigmode'

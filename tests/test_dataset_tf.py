@@ -1,79 +1,49 @@
+"""Tests for TensorFlow dataset pipeline integration.
+
+These tests verify that the pipeline-to-TensorFlow integration works correctly
+using the real dataset, as they test the actual pipeline implementation.
+"""
+
 import numpy as np
 import pytest
-import tensorflow as tf
 
-IMPLEMENTED_FEATURES = ['time_data', 'csm', 'csmtriu', 'sourcemap', 'eigmode', 'spectrogram'] + [
-    'seeds',
-    'idx',
-    'loc',
-    'source_strength_analytic',
-    'source_strength_estimated',
-    'noise_strength_analytic',
-    'noise_strength_estimated',
-    'f',
-    'num',
-    'targetmap_analytic',
-    'targetmap_estimated',
-]
-modes = ['welch', 'analytic', 'wishart']
-frequencies = [None, 1000]
-nums = [0, 3]
-start_idx = 3
+from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
+from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS
 
 
-@pytest.mark.parametrize('mode', modes)
-@pytest.mark.parametrize('feature', IMPLEMENTED_FEATURES + ['idx', 'seeds'])
-@pytest.mark.parametrize('mic_sig_noise', [True, False])
-@pytest.mark.parametrize('num', nums)
-@pytest.mark.parametrize('f', frequencies)
-def test_parse_tfrecord(mode, feature, mic_sig_noise, num, f, temp_dir, create_dataset):
-    """Test parsing TFRecord files."""
-    if num == 3 and f is None:
-        pytest.skip('Invalid combination of num=3 and f=None')
-    if mode == 'analytic' and 'estimated' in feature:
-        pytest.skip('Feature not supported in analytic mode')
-    if mode != 'welch' and feature in ['spectrogram', 'time_data']:
-        pytest.skip('Feature not supported in non-welch mode')
-
-    # generate data
-    dataset = create_dataset(mode=mode, mic_sig_noise=mic_sig_noise)
-    data_generated = next(
-        dataset.generate(f=f, num=num, split='training', size=1, progress_bar=False, features=[feature])
-    )
-    # save and parse data
-    dataset.save_tfrecord(
-        f=f, num=num, split='training', size=1, progress_bar=False, features=[feature], name=temp_dir / 'test.tfrecord'
-    )
-    parser = dataset.get_tfrecord_parser(f=f, num=num, features=[feature])
-    tfrecord = tf.data.TFRecordDataset(temp_dir / 'test.tfrecord').map(parser)
-    data_loaded = next(iter(tfrecord))
-    # compare data
-    np.testing.assert_allclose(data_generated[feature], data_loaded[feature], rtol=1e-5, atol=1e-8)
+@pytest.fixture
+def create_dataset():
+    """Create a DatasetSynthetic instance for tests."""
+    def _create_dataset(full=False, tasks=1, **kwargs):
+        if full:
+            return DatasetSynthetic(tasks=tasks, **kwargs)
+        config = DatasetSyntheticTestConfig(**kwargs)
+        return DatasetSynthetic(config=config, tasks=tasks, **kwargs)
+    return _create_dataset
 
 
-@pytest.mark.parametrize('mode', modes)
+@pytest.fixture
+def temp_dir():
+    """Create and clean up a temporary directory."""
+    import tempfile
+    import shutil
+    from pathlib import Path
+    test_dir = Path(tempfile.mkdtemp())
+    yield test_dir
+    shutil.rmtree(test_dir)
+
+
+@pytest.mark.parametrize('mode', MODES)
 @pytest.mark.parametrize('feature', IMPLEMENTED_FEATURES)
+@pytest.mark.parametrize('num', NUMS)
+@pytest.mark.parametrize('f', FREQUENCIES)
 @pytest.mark.parametrize('mic_sig_noise', [True, False])
-def test_save_tfrecord(mode, feature, mic_sig_noise, temp_dir, create_dataset):
-    """Test saving data to TFRecord format."""
-    if mode == 'analytic' and '_estimated' in feature:
-        pytest.skip('Feature not supported in analytic mode')
-    if mode != 'welch' and feature in ['spectrogram', 'time_data']:
-        pytest.skip('Feature not supported in non-welch mode')
-
-    dataset = create_dataset(mode, mic_sig_noise=mic_sig_noise)
-    dataset.save_tfrecord(
-        split='training', size=2, features=[feature], name=temp_dir / 'test.tfrecord', progress_bar=False
-    )
-
-
-@pytest.mark.parametrize('mode', modes)
-@pytest.mark.parametrize('feature', IMPLEMENTED_FEATURES)
-@pytest.mark.parametrize('num', nums)
-@pytest.mark.parametrize('f', frequencies)
-@pytest.mark.parametrize('mic_sig_noise', [True, False])
-def test_get_tf_dataset(mode, feature, num, f, mic_sig_noise, create_dataset):
-    """Test if a TensorFlow dataset can be constructed from the pipeline."""
+def test_get_tf_dataset(mode, feature, num, f, mic_sig_noise, create_dataset, temp_dir):
+    """Test if a TensorFlow dataset can be constructed from the pipeline.
+    
+    This test uses the real dataset because it tests pipeline-to-TensorFlow integration,
+    which depends on the actual pipeline implementation.
+    """
     if num == 3 and f is None:
         pytest.skip('Invalid combination of num=3 and f=None')
     if mode == 'analytic' and '_estimated' in feature:
@@ -82,6 +52,13 @@ def test_get_tf_dataset(mode, feature, num, f, mic_sig_noise, create_dataset):
         pytest.skip('Feature not supported in non-welch mode')
 
     dataset = create_dataset(mode, mic_sig_noise=mic_sig_noise)
-    dataset = dataset.get_tf_dataset(split='training', size=1, progress_bar=False, f=f, num=num, features=[feature])
+    dataset = dataset.get_tf_dataset(
+        split='training',
+        size=1,
+        progress_bar=False,
+        f=f,
+        num=num,
+        features=[feature]
+    )
     data = next(iter(dataset))
     assert feature in data.keys()

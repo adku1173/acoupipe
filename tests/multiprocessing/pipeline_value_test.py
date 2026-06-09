@@ -7,11 +7,11 @@ from scipy.stats import norm, rayleigh
 
 from acoupipe.pipeline import DistributedPipeline
 from acoupipe.sampler import MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
-from tests.pipeline_value_test import pos_total
+from tests.constants import POS_TOTAL
 
 
 def get_distributed_pipeline(nsamples=100, num_workers=1):
-    mg = MicGeom(pos_total=pos_total)
+    mg = MicGeom(pos_total=POS_TOTAL)
     wn_list = []
     ps_list = []
     for i in range(2):

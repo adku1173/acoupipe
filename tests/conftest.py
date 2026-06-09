@@ -1,31 +1,24 @@
 import os
 import shutil
-import sys
 import tempfile
 from pathlib import Path
 
-from acoular import ImportGrid, MicGeom, SteeringVector
+from acoular import ImportGrid, SteeringVector
 import numpy as np
 import pytest
 from scipy.stats import norm
 
+from .constants import MIC_GEOM
+from .dummy_dataset import DatasetDummy
 from acoupipe.datasets.experimental import DatasetMIRACLE
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticTestConfig
 from acoupipe.sampler import ContainerSampler, LocationSampler, NumericAttributeSampler
 from acoupipe.writer import WriteH5Dataset
 
-from .pipeline_value_test import get_distributed_pipeline, get_pipeline
+from .pipeline_value_test import get_pipeline
 
-MIC_GEOM = MicGeom(
-    pos_total=np.array(
-        [
-            [-0.68526741, -0.7593943, -1.99918406, 0.08414458],
-            [-0.60619132, 1.20374544, -0.27378946, -1.38583541],
-            [0.32909911, 0.56201909, -0.24697204, -0.68677001],
-        ]
-    )
-)
+
 
 
 class _AttributeTarget:
@@ -58,6 +51,22 @@ def create_dataset():
             return DatasetSynthetic(tasks=tasks, **kwargs)
         config = DatasetSyntheticTestConfig(**kwargs)
         return DatasetSynthetic(config=config, tasks=tasks, **kwargs)
+
+    return _create_dataset
+
+
+@pytest.fixture
+def create_dummy_dataset():
+    """Create a DatasetDummy instance for fast testing without expensive calculations."""
+
+    def _create_dataset(mode='welch', mic_sig_noise=True, use_cache=True, cache_dir=None, **kwargs):
+        return DatasetDummy(
+            mode=mode,
+            mic_sig_noise=mic_sig_noise,
+            use_cache=use_cache,
+            cache_dir=cache_dir,
+            **kwargs
+        )
 
     return _create_dataset
 
@@ -119,17 +128,6 @@ def container_sampler():
 def base_pipeline():
     size = 1
     pipeline = get_pipeline(size)
-    test_seeds = {1: range(1, 1 + size), 2: range(2, 2 + size), 3: range(3, 3 + size), 4: range(4, 4 + size)}
-    return pipeline, test_seeds
-
-
-@pytest.fixture
-def distributed_pipeline():
-    # Skip Ray-dependent tests on macOS due to Ray initialization issues
-    if sys.platform == 'darwin':
-        pytest.skip('Ray tests are not stable on macOS runners')
-    size = 3
-    pipeline = get_distributed_pipeline(size, 2)  # two workers
     test_seeds = {1: range(1, 1 + size), 2: range(2, 2 + size), 3: range(3, 3 + size), 4: range(4, 4 + size)}
     return pipeline, test_seeds
 
