@@ -12,7 +12,7 @@ from acoupipe.datasets.experimental import DatasetMIRACLEConfig
 
 class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
     """Test configuration for MIRACLE dataset with only 4 innermost microphones.
-    
+
     This configuration uses only the 4 innermost microphones from the 64-microphone
     array for faster testing. The scenario is fixed to 'D1'.
     The grid parameters are similar to DatasetSyntheticTestConfig.
@@ -26,11 +26,11 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
     def create_mics(self):
         """Create microphone geometry with only the 4 innermost microphones."""
         import acoular as ac
-        
+
         # Load all microphone positions from the file
         with h5.File(self.filename, 'r') as file:
             all_positions = file['data/location/receiver'][()].T
-        
+
         # Select the 4 innermost microphones
         # For a planar array, these would be the 4 closest to the center
         # We'll select indices that form a small square in the center
@@ -39,17 +39,17 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
         center = np.mean(all_positions, axis=1)
         distances = np.linalg.norm(all_positions - center[:, np.newaxis], axis=0)
         innermost_indices = np.argsort(distances)[:4]
-        
+
         # Sort indices to maintain consistent ordering
         innermost_indices = np.sort(innermost_indices)
-        
+
         pos_total = all_positions[:, innermost_indices]
         return ac.MicGeom(pos_total=pos_total)
 
     def create_grid(self):
         """Create grid with parameters similar to DatasetSyntheticTestConfig."""
         import acoular as ac
-        
+
         ap = self.mics.aperture
         return ac.RectGrid(
             y_min=-0.5 * ap,
@@ -63,7 +63,7 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
     def create_steer(self):
         """Create steering vector using one of the 4 microphones as reference."""
         import acoular as ac
-        
+
         # Use the first microphone as reference (or any of the 4)
         # For a small array, the reference should be near the center
         ref_index = 0  # First of the 4 selected microphones

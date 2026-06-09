@@ -12,7 +12,7 @@ from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):
     """Test configuration for synthetic dataset with simplified microphone geometry.
-    
+
     This configuration uses a smaller, fixed microphone geometry for faster testing.
     """
 

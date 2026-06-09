@@ -1101,6 +1101,3 @@ class DatasetSyntheticISM(DatasetSynthetic):
                 rt60=rt60,
             )
         super().__init__(config=config, tasks=tasks, remote_args=remote_args, logger=logger)
-
-
-
