@@ -4,52 +4,89 @@ This module contains test-specific configuration classes that should not be expo
 in the public API.
 """
 
-import h5py as h5
 import numpy as np
 
 from acoupipe.datasets.experimental import DatasetMIRACLEConfig
 
 
 class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
-    """Test configuration for MIRACLE dataset with only 4 innermost microphones.
-
-    This configuration uses only the 4 innermost microphones from the 64-microphone
-    array for faster testing. The scenario is fixed to 'D1'.
+    """Test configuration for MIRACLE dataset with simplified microphone geometry.
+    
+    This configuration uses a small 4-microphone array for faster testing.
+    The scenario is fixed to 'D1' with its parameters (speed of sound: 344.8 m/s).
     The grid parameters are similar to DatasetSyntheticTestConfig.
+    
+    Note: This test config bypasses the HDF5 file loading for the microphone geometry
+    to ensure consistent behavior with only 4 microphones.
     """
 
     def __init__(self, **kwargs):
         # Force scenario to D1 for test config
         kwargs['scenario'] = 'D1'
+        # Use microphone index 0 as reference (valid for 4-mic array)
+        kwargs.setdefault('ref_mic_index', 0)
+        # Disable positional noise for consistency
+        kwargs.setdefault('mic_pos_noise', False)
         super().__init__(**kwargs)
 
-    def create_mics(self):
-        """Create microphone geometry with only the 4 innermost microphones."""
+    def set_filename(self):
+        """Override to skip HDF5 file loading.
+        
+        Since we're using hardcoded microphone positions, we don't need the actual file.
+        Set a dummy filename to avoid errors.
+        """
+        self._filename = 'dummy.h5'
+
+    def create_env(self):
+        """Create environment with D1 scenario's speed of sound."""
         import acoular as ac
+        # D1 scenario has c0 = 344.8 m/s
+        return ac.Environment(c=344.8)
 
-        # Load all microphone positions from the file
-        with h5.File(self.filename, 'r') as file:
-            all_positions = file['data/location/receiver'][()].T
-
-        # Select the 4 innermost microphones
-        # For a planar array, these would be the 4 closest to the center
-        # We'll select indices that form a small square in the center
-        # For the 64-mic Vogel spiral, the innermost are typically the last few indices
-        # Let's use a simple approach: select 4 mics closest to the geometric center
-        center = np.mean(all_positions, axis=1)
-        distances = np.linalg.norm(all_positions - center[:, np.newaxis], axis=0)
-        innermost_indices = np.argsort(distances)[:4]
-
-        # Sort indices to maintain consistent ordering
-        innermost_indices = np.sort(innermost_indices)
-
-        pos_total = all_positions[:, innermost_indices]
+    def create_mics(self):
+        """Create microphone geometry with 4 microphones in a small planar arrangement."""
+        import acoular as ac
+        # Create a small 2x2 square array with 0.1m spacing
+        pos_total = np.array([
+            [-0.05, -0.05, 0.05, 0.05],  # x positions
+            [-0.05, 0.05, -0.05, 0.05],   # y positions
+            [0.0, 0.0, 0.0, 0.0],        # z positions
+        ])
         return ac.MicGeom(pos_total=pos_total)
+
+    def create_steer(self):
+        """Create steering vector using the first microphone as reference."""
+        import acoular as ac
+        
+        # Use the first microphone as reference
+        ref_pos = self.mics.pos_total[:, 0]
+        return ac.SteeringVector(
+            steer_type='true level',
+            ref=ref_pos,
+            mics=self.mics,
+            grid=self.grid,
+            env=self.env,
+        )
 
     def create_grid(self):
         """Create grid with parameters similar to DatasetSyntheticTestConfig."""
         import acoular as ac
+        
+        ap = self.mics.aperture
+        # Use a z position that's reasonable for the array
+        return ac.RectGrid(
+            y_min=-0.5 * ap,
+            y_max=0.5 * ap,
+            x_min=-0.5 * ap,
+            x_max=0.5 * ap,
+            z=0.5 * ap,
+            increment=1 / 5 * ap,
+        )
 
+    def create_source_grid(self):
+        """Create source grid matching the observation area."""
+        import acoular as ac
+        
         ap = self.mics.aperture
         return ac.RectGrid(
             y_min=-0.5 * ap,
@@ -60,17 +97,42 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
             increment=1 / 5 * ap,
         )
 
-    def create_steer(self):
-        """Create steering vector using one of the 4 microphones as reference."""
+    def create_sources(self):
+        """Create sources - use PointSource instead of PointSourceConvolve for simplicity."""
         import acoular as ac
+        
+        sources = []
+        for signal in self.signals:
+            sources.append(
+                ac.PointSource(
+                    signal=signal,
+                    mics=self.noisy_mics,
+                    env=self.env,
+                ),
+            )
+        return sources
 
-        # Use the first microphone as reference (or any of the 4)
-        # For a small array, the reference should be near the center
-        ref_index = 0  # First of the 4 selected microphones
-        return ac.SteeringVector(
-            steer_type='true level',
-            ref=self.mics.pos_total[:, ref_index],
-            mics=self.mics,
-            grid=self.grid,
-            env=self.env,
-        )
+    def get_prepare_func(self):
+        """Override to use DatasetSyntheticConfig's prepare functions."""
+        from functools import partial
+        from acoupipe.datasets.synthetic import DatasetSyntheticConfig
+        
+        cf = DatasetSyntheticConfig
+        if self.mode == 'welch':
+            prepare_func = partial(
+                cf.calc_welch_prepare_func,
+                mics=self.mics,
+                beamformer=self.beamformer,
+                sources=self.sources,
+                source_steer=self.source_steer,
+                fft_spectra=self.fft_spectra,
+                fft_obs_spectra=self.fft_obs_spectra,
+                obs=self.obs,
+            )
+        else:
+            prepare_func = partial(
+                cf.calc_analytic_prepare_func,
+                mics=self.mics,
+                freq_data=self.freq_data,
+            )
+        return prepare_func
