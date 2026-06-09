@@ -28,7 +28,7 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, s
 
     dataset = create_dataset(mode=mode, tasks=tasks)
     gen = dataset.generate(
-        split='training', progress_bar=False, size=100, start_idx=1, f=f, num=num, features=[feature]
+        split='training', progress_bar=False, size=100, start_idx=START_IDX, f=f, num=num, features=[feature]
     )
     while True:
         data = next(gen)
@@ -56,7 +56,7 @@ def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_mi
 
     dataset = create_miracle_dataset(mode=mode, signal_length=TEST_SIGNAL_LENGTH, tasks=tasks)
     gen = dataset.generate(
-        split='training', progress_bar=False, size=100, start_idx=1, f=f, num=num, features=[feature]
+        split='training', progress_bar=False, size=100, start_idx=START_IDX, f=f, num=num, features=[feature]
     )
     while True:
         data = next(gen)

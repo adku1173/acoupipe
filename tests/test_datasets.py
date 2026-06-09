@@ -219,7 +219,7 @@ def test_miracle_values_correct(mode, feature, f, num, create_miracle_dataset, s
 
     dataset = create_miracle_dataset(mode=mode, signal_length=TEST_SIGNAL_LENGTH)
     gen = dataset.generate(
-        split='training', progress_bar=False, size=10000, START_IDX=START_IDX, f=f, num=num, features=[feature]
+        split='training', progress_bar=False, size=10000, start_idx=START_IDX, f=f, num=num, features=[feature]
     )
     while True:
         data = next(gen)
