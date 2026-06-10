@@ -7,7 +7,7 @@ from acoular import config
 from h5py import File as H5File
 from traits.api import CInt, Dict, File, Instance, List, Property, cached_property, on_trait_change
 
-from acoupipe.pipeline import DataGenerator
+from acoupipe.base import DataGenerator
 
 config.h5library = 'h5py'
 

@@ -7,9 +7,9 @@ from numpy.testing import assert_almost_equal
 from scipy.spatial.distance import cdist
 from scipy.stats import norm
 
+from acoupipe.base import BaseSampler
 from acoupipe.pipeline import BasePipeline
 from acoupipe.sampler import (
-    BaseSampler,
     ContainerSampler,
     MicGeomSampler,
     NumericAttributeSampler,
@@ -19,7 +19,6 @@ from acoupipe.sampler import (
 )
 
 SAMPLER_CLASSES = [
-    BaseSampler,
     NumericAttributeSampler,
     SetSampler,
     SourceSetSampler,

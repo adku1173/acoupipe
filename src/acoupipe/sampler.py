@@ -53,7 +53,6 @@ from traits.api import (
     Either,
     Enum,
     Float,
-    HasPrivateTraits,
     Instance,
     Int,
     List,
@@ -65,34 +64,7 @@ from traits.api import (
     observe,
 )
 
-
-class BaseSampler(HasPrivateTraits):
-    """Base class that represents a random process.
-
-    This class has no functionality and should not be used in practice.
-    Manipulates attributes of an instance or a list of instances according to a specified random distribution.
-    """
-
-    #: a list of instances which attributes are to be manipulated
-    target = Trait(list, desc='the object instances which are manipulated by this class')
-
-    #: the random variable specifying the random distribution
-    random_var = Instance(_distn_infrastructure.rv_frozen, desc='instance of a random variable from scipy.stats module')
-
-    #: the state of the random variable :attr:`random_var`
-    random_state = Either(int, RandomState, Generator, desc='random state of the random variable')
-
-    #: manages if the same sampled value is chosen for all objects in the :attr:`target` list
-    #: if False, one value for each target is drawn
-    equal_value = Bool(False, desc='manages if a single value is chosen for all targets')
-
-    def rvs(self, size=1):
-        """Random variable sampling (for internal use)."""
-        return self.random_var.rvs(size=size, random_state=self.random_state)
-
-    def sample(self):
-        """Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` (no functionality in this class)."""
-        self.rvs()
+from acoupipe.base import BaseSampler
 
 
 class NumericAttributeSampler(BaseSampler):

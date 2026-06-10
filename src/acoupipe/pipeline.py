@@ -63,7 +63,7 @@ from numpy.random import RandomState, default_rng
 from tqdm import tqdm
 from traits.api import Callable, Dict, Either, HasPrivateTraits, Instance, Int, Property, Tuple
 
-from acoupipe.sampler import BaseSampler
+from acoupipe.base import BaseSampler, DataGenerator
 
 
 # Without the use of this decorator factory (wraps), the name of the
@@ -85,21 +85,6 @@ def log_execution_time(f):
     return wrap
 
 
-class DataGenerator(HasPrivateTraits):
-    """Abstract base class that serves as a data generator.
-
-    This class should not be used.
-    """
-
-    def get_data(self):
-        """Python generator that iteratively yields data set samples as a dictionary.
-
-        Returns
-        -------
-        Dictionary containing a sample of the data set {feature_name[key],feature[values]}.
-        """
-
-
 class BasePipeline(DataGenerator):
     """Class to control the random process and iteratively extract and pass a specified amount of data.
 
@@ -111,7 +96,7 @@ class BasePipeline(DataGenerator):
     given.
     """
 
-    #: a dictionary with instances of :class:`~acoupipe.sampler.BaseSampler` derived classes as keys
+    #: a dictionary with instances of :class:`~acoupipe.base.BaseSampler` derived classes as keys
     #: alternatively, the dict can contain objects of type :class:`numpy.random._generator.Generator` or
     #: :class:`numpy.random.RandomState` for control reasons
     #: (e.g. :code:`sampler = {0 : rms_sampler, 1 : numpy.random.RandomState(1)}`).
@@ -123,7 +108,7 @@ class BasePipeline(DataGenerator):
 
     #: feature method for the extraction/generation of features and labels.
     #: one can either pass a callable (e.g. `features = `lambda sampler: {"feature_name" : sampler.target}`).
-    #: Note that the callable must accept a list of :class:`acoupipe.sampler.BaseSampler` objects as first argument.
+    #: Note that the callable must accept a list of :class:`acoupipe.base.BaseSampler` objects as first argument.
     #: Alternatively, if further arguments are necessary, one can pass a tuple containing the
     #: callable and their arguments (e.g.: `features = (some_func, arg1, arg2, ...)}`).
     features = Either(Callable, Tuple, desc='feature method for the extraction/generation of features and labels')

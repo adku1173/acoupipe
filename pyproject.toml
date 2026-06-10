@@ -114,6 +114,19 @@ testpaths = "tests"
 pythonpath = ["src"]
 addopts = "-v --durations=10 --cov-report=html --cov-report=term-missing"
 norecursedirs = ["multiprocessing"] # default pytest collection and current CI do not descend into tests/multiprocessing
+
+[tool.coverage.run]
+omit = [
+    "src/acoupipe/base.py",
+    "src/acoupipe/datasets/base.py",
+]
+
+[tool.coverage.report]
+skip_covered = false
+show_missing = true
+
+[tool.coverage.html]
+directory = "htmlcov"
 # Note: regression tests are in tests/regression/ and are discovered normally
 markers = [
     "multiprocessing: marks tests that require multiprocessing (deselect with '-m \"not multiprocessing\"')",

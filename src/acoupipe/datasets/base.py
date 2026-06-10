@@ -21,7 +21,7 @@ class ConfigBase(HasPrivateTraits):
     """Configuration base class for generating microphone array datasets."""
 
     def get_sampler(self):
-        """Return dictionary containing the sampler objects of type :class:`acoupipe.sampler.BaseSampler`.
+        """Return dictionary containing the sampler objects of type :class:`acoupipe.base.BaseSampler`.
 
         this function has to be manually defined in a dataset subclass.
         It includes the sampler objects as values. The key defines the idx in the sample order.

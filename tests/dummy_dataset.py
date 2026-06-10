@@ -574,8 +574,8 @@ class DatasetDummy(DatasetBase):
                 shape_features.append(feature)
 
         # Create a dummy pipeline that uses our generate method
-        from acoupipe.pipeline import DataGenerator
-        from traits.api import Any, Int, List, Str, Bool
+        from acoupipe.base import DataGenerator
+        from traits.api import Any, Bool, Int, List, Str
 
         class DummyPipeline(DataGenerator):
             # Define traits for the attributes we need
@@ -626,8 +626,8 @@ class DatasetDummy(DatasetBase):
         This overrides the base class method to use the dummy dataset's generate method
         instead of creating a pipeline, since the dummy dataset doesn't use real acoustic calculations.
         """
+        from acoupipe.base import DataGenerator
         from acoupipe.writer import WriteH5Dataset
-        from acoupipe.pipeline import DataGenerator
         from traits.api import Any, Int, List, Str
 
         # Create a dummy pipeline that uses our generate method

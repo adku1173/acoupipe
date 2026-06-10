@@ -27,7 +27,7 @@ from h5py import File as H5File
 from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
 
 from acoupipe.config import TF_FLAG
-from acoupipe.pipeline import DataGenerator
+from acoupipe.base import DataGenerator
 
 
 class BaseWriteDataset(DataGenerator):
@@ -36,7 +36,7 @@ class BaseWriteDataset(DataGenerator):
     This class has no functionality and should not be used.
     """
 
-    #: source instance that has to be of type :class:`~acoupipe.pipeline.DataGenerator`
+    #: source instance that has to be of type :class:`~acoupipe.base.DataGenerator`
     source = Instance(DataGenerator)
 
     def save(self):
