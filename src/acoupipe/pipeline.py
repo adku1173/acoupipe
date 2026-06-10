@@ -61,7 +61,7 @@ import numpy as np
 import ray
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
-from traits.api import Callable, Dict, Either, HasPrivateTraits, Instance, Int, Property, Tuple
+from traits.api import Callable, Dict, Either, Instance, Int, Property, Tuple
 
 from acoupipe.base import BaseSampler, DataGenerator
 

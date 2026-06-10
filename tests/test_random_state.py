@@ -21,15 +21,15 @@ NVALUES = 100
 # Create a simple concrete sampler for testing
 class SimpleSampler(BaseSampler):
     """Simple sampler for testing base class functionality."""
-    
+
     #: attribute of the object in the :attr:`target` list that should be
     #: sampled by the random variable
     attribute = 'test_attr'
-    
+
     def rvs(self, size=1):
         """Random variable sampling."""
         return self.random_var.rvs(size=size, random_state=self.random_state)
-    
+
     def sample(self):
         """Sample implementation."""
         self.rvs()
