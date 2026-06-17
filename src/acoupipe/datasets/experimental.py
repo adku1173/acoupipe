@@ -261,6 +261,7 @@ class DatasetMIRACLE(DatasetBase):
             Dictionary of keyword arguments passed to the remote actors when using Ray for parallelization. Defaults to None.
         config : DatasetMIRACLEConfig, optional
             DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
+
         """
         if config is None:
             config = DatasetMIRACLEConfig(
@@ -556,9 +557,9 @@ class DatasetSRIRACHA(DatasetMIRACLE):
         tasks=1,
         config=None,
     ):
-        """Initialize the DatasetMIRACLE object.
+        """Initialize the DatasetSRIRACHA object.
 
-        Input parameters are passed to the DatasetMIRACLEConfig object, which creates
+        Input parameters are passed to the DatasetSRIRACHAConfig object, which creates
         all necessary objects for the simulation of microphone array data.
 
         Parameters
@@ -566,7 +567,7 @@ class DatasetSRIRACHA(DatasetMIRACLE):
         srir_dir : str, optional
             Path to the directory where the SRIR files are stored. Default is None, which
             uses the default cache directory. The SRIR files are downloaded from the
-            `MIRACLE`_ dataset if they are not found in the directory.
+            SRIRACHA dataset if they are not found in the directory.
         scenario : str, optional
             Scenario of the dataset. One of 'SR1', 'SRA1', 'SR1-D', 'SRA1-D',
             'SR2', 'SRA2', 'SR2-D', 'SRA2-D'. Default is 'SR1-D'.
@@ -588,6 +589,8 @@ class DatasetSRIRACHA(DatasetMIRACLE):
             Number of parallel processes. Default is 1.
         config : DatasetMIRACLEConfig, optional
             DatasetMIRACLEConfig object. Default is None, which creates a new DatasetMIRACLEConfig object.
+
+
         """
         if config is None:
             config = DatasetSRIRACHAConfig(

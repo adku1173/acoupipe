@@ -12,7 +12,7 @@ from acoular import WNoiseGenerator
 from acoupipe.sampler import NumericAttributeSampler
 
 # create white noise signal
-wn = WNoiseGenerator(sample_freq=51200, seed=10, rms=1.0, numsamples=51200)
+wn = WNoiseGenerator(sample_freq=51200, seed=10, rms=1.0, num_samples=51200)
 
 # create random variable with rayleigh distribution to sample rms value
 rayleigh_dist = scipy.stats.rayleigh(scale=5.0)

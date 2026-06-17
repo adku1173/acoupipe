@@ -31,7 +31,7 @@ rng = np.random.RandomState(1)  # scipy listens to numpy random seed (when scipy
 rayleigh_dist = scipy.stats.rayleigh(scale=5.0)
 
 # create white noise signal
-wn = acoular.WNoiseGenerator(sample_freq=51200, seed=10, rms=1.0, numsamples=51200)
+wn = acoular.WNoiseGenerator(sample_freq=51200, seed=10, rms=1.0, num_samples=51200)
 
 # create sampler object to sample rms value with rayleigh distribution
 rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist, target=[wn], attribute='rms', random_state=rng)
@@ -40,7 +40,7 @@ rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist, target=[wn], at
 micgeofile = path.join(path.split(acoular.__file__)[0], 'xml', 'array_64.xml')
 mg = acoular.MicGeom(file=micgeofile)
 p1 = acoular.PointSource(signal=wn, mics=mg)
-ps = acoular.PowerSpectra(time_data=p1, block_size=128, window='Hanning')
+ps = acoular.PowerSpectra(source=p1, block_size=128, window='Hanning')
 rg = acoular.RectGrid(x_min=-0.2, x_max=0.2, y_min=-0.2, y_max=0.2, z=0.3, increment=0.01)
 st = acoular.SteeringVector(grid=rg, mics=mg)
 bb = acoular.BeamformerBase(freq_data=ps, steer=st)

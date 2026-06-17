@@ -16,6 +16,11 @@ AcouPipe
    contents/lit.rst
    AcouPipe API <../autoapi/acoupipe/index>
 
+.. toctree::
+   :hidden:
+
+   contents/links.rst
+
 Data Generation 
 ===============
 

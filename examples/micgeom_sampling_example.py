@@ -33,7 +33,7 @@ plt.title('individual deviation on x-axis')
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()
 
@@ -48,7 +48,7 @@ plt.title('individual deviation on x- and y- axis')
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()
 
@@ -67,7 +67,7 @@ plt.title('rotation around z-axis')
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()
 
@@ -84,6 +84,6 @@ plt.title('translation of full geometry along y-axis')
 for _ in range(nsamples):
     mgs.sample()
     plt.scatter(mics.pos[0], mics.pos[1], marker='o', s=1, color='gray')
-plt.scatter(mgs.pos_init[0], mgs.pos_init[1], marker='x', s=10, label='true positions')
+plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1], marker='x', s=10, label='true positions')
 plt.legend()
 plt.show()

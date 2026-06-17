@@ -10,12 +10,6 @@ by classes that implement the actual functionality.
                 acoupipe.base.DataGenerator
                 acoupipe.base.BaseSampler
     :parts: 1
-
-.. autosummary::
-    :toctree: generated/
-
-    DataGenerator
-    BaseSampler
 """
 
 from abc import abstractmethod
