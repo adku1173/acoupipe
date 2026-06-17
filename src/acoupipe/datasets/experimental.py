@@ -565,7 +565,7 @@ class DatasetSRIRACHA(DatasetMIRACLE):
         ----------
         srir_dir : str, optional
             Path to the directory where the SRIR files are stored. Default is None, which
-            sets the path to the `pooch.os_cache` directory. The SRIR files are downloaded from the
+            uses the default cache directory. The SRIR files are downloaded from the
             `MIRACLE`_ dataset if they are not found in the directory.
         scenario : str, optional
             Scenario of the dataset. One of 'SR1', 'SRA1', 'SR1-D', 'SRA1-D',

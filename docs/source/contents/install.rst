@@ -2,7 +2,7 @@
 Install
 ============
 
-AcouPipe is currently available as a source-only package and is not published on PyPI or Conda. 
+AcouPipe is currently available as a source-only package and is not published on PyPI or Conda. It supports Python ``>=3.11,<3.14``.
 
 Tools
 -----
@@ -99,7 +99,7 @@ AcouPipe depends on the following packages which will be installed automatically
 * Ray_
 * h5py_
 * tqdm_
-* pooch_
+* irdl_
 
 Dependency Groups
 ^^^^^^^^^^^^^^^^^

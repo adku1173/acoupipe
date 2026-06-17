@@ -29,7 +29,7 @@ Installation
 ============
 
 AcouPipe is currently available as a source-only package and is not published on PyPI or Conda.
-It supports Python ``>=3.10,<3.14``.
+It supports Python ``>=3.11,<3.14``.
 
 First, clone the repository:
 
@@ -165,7 +165,7 @@ configuration (``SR`` empty, ``SRA`` absorbent), the source-receiver plane dista
       features=["sourcemap", "loc", "f"], split="training", size=10, f=[2000], num=0)
 
 If ``srir_dir`` is left as ``None``, AcouPipe downloads the required SRIRACHA data into the cache
-directory managed by ``pooch``.
+directory.
 
 
 Performance benchmarks (DatasetSynthetic)
