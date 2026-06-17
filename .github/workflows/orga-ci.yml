@@ -35,4 +35,4 @@ jobs:
   links:
     uses: acoular/ci/.github/workflows/links.yml@main
     with:
-      extra_args: "--exclude http://0.0.0.0:8265/"
+      extra_args: "--exclude http://0.0.0.0:8265/ --exclude https://slurm.schedmd.com/"
