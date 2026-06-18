@@ -122,10 +122,57 @@ extend-ignore = [
 docstring-code-line-length = "dynamic" # 3-8: Acoular uses 120, kept "dynamic" to for passes to check,
 
 [tool.ruff.lint.per-file-ignores]
-"src/*"            = ["D", "N806", "N802", "C901", "SLF001", "ARG004", "ARG002", "ARG001", "S101"]  # 9 / 10
-"examples/*"       = ["D", "INP001", "ARG"]                                                  # 14
-"app/main.py"      = ["A002", "D100", "D101", "D102", "D103", "D400", "INP001", "DTZ005", "PLC0415"]    # 9 (app docstrings); "PLC0415" is intentional lazy CLI import
-"tests/*"          = ["ALL"]                                                                 # 12
+# src files
+"src/acoupipe/__init__.py"           = ["Q000"]
+"src/acoupipe/base.py"                = ["ANN001", "ANN201", "D413", "Q000"]
+"src/acoupipe/config.py"              = ["D100", "Q000"]
+"src/acoupipe/datasets/base.py"       = ["ANN001", "ANN201", "ANN202", "ANN204", "C901", "D102", "D107", "D212", "D413", "D417", "ERA001", "Q000"]
+"src/acoupipe/datasets/experimental.py" = ["ANN001", "ANN201", "ANN202", "ANN204", "ANN205", "ARG002", "ARG004", "COM812", "D102", "D412", "D413", "D416", "D417", "N806", "Q000", "S101", "SLF001"]
+"src/acoupipe/datasets/features.py"   = ["ANN001", "ANN201", "ANN202", "ANN205", "ARG001", "ARG004", "D100", "D101", "D102", "D103", "D212", "D413", "D417", "Q000", "SLF001"]
+"src/acoupipe/datasets/ir.py"          = ["ANN001", "ANN003", "ANN201", "ANN202", "D100", "D103", "D413", "D417", "N806", "Q000"]
+"src/acoupipe/datasets/micgeom.py"    = ["D100", "Q000"]
+"src/acoupipe/datasets/spectra_analytic.py" = ["ANN001", "ANN201", "ANN202", "D100", "D101", "D212", "D413", "ERA001", "N802", "N806", "Q000"]
+"src/acoupipe/datasets/synthetic.py"  = ["ANN001", "ANN003", "ANN201", "ANN202", "ANN204", "ANN205", "ARG001", "ARG004", "COM812", "D102", "D103", "D107", "D205", "D212", "D413", "D416", "D417", "N806", "Q000", "SLF001"]
+"src/acoupipe/datasets/utils.py"      = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "D100", "D103", "D205", "D212", "D413", "ERA001", "N806", "Q000"]
+"src/acoupipe/loader.py"              = ["ANN001", "ANN201", "ANN202", "D413", "Q000"]
+"src/acoupipe/pipeline.py"            = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "ANN204", "D101", "D102", "D105", "D107", "D413", "ERA001", "Q000"]
+"src/acoupipe/sampler.py"             = ["ANN001", "ANN201", "ANN202", "D101", "D102", "ERA001", "N806", "Q000"]
+"src/acoupipe/version.py"             = ["D100", "Q000"]
+"src/acoupipe/writer.py"              = ["ANN001", "ANN201", "ANN202", "D102", "D205", "D212", "D413", "ERA001", "Q000"]
+
+# examples files
+"examples/micgeom_sampling_example.py"    = ["D100", "INP001", "Q000"]
+"examples/numeric_attribute_sampling.py" = ["D212", "Q000"]
+"examples/pipeline_writeH5_example.py"   = ["ANN001", "ANN201", "ARG001", "D212", "ERA001", "INP001", "Q000"]
+"examples/point_source_example.py"        = ["D100", "INP001", "Q000"]
+
+"app/main.py"      = ["A002", "ANN001", "ANN003", "ANN201", "ANN202", "D100", "D103", "DTZ005", "INP001", "PLC0415", "Q000"]    # "PLC0415" is intentional lazy CLI import
+
+# tests files (excluding throughput)
+"tests/__init__.py"                            = ["D104"]
+"tests/conftest.py"                           = ["ANN001", "ANN003", "ANN201", "ANN202", "D100", "D103", "Q000"]
+"tests/constants.py"                          = ["COM812", "Q000"]
+"tests/dummy_dataset.py"                      = ["ANN001", "ANN003", "ANN201", "ANN202", "ANN204", "ARG001", "ARG002", "ARG005", "C901", "COM812", "D107", "D413", "F811", "F841", "PLC0415", "PLR1704", "Q000", "RET505", "S301", "SLF001", "T201", "UP024", "UP028"]
+"tests/miracle_test_config.py"                = ["ANN003", "ANN201", "ANN204", "COM812", "D107", "PLC0415", "Q000"]
+"tests/multiprocessing/__init__.py"           = ["D104"]
+"tests/multiprocessing/conftest.py"           = ["ANN201", "D100", "D103", "Q000"]
+"tests/multiprocessing/pipeline_value_test.py" = ["ANN001", "ANN201", "ARG005", "COM812", "D103", "Q000", "RET504"]
+"tests/multiprocessing/test_sampler.py"        = ["ANN001", "ANN201", "ARG005", "D100", "D103", "PIE808", "PT011", "Q000", "S101"]
+"tests/pipeline_value_test.py"                = ["ANN001", "ANN201", "ARG005", "COM812", "D103", "Q000", "RET504"]
+"tests/regression/__init__.py"               = ["D104"]
+"tests/regression/multiprocessing/__init__.py" = ["D104"]
+"tests/regression/multiprocessing/test_datasets.py" = ["ANN001", "ANN201", "COM812", "D100", "Q000"]
+"tests/regression/test_datasets.py"           = ["ANN001", "ANN201", "ARG005", "COM812", "D100", "D103", "Q000", "S101", "SIM118"]
+"tests/synthetic_test_config.py"             = ["ANN201", "D102"]
+"tests/test_dataset_tf.py"                    = ["ANN001", "ANN003", "ANN201", "ANN202", "ARG001", "PLC0415", "Q000", "S101", "SIM118"]
+"tests/test_dummy_dataset.py"                 = ["ANN001", "ANN201", "B007", "B905", "COM812", "F841", "PLC0415", "PLW1508", "Q000", "S101", "SLF001"]
+"tests/test_ir.py"                            = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "ARG001", "ARG005", "D100", "D103", "EM101", "Q000", "S101", "SLF001"]
+"tests/test_loader.py"                        = ["ANN001", "ANN201", "D100", "Q000", "S101"]
+"tests/test_random_state.py"                 = ["ANN001", "ANN201", "ANN202", "D101", "Q000", "S101", "T201"]
+"tests/test_sampler.py"                       = ["ANN001", "ANN201", "ANN202", "ARG005", "COM812", "D100", "D103", "PIE808", "PT006", "PT011", "PT014", "PT018", "Q000", "S101"]
+"tests/test_save_h5.py"                       = ["ANN001", "ANN201", "COM812", "PLC0415", "Q000", "S101"]
+"tests/test_save_tfrecord.py"                 = ["ANN001", "ANN201", "ARG001", "COM812", "PLC0415", "Q000"]
+"tests/test_spectra.py"                       = ["ANN001", "ANN201", "ARG001", "D100", "D103", "N802", "N806", "PT006", "Q000", "S101", "SLF001"]
 "tests/throughput/*" = ["ALL"]   # 13 — tighten to targeted codes later (tests/* glob is non-recursive)
 
 
