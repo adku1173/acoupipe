@@ -25,3 +25,5 @@ tests/throughput/results/*.png
 *.sif
 llm_docs
 llm_context
+
+.worktrees/

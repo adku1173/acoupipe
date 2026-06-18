@@ -37,12 +37,9 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
         """
         self._filename = 'dummy.h5'
 
-    def create_env(self):
-        """Create environment with D1 scenario's speed of sound."""
-        import acoular as ac
-
-        # D1 scenario has c0 = 344.8 m/s
-        return ac.Environment(c=344.8)
+    def _get_measured_c0(self):
+        """Return D1 scenario's measured speed of sound."""
+        return 344.8
 
     def create_mics(self):
         """Create microphone geometry with 4 microphones in a small planar arrangement."""
@@ -69,7 +66,7 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
             ref=ref_pos,
             mics=self.mics,
             grid=self.grid,
-            env=self.env,
+            env=ac.Environment(c=self.parameters.sourcemap.c),
         )
 
     def create_grid(self):
@@ -111,7 +108,7 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
                 ac.PointSource(
                     signal=signal,
                     mics=self.noisy_mics,
-                    env=self.env,
+                    env=ac.Environment(c=self.measured_c0),
                 ),
             )
         return sources

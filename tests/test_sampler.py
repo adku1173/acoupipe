@@ -10,6 +10,7 @@ from scipy.stats import norm
 from acoupipe.base import BaseSampler
 from acoupipe.pipeline import BasePipeline
 from acoupipe.sampler import (
+    AttributeSampler,
     ContainerSampler,
     MicGeomSampler,
     NumericAttributeSampler,
@@ -19,6 +20,7 @@ from acoupipe.sampler import (
 )
 
 SAMPLER_CLASSES = [
+    AttributeSampler,
     NumericAttributeSampler,
     SetSampler,
     SourceSetSampler,
@@ -162,6 +164,53 @@ def test_container_sampler_error_handling(container_sampler):
     sampler.random_func = random_func
     with pytest.raises(ValueError):
         sampler.sample()
+
+
+def test_attribute_sampler_assigns_random_func_result_to_attribute_and_value():
+    target = Target()
+    sampler = AttributeSampler(
+        target=target,
+        attribute='attribute',
+        random_func=lambda rng: rng.integers(1, 10),
+        random_state=default_rng(1),
+    )
+
+    result = sampler.sample()
+
+    expected = default_rng(1).integers(1, 10)
+    assert result == expected
+    assert sampler.value == expected
+    assert target.attribute == expected
+
+
+def test_attribute_sampler_passes_parameters_to_two_argument_random_func():
+    target = Target()
+    parameters = Target()
+    parameters.factor = 10
+    sampler = AttributeSampler(
+        target=target,
+        attribute='attribute',
+        parameters=parameters,
+        random_func=lambda rng, params: params.factor + rng.integers(1, 10),
+        random_state=default_rng(1),
+    )
+
+    sampler.sample()
+
+    expected = parameters.factor + default_rng(1).integers(1, 10)
+    assert target.attribute == expected
+    assert sampler.value == expected
+
+
+def test_attribute_sampler_keeps_value_without_attribute_assignment():
+    sampler = AttributeSampler(
+        random_func=lambda rng: rng.integers(1, 10),
+        random_state=default_rng(1),
+    )
+
+    sampler.sample()
+
+    assert sampler.value == 5
 
 
 @pytest.mark.parametrize('mode', ['deviate', 'rotate', 'translate'])
