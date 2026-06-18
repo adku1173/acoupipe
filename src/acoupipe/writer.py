@@ -200,7 +200,8 @@ if TF_FLAG:
         Decide which encoder function, TF dtype and TF shape to use
         for a feature with given numpy / Python dtype and shape.
 
-        Returns:
+        Returns
+        -------
             encoder_func, tf_dtype, tf_shape
         """
         tf_dtype = tf.dtypes.as_dtype(dtype)

@@ -231,7 +231,7 @@ class DatasetDummyConfig(ConfigBase):
             elif feature_name in ['noise_strength_analytic', 'noise_strength_estimated']:
                 # Small positive values
                 return rng.exponential(0.01, shape).astype(dtype)
-            elif feature_name in ['csmtriu']:
+            elif feature_name == 'csmtriu':
                 # Symmetric matrix (upper triangular stored as full)
                 data = rng.random(shape).astype(dtype)
                 # Make it symmetric
@@ -512,7 +512,7 @@ class DatasetDummy(DatasetBase):
             elif feature_name in ['noise_strength_analytic', 'noise_strength_estimated']:
                 # Small positive values
                 return rng.exponential(0.01, shape).astype(dtype)
-            elif feature_name in ['csmtriu']:
+            elif feature_name == 'csmtriu':
                 # Symmetric matrix (upper triangular stored as full)
                 data = rng.random(shape).astype(dtype)
                 # Make it symmetric
