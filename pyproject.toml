@@ -60,7 +60,7 @@ docs = [
 ]
 
 lint = [
-    "ruff==0.14.2",
+    "acoular-ruff @ git+https://github.com/acoular/ci.git@ruff-v1.0",
 ]
 
 unsupported = [
@@ -82,6 +82,51 @@ dev = [
     {include-group = "lint"},
     {include-group = "tests"},
 ]
+
+[tool.ruff]
+extend = ".venv/share/ruff/ruff.acoular.toml"
+src = ["src"]
+extend-exclude = ["docs/source"]   # shared config's exclude resolves to its own dir, not the project root
+
+[tool.ruff.lint]
+extend-ignore = [
+
+    # ===== Temporary migration guards (removed in the noted sub-issue) =====
+    "I001", "F401", "E402", "PLR0402",   # 2    imports: sorting / unused / placement / from-import
+    "ICN001", "ICN003",                  # 2    import aliases
+    "E501", "W505",                      # 3-8  line-length / docstring-length
+    "G004", "LOG015",                    # 11   logging
+    "PGH004", "RUF100", "E741",          # 10   stale-noqa cleanup / ambiguous names
+    "S307",                              # 10   intentional eval() in sampler
+    # no dedicated sub-issue -> general code cleanup, remove last
+    "RUF015", "RUF021", "C419", "SIM108", "SIM114",  # 15
+    "PLR5501", "PLR1711", "PLW0120",                 # 15
+    "TRY",                                           # 15  exception style (TRY003/004/201)
+    "EXE002",                                        # 15  exec bit (or `chmod -x src/acoupipe/*.py`)
+    # whitespace / formatting trivia
+    "W291", "W293", "COM819", "D210", "D403", "PLR2044",  # 15 (better cleared by `ruff format`)
+
+    # ===== Mirror Acoular's pyproject (fix at the end, no subissue) =====
+    "FBT002", "FBT003",  
+    "PTH",               #   os.path -> pathlib
+    "NPY002",            #   legacy numpy RNG
+    "PERF4",             #   list-comprehension perf
+    "PLR2004",           #   magic-value comparison
+    "PLR091",            #   too many args/branches/returns/statements
+    "PLW2901",           #   overwritten loop variable
+    "RUF005",            #   iterable concatenation
+    "RUF059",            #   unused unpacked variable
+]
+
+[tool.ruff.format]
+docstring-code-line-length = "dynamic" # 3-8: Acoular uses 120, kept "dynamic" to for passes to check,
+
+[tool.ruff.lint.per-file-ignores]
+"src/*"            = ["D", "N806", "N802", "C901", "SLF001", "ARG004", "ARG002", "ARG001", "S101"]  # 9 / 10
+"examples/*"       = ["D", "INP001", "ARG"]                                                  # 14
+"app/main.py"      = ["A002", "D100", "D101", "D102", "D103", "D400", "INP001", "DTZ005", "PLC0415"]    # 9 (app docstrings); "PLC0415" is intentional lazy CLI import
+"tests/*"          = ["ALL"]                                                                 # 12
+"tests/throughput/*" = ["ALL"]   # 13 — tighten to targeted codes later (tests/* glob is non-recursive)
 
 
 [project.urls]
