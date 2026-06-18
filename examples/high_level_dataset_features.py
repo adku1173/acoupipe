@@ -1,6 +1,6 @@
 """
-Adding Features to high-level Monte-Carlo Datasets
-==================================================
+Adding Features to high-level Monte-Carlo Datasets.
+===================================================
 
 This user guide is a follow-up to
 ``examples/high_level_monte_carlo_dataset.py``.  The introductory example shows

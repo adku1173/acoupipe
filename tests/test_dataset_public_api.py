@@ -71,8 +71,8 @@ def test_config_sample_passes_parameters_to_random_function_for_ordered_dependen
     parameters = ParameterSet.from_dict({'nsources': 1, 'rms': np.array([])})
     config = Config(parameters=parameters)
 
-    config.sample('nsources', random_func=lambda rng, params: params.nsources + 2)
-    config.sample('rms', random_func=lambda rng, params: np.ones(params.nsources))
+    config.sample('nsources', random_func=lambda _, params: params.nsources + 2)
+    config.sample('rms', random_func=lambda _, params: np.ones(params.nsources))
 
     sample = next(Dataset(config=config).generate(size=1, progress_bar=False))
 
@@ -93,7 +93,7 @@ def test_dataset_and_config_can_generate_from_parameter_sampling_without_subclas
     config.sample('rms', random_var=norm(loc=2.0, scale=0.0))
 
     feature = create_feature(
-        feature_func=lambda sampler: {'rms': parameters.rms},
+        feature_func=lambda _: {'rms': parameters.rms},
         name='rms',
         shape=(),
         dtype=np.float32,
@@ -179,7 +179,9 @@ def test_config_feature_metadata_supports_tfrecord_saving_and_parsing(tmp_path):
     output = tmp_path / 'custom.tfrecord'
 
     dataset.save_tfrecord(features=['rms'], size=1, name=output, progress_bar=False)
-    parsed = tf.data.TFRecordDataset(output.as_posix()).map(dataset.get_tfrecord_parser(features=['rms'], f=None, num=0))
+    parsed = tf.data.TFRecordDataset(output.as_posix()).map(
+        dataset.get_tfrecord_parser(features=['rms'], f=None, num=0)
+    )
     sample = next(iter(parsed))
 
     assert sample['rms'].numpy() == np.float32(1.0)

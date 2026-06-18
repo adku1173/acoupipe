@@ -65,12 +65,25 @@ class Config(HasPrivateTraits):
         This private hook exists while older Dataset configs still keep some
         Monte-Carlo state in sampler/helper objects. Future refactors should
         move those values into ``parameters`` and make this hook unnecessary.
-        Older external configs may still define ``get_sampler()``; use it as a
-        compatibility bridge without exposing that method on ``Config``.
+        Older external configs may still define ``get_sampler()``; this method
+        calls only those subclass implementations as a compatibility bridge.
+
+        Implementation detail
+        ---------------------
+        The lookup walks ``type(self).__mro__`` and inspects each subclass
+        ``__dict__`` until reaching ``Config``. This intentionally skips
+        ``Config.get_sampler`` itself. If we resolved methods through normal
+        attribute lookup (or included ``Config``), ``_get_legacy_sampler``
+        could call ``Config.get_sampler`` again, which calls this method and
+        causes recursion. Using ``__mro__`` + direct ``__dict__`` access keeps
+        legacy subclass overrides working while avoiding that loop.
         """
-        legacy_get_sampler = getattr(self, 'get_sampler', None)
-        if legacy_get_sampler is not None:
-            return legacy_get_sampler()
+        for cls in type(self).__mro__:
+            if cls is Config:
+                break
+            legacy_get_sampler = cls.__dict__.get('get_sampler')
+            if legacy_get_sampler is not None:
+                return legacy_get_sampler(self)
         return {}
 
     def _resolve_parameter_path(self, path):
@@ -143,8 +156,8 @@ class Config(HasPrivateTraits):
         self._registered_feature_funcs.append(feature_func)
         return func
 
-    def _get_sampler(self):
-        """Return the complete private sampler dictionary for Pipeline execution."""
+    def get_sampler(self):
+        """Return the complete sampler dictionary for Pipeline execution."""
         sampler = dict(self._get_legacy_sampler())
         if not self._parameter_samplers:
             return sampler
@@ -177,7 +190,7 @@ class Config(HasPrivateTraits):
             builder.add_custom(prepare_hook())
         feature_collection = builder.build()
         for name, (dtype, shape) in self._registered_feature_metadata.items():
-            builder._add_mapper(name, dtype, shape)
+            builder.add_mapper(name, dtype, shape)
         for feature_func in self._registered_feature_funcs:
             builder.add_custom(feature_func)
         cleanup_hook = self._get_config_hook('get_cleanup_func')
@@ -188,7 +201,7 @@ class Config(HasPrivateTraits):
     def configure_pipeline(self, pipeline, features, f, num):
         """Attach this config's samplers and feature functions to a Pipeline."""
         feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.sampler = self._get_sampler()
+        pipeline.sampler = self.get_sampler()
         pipeline.features = feature_collection.get_feature_funcs()
         return feature_collection
 

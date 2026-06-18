@@ -1,6 +1,6 @@
 """
-High-level Monte-Carlo datasets with the Dataset API
-====================================================
+High-level Monte-Carlo datasets with the Dataset API.
+=====================================================
 
 This tutorial shows how to build a tiny Monte-Carlo simulation with the
 high-level :class:`acoupipe.datasets.Dataset` API.

@@ -52,6 +52,7 @@ class ParameterSet:
         return {name: getattr(self, name) for name in self._parameter_names}
 
     def __repr__(self):
+        """Return a string representation of the ParameterSet with all parameter values."""
         parameters = ', '.join(f'{name}={getattr(self, name)!r}' for name in self._parameter_names)
         return f'{type(self).__name__}({parameters})'
 

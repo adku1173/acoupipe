@@ -840,15 +840,15 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        self._add_mapper('idx', np.int32, ())
-        self._add_mapper('seeds', np.int32, (None, 2))
+        self.add_mapper('idx', np.int32, ())
+        self.add_mapper('seeds', np.int32, (None, 2))
         self.feature_collection.parameters = self.parameters
         for feature in self.features:
             self.feature_collection.add_feature_func(self._build_feature_lifecycle_func(feature, self.parameters))
-            self._add_mapper(feature.name, feature.dtype, feature.shape)
+            self.add_mapper(feature.name, feature.dtype, feature.shape)
         return self.feature_collection
 
-    def _add_mapper(self, name, dtype, shape):
+    def add_mapper(self, name, dtype, shape):
         if not TF_FLAG:
             return
         encoder, tf_dtype, tf_shape = infer_tf_encoding(dtype, shape)

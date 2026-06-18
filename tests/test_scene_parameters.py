@@ -65,7 +65,7 @@ def test_config_sampling_supports_nested_parameter_path():
 def test_config_sampling_rejects_unknown_nested_parameter_path():
     dataset = DatasetSynthetic()
 
-    with pytest.raises(ValueError, match='Unsupported sampling path "sourcemap.missing"'):
+    with pytest.raises(ValueError, match=r'Unsupported sampling path "sourcemap.missing"'):
         dataset.config.sample('sourcemap.missing', random_var=norm(loc=0.0, scale=1.0))
 
 
@@ -80,8 +80,8 @@ def test_config_privately_merges_parameter_sampling_into_pipeline_sampler():
     dataset = DatasetSynthetic()
     dataset.config.sample('c', random_var=norm(loc=340.0, scale=0.0))
 
-    legacy_sampler = dataset.config._get_legacy_sampler()
-    sampler = dataset.config._get_sampler()
+    legacy_sampler = dataset.config._get_legacy_sampler()  # noqa: SLF001
+    sampler = dataset.config.get_sampler()
 
     assert max(sampler) > 6
     assert max(sampler) > max(legacy_sampler)
@@ -96,9 +96,9 @@ def test_config_privately_merges_parameter_sampling_into_pipeline_sampler():
 def test_sampler_access_is_private_to_config_not_dataset():
     dataset = DatasetSynthetic()
 
-    assert callable(dataset.config._get_sampler)
-    assert not hasattr(dataset.config, 'get_sampler')
-    assert '_get_sampler' not in Dataset.__dict__
+    assert callable(dataset.config.get_sampler)
+    assert hasattr(dataset.config, 'get_sampler')
+    assert 'get_sampler' not in Dataset.__dict__
 
 
 def test_sampler_key_limit_is_private():
@@ -112,7 +112,7 @@ def test_parameter_sampling_is_appended_after_reserved_sampler_keys_when_optiona
     dataset = DatasetSynthetic(mic_sig_noise=False, random_signal_length=False)
     parameter_sampler = dataset.config.sample('c', random_var=norm(loc=340.0, scale=0.0))
 
-    sampler = dataset.config._get_sampler()
+    sampler = dataset.config.get_sampler()
 
     assert 5 not in sampler
     assert 6 not in sampler
@@ -199,7 +199,7 @@ def test_dataset_miracle_preserves_user_supplied_sourcemap_speed():
 def test_dataset_synthetic_ism_prepare_functions_receive_parameters(monkeypatch):
     from acoupipe.datasets.synthetic import DatasetSyntheticISMConfig
 
-    monkeypatch.setattr(DatasetSyntheticISMConfig, 'create_acoular_pipeline', lambda self: None)
+    monkeypatch.setattr(DatasetSyntheticISMConfig, 'create_acoular_pipeline', lambda _: None)
     config = DatasetSyntheticISMConfig(mode='welch')
     prepare_func = config.get_prepare_func()
 
@@ -240,7 +240,7 @@ def test_dataset_synthetic_ism_prepare_ir_forwards_speed_of_sound(monkeypatch):
     monkeypatch.setattr(synthetic, 'get_ir', fake_get_ir)
     monkeypatch.setattr(synthetic, 'calc_transfer', fake_calc_transfer)
 
-    DatasetSyntheticISMConfig._prepare_ir(
+    DatasetSyntheticISMConfig._prepare_ir(  # noqa: SLF001
         mics=Mics(),
         freq_data=FreqData(),
         loc=np.array([[1.0], [0.0], [0.0]]),

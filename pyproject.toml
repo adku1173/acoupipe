@@ -122,6 +122,9 @@ extend-ignore = [
 docstring-code-line-length = "dynamic" # 3-8: Acoular uses 120, kept "dynamic" to for passes to check,
 
 [tool.ruff.lint.per-file-ignores]
+# Allow all tests to fail S101 (assert statements), D103 (missing docstring in public function), and D100 (missing docstring in public module)
+"tests/**" = ["D100", "D102", "D103", "S101","PLC0415"]
+
 # src files
 "src/acoupipe/__init__.py"           = ["Q000"]
 "src/acoupipe/base.py"                = ["ANN001", "ANN201", "D413", "Q000"]
@@ -141,6 +144,8 @@ docstring-code-line-length = "dynamic" # 3-8: Acoular uses 120, kept "dynamic" t
 "src/acoupipe/writer.py"              = ["ANN001", "ANN201", "ANN202", "D102", "D205", "D212", "D413", "ERA001", "Q000"]
 
 # examples files
+"examples/high_level_dataset_features.py" = ["INP001", "D205"]
+"examples/high_level_monte_carlo_dataset.py" = ["INP001", "D205"]
 "examples/micgeom_sampling_example.py"    = ["D100", "INP001", "Q000"]
 "examples/numeric_attribute_sampling.py" = ["D212", "Q000"]
 "examples/pipeline_writeH5_example.py"   = ["ANN001", "ANN201", "ARG001", "D212", "ERA001", "INP001", "Q000"]

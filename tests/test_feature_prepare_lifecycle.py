@@ -47,7 +47,7 @@ def test_feature_prepare_runs_immediately_before_own_calculation():
 
 def test_feature_without_prepare_hook_still_works():
     feature = create_feature(
-        feature_func=lambda sampler: {'plain': np.float32(1.0)},
+        feature_func=lambda _: {'plain': np.float32(1.0)},
         name='plain',
         dtype=np.float32,
         shape=(),
