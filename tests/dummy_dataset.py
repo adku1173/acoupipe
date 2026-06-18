@@ -16,7 +16,7 @@ from pathlib import Path
 import numpy as np
 from traits.api import Bool, Dict, Float, Instance, Int, List, Enum, Any
 
-from acoupipe.datasets.base import ConfigBase, DatasetBase
+from acoupipe.datasets.base import Config, Dataset
 from acoupipe.datasets.features import BaseFeatureCatalog, create_feature
 
 
@@ -24,7 +24,7 @@ from acoupipe.datasets.features import BaseFeatureCatalog, create_feature
 DEFAULT_CACHE_DIR = Path.home() / '.cache' / 'acoupipe' / 'dummy_dataset'
 
 
-class DatasetDummyConfig(ConfigBase):
+class DatasetDummyConfig(Config):
     """Configuration for the dummy dataset.
 
     This config provides minimal setup without creating heavy acoular objects,
@@ -314,7 +314,7 @@ class DummyDataCache:
             cache_file.unlink()
 
 
-class DatasetDummy(DatasetBase):
+class DatasetDummy(Dataset):
     """Dummy dataset that returns pre-computed data for fast testing.
 
     This dataset generates synthetic data with correct shapes and data types,

@@ -3,12 +3,16 @@
 import logging
 from functools import partial
 
-from traits.api import Dict, HasPrivateTraits, Instance, Int, Property
+from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, Int, List, Property
 
+from acoupipe.base import BaseSampler
 from acoupipe.config import TF_FLAG
+from acoupipe.datasets.callbacks import call_with_supported_context
 from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
+from acoupipe.datasets.parameters import ParameterSet
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
+from acoupipe.sampler import AttributeSampler
 from acoupipe.writer import WriteH5Dataset
 
 if TF_FLAG:
@@ -17,36 +21,189 @@ if TF_FLAG:
     from acoupipe.writer import WriteTFRecord, complex_list_feature
 
 
-class ConfigBase(HasPrivateTraits):
-    """Configuration base class for generating microphone array datasets."""
+class Config(HasPrivateTraits):
+    """Configuration class for generating microphone array datasets.
+
+    Configs define the simulation runtime and own a ``parameters`` object that
+    holds the current Monte-Carlo state. The Dataset pipeline may use samplers
+    internally to mutate those parameters, but simulation code should consume
+    the parameter object rather than sampler dictionary entries.
+
+    Notes
+    -----
+    ``_sampler_key_limit`` is an internal guard for the sampler key namespace.
+    Dataset prepare functions use fixed integer keys to look up samplers with
+    specific meanings. Some of those samplers are optional, but their keys must
+    remain reserved so that appended parameter samplers cannot accidentally
+    occupy a key that a prepare function interprets differently. Subclasses
+    should set this to the highest reserved sampler key used by their private
+    sampler/prepare-function contract. It is private infrastructure and not
+    part of the user-facing Dataset API.
+    """
+
+    _sampler_key_limit = Int(-1, desc='highest internally reserved sampler key')
+    parameters = Any(desc='Monte-Carlo parameters')
+    _parameter_samplers = List(Instance(BaseSampler), desc='samplers created for parameter paths')
+    _registered_prepare_funcs = List(Callable, desc='user-registered prepare callbacks')
+    _registered_feature_funcs = List(Callable, desc='user-registered feature callbacks')
+    _registered_feature_names = List(desc='names of user-registered feature callbacks')
+    _registered_feature_metadata = Dict(desc='dtype and shape metadata for user-registered feature callbacks')
+
+    def __init__(self, **traits):
+        parameters = traits.pop('parameters', None)
+        if parameters is None:
+            parameters = self.create_parameters()
+        super().__init__(parameters=parameters, **traits)
+
+    def create_parameters(self):
+        """Create the Monte-Carlo parameter object owned by this config."""
+        return ParameterSet()
+
+    def _get_legacy_sampler(self):
+        """Return transitional samplers not yet backed by ``parameters``.
+
+        This private hook exists while older Dataset configs still keep some
+        Monte-Carlo state in sampler/helper objects. Future refactors should
+        move those values into ``parameters`` and make this hook unnecessary.
+        Older external configs may still define ``get_sampler()``; this method
+        calls only those subclass implementations as a compatibility bridge.
+
+        Implementation detail
+        ---------------------
+        The lookup walks ``type(self).__mro__`` and inspects each subclass
+        ``__dict__`` until reaching ``Config``. This intentionally skips
+        ``Config.get_sampler`` itself. If we resolved methods through normal
+        attribute lookup (or included ``Config``), ``_get_legacy_sampler``
+        could call ``Config.get_sampler`` again, which calls this method and
+        causes recursion. Using ``__mro__`` + direct ``__dict__`` access keeps
+        legacy subclass overrides working while avoiding that loop.
+        """
+        for cls in type(self).__mro__:
+            if cls is Config:
+                break
+            legacy_get_sampler = cls.__dict__.get('get_sampler')
+            if legacy_get_sampler is not None:
+                return legacy_get_sampler(self)
+        return {}
+
+    def _resolve_parameter_path(self, path):
+        """Return the value at a direct or dotted parameter path."""
+        if not isinstance(path, str) or not path or any(part == '' for part in path.split('.')):
+            msg = f'Unsupported sampling path "{path}". The parameter object has no such attribute.'
+            raise ValueError(msg)
+        value = self.parameters
+        for part in path.split('.'):
+            if not hasattr(value, part):
+                msg = f'Unsupported sampling path "{path}". The parameter object has no such attribute.'
+                raise ValueError(msg)
+            value = getattr(value, part)
+        return value
+
+    def sample(self, path, random_var=None, random_func=None, sampler_class=None, equal_value=True, **sampler_kwargs):
+        """Register a sampler for a direct or dotted parameter attribute."""
+        self._resolve_parameter_path(path)
+        if sampler_class not in (None, AttributeSampler):
+            msg = f'Sampling path "{path}" supports only AttributeSampler.'
+            raise ValueError(msg)
+        if random_var is None and random_func is None:
+            msg = f'Sampling path "{path}" requires random_var or random_func.'
+            raise ValueError(msg)
+        sampler = AttributeSampler(
+            target=self.parameters,
+            attribute=path,
+            parameters=self.parameters,
+            random_var=random_var,
+            random_func=random_func,
+            equal_value=equal_value,
+            **sampler_kwargs,
+        )
+        self._parameter_samplers.append(sampler)
+        return sampler
+
+    def prepare(self, func):
+        """Register a callback that runs after sampling and before feature extraction."""
+
+        def prepare_func(sampler, data):
+            result = call_with_supported_context(
+                func,
+                parameters=self.parameters,
+                sampler=sampler,
+                data=data,
+            )
+            return result if isinstance(result, dict) else {}
+
+        self._registered_prepare_funcs.append(prepare_func)
+        return func
+
+    def feature(self, name, func, dtype=None, shape=None):
+        """Register a named feature callback for Dataset generation."""
+        if (dtype is None) != (shape is None):
+            msg = f'Feature "{name}" metadata requires both dtype and shape.'
+            raise ValueError(msg)
+
+        def feature_func(sampler, data):
+            value = call_with_supported_context(
+                func,
+                parameters=self.parameters,
+                sampler=sampler,
+                data=data,
+            )
+            return {name: value}
+
+        self._registered_feature_names.append(name)
+        if dtype is not None:
+            self._registered_feature_metadata[name] = (dtype, shape)
+        self._registered_feature_funcs.append(feature_func)
+        return func
 
     def get_sampler(self):
-        """Return dictionary containing the sampler objects of type :class:`acoupipe.base.BaseSampler`.
+        """Return the complete sampler dictionary for Pipeline execution."""
+        sampler = dict(self._get_legacy_sampler())
+        if not self._parameter_samplers:
+            return sampler
+        # Append parameter samplers after both active samplers and the
+        # config's reserved sampler key range. This prevents optional inactive
+        # transitional samplers from having their semantic keys reused accidentally.
+        reserved_key_limit = getattr(self, '_sampler_key_limit', -1)
+        next_key = max(max(sampler.keys(), default=-1), reserved_key_limit) + 1
+        for offset, parameter_sampler in enumerate(self._parameter_samplers):
+            sampler[next_key + offset] = parameter_sampler
+        return sampler
 
-        this function has to be manually defined in a dataset subclass.
-        It includes the sampler objects as values. The key defines the idx in the sample order.
+    def _get_config_hook(self, name):
+        """Return a subclass hook method if the config class defines it."""
+        if not any(name in cls.__dict__ for cls in type(self).__mro__):
+            return None
+        return getattr(self, name)
 
-        Examples
-        --------
-        >>> ConfigBase().get_sampler()
-        {}
+    def get_feature_collection(self, features, f, num):
+        """Build the feature collection for this config."""
+        features = [] if features is None else list(features)
+        feature_instances = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        default_feature_names = [feat for feat in features if isinstance(feat, str)]
+        feature_instances += self.get_default_features(default_feature_names, f, num)
+        builder = BaseFeatureCollectionBuilder(features=feature_instances, parameters=self.parameters)
+        for prepare_func in self._registered_prepare_funcs:
+            builder.add_custom(prepare_func)
+        prepare_hook = self._get_config_hook('get_prepare_func')
+        if prepare_hook is not None:
+            builder.add_custom(prepare_hook())
+        feature_collection = builder.build()
+        for name, (dtype, shape) in self._registered_feature_metadata.items():
+            builder.add_mapper(name, dtype, shape)
+        for feature_func in self._registered_feature_funcs:
+            builder.add_custom(feature_func)
+        cleanup_hook = self._get_config_hook('get_cleanup_func')
+        if cleanup_hook is not None:
+            builder.add_custom(cleanup_hook(features))
+        return feature_collection
 
-        e.g.:
-
-        .. code-block:: python
-
-            sampler = {
-                0 : BaseSampler(...),
-                1 : BaseSampler(...),
-                ...
-            }
-
-        Returns
-        -------
-        dict
-            dictionary containing the sampler objects
-        """
-        return {}
+    def configure_pipeline(self, pipeline, features, f, num):
+        """Attach this config's samplers and feature functions to a Pipeline."""
+        feature_collection = self.get_feature_collection(features, f, num)
+        pipeline.sampler = self.get_sampler()
+        pipeline.features = feature_collection.get_feature_funcs()
+        return feature_collection
 
     def _get_default_feature_kwargs(self, f, num):
         """Return keyword arguments passed to default feature builder methods."""
@@ -72,8 +229,9 @@ class ConfigBase(HasPrivateTraits):
         """
         builder_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
+        registered_feature_names = set(self._registered_feature_names)
         for feature_name in features:
-            if feature_name not in ['idx', 'seeds']:
+            if feature_name not in ['idx', 'seeds'] and feature_name not in registered_feature_names:
                 builder = getattr(self, f'_get_default_feature_{feature_name}', None)
                 if builder is None:
                     msg = f'Unknown feature "{feature_name}".'
@@ -82,19 +240,19 @@ class ConfigBase(HasPrivateTraits):
         return default_features
 
 
-class DatasetBase(HasPrivateTraits):
+class Dataset(HasPrivateTraits):
     """
-    Base class for generating microphone array datasets with specified features and labels.
+    Class for generating microphone array datasets with specified features and labels.
 
     Attributes
     ----------
-    config : ConfigBase
+    config : Config
         Configuration object for dataset generation.
     tasks : int
         Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
     """
 
-    config = Instance(ConfigBase, desc='configuration object')
+    config = Instance(Config, desc='configuration object')
     tasks = Property(desc='number of parallel tasks for data generation')
     remote_args = Dict({})
     #: logger instance to log calculation times for each data sample
@@ -108,7 +266,7 @@ class DatasetBase(HasPrivateTraits):
         HasPrivateTraits.__init__(self)
         self.tasks = tasks
         if config is None:
-            config = ConfigBase()
+            config = Config()
         self.config = config
         self.remote_args = remote_args or {}
         self.logger = logger
@@ -173,17 +331,9 @@ class DatasetBase(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        # handle all custom features (BaseFeatureCatalog instances)
-        feature_instances = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
-        if hasattr(self.config, 'get_default_features'):
-            default_feature_names = [feat for feat in features if isinstance(feat, str)]
-            feature_instances += self.config.get_default_features(default_feature_names, f, num)
-        builder = BaseFeatureCollectionBuilder(features=feature_instances)
-        if hasattr(self.config, 'get_prepare_func'):
-            builder.add_custom(self.config.get_prepare_func())  # add prepare function
-        return builder.build()  # finally build the feature collection
+        return self.config.get_feature_collection(features, f, num)
 
-    def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
+    def generate(self, features=None, size=None, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
 
         Parameters
@@ -238,10 +388,14 @@ class DatasetBase(HasPrivateTraits):
             for data in generator:
                 print(data)
         """
+        if size is None:
+            msg = 'Dataset.generate() requires a size.'
+            raise ValueError(msg)
         pipeline = self.get_pipeline_instance()
-        pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        self.config.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
+        if not pipeline.random_seeds:
+            pipeline.numsamples = size
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
     def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
@@ -300,13 +454,18 @@ class DatasetBase(HasPrivateTraits):
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
-        pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        self.config.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
+        if not pipeline.random_seeds:
+            pipeline.numsamples = size
         WriteH5Dataset(
             name=name,
             source=pipeline,
         ).save(progress_bar, start_idx)  # start the calculation
+
+
+ConfigBase = Config
+DatasetBase = Dataset
 
 
 if TF_FLAG:
@@ -370,10 +529,10 @@ if TF_FLAG:
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
-        pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.features = feature_collection.get_feature_funcs()
+        feature_collection = self.config.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
+        if not pipeline.random_seeds:
+            pipeline.numsamples = size
         # get features with varying length to handle them correctly in the TFRecord writer
         shape_features = []
         for feature, shape in feature_collection.feature_tf_shape_mapper.items():
@@ -391,7 +550,7 @@ if TF_FLAG:
             start_idx,
         )
 
-    DatasetBase.save_tfrecord = save_tfrecord
+    Dataset.save_tfrecord = save_tfrecord
 
     def get_output_signature(self, features, f=None, num=0):
         """Get the output signature of the dataset.
@@ -429,7 +588,7 @@ if TF_FLAG:
             )
         return signature
 
-    DatasetBase.get_output_signature = get_output_signature
+    Dataset.get_output_signature = get_output_signature
 
     def get_tf_dataset(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=False):
         """Get a TensorFlow dataset from the generated data.
@@ -469,10 +628,10 @@ if TF_FLAG:
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
-        pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.features = feature_collection.get_feature_funcs()
+        self.config.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
+        if not pipeline.random_seeds:
+            pipeline.numsamples = size
         features = features + ['idx', 'seeds']
         output_signature = self.get_output_signature(features, f=f, num=num)
         return tf.data.Dataset.from_generator(
@@ -480,7 +639,7 @@ if TF_FLAG:
             output_signature=output_signature,
         )
 
-    DatasetBase.get_tf_dataset = get_tf_dataset
+    Dataset.get_tf_dataset = get_tf_dataset
 
     def get_tfrecord_parser(self, features, f, num):
         """Get a parser function for a TFRecord dataset.
@@ -588,4 +747,4 @@ if TF_FLAG:
 
         return _parse_function
 
-    DatasetBase.get_tfrecord_parser = get_tfrecord_parser
+    Dataset.get_tfrecord_parser = get_tfrecord_parser

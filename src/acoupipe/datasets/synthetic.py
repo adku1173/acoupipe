@@ -23,12 +23,10 @@ from scipy.stats import norm, poisson
 from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, observe
 
 import acoupipe.sampler as sp
-from acoupipe.datasets.base import ConfigBase, DatasetBase
+from acoupipe.datasets.base import Config, Dataset
 from acoupipe.datasets.features import (
     AnalyticNoiseStrengthFeature,
     AnalyticSourceStrengthFeature,
-    BaseFeatureCatalog,
-    BaseFeatureCollectionBuilder,
     CSMFeature,
     CSMtriuFeature,
     EigmodeFeature,
@@ -43,11 +41,12 @@ from acoupipe.datasets.features import (
 )
 from acoupipe.datasets.ir import get_ir, require_ir_support
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
+from acoupipe.datasets.parameters import SyntheticParameters
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import calc_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
 
 
-class DatasetSynthetic(DatasetBase):
+class DatasetSynthetic(Dataset):
     r"""`DatasetSynthetic` is a purely synthetic microphone array source case generator.
 
     DatasetSynthetic relies on synthetic source signals from which the features are extracted and has been used in different publications,
@@ -202,16 +201,7 @@ class DatasetSynthetic(DatasetBase):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        # handle all custom features (BaseFeatureCatalog instances)
-        custom_features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
-        # collect default features defined by name
-        default_feature_names = [feat for feat in features if isinstance(feat, str)]
-        default_features = self.config.get_default_features(default_feature_names, f, num)
-        builder = BaseFeatureCollectionBuilder(features=default_features + custom_features)
-        builder.add_custom(self.config.get_prepare_func())  # add prepare function
-        feature_collection = builder.build()  # finally build the feature collection
-        builder.add_custom(self.config.get_cleanup_func(features))  # add cleanup function
-        return feature_collection
+        return self.config.get_feature_collection(features, f, num)
 
 
 def sample_rms(nsources, rng):
@@ -232,7 +222,7 @@ def sample_signal_length(rng):
     return rng.uniform(1, 10)
 
 
-class DatasetSyntheticConfig(ConfigBase):
+class DatasetSyntheticConfig(Config):
     """
     Default Configuration class.
 
@@ -312,6 +302,8 @@ class DatasetSyntheticConfig(ConfigBase):
     """
 
     # public traits
+    _sampler_key_limit = Int(6, desc='highest internally reserved sampler key')
+    parameters = Instance(SyntheticParameters, desc='lightweight physical scene parameters')
     fs = Float(13720, desc='sampling frequency')
     signal_length = Float(5, desc='length of the signal in seconds')
     max_nsources = Int(10, desc='maximum number of sources')
@@ -363,6 +355,10 @@ class DatasetSyntheticConfig(ConfigBase):
     def recreate_acoular_pipeline(self, event):  # noqa ARG002
         self.create_acoular_pipeline()
 
+    def create_parameters(self):
+        """Create lightweight scene parameters for Dataset generation."""
+        return SyntheticParameters(c=343.0)
+
     def create_acoular_pipeline(self):
         self.env = self.create_env()
         self.mics = self.create_mics()
@@ -390,7 +386,7 @@ class DatasetSyntheticConfig(ConfigBase):
         self.mic_noise_sampler = self.create_mic_noise_sampler()
         self.signal_length_sampler = self.create_signal_length_sampler()
 
-    def get_sampler(self):
+    def _get_legacy_sampler(self):
         self.create_sampler()
         sampler = {
             2: self.signal_seed_sampler,
@@ -482,12 +478,14 @@ class DatasetSyntheticConfig(ConfigBase):
         )
 
     def _get_default_feature_sourcemap(self, **kwargs):  # noqa ARG002
+        beamformer = self.create_sourcemap_beamformer()
         return SourcemapFeature(
-            beamformer=self.beamformer,
+            beamformer=beamformer,
+            prepare_func=partial(self._prepare_sourcemap_beamformer, beamformer=beamformer),
             f=kwargs['f'],
             num=kwargs['num'],
             dtype=np.float32,
-            shape=(kwargs['fdim'],) + self.beamformer.steer.grid.shape,
+            shape=(kwargs['fdim'],) + beamformer.steer.grid.shape,
         )
 
     def _get_default_feature_loc(self, **kwargs):  # noqa ARG002
@@ -588,7 +586,7 @@ class DatasetSyntheticConfig(ConfigBase):
         )
 
     def create_env(self):
-        return ac.Environment(c=343.0)
+        return ac.Environment(c=self.parameters.c)
 
     def create_mics(self):
         return ac.MicGeom(pos_total=tub_vogel64_ap1)
@@ -628,6 +626,31 @@ class DatasetSyntheticConfig(ConfigBase):
             freq_data=self.freq_data,
             steer=self.steer,
         )
+
+    def create_sourcemap_steer(self):
+        """Create the steering vector used by the default sourcemap Feature."""
+        return ac.SteeringVector(
+            steer_type='true level',
+            ref=self.steer.ref,
+            mics=self.mics,
+            grid=self.grid,
+            env=ac.Environment(c=self.parameters.sourcemap.c),
+        )
+
+    def create_sourcemap_beamformer(self):
+        """Create the beamformer used by the default sourcemap Feature."""
+        return ac.BeamformerBase(
+            r_diag=False,
+            precision='float32',
+            cached=False,
+            freq_data=self.freq_data,
+            steer=self.create_sourcemap_steer(),
+        )
+
+    @staticmethod
+    def _prepare_sourcemap_beamformer(parameters, beamformer):
+        """Apply Feature-specific sourcemap parameters to the analysis beamformer."""
+        beamformer.steer.env.c = parameters.sourcemap.c
 
     def create_signals(self):
         signals = []
@@ -772,6 +795,12 @@ class DatasetSyntheticConfig(ConfigBase):
         return micgeom_sampler.target
 
     @staticmethod
+    def _sync_runtime_env_from_parameters(parameters, env):
+        """Apply sampled parameters to the runtime Acoular environment."""
+        if parameters is not None and env is not None:
+            env.c = parameters.c
+
+    @staticmethod
     def _prepare_source_params(sampler, fs):
         seed_sampler = sampler.get(2)
         rms_sampler = sampler.get(3)
@@ -843,9 +872,12 @@ class DatasetSyntheticConfig(ConfigBase):
         freq_data.custom_transfer = custom_transfer
 
     @staticmethod
-    def calc_welch_prepare_func(sampler, mics, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs):
+    def calc_welch_prepare_func(
+        sampler, mics, beamformer, sources, source_steer, fft_spectra, fft_obs_spectra, obs, parameters=None
+    ):
         cf = DatasetSyntheticConfig
         freq_data = beamformer.freq_data
+        cf._sync_runtime_env_from_parameters(parameters, beamformer.steer.env)
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         source_steer.grid = ac.ImportGrid(pos=loc)
@@ -860,8 +892,9 @@ class DatasetSyntheticConfig(ConfigBase):
         }
 
     @staticmethod
-    def calc_analytic_prepare_func(sampler, mics, freq_data):
+    def calc_analytic_prepare_func(sampler, mics, freq_data, parameters=None):
         cf = DatasetSyntheticConfig
+        cf._sync_runtime_env_from_parameters(parameters, freq_data.steer.env)
         mics = DatasetSyntheticConfig._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         noise_prms_sq = DatasetSyntheticConfig._prepare_noise_params(sampler, prms_sq)
@@ -891,9 +924,15 @@ class DatasetSyntheticConfig(ConfigBase):
                 fft_spectra=self.fft_spectra,
                 fft_obs_spectra=self.fft_obs_spectra,
                 obs=self.obs,
+                parameters=self.parameters,
             )
         else:
-            prepare_func = partial(self.calc_analytic_prepare_func, mics=self.mics, freq_data=self.beamformer.freq_data)
+            prepare_func = partial(
+                self.calc_analytic_prepare_func,
+                mics=self.mics,
+                freq_data=self.beamformer.freq_data,
+                parameters=self.parameters,
+            )
         return prepare_func
 
     def get_cleanup_func(self, features):
@@ -949,8 +988,7 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         # shift positions to center of the room
         mloc = np.hstack((mics.pos, ref_loc)) + room_center
         sloc = loc + room_center
-        #: missing speed of sound
-        irs = get_ir(freq_data.sample_freq, rdim, mloc, sloc, rt60)
+        irs = get_ir(freq_data.sample_freq, rdim, mloc, sloc, rt60, c=c)
         h_norm = np.zeros(nsources)
         # get longest ir length
         max_ir_len = max([irs[j][i].shape[0] for i in range(nsources) for j in range(num_mics)])
@@ -981,9 +1019,10 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
             src.kernel = ir[-1, i, :].T[:, np.newaxis]
 
     @staticmethod
-    def calc_analytic_prepare_func(sampler, mics, freq_data, room_params):
+    def calc_analytic_prepare_func(sampler, mics, freq_data, room_params, parameters=None):
         cf = DatasetSyntheticConfig
         cism = DatasetSyntheticISMConfig
+        cf._sync_runtime_env_from_parameters(parameters, freq_data.steer.env)
         mics = cf._prepare_mics(sampler, mics)
         c = freq_data.steer.env.c
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
@@ -1007,12 +1046,15 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
         }
 
     @staticmethod
-    def calc_welch_prepare_func(sampler, mics, beamformer, sources, fft_spectra, fft_obs_spectra, obs, room_params):
+    def calc_welch_prepare_func(
+        sampler, mics, beamformer, sources, fft_spectra, fft_obs_spectra, obs, room_params, parameters=None
+    ):
         cf = DatasetSyntheticConfig
         cism = DatasetSyntheticISMConfig
         freq_data = beamformer.freq_data
         fftfreq = freq_data.fftfreq()
 
+        cf._sync_runtime_env_from_parameters(parameters, beamformer.steer.env)
         mics = cf._prepare_mics(sampler, mics)
         loc, prms_sq, source_seeds, num_samples = cf._prepare_source_params(sampler, freq_data.sample_freq)
         c = sources[0].env.c
@@ -1046,6 +1088,7 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
                 fft_obs_spectra=self.fft_obs_spectra,
                 obs=self.obs,
                 room_params=room_params,
+                parameters=self.parameters,
             )
         else:
             prepare_func = partial(
@@ -1053,6 +1096,7 @@ class DatasetSyntheticISMConfig(DatasetSyntheticConfig):
                 mics=self.mics,
                 freq_data=self.beamformer.freq_data,
                 room_params=room_params,
+                parameters=self.parameters,
             )
         return prepare_func
 

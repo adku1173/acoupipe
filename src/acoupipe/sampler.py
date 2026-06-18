@@ -67,6 +67,106 @@ from traits.api import (
 from acoupipe.base import BaseSampler
 
 
+class AttributeSampler(BaseSampler):
+    """Samples one value with a callable and optionally assigns it to one attribute.
+
+    ``AttributeSampler`` is the generic sampler primitive for high-level Dataset
+    parameter sampling. One sampler represents one sampled value. If one sampled
+    value has to be applied to multiple runtime objects, sample it once into the
+    parameter object and copy it to those objects in a prepare callback instead
+    of assigning to multiple targets here.
+
+    The callable receives the sampler random state. If it declares two
+    positional arguments, the second argument is the current parameter object,
+    which enables ordered dependencies between sampled parameters.
+
+    Examples
+    --------
+    Sample one value with a NumPy random generator and assign it to one target
+    attribute:
+
+    >>> from numpy.random import default_rng
+    >>> from acoupipe.sampler import AttributeSampler
+    >>> class Parameters:
+    ...     rms = 1.0
+    >>> parameters = Parameters()
+    >>> sampler = AttributeSampler(
+    ...     target=parameters,
+    ...     attribute='rms',
+    ...     random_func=lambda rng: rng.integers(1, 10),
+    ...     random_state=default_rng(1),
+    ... )
+    >>> sampler.sample()
+    np.int64(5)
+    >>> parameters.rms
+    np.int64(5)
+    >>> sampler.value
+    np.int64(5)
+
+    Sampling functions may read the current parameter object to express ordered
+    dependencies between sampled parameters:
+
+    >>> from acoupipe.datasets import ParameterSet
+    >>> parameters = ParameterSet.from_dict({'nsources': 3, 'rms': None})
+    >>> sampler = AttributeSampler(
+    ...     target=parameters,
+    ...     attribute='rms',
+    ...     parameters=parameters,
+    ...     random_func=lambda rng, params: [1.0] * params.nsources,
+    ...     random_state=default_rng(1),
+    ... )
+    >>> sampler.sample()
+    [1.0, 1.0, 1.0]
+    >>> parameters.rms
+    [1.0, 1.0, 1.0]
+    """
+
+    #: object whose attribute receives the sampled value; optional
+    target = Any(desc='object whose attribute is assigned when attribute is set')
+
+    #: optional attribute path on target that receives the sampled value
+    attribute = Str(desc='name of the target attribute to assign')
+
+    #: callable random process; signature must be ``(rng)`` or ``(rng, parameters)``
+    random_func = Callable(desc='callable that samples a value from the random state')
+
+    #: parameter object passed to two-argument random functions
+    parameters = Any(desc='current Dataset parameter object')
+
+    #: last sampled value
+    value = Any(desc='last sampled value')
+
+    def _call_random_func(self):
+        sig = signature(self.random_func)
+        num_parameters = len(sig.parameters)
+        if num_parameters == 1:
+            return self.random_func(self.random_state)
+        if num_parameters == 2:
+            return self.random_func(self.random_state, self.parameters)
+        msg = 'the random_func callable has to have a signature of (rng) or (rng, parameters).'
+        raise ValueError(msg)
+
+    def rvs(self):
+        """Draw one value from the configured random process."""
+        if self.random_func:
+            return self._call_random_func()
+        return self.random_var.rvs(random_state=self.random_state)
+
+    def set_value(self, target, value):
+        """Assign a sampled value to a possibly dotted attribute path."""
+        attributes = self.attribute.split('.')
+        for attribute in attributes[:-1]:
+            target = getattr(target, attribute)
+        setattr(target, attributes[-1], value)
+
+    def sample(self):
+        """Sample one value, store it, and optionally assign it to ``target.attribute``."""
+        self.value = self.rvs()
+        if self.attribute:
+            self.set_value(self.target, self.value)
+        return self.value
+
+
 class NumericAttributeSampler(BaseSampler):
     """Samples attributes of numeric type (e.g. int, float).
 

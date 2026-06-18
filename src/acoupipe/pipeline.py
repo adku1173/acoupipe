@@ -286,7 +286,7 @@ class BasePipeline(DataGenerator):
             for i in sampler_order:
                 if isinstance(self.sampler[i], BaseSampler):
                     self.sampler[i].sample()
-            data = {'idx': self._idx, 'seeds': np.array(list(self._seeds.items()))}
+            data = {'idx': self._idx, 'seeds': np.array(list(self._seeds.items()), dtype=np.int64).reshape(-1, 2)}
             data.update(self._extract_features())
             yield data
             pbar.update(1)

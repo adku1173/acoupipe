@@ -23,7 +23,8 @@ import numpy as np
 from irdl import MiracleDataset, SrirachaDataset
 from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
-from acoupipe.datasets.base import DatasetBase
+from acoupipe.datasets.base import Dataset
+from acoupipe.datasets.parameters import MIRACLEParameters
 from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 from acoupipe.datasets.utils import (
     calc_transfer,
@@ -58,7 +59,7 @@ _SRIRACHA_SCENARIOS = [
 ]
 
 
-class DatasetMIRACLE(DatasetBase):
+class DatasetMIRACLE(Dataset):
     r"""A microphone array dataset generator using experimentally measured data.
 
     DatasetSynthetic relies on measured spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset.
@@ -282,10 +283,12 @@ class DatasetMIRACLE(DatasetBase):
 class DatasetMIRACLEConfig(DatasetSyntheticConfig):
     """Configuration class for the DatasetMIRACLE dataset."""
 
+    parameters = Instance(MIRACLEParameters, desc='measured-SRIR analysis parameters')
     srir_dir = Either(Instance(Path), Str, None)
     scenario = Either(_MIRACLE_SCENARIOS, default='A1', desc='experimental configuration')
     dataset_split = Either(None, 'C1', 'C2', 'C3', 'C4', default=None, desc='artificial dataset split')
     filename = Property()
+    measured_c0 = Property(desc='measured speed of sound from SRIR metadata')
     _filename = Str
     ref_mic_index = Int(63, desc='reference microphone index (default: index of the centermost mic)')
     mic_pos_noise = Enum(False, desc='apply positional noise to microphone geometry')
@@ -298,6 +301,10 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     def _get_filename(self):
         return self._filename
+
+    def _get_measured_c0(self):
+        with h5.File(self.filename, 'r') as file:
+            return float(np.mean(self._read_speed_of_sound(file)))
 
     def set_filename(self):
         """Resolve the SRIR file path, downloading via :mod:`irdl` if necessary."""
@@ -321,7 +328,8 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
 
     def create_acoular_pipeline(self):
         self.set_filename()
-        self.env = self.create_env()
+        if getattr(self.parameters.sourcemap, 'c', None) is None:
+            self.parameters.sourcemap.c = self.measured_c0
         self.mics = self.create_mics()
         self.noisy_mics = self.mics
         self.grid = self.create_grid()
@@ -338,6 +346,10 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         self.fft_obs_spectra = self.create_fft_obs_spectra()
         self.beamformer = self.create_beamformer()
 
+    def create_parameters(self):
+        """Create measured-scene parameters for DatasetMIRACLE generation."""
+        return MIRACLEParameters()
+
     def create_sampler(self):
         self.location_sampler = self.create_location_sampler()
         self.signal_seed_sampler = self.create_signal_seed_sampler()
@@ -346,7 +358,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
         self.mic_noise_sampler = self.create_mic_noise_sampler()
         self.signal_length_sampler = self.create_signal_length_sampler()
 
-    def get_sampler(self):
+    def _get_legacy_sampler(self):
         self.create_sampler()
         sampler = {
             2: self.signal_seed_sampler,
@@ -367,11 +379,6 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             pos_total = self._read_receiver_positions(file)
         return ac.MicGeom(pos_total=pos_total)
 
-    def create_env(self):
-        with h5.File(self.filename, 'r') as file:
-            c = np.mean(self._read_speed_of_sound(file))
-        return ac.Environment(c=c)
-
     def create_sources(self):
         sources = []
         for signal in self.signals:
@@ -379,7 +386,6 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 ac.PointSourceConvolve(
                     signal=signal,
                     mics=self.noisy_mics,
-                    env=self.env,
                     extend_signal=True,
                 ),
             )
@@ -391,9 +397,18 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
                 steer_type='true level',
                 mics=self.mics,
                 grid=self.grid,
-                env=self.env,
+                env=ac.Environment(c=self.parameters.sourcemap.c),
                 ref=self._read_receiver_positions(file)[:, self.ref_mic_index],
             )
+
+    def create_source_steer(self):
+        return ac.SteeringVector(
+            steer_type='true level',
+            ref=self.obs.pos.squeeze(),
+            mics=self.noisy_mics,
+            grid=ac.ImportGrid(),
+            env=ac.Environment(c=self.parameters.sourcemap.c),
+        )
 
     def create_grid(self):
         ap = self.mics.aperture

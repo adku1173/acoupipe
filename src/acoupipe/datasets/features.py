@@ -4,9 +4,24 @@ import acoular as ac
 import numpy as np
 from numpy import array, imag, newaxis, real, triu_indices
 from numpy.linalg import eigh
-from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
+from traits.api import (
+    Any,
+    Callable,
+    Dict,
+    Either,
+    Enum,
+    Float,
+    HasPrivateTraits,
+    Instance,
+    Int,
+    List,
+    Property,
+    Str,
+    Tuple,
+)
 
 from acoupipe.config import TF_FLAG
+from acoupipe.datasets.callbacks import call_with_supported_context
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import (
     get_frequency_index_range,
@@ -34,6 +49,11 @@ class BaseFeatureCatalog(HasPrivateTraits):
     name = Str
     dtype = Callable
     shape = Tuple
+    prepare_func = Callable(desc='optional per-Feature prepare callback')
+
+    def get_prepare_func(self):
+        """Return the optional per-Feature prepare callback."""
+        return self.prepare_func
 
     def get_feature_func(self):
         """Will return a method depending on the class parameters."""
@@ -714,6 +734,7 @@ class BaseFeatureCollection(HasPrivateTraits):
         List of feature_funcs.
     """
 
+    parameters = Any(desc='current Dataset parameter object')
     feature_funcs = List(desc='list of feature_funcs')
     feature_tf_encoder_mapper = Dict(desc='feature encoder mapper')
     feature_tf_shape_mapper = Dict(desc='feature shape mapper')
@@ -732,23 +753,24 @@ class BaseFeatureCollection(HasPrivateTraits):
 
     def get_feature_funcs(self):
         """
-        Get all feature_funcs of the BaseFeatureCollection.
+        Get all feature funcs of the BaseFeatureCollection.
 
         Returns
         -------
         list
-            List of feature_funcs.
+            List of feature funcs.
         """
 
         def calc_features(sampler, feature_funcs):
             data = {}
             for ffunc in feature_funcs:
-                # Check if ffunc accepts a 'data' parameter
-                sig = inspect.signature(ffunc)
-                if 'data' in sig.parameters:
-                    data.update(ffunc(sampler=sampler, data=data))
-                else:
-                    data.update(ffunc(sampler=sampler))
+                result = call_with_supported_context(
+                    ffunc,
+                    sampler=sampler,
+                    data=data,
+                )
+                if isinstance(result, dict):
+                    data.update(result)
             return data
 
         return partial(calc_features, feature_funcs=self.feature_funcs)
@@ -764,8 +786,36 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection object.
     """
 
+    parameters = Any(desc='current Dataset parameter object')
     features = List(Instance(BaseFeatureCatalog), desc='list of feature instances')
-    feature_collection = Instance(BaseFeatureCollection, args=(), desc='BaseFeatureCollection object')
+    feature_collection = Instance(BaseFeatureCollection, desc='BaseFeatureCollection object')
+
+    def _feature_collection_default(self):
+        return BaseFeatureCollection(parameters=self.parameters)
+
+    @staticmethod
+    def _build_feature_lifecycle_func(feature, parameters):
+        prepare_func = feature.get_prepare_func()
+        feature_func = feature.get_feature_func()
+
+        def calculate_prepared_feature(sampler, data):
+            if prepare_func is not None:
+                prepare_result = call_with_supported_context(
+                    prepare_func,
+                    sampler=sampler,
+                    parameters=parameters,
+                    data=data,
+                )
+                if isinstance(prepare_result, dict):
+                    data.update(prepare_result)
+            return call_with_supported_context(
+                feature_func,
+                sampler=sampler,
+                parameters=parameters,
+                data=data,
+            )
+
+        return calculate_prepared_feature
 
     def add_custom(self, feature_func):
         """
@@ -790,14 +840,15 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
         BaseFeatureCollection
             BaseFeatureCollection object.
         """
-        self._add_mapper('idx', np.int32, ())
-        self._add_mapper('seeds', np.int32, (None, 2))
+        self.add_mapper('idx', np.int32, ())
+        self.add_mapper('seeds', np.int32, (None, 2))
+        self.feature_collection.parameters = self.parameters
         for feature in self.features:
-            self.feature_collection.add_feature_func(feature.get_feature_func())
-            self._add_mapper(feature.name, feature.dtype, feature.shape)
+            self.feature_collection.add_feature_func(self._build_feature_lifecycle_func(feature, self.parameters))
+            self.add_mapper(feature.name, feature.dtype, feature.shape)
         return self.feature_collection
 
-    def _add_mapper(self, name, dtype, shape):
+    def add_mapper(self, name, dtype, shape):
         if not TF_FLAG:
             return
         encoder, tf_dtype, tf_shape = infer_tf_encoding(dtype, shape)
