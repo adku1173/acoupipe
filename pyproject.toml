@@ -114,19 +114,17 @@ extend-ignore = [
 ]
 
 [tool.ruff.format]
-docstring-code-line-length = "dynamic"  # 3-8: Acoular uses 120; "dynamic" keeps check passing during migration
+#docstring-code-line-length = 120
 
 [tool.ruff.lint.per-file-ignores]
 # In each src entry: E501/W505 -> the file's 3-8 line-length task; D* -> 9; N*/ARG*/SLF001 -> 10
 # --- src: 3 core modules ---
-"src/acoupipe/__init__.py"            = ["E501", "W505"]
 "src/acoupipe/base.py"                = ["D413"]
 "src/acoupipe/config.py"              = ["D100"]
 "src/acoupipe/version.py"             = ["D100"]
-"src/acoupipe/loader.py"              = ["D413", "E501", "W505"]
-"src/acoupipe/pipeline.py"            = ["D101", "D102", "D105", "D107", "D413", "E501", "W505"]
-"src/acoupipe/writer.py"              = ["D102", "D205", "D212", "D413", "E501", "W505"]
-"src/acoupipe/datasets/__init__.py"   = ["W505"]
+"src/acoupipe/loader.py"              = ["D413"]
+"src/acoupipe/pipeline.py"            = ["D101", "D102", "D105", "D107", "D413"]
+"src/acoupipe/writer.py"              = ["D102", "D205", "D212", "D413"]
 # --- src: 4 samplers ---
 "src/acoupipe/sampler.py"             = ["D101", "D102", "E501", "N806", "W505"]
 # --- src: 5 small dataset modules ---

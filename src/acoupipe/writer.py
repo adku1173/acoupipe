@@ -1,9 +1,10 @@
-"""Provides classes to store the data extracted by :class:`~acoupipe.pipeline.BasePipeline` derived classes.
+"""Provides classes to store the data extracted by :class:`~acoupipe.pipeline.BasePipeline`.
 
 Purpose of the Writer Module
 ----------------------------
 The :code:`writer.py` module provides classes to store the data extracted by the pipeline.
-The current implementation includes classes to save data in a container-like file format (.h5 file with the :code:`WriteH5Dataset` class) or
+The current implementation includes classes to save data in a container-like file format
+(.h5 file with the :code:`WriteH5Dataset` class) or
 binary format (.tfrecord file with the :code:`WriteTFRecord` class).
 The latter can be efficiently consumed by the Tensorflow framework for machine learning.
 
@@ -31,7 +32,9 @@ from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
 
 
 class BaseWriteDataset(DataGenerator):
-    """Base class intended to write data from :class:`~acoupipe.pipeline.BasePipeline` instances to a specific file format.
+    """Base class intended to write data to a specific file format.
+
+    Writes data from :class:`~acoupipe.pipeline.BasePipeline` instances.
 
     This class has no functionality and should not be used.
     """
@@ -40,11 +43,11 @@ class BaseWriteDataset(DataGenerator):
     source = Instance(DataGenerator)
 
     def save(self):
-        """Save data from a :class:`~acoupipe.pipeline.BasePipeline` instance specified at :attr:`source` to file."""
+        """Save data from the :attr:`source` instance to file."""
         # write to File...
 
     def get_data(self, progress_bar=True, start_idx=1):
-        """Python generator that saves source output data to file and passes the data to the next object.
+        """Save source output data to file and pass the data to the next object.
 
         Parameters
         ----------
@@ -115,7 +118,7 @@ class WriteH5Dataset(BaseWriteDataset):
                 f5h.create_dataset(f'metadata/{key}', data=value)
 
     def save(self, progress_bar=True, start_idx=1):
-        """Save the output of the :meth:`get_data()` method of :class:`~acoupipe.pipeline.BasePipeline` to .h5 file format."""
+        """Save the :meth:`get_data()` output of the :attr:`source` to .h5 file format."""
         f5h = self.get_file()
         subf = self.get_filtered_features()
         for data in self.source.get_data(progress_bar, start_idx):
@@ -125,7 +128,7 @@ class WriteH5Dataset(BaseWriteDataset):
         f5h.close()
 
     def get_data(self, progress_bar=True, start_idx=1):
-        """Python generator that saves the data passed by the source to a `*.h5` file and yields the data to the next object.
+        """Save the source data to a `*.h5` file and yield it to the next object.
 
         Returns
         -------
@@ -241,16 +244,18 @@ if TF_FLAG:
 
         Serializes samples from a :class:`~acoupipe.pipeline.BasePipeline` into the TensorFlow
         TFRecord format, using encoder functions provided via :attr:`encoder_funcs`.
-        For features whose shapes may vary (contain ``None``), list their names in :attr:`shape_features`
+        For features whose shapes may vary (contain ``None``), list their names
+        in :attr:`shape_features`
         to have the runtime shape stored as an auxiliary ``<name>_shape`` int64 feature.
         """
 
         #: Name of the file to be saved.
         name = File(filter=['*.tfrecords'], desc='name of data file')
 
-        #: Dictionary with encoding functions (dict values) to convert data yielded by the pipeline to binary .tfrecord format.
-        #: The key values of this dictionary are the feature names specified in the :attr:`features` attribute
-        #: of the :attr:`source` object.
+        #: Dictionary with encoding functions (dict values) to convert data yielded
+        #: by the pipeline to binary .tfrecord format.
+        #: The key values of this dictionary are the feature names specified
+        #: in the :attr:`features` attribute of the :attr:`source` object.
         encoder_funcs = Dict(
             key_trait=Str(),
             value_trait=Callable(),
@@ -260,7 +265,8 @@ if TF_FLAG:
         #: Trait to set specific options to the .tfrecord file.
         options = Trait(None, tf.io.TFRecordOptions)
 
-        #: List of feature names for which the shape should be stored alongside the data (as ``<name>_shape``).
+        #: List of feature names for which the shape should be stored alongside
+        #: the data (as ``<name>_shape``).
         shape_features = List(Str, desc='features whose shapes are written along with the data')
 
         def _encode_sample(self, features, encoders):

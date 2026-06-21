@@ -682,7 +682,6 @@ class DatasetDummy(DatasetBase):
             msg = 'TensorFlow is not available. Cannot create TF dataset.'
             raise ImportError(msg)
 
-
         import tensorflow as tf
 
         # Get the feature collection to get the output signature

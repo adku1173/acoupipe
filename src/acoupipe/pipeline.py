@@ -3,11 +3,17 @@
 Purpose of the Pipeline Module
 ------------------------------
 
-Classes defined in the :code:`pipeline.py` module have the ability to iteratively perform tasks on the related computational pipeline to build up a dataset.
-The results of these tasks are the features (and labels) associated with a specific sample of the dataset.
-Feature creation tasks can be specified by passing callable functions that are evoked at each iteration of the :code:`BasePipeline`'s :code:`get_data()` generator method.
-It is worth noting that such a data generator can also be used directly to feed a machine learning model without saving the data to file, as common machine learning frameworks, such as Tensorflow_, offer the possibility to consume data from Python generators.
-Control of the state of the sampling process is maintained via the :code:`sampler` attribute holding a list of :code:`BaseSampler` derived instances.
+Classes defined in the :code:`pipeline.py` module have the ability to iteratively perform
+tasks on the related computational pipeline to build up a dataset.
+The results of these tasks are the features (and labels) associated with a specific
+sample of the dataset.
+Feature creation tasks can be specified by passing callable functions that are evoked at
+each iteration of the :code:`BasePipeline`'s :code:`get_data()` generator method.
+It is worth noting that such a data generator can also be used directly to feed a machine
+learning model without saving the data to file, as common machine learning frameworks,
+such as Tensorflow_, offer the possibility to consume data from Python generators.
+Control of the state of the sampling process is maintained via the :code:`sampler`
+attribute holding a list of :code:`BaseSampler` derived instances.
 
 .. code-block:: python
 
@@ -20,7 +26,7 @@ Control of the state of the sampling process is maintained via the :code:`sample
 
     n1 = ac.WNoiseGenerator(sample_freq=24000, numsamples=24000 * 5, rms=1.0, seed=1)
 
-    rms_sampler = NumericAttributeSampler(target=[n1], attribute='rms', random_var=random_var, random_state=10)
+    rms_sampler = NumericAttributeSampler(target=[n1], attribute='rms', random_var=random_var)
 
 
     def calculate_squared_rms(sampler):
@@ -86,7 +92,7 @@ def log_execution_time(f):
 
 
 class BasePipeline(DataGenerator):
-    """Class to control the random process and iteratively extract and pass a specified amount of data.
+    """Control the random process and iteratively extract and pass a specified amount of data.
 
     This class can be used to calculate data (extract features)
     by assigning a name and a callable function to :attr:`features`.
@@ -97,26 +103,34 @@ class BasePipeline(DataGenerator):
     """
 
     #: a dictionary with instances of :class:`~acoupipe.base.BaseSampler` derived classes as keys
-    #: alternatively, the dict can contain objects of type :class:`numpy.random._generator.Generator` or
-    #: :class:`numpy.random.RandomState` for control reasons
+    #: alternatively, the dict can contain objects of type
+    #: :class:`numpy.random._generator.Generator` or :class:`numpy.random.RandomState`
+    #: for control reasons
     #: (e.g. :code:`sampler = {0 : rms_sampler, 1 : numpy.random.RandomState(1)}`).
-    #: The trait also accepts a list of samples (e.g. :code:`sampler = [rms_sampler, numpy.random.RandomState(1)]`).
+    #: The trait also accepts a list of samples
+    #: (e.g. :code:`sampler = [rms_sampler, numpy.random.RandomState(1)]`).
     #: which is then converted to a dictionary with the indices of the list as keys.
     sampler = Property(
-        desc='Dictionary with instances of BaseSampler derived classes as values and their sample order indices as keys',
+        desc='Dictionary with instances of BaseSampler derived classes as values '
+        'and their sample order indices as keys',
     )
 
     #: feature method for the extraction/generation of features and labels.
-    #: one can either pass a callable (e.g. `features = `lambda sampler: {"feature_name" : sampler.target}`).
-    #: Note that the callable must accept a list of :class:`acoupipe.base.BaseSampler` objects as first argument.
+    #: one can either pass a callable
+    #: (e.g. `features = `lambda sampler: {"feature_name" : sampler.target}`).
+    #: Note that the callable must accept a list of :class:`acoupipe.base.BaseSampler`
+    #: objects as first argument.
     #: Alternatively, if further arguments are necessary, one can pass a tuple containing the
     #: callable and their arguments (e.g.: `features = (some_func, arg1, arg2, ...)}`).
     features = Either(Callable, Tuple, desc='feature method for the extraction/generation of features and labels')
 
     #: a dict with values of `range(seeds)` associated with sampler objects in :attr:`sampler`.
-    #: A new seed will be collected from each range object during an evaluation of the :meth:`get_data()` generator.
-    #: This seed is used to initialize an instance of :class:`numpy.random._generator.Generator` which is passed to
-    #: the :attr:`random_state` of the samplers in :attr:`sampler`. If not given, :meth:`get_data()` relies on
+    #: A new seed will be collected from each range object during an evaluation
+    #: of the :meth:`get_data()` generator.
+    #: This seed is used to initialize an instance of
+    #: :class:`numpy.random._generator.Generator` which is passed to
+    #: the :attr:`random_state` of the samplers in :attr:`sampler`.
+    #: If not given, :meth:`get_data()` relies on
     #: :attr:`numsamples`.
     random_seeds = Property(desc='Dictionary of seeds associated with sampler objects')
 
@@ -185,7 +199,7 @@ class BasePipeline(DataGenerator):
         raise ValueError(msg)
 
     def _update_sample_index_and_seeds(self, seed_iter=None):
-        """Update seeds and running index of associated with the current data sample of the dataset."""
+        """Update seeds and running index for the current data sample of the dataset."""
         self._idx += 1
         if not self.random_seeds:
             return
@@ -193,7 +207,8 @@ class BasePipeline(DataGenerator):
         for k in self.sampler:
             if isinstance(self.sampler[k], BaseSampler):
                 self.sampler[k].random_state = default_rng(self._seeds[k])
-                # self.logger.error(f"update {self.sampler[k].__class__.__name__}, state: {self.sampler[k].random_state.__getstate__()}")
+                # self.logger.error(f"update {self.sampler[k].__class__.__name__}, "
+                #     f"state: {self.sampler[k].random_state.__getstate__()}")
             elif isinstance(self.sampler[k], RandomState):
                 self.sampler[k].seed(self._seeds[k])
             elif isinstance(self.sampler[k], np.random.Generator):
@@ -308,7 +323,7 @@ class SamplerActor:
         self.sampler_order.sort()
 
     def sample(self, seeds):
-        """Invocation of the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
+        """Invoke the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
         self.set_new_seed(seeds)
         for k in self.sampler_order:
             if isinstance(self.sampler[k], BaseSampler):
@@ -372,7 +387,8 @@ class DistributedPipeline(BasePipeline):
     #: each worker is associated with a stateless task.
     numworkers = Int(1, desc='number of tasks to be performed in parallel (usually number of CPUs)')
 
-    #: additional arguments to be passed to ray remote tasks, e.g. num_gpus for GPU resource allocation (e.g. num_gpus=0.25 for 1 GPU per 4 tasks)
+    #: additional arguments to be passed to ray remote tasks, e.g. num_gpus for GPU
+    #: resource allocation (e.g. num_gpus=0.25 for 1 GPU per 4 tasks)
     remote_args = Dict()
 
     def _log_execution_time(self, task_index, times, pid):
@@ -398,7 +414,7 @@ class DistributedPipeline(BasePipeline):
         )  # add index, and seeds
 
     def _update_sample_index_and_seeds(self, seed_iter=None):
-        """Update seeds and running index of associated with the current data sample of the dataset."""
+        """Update seeds and running index for the current data sample of the dataset."""
         self._idx += 1
         if not self.random_seeds:
             return

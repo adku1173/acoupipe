@@ -294,9 +294,7 @@ class DatasetBase(HasPrivateTraits):
             num = 3
 
             # save the dataset
-            dataset = DatasetSynthetic().save_h5(
-                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.h5'
-            )
+            dataset = DatasetSynthetic().save_h5(f=f, num=num, split='training', size=10, features=features, name='/tmp/example.h5')
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
