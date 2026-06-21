@@ -8,11 +8,10 @@ to the Sampler class, the random state of the random variable will be used.
 
 import unittest
 
+from acoupipe.base import BaseSampler
+
 from numpy.random import RandomState
 from scipy.stats import norm
-
-from acoupipe.base import BaseSampler
-from acoupipe.sampler import NumericAttributeSampler
 
 SEED = 100
 NVALUES = 100

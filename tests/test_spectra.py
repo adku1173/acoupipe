@@ -1,4 +1,5 @@
 from acoular import ImportGrid
+
 import numpy as np
 import pytest
 

@@ -91,8 +91,6 @@ extend-exclude = ["docs/source"]   # shared config's exclude resolves to its own
 [tool.ruff.lint]
 extend-ignore = [
     # ===== Temporary migration guards (removed in the noted sub-issue) =====
-    "I001", "F401", "E402", "PLR0402",   # 2   imports: sorting / unused / placement / from-import
-    "ICN001", "ICN003",                  # 2   import aliases
     # E501 / W505 (line-length, doc-length) live in per-file src entries -> 3-8, peelable per module
     "G004", "LOG015",                    # 11  logging
     "PGH004", "RUF100", "E741",          # 10  stale-noqa cleanup / ambiguous names

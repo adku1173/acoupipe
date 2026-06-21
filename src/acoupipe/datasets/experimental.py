@@ -18,16 +18,16 @@ from functools import partial
 from pathlib import Path
 
 import acoular as ac
-import h5py as h5
-import numpy as np
-from irdl import MiracleDataset, SrirachaDataset
-from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
-
 from acoupipe.datasets.base import DatasetBase
 from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 from acoupipe.datasets.utils import (
     calc_transfer,
 )
+
+import h5py as h5
+import numpy as np
+from irdl import MiracleDataset, SrirachaDataset
+from traits.api import Dict, Either, Enum, Instance, Int, Property, Str, observe
 
 _MIRACLE_SCENARIOS = ['A1', 'D1', 'A2', 'R2']
 _SRIRACHA_SCENARIOS = [

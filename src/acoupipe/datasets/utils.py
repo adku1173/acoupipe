@@ -2,11 +2,11 @@ from functools import wraps
 from time import time
 
 import acoular as ac
-import numpy as np
-import scipy.signal
-
 from acoupipe.config import TF_FLAG
 from acoupipe.writer import WriteH5Dataset
+
+import numpy as np
+import scipy.signal
 
 if TF_FLAG:
     from acoupipe.writer import WriteTFRecord
@@ -14,8 +14,6 @@ import logging
 from datetime import datetime
 from os.path import join
 from warnings import warn
-
-from numpy import concatenate, imag, newaxis, real, searchsorted
 
 
 def calc_transfer(ir, fs, blocksize, fftfreq, time_axis=-1):
@@ -238,7 +236,7 @@ def get_frequency_index_range(freq, f, num):
     """
     if num == 0:
         # single frequency line
-        ind = searchsorted(freq, f)
+        ind = np.searchsorted(freq, f)
         if ind >= len(freq):
             warn(
                 f'Queried frequency ({f:g} Hz) not in resolved frequency range. Returning zeros.',
@@ -263,8 +261,8 @@ def get_frequency_index_range(freq, f, num):
     else:
         f1 = f * 2.0 ** (-0.5 / num)
         f2 = f * 2.0 ** (+0.5 / num)
-    ind1 = searchsorted(freq, f1)
-    ind2 = searchsorted(freq, f2)
+    ind1 = np.searchsorted(freq, f1)
+    ind2 = np.searchsorted(freq, f2)
     if ind1 == ind2:
         warn(
             f'Queried frequency band ({f1:g} to {f2:g} Hz) does not '
@@ -330,7 +328,7 @@ def set_filename(writer, path='.', *args):
 def complex_to_real(func):
     def complex_to_real_wrapper(*args, **kwargs):
         a = func(*args, **kwargs)
-        return concatenate([real(a)[..., newaxis], imag(a)[..., newaxis]], axis=-1)
+        return np.concatenate([np.real(a)[..., np.newaxis], np.imag(a)[..., np.newaxis]], axis=-1)
 
     return complex_to_real_wrapper
 

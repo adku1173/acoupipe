@@ -1,13 +1,4 @@
 from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
-import numpy as np
-import pytest
-from numpy import array
-from numpy.random import RandomState, default_rng
-from numpy.testing import assert_almost_equal
-from scipy.spatial.distance import cdist
-from scipy.stats import norm
-
-from acoupipe.base import BaseSampler
 from acoupipe.pipeline import BasePipeline
 from acoupipe.sampler import (
     ContainerSampler,
@@ -17,6 +8,13 @@ from acoupipe.sampler import (
     SetSampler,
     SourceSetSampler,
 )
+
+import numpy as np
+import pytest
+from numpy.random import RandomState, default_rng
+from numpy.testing import assert_almost_equal
+from scipy.spatial.distance import cdist
+from scipy.stats import norm
 
 SAMPLER_CLASSES = [
     NumericAttributeSampler,
@@ -173,11 +171,11 @@ def test_micgeom_sampler(mode):
     rng = RandomState(2)
     normal_distribution = norm(loc=0, scale=0.1)
     if mode == 'deviate':
-        sampler = MicGeomSampler(random_var=normal_distribution, random_state=rng, ddir=array([[1.0], [1.0], [1.0]]))
+        sampler = MicGeomSampler(random_var=normal_distribution, random_state=rng, ddir=np.array([[1.0], [1.0], [1.0]]))
     elif mode == 'rotate':
-        sampler = MicGeomSampler(random_var=normal_distribution, random_state=rng, rvec=array([[1.0], [1.0], [1.0]]))
+        sampler = MicGeomSampler(random_var=normal_distribution, random_state=rng, rvec=np.array([[1.0], [1.0], [1.0]]))
     elif mode == 'translate':
-        sampler = MicGeomSampler(random_var=normal_distribution, random_state=rng, tdir=array([[1.0], [1.0], [1.0]]))
+        sampler = MicGeomSampler(random_var=normal_distribution, random_state=rng, tdir=np.array([[1.0], [1.0], [1.0]]))
 
     sampler.target = micgeom
     mpos_target = micgeom.pos_total.copy()

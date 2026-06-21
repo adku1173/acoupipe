@@ -1,9 +1,10 @@
 import acoular as ac
+from acoupipe.datasets.experimental import DatasetMIRACLEConfig
+
+from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS, START_IDX, TEST_SIGNAL_LENGTH
+
 import numpy as np
 import pytest
-
-from acoupipe.datasets.experimental import DatasetMIRACLEConfig
-from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS, START_IDX, TEST_SIGNAL_LENGTH
 
 
 @pytest.mark.parametrize('mode', MODES)

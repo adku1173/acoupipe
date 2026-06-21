@@ -1,8 +1,8 @@
 import importlib
 
-import pytest
-
 from acoupipe.datasets import ir
+
+import pytest
 
 
 def test_get_ir_falls_back_to_pyroomacoustics(monkeypatch):

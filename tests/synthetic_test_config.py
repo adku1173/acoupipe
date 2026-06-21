@@ -5,9 +5,9 @@ in the public API.
 """
 
 import acoular as ac
-import numpy as np
-
 from acoupipe.datasets.synthetic import DatasetSyntheticConfig
+
+import numpy as np
 
 
 class DatasetSyntheticTestConfig(DatasetSyntheticConfig):

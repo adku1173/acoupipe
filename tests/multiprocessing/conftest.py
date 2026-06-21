@@ -1,8 +1,8 @@
 import sys
 
-import pytest
-
 from tests.multiprocessing.pipeline_value_test import get_distributed_pipeline
+
+import pytest
 
 
 @pytest.fixture

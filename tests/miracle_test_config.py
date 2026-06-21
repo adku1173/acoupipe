@@ -4,9 +4,9 @@ This module contains test-specific configuration classes that should not be expo
 in the public API.
 """
 
-import numpy as np
-
 from acoupipe.datasets.experimental import DatasetMIRACLEConfig
+
+import numpy as np
 
 
 class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
@@ -119,6 +119,7 @@ class DatasetMIRACLETestConfig(DatasetMIRACLEConfig):
     def get_prepare_func(self):
         """Override to use DatasetSyntheticConfig's prepare functions."""
         from functools import partial
+
         from acoupipe.datasets.synthetic import DatasetSyntheticConfig
 
         cf = DatasetSyntheticConfig

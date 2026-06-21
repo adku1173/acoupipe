@@ -1,12 +1,12 @@
 from pathlib import Path
 
 import acoular as ac
+from acoupipe.sampler import MicGeomSampler
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 from numpy.random import RandomState
-
-from acoupipe.sampler import MicGeomSampler
 
 nsamples = 10
 

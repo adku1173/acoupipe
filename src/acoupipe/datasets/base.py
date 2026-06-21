@@ -3,18 +3,18 @@
 import logging
 from functools import partial
 
-from traits.api import Dict, HasPrivateTraits, Instance, Int, Property
-
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
 
-if TF_FLAG:
-    import tensorflow as tf
+from traits.api import Dict, HasPrivateTraits, Instance, Int, Property
 
+if TF_FLAG:
     from acoupipe.writer import WriteTFRecord, complex_list_feature
+
+    import tensorflow as tf
 
 
 class ConfigBase(HasPrivateTraits):
@@ -310,9 +310,9 @@ class DatasetBase(HasPrivateTraits):
 
 
 if TF_FLAG:
-    import tensorflow as tf
-
     from acoupipe.writer import WriteTFRecord, complex_list_feature
+
+    import tensorflow as tf
 
     def save_tfrecord(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Save dataset to a .tfrecord file.

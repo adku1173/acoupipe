@@ -8,17 +8,14 @@ pipeline.
 """
 
 import hashlib
-import os
 import pickle
-from functools import partial
 from pathlib import Path
-
-import numpy as np
-from traits.api import Bool, Dict, Float, Instance, Int, List, Enum, Any
 
 from acoupipe.datasets.base import ConfigBase, DatasetBase
 from acoupipe.datasets.features import BaseFeatureCatalog, create_feature
 
+import numpy as np
+from traits.api import Bool, Dict, Enum, Float, Instance, Int
 
 # Default cache directory
 DEFAULT_CACHE_DIR = Path.home() / '.cache' / 'acoupipe' / 'dummy_dataset'
@@ -560,8 +557,7 @@ class DatasetDummy(DatasetBase):
             msg = 'TensorFlow is not available. Cannot save to TFRecord format.'
             raise ImportError(msg)
 
-        import tensorflow as tf
-        from acoupipe.writer import WriteTFRecord, complex_list_feature
+        from acoupipe.writer import WriteTFRecord
 
         # Get the feature collection to get the TF shape and dtype mappings
         feature_collection = self.get_feature_collection(features, f, num)
@@ -575,7 +571,8 @@ class DatasetDummy(DatasetBase):
 
         # Create a dummy pipeline that uses our generate method
         from acoupipe.base import DataGenerator
-        from traits.api import Any, Bool, Int, List, Str
+
+        from traits.api import Any, Int, List, Str
 
         class DummyPipeline(DataGenerator):
             # Define traits for the attributes we need
@@ -628,6 +625,7 @@ class DatasetDummy(DatasetBase):
         """
         from acoupipe.base import DataGenerator
         from acoupipe.writer import WriteH5Dataset
+
         from traits.api import Any, Int, List, Str
 
         # Create a dummy pipeline that uses our generate method
@@ -684,8 +682,8 @@ class DatasetDummy(DatasetBase):
             msg = 'TensorFlow is not available. Cannot create TF dataset.'
             raise ImportError(msg)
 
+
         import tensorflow as tf
-        from functools import partial
 
         # Get the feature collection to get the output signature
         feature_collection = self.get_feature_collection(features, f, num)

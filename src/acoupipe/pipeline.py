@@ -57,13 +57,13 @@ import os
 from functools import wraps
 from time import time
 
+from acoupipe.base import BaseSampler, DataGenerator
+
 import numpy as np
 import ray
 from numpy.random import RandomState, default_rng
 from tqdm import tqdm
 from traits.api import Callable, Dict, Either, Instance, Int, Property, Tuple
-
-from acoupipe.base import BaseSampler, DataGenerator
 
 
 # Without the use of this decorator factory (wraps), the name of the

@@ -1,13 +1,14 @@
 """BasePipeline and Distributed Pipeline for testing."""
 
 from acoular import MicGeom, PointSource, SourceMixer, WNoiseGenerator
-from numpy import array
-from numpy.random import RandomState
-from scipy.stats import norm, rayleigh
-
 from acoupipe.pipeline import BasePipeline
 from acoupipe.sampler import MicGeomSampler, NumericAttributeSampler, PointSourceSampler, SourceSetSampler
+
 from tests.constants import POS_TOTAL
+
+import numpy as np
+from numpy.random import RandomState
+from scipy.stats import norm, rayleigh
 
 
 def get_pipeline(nsamples):
@@ -24,13 +25,13 @@ def get_pipeline(nsamples):
     )
 
     mgs = MicGeomSampler(
-        random_var=norm(loc=0, scale=0.004), ddir=array([[1.0], [0.5], [0]]), random_state=RandomState(2), target=mg
+        random_var=norm(loc=0, scale=0.004), ddir=np.array([[1.0], [0.5], [0]]), random_state=RandomState(2), target=mg
     )
 
     pss = PointSourceSampler(
         random_var=norm(loc=0, scale=0.1688),
         target=ps_list,
-        ldir=array([[1.0], [1.0], [0.1]]),
+        ldir=np.array([[1.0], [1.0], [0.1]]),
         x_bounds=(-0.5, 0.5),
         y_bounds=(-0.5, 0.5),
         random_state=RandomState(3),

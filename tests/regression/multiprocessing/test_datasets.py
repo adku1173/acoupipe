@@ -1,9 +1,9 @@
 import os
 
+from tests.constants import MODES, START_IDX, TEST_SIGNAL_LENGTH
+
 import numpy as np
 import pytest
-
-from tests.constants import MODES, START_IDX, TEST_SIGNAL_LENGTH
 
 # tasks is defined locally in this file
 tasks = 2
