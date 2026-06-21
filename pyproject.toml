@@ -90,90 +90,96 @@ extend-exclude = ["docs/source"]   # shared config's exclude resolves to its own
 
 [tool.ruff.lint]
 extend-ignore = [
-
     # ===== Temporary migration guards (removed in the noted sub-issue) =====
-    "I001", "F401", "E402", "PLR0402",   # 2    imports: sorting / unused / placement / from-import
-    "ICN001", "ICN003",                  # 2    import aliases
-    "E501", "W505",                      # 3-8  line-length / docstring-length
-    "G004", "LOG015",                    # 11   logging
-    "PGH004", "RUF100", "E741",          # 10   stale-noqa cleanup / ambiguous names
-    "S307",                              # 10   intentional eval() in sampler
+    "I001", "F401", "E402", "PLR0402",   # 2   imports: sorting / unused / placement / from-import
+    "ICN001", "ICN003",                  # 2   import aliases
+    # E501 / W505 (line-length, doc-length) live in per-file src entries -> 3-8, peelable per module
+    "G004", "LOG015",                    # 11  logging
+    "PGH004", "RUF100", "E741",          # 10  stale-noqa cleanup / ambiguous names
     # no dedicated sub-issue -> general code cleanup, remove last
     "RUF015", "RUF021", "C419", "SIM108", "SIM114",  # 15
     "PLR5501", "PLR1711", "PLW0120",                 # 15
     "TRY",                                           # 15  exception style (TRY003/004/201)
     "EXE002",                                        # 15  exec bit (or `chmod -x src/acoupipe/*.py`)
-    # whitespace / formatting trivia
-    "W291", "W293", "COM819", "D210", "D403", "PLR2044",  # 15 (better cleared by `ruff format`)
+    "W291", "W293", "COM819", "D210", "D403", "PLR2044",  # 15  whitespace/format trivia (or `ruff format`)
 
-    # ===== Mirror Acoular's pyproject (fix at the end, no subissue) =====
-    "FBT002", "FBT003",  
-    "PTH",               #   os.path -> pathlib
-    "NPY002",            #   legacy numpy RNG
-    "PERF4",             #   list-comprehension perf
-    "PLR2004",           #   magic-value comparison
-    "PLR091",            #   too many args/branches/returns/statements
-    "PLW2901",           #   overwritten loop variable
-    "RUF005",            #   iterable concatenation
-    "RUF059",            #   unused unpacked variable
+    # ===== Permanent — mirror Acoular's pyproject (no sub-issue; never removed) =====
+    "FBT002", "FBT003",  # boolean positional args
+    "PTH",               # os.path -> pathlib
+    "NPY002",            # legacy numpy RNG
+    "PERF4",             # list-comprehension perf
+    "PLR2004",           # magic-value comparison
+    "PLR091",            # too many args/branches/returns/statements
+    "PLW2901",           # overwritten loop variable
+    "RUF005",            # iterable concatenation
+    "RUF059",            # unused unpacked variable
+    "S307",              # intentional eval() in sampler
 ]
 
 [tool.ruff.format]
-docstring-code-line-length = "dynamic" # 3-8: Acoular uses 120, kept "dynamic" to for passes to check,
+docstring-code-line-length = "dynamic"  # 3-8: Acoular uses 120; "dynamic" keeps check passing during migration
 
 [tool.ruff.lint.per-file-ignores]
-# src files
-"src/acoupipe/__init__.py"           = ["Q000"]
-"src/acoupipe/base.py"                = ["ANN001", "ANN201", "D413", "Q000"]
-"src/acoupipe/config.py"              = ["D100", "Q000"]
-"src/acoupipe/datasets/base.py"       = ["ANN001", "ANN201", "ANN202", "ANN204", "C901", "D102", "D107", "D212", "D413", "D417", "ERA001", "Q000"]
-"src/acoupipe/datasets/experimental.py" = ["ANN001", "ANN201", "ANN202", "ANN204", "ANN205", "ARG002", "ARG004", "COM812", "D102", "D412", "D413", "D416", "D417", "N806", "Q000", "S101", "SLF001"]
-"src/acoupipe/datasets/features.py"   = ["ANN001", "ANN201", "ANN202", "ANN205", "ARG001", "ARG004", "D100", "D101", "D102", "D103", "D212", "D413", "D417", "Q000", "SLF001"]
-"src/acoupipe/datasets/ir.py"          = ["ANN001", "ANN003", "ANN201", "ANN202", "D100", "D103", "D413", "D417", "N806", "Q000"]
-"src/acoupipe/datasets/micgeom.py"    = ["D100", "Q000"]
-"src/acoupipe/datasets/spectra_analytic.py" = ["ANN001", "ANN201", "ANN202", "D100", "D101", "D212", "D413", "ERA001", "N802", "N806", "Q000"]
-"src/acoupipe/datasets/synthetic.py"  = ["ANN001", "ANN003", "ANN201", "ANN202", "ANN204", "ANN205", "ARG001", "ARG004", "COM812", "D102", "D103", "D107", "D205", "D212", "D413", "D416", "D417", "N806", "Q000", "SLF001"]
-"src/acoupipe/datasets/utils.py"      = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "D100", "D103", "D205", "D212", "D413", "ERA001", "N806", "Q000"]
-"src/acoupipe/loader.py"              = ["ANN001", "ANN201", "ANN202", "D413", "Q000"]
-"src/acoupipe/pipeline.py"            = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "ANN204", "D101", "D102", "D105", "D107", "D413", "ERA001", "Q000"]
-"src/acoupipe/sampler.py"             = ["ANN001", "ANN201", "ANN202", "D101", "D102", "ERA001", "N806", "Q000"]
-"src/acoupipe/version.py"             = ["D100", "Q000"]
-"src/acoupipe/writer.py"              = ["ANN001", "ANN201", "ANN202", "D102", "D205", "D212", "D413", "ERA001", "Q000"]
+# In each src entry: E501/W505 -> the file's 3-8 line-length task; D* -> 9; N*/ARG*/SLF001 -> 10
+# --- src: 3 core modules ---
+"src/acoupipe/__init__.py"            = ["E501", "W505"]
+"src/acoupipe/base.py"                = ["D413"]
+"src/acoupipe/config.py"              = ["D100"]
+"src/acoupipe/version.py"             = ["D100"]
+"src/acoupipe/loader.py"              = ["D413", "E501", "W505"]
+"src/acoupipe/pipeline.py"            = ["D101", "D102", "D105", "D107", "D413", "E501", "W505"]
+"src/acoupipe/writer.py"              = ["D102", "D205", "D212", "D413", "E501", "W505"]
+"src/acoupipe/datasets/__init__.py"   = ["W505"]
+# --- src: 4 samplers ---
+"src/acoupipe/sampler.py"             = ["D101", "D102", "E501", "N806", "W505"]
+# --- src: 5 small dataset modules ---
+"src/acoupipe/datasets/base.py"       = ["D102", "D107", "D212", "D413", "D417", "E501", "W505"]
+"src/acoupipe/datasets/micgeom.py"    = ["D100"]
+"src/acoupipe/datasets/utils.py"      = ["D100", "D103", "D205", "D212", "D413", "N806", "W505"]
+# --- src: 6 feature extraction ---
+"src/acoupipe/datasets/features.py"   = ["ARG001", "ARG004", "D100", "D101", "D102", "D103", "D212", "D413", "D417", "E501", "SLF001", "W505"]
+# --- src: 7 synthetic datasets ---
+"src/acoupipe/datasets/synthetic.py"  = ["ARG001", "ARG004", "D102", "D103", "D107", "D205", "D212", "D413", "D416", "D417", "E501", "N806", "SLF001", "W505"]
+"src/acoupipe/datasets/spectra_analytic.py" = ["D100", "D101", "D212", "D413", "E501", "N802", "N806"]
+# --- src: 8 experimental datasets ---
+"src/acoupipe/datasets/experimental.py" = ["ARG002", "ARG004", "D102", "D412", "D413", "D416", "D417", "E501", "N806", "S101", "SLF001", "W505"]
+"src/acoupipe/datasets/ir.py"          = ["D100", "D103", "D413", "D417", "E501", "N806", "W505"]
 
-# examples files
-"examples/micgeom_sampling_example.py"    = ["D100", "INP001", "Q000"]
-"examples/numeric_attribute_sampling.py" = ["D212", "Q000"]
-"examples/pipeline_writeH5_example.py"   = ["ANN001", "ANN201", "ARG001", "D212", "ERA001", "INP001", "Q000"]
-"examples/point_source_example.py"        = ["D100", "INP001", "Q000"]
+# --- 14 examples ---
+"examples/micgeom_sampling_example.py"   = ["D100", "INP001"]
+"examples/numeric_attribute_sampling.py" = ["D212"]
+"examples/pipeline_writeH5_example.py"   = ["ARG001", "D212", "INP001"]
+"examples/point_source_example.py"       = ["D100", "INP001"]
 
-"app/main.py"      = ["A002", "ANN001", "ANN003", "ANN201", "ANN202", "D100", "D103", "DTZ005", "INP001", "PLC0415", "Q000"]    # "PLC0415" is intentional lazy CLI import
+# --- app ---
+"app/main.py" = ["A002", "D100", "D103", "DTZ005", "E501", "INP001", "PLC0415"]  # PLC0415 = intentional lazy CLI import
 
-# tests files (excluding throughput)
+# --- 12 tests (targeted) ---
 "tests/__init__.py"                            = ["D104"]
-"tests/conftest.py"                           = ["ANN001", "ANN003", "ANN201", "ANN202", "D100", "D103", "Q000"]
-"tests/constants.py"                          = ["COM812", "Q000"]
-"tests/dummy_dataset.py"                      = ["ANN001", "ANN003", "ANN201", "ANN202", "ANN204", "ARG001", "ARG002", "ARG005", "C901", "COM812", "D107", "D413", "F811", "F841", "PLC0415", "PLR1704", "Q000", "RET505", "S301", "SLF001", "T201", "UP024", "UP028"]
-"tests/miracle_test_config.py"                = ["ANN003", "ANN201", "ANN204", "COM812", "D107", "PLC0415", "Q000"]
-"tests/multiprocessing/__init__.py"           = ["D104"]
-"tests/multiprocessing/conftest.py"           = ["ANN201", "D100", "D103", "Q000"]
-"tests/multiprocessing/pipeline_value_test.py" = ["ANN001", "ANN201", "ARG005", "COM812", "D103", "Q000", "RET504"]
-"tests/multiprocessing/test_sampler.py"        = ["ANN001", "ANN201", "ARG005", "D100", "D103", "PIE808", "PT011", "Q000", "S101"]
-"tests/pipeline_value_test.py"                = ["ANN001", "ANN201", "ARG005", "COM812", "D103", "Q000", "RET504"]
-"tests/regression/__init__.py"               = ["D104"]
+"tests/conftest.py"                            = ["D100", "D103"]
+"tests/dummy_dataset.py"                       = ["ARG001", "ARG002", "ARG005", "D107", "D413", "F811", "F841", "PLC0415", "PLR1704", "RET505", "S301", "SLF001", "T201", "UP024", "UP028", "W505"]
+"tests/miracle_test_config.py"                 = ["D107", "PLC0415"]
+"tests/multiprocessing/__init__.py"            = ["D104"]
+"tests/multiprocessing/conftest.py"            = ["D100", "D103"]
+"tests/multiprocessing/pipeline_value_test.py" = ["ARG005", "D103", "RET504"]
+"tests/multiprocessing/test_sampler.py"        = ["ARG005", "D100", "D103", "PIE808", "PT011", "S101"]
+"tests/pipeline_value_test.py"                 = ["ARG005", "D103", "RET504"]
+"tests/regression/__init__.py"                 = ["D104"]
 "tests/regression/multiprocessing/__init__.py" = ["D104"]
-"tests/regression/multiprocessing/test_datasets.py" = ["ANN001", "ANN201", "COM812", "D100", "Q000"]
-"tests/regression/test_datasets.py"           = ["ANN001", "ANN201", "ARG005", "COM812", "D100", "D103", "Q000", "S101", "SIM118"]
-"tests/synthetic_test_config.py"             = ["ANN201", "D102"]
-"tests/test_dataset_tf.py"                    = ["ANN001", "ANN003", "ANN201", "ANN202", "ARG001", "PLC0415", "Q000", "S101", "SIM118"]
-"tests/test_dummy_dataset.py"                 = ["ANN001", "ANN201", "B007", "B905", "COM812", "F841", "PLC0415", "PLW1508", "Q000", "S101", "SLF001"]
-"tests/test_ir.py"                            = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "ARG001", "ARG005", "D100", "D103", "EM101", "Q000", "S101", "SLF001"]
-"tests/test_loader.py"                        = ["ANN001", "ANN201", "D100", "Q000", "S101"]
-"tests/test_random_state.py"                 = ["ANN001", "ANN201", "ANN202", "D101", "Q000", "S101", "T201"]
-"tests/test_sampler.py"                       = ["ANN001", "ANN201", "ANN202", "ARG005", "COM812", "D100", "D103", "PIE808", "PT006", "PT011", "PT014", "PT018", "Q000", "S101"]
-"tests/test_save_h5.py"                       = ["ANN001", "ANN201", "COM812", "PLC0415", "Q000", "S101"]
-"tests/test_save_tfrecord.py"                 = ["ANN001", "ANN201", "ARG001", "COM812", "PLC0415", "Q000"]
-"tests/test_spectra.py"                       = ["ANN001", "ANN201", "ARG001", "D100", "D103", "N802", "N806", "PT006", "Q000", "S101", "SLF001"]
-"tests/throughput/*" = ["ALL"]   # 13 — tighten to targeted codes later (tests/* glob is non-recursive)
+"tests/regression/multiprocessing/test_datasets.py" = ["D100"]
+"tests/regression/test_datasets.py"            = ["ARG005", "D100", "D103", "S101", "SIM118", "W505"]
+"tests/synthetic_test_config.py"               = ["D102"]
+"tests/test_dataset_tf.py"                     = ["ARG001", "PLC0415", "S101", "SIM118"]
+"tests/test_dummy_dataset.py"                  = ["B007", "B905", "F841", "PLC0415", "PLW1508", "S101", "SLF001"]
+"tests/test_ir.py"                             = ["ARG001", "ARG005", "D100", "D103", "EM101", "S101", "SLF001"]
+"tests/test_loader.py"                         = ["D100", "S101"]
+"tests/test_random_state.py"                   = ["D101", "S101", "T201"]
+"tests/test_sampler.py"                        = ["ARG005", "D100", "D103", "PIE808", "PT006", "PT011", "PT014", "PT018", "S101"]
+"tests/test_save_h5.py"                        = ["PLC0415", "S101"]
+"tests/test_save_tfrecord.py"                  = ["ARG001", "PLC0415"]
+"tests/test_spectra.py"                        = ["ARG001", "D100", "D103", "N802", "N806", "PT006", "S101", "SLF001"]
+# --- 13 throughput ---
+"tests/throughput/*" = ["ALL"]
 
 
 [project.urls]
