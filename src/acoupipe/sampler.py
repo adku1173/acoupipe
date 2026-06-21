@@ -42,6 +42,8 @@ The output of the example is:
 from inspect import signature
 
 import acoular as ac
+from acoupipe.base import BaseSampler
+
 import numpy as np
 from numpy.random import Generator, RandomState
 from scipy.stats import _distn_infrastructure
@@ -63,8 +65,6 @@ from traits.api import (
     cached_property,
     observe,
 )
-
-from acoupipe.base import BaseSampler
 
 
 class NumericAttributeSampler(BaseSampler):

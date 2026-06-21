@@ -21,13 +21,13 @@ The latter can be efficiently consumed by the Tensorflow framework for machine l
 from datetime import datetime
 from os import path
 
-import numpy as np
 from acoular import config
-from h5py import File as H5File
-from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
-
 from acoupipe.base import DataGenerator
 from acoupipe.config import TF_FLAG
+
+import numpy as np
+from h5py import File as H5File
+from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
 
 
 class BaseWriteDataset(DataGenerator):

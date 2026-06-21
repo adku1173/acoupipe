@@ -4,12 +4,12 @@ These tests verify that the pipeline-to-TensorFlow integration works correctly
 using the real dataset, as they test the actual pipeline implementation.
 """
 
-import numpy as np
-import pytest
-
 from acoupipe.datasets.synthetic import DatasetSynthetic
+
 from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS
 from tests.synthetic_test_config import DatasetSyntheticTestConfig
+
+import pytest
 
 
 @pytest.fixture
@@ -28,8 +28,8 @@ def create_dataset():
 @pytest.fixture
 def temp_dir():
     """Create and clean up a temporary directory."""
-    import tempfile
     import shutil
+    import tempfile
     from pathlib import Path
 
     test_dir = Path(tempfile.mkdtemp())

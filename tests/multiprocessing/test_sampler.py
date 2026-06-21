@@ -1,7 +1,6 @@
-import pytest
-
 from acoupipe.pipeline import DistributedPipeline
 
+import pytest
 
 pytestmark = pytest.mark.multiprocessing
 

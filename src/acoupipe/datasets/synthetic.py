@@ -18,10 +18,6 @@ from copy import deepcopy
 from functools import partial
 
 import acoular as ac
-import numpy as np
-from scipy.stats import norm, poisson
-from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, observe
-
 import acoupipe.sampler as sp
 from acoupipe.datasets.base import ConfigBase, DatasetBase
 from acoupipe.datasets.features import (
@@ -45,6 +41,10 @@ from acoupipe.datasets.ir import get_ir, require_ir_support
 from acoupipe.datasets.micgeom import tub_vogel64_ap1
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import calc_transfer, get_all_source_signals, get_uncorrelated_noise_source_recursively
+
+import numpy as np
+from scipy.stats import norm, poisson
+from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, observe
 
 
 class DatasetSynthetic(DatasetBase):

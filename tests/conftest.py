@@ -4,21 +4,22 @@ import tempfile
 from pathlib import Path
 
 from acoular import ImportGrid, SteeringVector
-import numpy as np
-import pytest
-from scipy.stats import norm
-
-from .constants import MIC_GEOM
-from .dummy_dataset import DatasetDummy
 from acoupipe.datasets.experimental import DatasetMIRACLE
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.synthetic import DatasetSynthetic
 from acoupipe.sampler import ContainerSampler, LocationSampler, NumericAttributeSampler
-from tests.miracle_test_config import DatasetMIRACLETestConfig
-from tests.synthetic_test_config import DatasetSyntheticTestConfig
 from acoupipe.writer import WriteH5Dataset
 
+from tests.miracle_test_config import DatasetMIRACLETestConfig
+from tests.synthetic_test_config import DatasetSyntheticTestConfig
+
+from .constants import MIC_GEOM
+from .dummy_dataset import DatasetDummy
 from .pipeline_value_test import get_pipeline
+
+import numpy as np
+import pytest
+from scipy.stats import norm
 
 
 class _AttributeTarget:

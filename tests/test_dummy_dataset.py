@@ -1,18 +1,18 @@
 """Tests for the dummy dataset functionality."""
 
-import os
 import importlib.util
-import tempfile
+import os
 import shutil
+import tempfile
 from pathlib import Path
+
+from .dummy_dataset import DatasetDummy, DatasetDummyConfig
 
 import numpy as np
 import pytest
 
 # Only run these tests if TensorFlow is available
 TF_FLAG = importlib.util.find_spec('tensorflow') is not None
-
-from .dummy_dataset import DatasetDummy, DatasetDummyConfig
 
 
 @pytest.fixture
@@ -322,7 +322,6 @@ class TestDummyDatasetWithTFRecord:
         """Test creating a TensorFlow dataset from dummy data."""
         if not TF_FLAG:
             pytest.skip('TensorFlow not available')
-        import tensorflow as tf
 
         features = ['csm', 'idx', 'seeds']
 

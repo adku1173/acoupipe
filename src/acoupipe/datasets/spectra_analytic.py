@@ -1,10 +1,9 @@
-import numpy as np
-import numpy.fft as fft
 from acoular import PowerSpectraImport, SteeringVector
 from acoular.internal import digest
-from numpy import diag_indices, dot, r_, tril_indices, zeros
+
+import numpy as np
+import scipy.linalg as spla
 from numpy.random import default_rng
-from scipy.linalg import cholesky
 from traits.api import (
     CArray,
     CInt,
@@ -138,7 +137,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         f : ndarray
             Array of length *block_size/2+1* containing the sample frequencies.
         """
-        return abs(fft.fftfreq(self.block_size, 1.0 / self.sample_freq)[: int(self.block_size / 2 + 1)])
+        return abs(np.fft.fftfreq(self.block_size, 1.0 / self.sample_freq)[: int(self.block_size / 2 + 1)])
 
     @property_depends_on('num_samples, block_size, overlap')
     def _get_num_blocks(self):
@@ -173,19 +172,19 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         df = self.df_eq
         dim = scale.shape[0]
         n_tril = dim * (dim - 1) // 2
-        C = cholesky(scale, lower=True)
+        C = spla.cholesky(scale, lower=True)
         covariances = rng.normal(size=n_tril) + 1j * rng.normal(size=n_tril)
         covariances *= np.sqrt(0.5)
-        variances = r_[[rng.gamma(df - dim + i, scale=1, size=1) ** 0.5 for i in range(dim)]]
-        A = zeros(C.shape, dtype=complex)
+        variances = np.r_[[rng.gamma(df - dim + i, scale=1, size=1) ** 0.5 for i in range(dim)]]
+        A = np.zeros(C.shape, dtype=complex)
         # input the covariances
-        tril_idx = tril_indices(dim, k=-1)
+        tril_idx = np.tril_indices(dim, k=-1)
         A[tril_idx] = covariances
         # Input the variances
-        A[diag_indices(dim)] = variances.astype(complex)[:, 0]
+        A[np.diag_indices(dim)] = variances.astype(complex)[:, 0]
         # build matrix
-        CA = dot(C, A)
-        return dot(CA, CA.conjugate().T) / df
+        CA = np.dot(C, A)
+        return np.dot(CA, CA.conjugate().T) / df
 
     @property_depends_on(
         'seed, mode, block_size, overlap, sample_freq, num_samples, Q, noise, ind_low, ind_high, steer.digest, custom_transfer',
@@ -200,7 +199,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     def _calc_csm(self):
         Q = self._Q
         fftfreq = self.fftfreq()
-        H = zeros((fftfreq.shape[0], self.steer.mics.num_mics, Q.shape[1]), dtype=complex)
+        H = np.zeros((fftfreq.shape[0], self.steer.mics.num_mics, Q.shape[1]), dtype=complex)
         for i in self.indices:  # calculate only the indices that are needed
             H[i] = self.steer.transfer(fftfreq[i]).T  # transfer functions
         csm = H @ Q @ H.swapaxes(2, 1).conjugate()
@@ -221,7 +220,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
         if self.mode == 'analytic':
             return self.Q
         fftfreq = self.fftfreq()
-        Q = zeros((fftfreq.shape[0], self.Q.shape[1], self.Q.shape[1]), dtype=complex)
+        Q = np.zeros((fftfreq.shape[0], self.Q.shape[1], self.Q.shape[1]), dtype=complex)
         for i in self.indices:
             rng = default_rng([self.seed, i])
             Q[i] = self._sample_wishart(self.Q[i], rng)
@@ -233,7 +232,7 @@ class PowerSpectraAnalytic(PowerSpectraImport):
             if self.mode == 'analytic':
                 return self.noise
             fftfreq = self.fftfreq()
-            noise = zeros((fftfreq.shape[0], self.noise.shape[1], self.noise.shape[1]), dtype=complex)
+            noise = np.zeros((fftfreq.shape[0], self.noise.shape[1], self.noise.shape[1]), dtype=complex)
             for i in self.indices:
                 rng = default_rng([self.seed + 1, i])
                 noise[i] = self._sample_wishart(self.noise[i], rng)

@@ -4,8 +4,9 @@ This module centralizes constants that are used across multiple test files
 to avoid duplication and ensure consistency.
 """
 
-import numpy as np
 from acoular import MicGeom
+
+import numpy as np
 
 # Feature names that are implemented and tested
 IMPLEMENTED_FEATURES = [

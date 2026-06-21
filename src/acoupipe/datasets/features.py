@@ -1,11 +1,6 @@
 from functools import partial
 
 import acoular as ac
-import numpy as np
-from numpy import array, imag, newaxis, real, triu_indices
-from numpy.linalg import eigh
-from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
-
 from acoupipe.config import TF_FLAG
 from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.utils import (
@@ -13,6 +8,10 @@ from acoupipe.datasets.utils import (
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
+
+import numpy as np
+from numpy.linalg import eigh
+from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
 
 if TF_FLAG:
     from acoupipe.writer import infer_tf_encoding
@@ -172,13 +171,13 @@ class SourcemapFeature(BaseFeatureCatalog):
 
     @staticmethod
     def calc_beamformer1(sampler, beamformer, f, num, name):
-        sm = array([beamformer.synthetic(freq, num=num) for freq in f])
+        sm = np.array([beamformer.synthetic(freq, num=num) for freq in f])
         return {name: sm}
 
     @staticmethod
     def calc_beamformer2(sampler, beamformer, name):
         f = beamformer.freq_data.fftfreq()
-        sm = array([beamformer.synthetic(freq, num=0) for freq in f])
+        sm = np.array([beamformer.synthetic(freq, num=0) for freq in f])
         return {name: sm}
 
     def get_feature_func(self):
@@ -330,7 +329,7 @@ class CSMFeature(SpectraFeature):
             depending on the number of frequencies in fidx.
         """
         csm = freq_data.csm[:]
-        csm = array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
+        csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: csm}
 
     def get_feature_func(self):
@@ -351,10 +350,10 @@ class CSMtriuFeature(SpectraFeature):
         csm_triu_imag = np.zeros(csm.shape)
         num_mics = csm.shape[1]
         for i in range(csm.shape[0]):
-            csmtriu_real[i][triu_indices(num_mics)] = real(csm[i])[
-                triu_indices(num_mics)
+            csmtriu_real[i][np.triu_indices(num_mics)] = np.real(csm[i])[
+                np.triu_indices(num_mics)
             ]  # add real part at upper triangular matrix
-            csm_triu_imag[i][triu_indices(num_mics)] = imag(csm[i])[triu_indices(num_mics)]
+            csm_triu_imag[i][np.triu_indices(num_mics)] = np.imag(csm[i])[np.triu_indices(num_mics)]
         return csmtriu_real + csm_triu_imag.transpose(0, 2, 1)
 
     @staticmethod
@@ -393,7 +392,7 @@ class CSMtriuFeature(SpectraFeature):
             depending on the number of frequencies in fidx.
         """
         csm = freq_data.csm[:]
-        csm = array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
+        csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: CSMtriuFeature.transform(csm)}
 
     def get_feature_func(self):
@@ -410,7 +409,7 @@ class EigmodeFeature(SpectraFeature):
     @staticmethod
     def transform(csm):
         eva, eve = eigh(csm)
-        return eva[:, newaxis, :] * eve[:]
+        return eva[:, np.newaxis, :] * eve[:]
 
     @staticmethod
     def calc_eigmode1(sampler, freq_data, name):
@@ -448,7 +447,7 @@ class EigmodeFeature(SpectraFeature):
             depending on the number of frequencies in fidx.
         """
         csm = freq_data.csm[:]
-        csm = array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
+        csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: EigmodeFeature.transform(csm)}
 
     def get_feature_func(self):

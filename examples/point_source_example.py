@@ -1,11 +1,11 @@
 from pathlib import Path
 
 import acoular as ac
+from acoupipe.sampler import NumericAttributeSampler, PointSourceSampler, SourceSetSampler
+
 import numpy as np
 import scipy.stats
 from pylab import colorbar, figure, imshow, plot, show
-
-from acoupipe.sampler import NumericAttributeSampler, PointSourceSampler, SourceSetSampler
 
 ac.config.global_caching = 'none'
 

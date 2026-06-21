@@ -4,10 +4,10 @@ These tests verify that TFRecord file saving works correctly, decoupled from
 acoustic correctness testing (which is done in regression tests).
 """
 
+from .dummy_dataset import DatasetDummy
+
 import numpy as np
 import pytest
-
-from .dummy_dataset import DatasetDummy
 
 
 @pytest.fixture
@@ -19,8 +19,8 @@ def dummy_dataset():
 @pytest.fixture
 def temp_dir():
     """Create and clean up a temporary directory."""
-    import tempfile
     import shutil
+    import tempfile
     from pathlib import Path
 
     test_dir = Path(tempfile.mkdtemp())

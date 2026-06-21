@@ -5,11 +5,11 @@ Created on Tue Oct 13 11:53:22 2020.
 @author: kujawski
 """
 
+from acoular import WNoiseGenerator
+from acoupipe.sampler import NumericAttributeSampler
+
 import matplotlib.pyplot as plt
 import scipy.stats
-from acoular import WNoiseGenerator
-
-from acoupipe.sampler import NumericAttributeSampler
 
 # create white noise signal
 wn = WNoiseGenerator(sample_freq=51200, seed=10, rms=1.0, num_samples=51200)
