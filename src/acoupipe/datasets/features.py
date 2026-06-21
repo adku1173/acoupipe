@@ -114,7 +114,7 @@ class TargetmapFeature(BaseFeatureCatalog):
 
 
 class SourcemapFeature(BaseFeatureCatalog):
-    """SourcemapFeature class for handling the generation of sourcemaps obtained with microphone array methods.
+    """Handle the generation of sourcemaps obtained with microphone array methods.
 
     Attributes
     ----------
@@ -123,7 +123,8 @@ class SourcemapFeature(BaseFeatureCatalog):
     beamformer : instance of class acoular.BeamformerBase
         The beamformer to calculate the sourcemap.
     f : float
-        The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+        The center frequency or list of frequencies of the dataset.
+        If None, all frequencies are included.
     num : integer
         Controls the width of the frequency bands considered; defaults to
         0 (single frequency line).
@@ -137,8 +138,8 @@ class SourcemapFeature(BaseFeatureCatalog):
         n    1/n-octave band
         ===  =====================
     fidx : list of tuples
-        List of tuples containing the start and end indices of the frequency bands to be considered. Is determined
-        automatically from attr:`f` and attr:`num`.
+        List of tuples containing the start and end indices of the frequency bands to be
+        considered. Is determined automatically from attr:`f` and attr:`num`.
     """
 
     name = Str('sourcemap')
@@ -160,7 +161,7 @@ class SourcemapFeature(BaseFeatureCatalog):
         return fidx
 
     def set_freq_limits(self):
-        """Set the frequency limits of the beamformer so that the result is only calculated for necessary frequencies."""
+        """Set the beamformer frequency limits to calculate only the necessary frequencies."""
         if self.beamformer.freq_data is not None:
             if self.fidx is not None:
                 self.beamformer.freq_data.ind_low = min([f[0] for f in self.fidx])
@@ -223,7 +224,7 @@ class SpectraFeature(BaseFeatureCatalog):
         return fidx
 
     def set_freq_limits(self):
-        """Set the frequency limits of the spectra object so that the result is only calculated for necessary frequencies."""
+        """Set the beamformer frequency limits to calculate only the necessary frequencies."""
         if self.freq_data is not None:
             if self.fidx is not None:
                 self.freq_data.ind_low = min([f[0] for f in self.fidx])
@@ -318,15 +319,16 @@ class CSMFeature(SpectraFeature):
         freq_data : instance of class acoular.PowerSpectra
             power spectra to calculate the csm feature
         fidx : list of tuples, optional
-            list of tuples containing the start and end indices of the frequency bands to be considered,
+            list of tuples containing the start and end indices of the frequency bands to
+            be considered,
             by default None
 
 
         Returns
         -------
         numpy.array
-            The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
-            depending on the number of frequencies in fidx.
+            The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics)
+            with numfreq depending on the number of frequencies in fidx.
         """
         csm = freq_data.csm[:]
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
@@ -381,15 +383,16 @@ class CSMtriuFeature(SpectraFeature):
         freq_data : instance of class acoular.PowerSpectra
             power spectra to calculate the csm feature
         fidx : list of tuples, optional
-            list of tuples containing the start and end indices of the frequency bands to be considered,
+            list of tuples containing the start and end indices of the frequency bands to
+            be considered,
             by default None
 
 
         Returns
         -------
         numpy.array
-            The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics) with numfreq
-            depending on the number of frequencies in fidx.
+            The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics)
+            with numfreq depending on the number of frequencies in fidx.
         """
         csm = freq_data.csm[:]
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
@@ -413,7 +416,7 @@ class EigmodeFeature(SpectraFeature):
 
     @staticmethod
     def calc_eigmode1(sampler, freq_data, name):
-        """Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+        """Calculate eigenvalue-scaled eigenvectors of the CSM from time data.
 
         Parameters
         ----------
@@ -429,14 +432,15 @@ class EigmodeFeature(SpectraFeature):
 
     @staticmethod
     def calc_eigmode2(sampler, freq_data, fidx, name):
-        """Calculate the eigenvalue-scaled eigenvectors of the cross-spectral matrix (CSM) from time data.
+        """Calculate eigenvalue-scaled eigenvectors of the CSM from time data.
 
         Parameters
         ----------
         freq_data : instance of class acoular.PowerSpectra
             power spectra to calculate the csm feature
         fidx : list of tuples, optional
-            list of tuples containing the start and end indices of the frequency bands to be considered,
+            list of tuples containing the start and end indices of the frequency bands to
+            be considered,
             by default None
 
 

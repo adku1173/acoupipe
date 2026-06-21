@@ -132,7 +132,7 @@ extend-ignore = [
 "src/acoupipe/datasets/micgeom.py"    = ["D100"]
 "src/acoupipe/datasets/utils.py"      = ["D100", "D103", "D205", "D212", "D413", "N806"]
 # --- src: 6 feature extraction ---
-"src/acoupipe/datasets/features.py"   = ["ARG001", "ARG004", "D100", "D101", "D102", "D103", "D212", "D413", "D417", "E501", "SLF001", "W505"]
+"src/acoupipe/datasets/features.py"   = ["ARG001", "ARG004", "D100", "D101", "D102", "D103", "D212", "D413", "D417", "SLF001"]
 # --- src: 7 synthetic datasets ---
 "src/acoupipe/datasets/synthetic.py"  = ["ARG001", "ARG004", "D102", "D103", "D107", "D205", "D212", "D413", "D416", "D417", "E501", "N806", "SLF001", "W505"]
 "src/acoupipe/datasets/spectra_analytic.py" = ["D100", "D101", "D212", "D413", "E501", "N802", "N806"]
