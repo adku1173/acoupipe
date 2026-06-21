@@ -126,7 +126,7 @@ extend-ignore = [
 "src/acoupipe/pipeline.py"            = ["D101", "D102", "D105", "D107", "D413"]
 "src/acoupipe/writer.py"              = ["D102", "D205", "D212", "D413"]
 # --- src: 4 samplers ---
-"src/acoupipe/sampler.py"             = ["D101", "D102", "E501", "N806", "W505"]
+"src/acoupipe/sampler.py"             = ["D101", "D102", "N806"]
 # --- src: 5 small dataset modules ---
 "src/acoupipe/datasets/base.py"       = ["D102", "D107", "D212", "D413", "D417", "E501", "W505"]
 "src/acoupipe/datasets/micgeom.py"    = ["D100"]

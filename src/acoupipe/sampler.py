@@ -3,16 +3,23 @@
 Sampler Module Purpose
 -----------------------
 
-A manipulation of object characteristics according to a certain
-random distribution can be achieved by using the :code:`BaseSampler` derived classes included in the :code:`sampler.py` module.
-All :code:`BaseSampler` derived classes represent random processes that can be used to manipulate the attributes of Acoular's objects according to a specified distribution.
-A random process is defined by a random variable and a corresponding random state. Both properties are attributes of all :code:`BaseSampler` derived classes.
+A manipulation of object characteristics according to a certain random distribution can be
+achieved by using the :code:`BaseSampler` derived classes included in the
+:code:`sampler.py` module.
+All :code:`BaseSampler` derived classes represent random processes that can be used to
+manipulate the attributes of Acoular's objects according to a specified distribution.
+A random process is defined by a random variable and a corresponding random state.
+Both properties are attributes of all :code:`BaseSampler` derived classes.
 AcouPipe offers a variety of different types of samplers in the :code:`sampler.py` module.
-The random variable that can be passed to class instances of the sampler module must either be derived from or be part of the :code:`scipy.stats` module.
+The random variable that can be passed to class instances of the sampler module must
+either be derived from or be part of the :code:`scipy.stats` module.
 
-This example illustrates how the RMS value of two white noise signals can be sampled according to a normal distribution. For this purpose, an instance of the :code:`BaseSampler`
-derived :code:`NumericAttributeSampler` class is used. The two :code:`WNoiseGenerator` objects are given as targets to the sampler object.
-New RMS values following a normal distribution are assigned to the :code:`WNoiseGenerator` objects each time the sample method of the :code:`NumericAttributeSampler` object is evaluated.
+This example illustrates how the RMS value of two white noise signals can be sampled
+according to a normal distribution. For this purpose, an instance of the :code:`BaseSampler`
+derived :code:`NumericAttributeSampler` class is used. The two :code:`WNoiseGenerator`
+objects are given as targets to the sampler object.
+New RMS values following a normal distribution are assigned to the :code:`WNoiseGenerator`
+objects each time the sample method of the :code:`NumericAttributeSampler` object is evaluated.
 
 .. code-block:: python
 
@@ -26,7 +33,7 @@ New RMS values following a normal distribution are assigned to the :code:`WNoise
 
     n2 = ac.WNoiseGenerator(sample_freq=24000, num_samples=24000 * 5, rms=0.5, seed=2)
 
-    rms_sampler = NumericAttributeSampler(target=[n1, n2], attribute='rms', random_var=random_var, random_state=10)
+    rms_sampler = NumericAttributeSampler(target=[n1, n2], attribute='rms', random_var=random_var)
 
     rms_sampler.sample()
     print(n1.rms, n2.rms)
@@ -70,12 +77,13 @@ from traits.api import (
 class NumericAttributeSampler(BaseSampler):
     """Samples attributes of numeric type (e.g. int, float).
 
-    This class samples attributes of numeric type (e.g. int, float) of an instance or a list of instances according
-    to a specified random distribution.
+    This class samples attributes of numeric type (e.g. int, float) of an instance or a
+    list of instances according to a specified random distribution.
     The attribute to be sampled is specified by :attr:`attribute`.
     The sampled values are normalized to the range [0,1] if :attr:`normalize` is set to True.
-    The sampled values are ordered in ascending or descending order for all objects in the :attr:`target` list if :attr:`order`
-    is set to "ascending" or "descending". If no value is set (:attr:`order` `=None`), no ordering is performed.
+    The sampled values are ordered in ascending or descending order for all objects in the
+    :attr:`target` list if :attr:`order` is set to "ascending" or "descending".
+    If no value is set (:attr:`order` `=None`), no ordering is performed.
     """
 
     #: attribute of the object in the :attr:`target` list that should be
@@ -86,8 +94,9 @@ class NumericAttributeSampler(BaseSampler):
     #: if :attr:`equal_value` is set to True, this has no effect.
     normalize = Bool(False, desc='if attribute is True, sampled values will be normalized')
 
-    #: whether to order the drawn values in ascending or descending order for all objects in the :attr:`target` list.
-    #: if :attr:`equal_value` is set to True, this has no effect. If no value is set (:attr:`order` `=None`), no ordering is performed.
+    #: whether to order the drawn values in ascending or descending order for all objects
+    #: in the :attr:`target` list. if :attr:`equal_value` is set to True, this has no effect.
+    #: If no value is set (:attr:`order` `=None`), no ordering is performed.
     order = Either('ascending', 'descending')
 
     #: sampled value filter (resample if callable filter returns False)
@@ -115,8 +124,9 @@ class NumericAttributeSampler(BaseSampler):
     def sample(self):
         """Random sampling of the target instance attribute.
 
-        Utilizes :meth:`rvs` function to draw random values from :attr:`random_var` that are going to be assigned
-        to the target instance attribute via internal :meth:`set_value` method.
+        Utilizes :meth:`rvs` function to draw random values from :attr:`random_var`
+        that are going to be assigned to the target instance attribute via internal
+        :meth:`set_value` method.
         """
         if self.equal_value:
             value = self.rvs()[0]
@@ -193,8 +203,9 @@ class SetSampler(BaseSampler):
     def sample(self):
         """Random sampling of the target instance attribute.
 
-        Utilizes :meth:`rvs` function to draw random values from :attr:`set` that are going to be assigned
-        to the target instance attribute :attr:`attribute` via internal :meth:`set_value` method.
+        Utilizes :meth:`rvs` function to draw random values from :attr:`set`
+        that are going to be assigned to the target instance attribute :attr:`attribute`
+        via internal :meth:`set_value` method.
         """
         # draw a single value from set -> assign to each target in target List
         if self.equal_value:
@@ -208,12 +219,13 @@ class SetSampler(BaseSampler):
 
 
 class SourceSetSampler(SetSampler):
-    """Draws one or multiple sources of type :class:`acoular.SamplesGenerator` from a given set of sources.
+    """Draw one or multiple sources from a given set of :class:`acoular.SamplesGenerator`.
 
     From a given set of sources (type :class:`acoular.SamplesGenerator`),
     :class:`SourceSetSampler` draws one or multiple sources from this set
-    and assigns those to one or more SourceMixer instances. The number of sources to be drawn is specified by
-    :attr:`nsources`. The attribute to be sampled is specified by :attr:`attribute`.
+    and assigns those to one or more SourceMixer instances. The number of sources to be
+    drawn is specified by :attr:`nsources`.
+    The attribute to be sampled is specified by :attr:`attribute`.
     """
 
     #: a list of :class:`acoular.SourceMixer` instances
@@ -407,7 +419,7 @@ class LocationSampler(BaseSampler):
 
 
 class PointSourceSampler(LocationSampler):
-    """Random process that samples the locations of one or more instances of type :class:`PointSource`."""
+    """Sample the locations of one or more instances of type :class:`PointSource`."""
 
     #: a list of :class:`acoular.PointSource` instances
     target = Trait(list, desc='a list of PointSource instances to manipulate')
@@ -535,13 +547,15 @@ class MicGeomSampler(BaseSampler):
 
 #     The current implementation only allows uncorrelated sources, meaning that the
 #     sampled covariances matrices at :attr:`target` are diagonal matrices.
-#     The strength (variance) of the sources follows the given random distribution at :attr:`random_var`.
+#     The strength (variance) of the sources follows the given random distribution
+#     at :attr:`random_var`.
 #     The attribute :attr:`nsources` determines the number of sources to be sampled.
-#     The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
+#     The :attr:`nfft` attribute determines the number of fft bins at which power is distributed.
 #     The power of each source is sampled from the given random distribution at :attr:`random_var`.
-#     and assigned to :attr:`variances` after sampling. The attribute :attr:`equal_value` determines if a single
-#     power is chosen for all sources.
-#     The :attr:`scale_variance` attribute determines if the variance is scaled such that the sum of variances equals to 1.
+#     and assigned to :attr:`variances` after sampling.
+#     The attribute :attr:`equal_value` determines if a single power is chosen for all sources.
+#     The :attr:`scale_variance` attribute determines if the variance is scaled
+#     such that the sum of variances equals to 1.
 #     """
 
 #     #: the sampled complex covariance matrices of shape (nfft, nsources, nsources)
@@ -587,7 +601,8 @@ class MicGeomSampler(BaseSampler):
 #         self.variances = variance.copy() # copy full variance
 #         variance /= self.nfft
 #         variance = np.diag(variance.astype(complex))
-#         self.target = np.repeat(variance,self.nfft).reshape((self.nsources,self.nsources,self.nfft)).T
+#         self.target = np.repeat(variance, self.nfft).reshape(
+#             (self.nsources, self.nsources, self.nfft)).T
 
 
 # class SpectraSampler(CovSampler):
@@ -596,14 +611,15 @@ class MicGeomSampler(BaseSampler):
 #     The current implementation only allows uncorrelated sources, meaning that the
 #     sampled power spectra at :attr:`target` are diagonal matrices.
 #     The attribute :attr:`nsources` determines the number of sources to be sampled.
-#     The :attr:`nfft` attribute determines the number of fft bins at which the power is distributed.
+#     The :attr:`nfft` attribute determines the number of fft bins at which power is distributed.
 #     The power of each source is sampled from the given random distribution at :attr:`random_var`.
 #     and assigned to :attr:`variances`. The attribute :attr:`equal_value` determines if a single
 #     power is chosen for all sources. The :attr:`scale_variance` attribute determines if the
 #     variance is scaled such that the sum of variances equals to 1.
 #     The attribute :attr:`equal_spectra` determines if the same underlying transfer function of
 #     a power spectrum is assigned to all sources. The attribute :attr:`max_order` determines the
-#     maximum order of the power spectra filter. The sampled Power Spectra are assigned to :attr:`target`
+#     maximum order of the power spectra filter.
+#     The sampled Power Spectra are assigned to :attr:`target`
 #     after sampling.
 #     """
 
@@ -653,7 +669,8 @@ class MicGeomSampler(BaseSampler):
 #                 Q[:,i,i] = Hw2*variance[i].astype(complex)
 #         else:
 #             for i in range(self.nsources):
-#                 Hw, _ = generate_uniform_parametric_eq(self.nfft, self.max_order, self._random_state)
+#                 Hw, _ = generate_uniform_parametric_eq(
+#                     self.nfft, self.max_order, self._random_state)
 #                 Hw = Hw.conj()/(Hw.conj() * Hw) # invert filter response
 #                 Q[:,i,i] = Hw*Hw.conj()
 #                 Q[:,i,i] /= Q[:,i,i].sum()/variance[i].astype(complex)
