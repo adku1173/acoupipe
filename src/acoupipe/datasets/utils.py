@@ -223,7 +223,8 @@ def get_frequency_index_range(freq, f, num):
     Parameters
     ----------
     freq : numpy.array
-        frequency vector (can be determined by evaluating `freqdata()` method at a `acoular.PowerSpectra` instance)
+        frequency vector (can be determined by evaluating `freqdata()` method
+        at a `acoular.PowerSpectra` instance)
     f : float
         the frequency (or center frequency) of interest
     num : int
@@ -275,7 +276,7 @@ def get_frequency_index_range(freq, f, num):
 
 
 def set_pipeline_seeds(pipeline, start_idx, size, dataset='training'):
-    """Create the random seed list for each of the sampler objects that is held by the pipeline object.
+    """Create the random seed list for each sampler object held by the pipeline.
 
     Parameters
     ----------
