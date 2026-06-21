@@ -114,7 +114,7 @@ extend-ignore = [
 ]
 
 [tool.ruff.format]
-docstring-code-line-length = "dynamic"  # 3-8: Acoular uses 120; "dynamic" keeps check passing during migration
+#docstring-code-line-length = 120
 
 [tool.ruff.lint.per-file-ignores]
 # In each src entry: E501/W505 -> the file's 3-8 line-length task; D* -> 9; N*/ARG*/SLF001 -> 10

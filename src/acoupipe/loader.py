@@ -1,4 +1,7 @@
-"""Provides classes to load the datasets stored with :class:`~acoupipe.writer.BaseWriteDataset` derived classes."""
+"""Provides classes to load the datasets stored with derived classes.
+
+See :class:`~acoupipe.writer.BaseWriteDataset`.
+"""
 
 import contextlib
 from os import path
@@ -13,7 +16,9 @@ config.h5library = 'h5py'
 
 
 class BaseLoadDataset(DataGenerator):
-    """Base class for all derived classes intended to load data stored by :class:`~acoupipe.writer.BaseWriteDataset`.
+    """Base class for all derived classes intended to load data.
+
+    Loads data stored by :class:`~acoupipe.writer.BaseWriteDataset`.
 
     This class has no functionality and should not be used.
     """
@@ -102,16 +107,16 @@ class LoadH5Dataset(BaseLoadDataset):
         a data generator with the :meth:`from_generator` method of the `Tensorflow Dataset API`_
         to feed machine learning models.
 
-        Example to create a repeatable data set with the Tensorflow `tf.data.Dataset` API is given in
+        Example to create a repeatable data set with the `tf.data.Dataset` API is given below:
 
         .. code-block:: python
 
             h5data = LoadH5Dataset(name='some_dataset.h5')
             generator = h5data.get_dataset_generator(features=['loc'])
-            output_signature = {
+            sig = {
                 'loc': tf.TensorSpec(shape=(3, None), dtype=tf.float32),
             }
-            dataset = tf.data.Dataset.from_generator(generator, output_signature=output_signature).repeat()
+            dataset = tf.data.Dataset.from_generator(generator, output_signature=sig).repeat()
             loc = next(iter(dataset))  # return locations
 
         Parameters
@@ -145,7 +150,7 @@ class LoadH5Dataset(BaseLoadDataset):
         return sample_generator
 
     def get_data(self):
-        """Python generator that iteratively yields the samples of the dataset in ascending sample index order (e.g. 1,2,...,N).
+        """Yield the dataset samples in ascending sample index order (e.g. 1,2,...,N).
 
         Returns
         -------
