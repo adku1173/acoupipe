@@ -81,4 +81,4 @@ Example
 
 The generator yields one sample at a time as a dictionary. It includes the chosen features and the helper fields ``idx`` (sample index) and ``seeds`` (random seeds) for reproducibility in multi-processing scenarios.
 
-API reference: :class:`acoupipe.datasets.synthetic.DatasetSynthetic`
+API reference: :class:`~acoupipe.datasets.synthetic.dataset.DatasetSynthetic`

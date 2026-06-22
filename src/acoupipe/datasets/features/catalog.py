@@ -2,12 +2,12 @@ from functools import partial
 
 import acoular as ac
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.utils import (
+from acoupipe.datasets._shared.utils import (
     get_frequency_index_range,
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
+from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 
 import numpy as np
 from numpy.linalg import eigh

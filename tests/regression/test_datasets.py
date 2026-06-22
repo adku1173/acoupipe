@@ -1,6 +1,6 @@
 import acoular as ac
-from acoupipe.datasets.experimental import DatasetMIRACLEConfig
 from acoupipe.datasets.features import get_tf_mappers
+from acoupipe.datasets.miracle.legacy_config import DatasetMIRACLEConfig
 
 from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS, START_IDX, TEST_SIGNAL_LENGTH
 

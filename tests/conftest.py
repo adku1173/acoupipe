@@ -4,8 +4,8 @@ import tempfile
 from pathlib import Path
 
 from acoular import ImportGrid, SteeringVector
-from acoupipe.datasets.experimental import DatasetMIRACLE
-from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
+from acoupipe.datasets import DatasetMIRACLE
+from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.synthetic import DatasetSynthetic
 from acoupipe.sampler import ContainerSampler, LocationSampler, NumericAttributeSampler
 from acoupipe.writer import WriteH5Dataset

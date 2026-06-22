@@ -6,7 +6,7 @@ DatasetMIRACLE
 ``DatasetMIRACLE`` is an experimental (semi-synthetic) microphone array data generator that
 builds multi-source source cases by convolving synthetic source signals with **measured**
 spatial room impulse responses (SRIRs) from the `MIRACLE`_ dataset. The workflow is
-analogous to :class:`~acoupipe.datasets.synthetic.DatasetSynthetic`, but the propagation
+analogous to :class:`~acoupipe.datasets.synthetic.dataset.DatasetSynthetic`, but the propagation
 operator is given by measured SRIRs instead of an analytic free-field model.
 
 Multi-source scenes are realized by superposition of individually convolved source signals.
@@ -37,7 +37,7 @@ Scenarios
 ---------
 
 MIRACLE provides SRIRs for four measurement scenarios. In AcouPipe, the scenario is
-selected via the ``scenario`` parameter of :class:`~acoupipe.datasets.experimental.DatasetMIRACLE`.
+selected via the ``scenario`` parameter of :class:`~acoupipe.datasets.miracle.dataset.DatasetMIRACLE`.
 
 The table below summarizes the spatial sampling and environmental configuration. Note that
 the number of available single-channel SRIRs per scenario is given by
