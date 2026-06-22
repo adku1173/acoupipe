@@ -2,12 +2,12 @@ from functools import partial
 
 import acoular as ac
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
-from acoupipe.datasets.utils import (
+from acoupipe.datasets._shared.utils import (
     get_frequency_index_range,
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
+from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 
 import numpy as np
 from numpy.linalg import eigh
@@ -799,6 +799,10 @@ class BaseFeatureCollectionBuilder(HasPrivateTraits):
             self.feature_collection.add_feature_func(feature.get_feature_func())
             self._add_mapper(feature.name, feature.dtype, feature.shape)
         return self.feature_collection
+
+    def add_mapper(self, name, dtype, shape):
+        """Add TensorFlow encoding metadata for a named feature."""
+        self._add_mapper(name, dtype, shape)
 
     def _add_mapper(self, name, dtype, shape):
         if not TF_FLAG:

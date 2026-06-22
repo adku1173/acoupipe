@@ -19,7 +19,7 @@ def get_dataset(dataset, **kwargs):
         kwargs.pop('srir_dir')
         return Dataset(**kwargs)
     elif dataset == 'DatasetMIRACLE':
-        from acoupipe.datasets.experimental import DatasetMIRACLE as Dataset
+        from acoupipe.datasets import DatasetMIRACLE as Dataset
 
         return Dataset(**kwargs)
     else:

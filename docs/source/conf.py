@@ -41,7 +41,7 @@ autoapi_options = ["show-inheritance"]
 autoapi_skip_classes = ["DatasetSyntheticISM", "DatasetSyntheticISMConfig",
     "sample_rms", "sample_mic_noise_variance", "signal_seed", "DatasetSyntheticFeatureCollectionBuilder",
     "ActorHandler", "SamplerActor", "log_execution_time", "bytes_feature", "ConfigBase"]
-autoapi_skip_modules = ["acoupipe.datasets.ir"]
+autoapi_skip_modules = ["acoupipe.datasets.ism.ir"]
 autoapi_python_class_content = "both"
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]

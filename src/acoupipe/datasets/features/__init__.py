@@ -1,0 +1,41 @@
+"""Feature catalog package for dataset generation internals."""
+
+from acoupipe.datasets.features.catalog import (
+    AnalyticNoiseStrengthFeature,
+    AnalyticSourceStrengthFeature,
+    BaseFeatureCatalog,
+    BaseFeatureCollection,
+    BaseFeatureCollectionBuilder,
+    CSMFeature,
+    CSMtriuFeature,
+    EigmodeFeature,
+    EstimatedNoiseStrengthFeature,
+    EstimatedSourceStrengthFeature,
+    LocFeature,
+    SourcemapFeature,
+    SpectraFeature,
+    SpectrogramFeature,
+    TargetmapFeature,
+    TimeDataFeature,
+    create_feature,
+)
+
+__all__ = [
+    'AnalyticNoiseStrengthFeature',
+    'AnalyticSourceStrengthFeature',
+    'BaseFeatureCatalog',
+    'BaseFeatureCollection',
+    'BaseFeatureCollectionBuilder',
+    'CSMFeature',
+    'CSMtriuFeature',
+    'EigmodeFeature',
+    'EstimatedNoiseStrengthFeature',
+    'EstimatedSourceStrengthFeature',
+    'LocFeature',
+    'SourcemapFeature',
+    'SpectraFeature',
+    'SpectrogramFeature',
+    'TargetmapFeature',
+    'TimeDataFeature',
+    'create_feature',
+]

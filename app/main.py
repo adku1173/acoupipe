@@ -23,7 +23,7 @@ def main(dataset, mode, split, size, features, f, num, start_idx, tasks, head, n
     if dataset == 'DatasetSynthetic':
         from acoupipe.datasets.synthetic import DatasetSynthetic as Dataset
     elif dataset == 'DatasetMIRACLE':
-        from acoupipe.datasets.experimental import DatasetMIRACLE as Dataset
+        from acoupipe.datasets import DatasetMIRACLE as Dataset
 
     # create filename if not given
     if name is None:

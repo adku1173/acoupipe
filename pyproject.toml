@@ -69,12 +69,13 @@ unsupported = [
 
 tests = [
     "diff_cover",
-    "pytest",
+    "pytest<9",
     "pytest-cov",
     "pytest-regtest",
     "pyyaml",
     "pandas",
     "tensorflow",
+    "pytest-cases>=3.10.1",
 ]
 
 dev = [
@@ -117,28 +118,29 @@ extend-ignore = [
 #docstring-code-line-length = 120
 
 [tool.ruff.lint.per-file-ignores]
-# In each src entry: E501/W505 -> the file's 3-8 line-length task; D* -> 9; N*/ARG*/SLF001 -> 10
-# --- src: 3 core modules ---
-"src/acoupipe/base.py"                = ["D413"]
-"src/acoupipe/config.py"              = ["D100"]
-"src/acoupipe/version.py"             = ["D100"]
-"src/acoupipe/loader.py"              = ["D413"]
-"src/acoupipe/pipeline.py"            = ["D101", "D102", "D105", "D107", "D413"]
-"src/acoupipe/writer.py"              = ["D102", "D205", "D212", "D413"]
-# --- src: 4 samplers ---
-"src/acoupipe/sampler.py"             = ["D101", "D102", "N806"]
-# --- src: 5 small dataset modules ---
-"src/acoupipe/datasets/base.py"       = ["D102", "D107", "D212", "D413", "D417"]
-"src/acoupipe/datasets/micgeom.py"    = ["D100"]
-"src/acoupipe/datasets/utils.py"      = ["D100", "D103", "D205", "D212", "D413", "N806"]
-# --- src: 6 feature extraction ---
-"src/acoupipe/datasets/features.py"   = ["ARG001", "ARG004", "D100", "D101", "D102", "D103", "D212", "D413", "D417", "SLF001"]
-# --- src: 7 synthetic datasets ---
-"src/acoupipe/datasets/synthetic.py"  = ["ARG001", "ARG004", "D102", "D103", "D107", "D205", "D212", "D413", "D416", "D417", "E501", "N806", "SLF001", "W505"]
-"src/acoupipe/datasets/spectra_analytic.py" = ["D100", "D101", "D212", "D413", "E501", "N802", "N806"]
-# --- src: 8 experimental datasets ---
-"src/acoupipe/datasets/experimental.py" = ["ARG002", "ARG004", "D102", "D412", "D413", "D416", "D417", "E501", "N806", "S101", "SLF001", "W505"]
-"src/acoupipe/datasets/ir.py"          = ["D100", "D103", "D413", "D417", "E501", "N806", "W505"]
+# src files
+"src/acoupipe/__init__.py"           = ["Q000"]
+"src/acoupipe/base.py"                = ["ANN001", "ANN201", "D413", "Q000"]
+"src/acoupipe/config.py"              = ["D100", "Q000"]
+"src/acoupipe/datasets/__init__.py"   = ["W505"]
+"src/acoupipe/datasets/base/config.py" = ["W505"]
+"src/acoupipe/datasets/base/dataset.py" = ["ANN001", "ANN201", "ANN202", "ANN204", "C901", "D102", "D107", "D212", "D413", "D417", "E501", "ERA001", "Q000", "W505"]
+"src/acoupipe/datasets/base/legacy_config.py" = ["W505"]
+"src/acoupipe/datasets/features/catalog.py" = ["ANN001", "ANN201", "ANN202", "ANN205", "ARG001", "ARG004", "D100", "D101", "D102", "D103", "D212", "D413", "D417", "Q000", "SLF001"]
+"src/acoupipe/datasets/ism/ir.py"          = ["ANN001", "ANN003", "ANN201", "ANN202", "D100", "D103", "D413", "D417", "E501", "N806", "Q000", "W505"]
+"src/acoupipe/datasets/ism/legacy_config.py" = ["ANN001", "ANN201", "ANN202", "ARG004", "D102", "D413", "N806", "Q000", "SLF001"]
+"src/acoupipe/datasets/synthetic/micgeom.py" = ["D100", "Q000"]
+"src/acoupipe/datasets/miracle/legacy_config.py" = ["ANN001", "ANN201", "ANN202", "ANN204", "ANN205", "ARG002", "ARG004", "COM812", "D102", "D412", "D413", "D416", "D417", "E501", "N806", "Q000", "S101", "SLF001", "W505"]
+"src/acoupipe/datasets/features/spectra_analytic.py" = ["ANN001", "ANN201", "ANN202", "D100", "D101", "D212", "D413", "E501", "ERA001", "N802", "N806", "Q000"]
+"src/acoupipe/datasets/sriracha/legacy_config.py" = ["ANN001", "ANN201", "ANN202", "D102", "D413", "Q000"]
+"src/acoupipe/datasets/synthetic/dataset.py" = ["E501", "W505"]
+"src/acoupipe/datasets/synthetic/legacy_config.py" = ["ANN001", "ANN003", "ANN201", "ANN202", "ANN204", "ANN205", "ARG001", "ARG004", "COM812", "D102", "D103", "D107", "D205", "D212", "D413", "D416", "D417", "E501", "N806", "Q000", "SLF001", "W505"]
+"src/acoupipe/datasets/_shared/utils.py" = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "D100", "D103", "D205", "D212", "D413", "ERA001", "N806", "Q000"]
+"src/acoupipe/loader.py"              = ["ANN001", "ANN201", "ANN202", "D413", "Q000"]
+"src/acoupipe/pipeline.py"            = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "ANN204", "D101", "D102", "D105", "D107", "D413", "ERA001", "Q000"]
+"src/acoupipe/sampler.py"             = ["ANN001", "ANN201", "ANN202", "D101", "D102", "ERA001", "N806", "Q000"]
+"src/acoupipe/version.py"             = ["D100", "Q000"]
+"src/acoupipe/writer.py"              = ["ANN001", "ANN201", "ANN202", "D102", "D205", "D212", "D413", "ERA001", "Q000"]
 
 # --- 14 examples ---
 "examples/micgeom_sampling_example.py"   = ["D100", "INP001"]

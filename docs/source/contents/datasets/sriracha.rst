@@ -57,7 +57,7 @@ SRIRACHA provides eight measurement scenarios. Naming follows:
 - ``-D`` suffix: dense local source arrangement.
 
 In AcouPipe, the scenario is selected via the ``scenario`` parameter of
-:class:`acoupipe.datasets.experimental.DatasetSRIRACHA`.
+:class:`~acoupipe.datasets.sriracha.dataset.DatasetSRIRACHA`.
 
 .. list-table:: Available SRIRACHA scenarios (SRIR grids and meta-data)
     :header-rows: 1
@@ -209,7 +209,7 @@ Example
 
 .. code-block:: python
 
-    from acoupipe.datasets.experimental import DatasetSRIRACHA
+    from acoupipe.datasets import DatasetSRIRACHA
 
     ds = DatasetSRIRACHA(scenario="SRA2-D")
 

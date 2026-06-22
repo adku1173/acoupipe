@@ -1,4 +1,4 @@
-from acoupipe.datasets.experimental import DatasetMIRACLE
+from acoupipe.datasets import DatasetMIRACLE
 
 feature = 'csm'
 

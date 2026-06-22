@@ -3,7 +3,7 @@ from pathlib import Path
 import acoular as ac
 import matplotlib.pyplot as plt
 
-from acoupipe.datasets.experimental import DatasetMIRACLE
+from acoupipe.datasets import DatasetMIRACLE
 
 f = 2000
 

@@ -4,82 +4,18 @@ import logging
 from functools import partial
 
 from acoupipe.config import TF_FLAG
+from acoupipe.datasets._shared.utils import set_pipeline_seeds
+from acoupipe.datasets.base.legacy_config import ConfigBase
 from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
-from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
 
-from traits.api import Dict, HasPrivateTraits, Instance, Int, Property
+from traits.api import Any, Dict, HasPrivateTraits, Instance, Int, Property
 
 if TF_FLAG:
     from acoupipe.writer import WriteTFRecord, complex_list_feature
 
     import tensorflow as tf
-
-
-class ConfigBase(HasPrivateTraits):
-    """Configuration base class for generating microphone array datasets."""
-
-    def get_sampler(self):
-        """Return a dict of the sampler objects of type :class:`acoupipe.base.BaseSampler`.
-
-        this function has to be manually defined in a dataset subclass.
-        It includes the sampler objects as values. The key defines the idx in the sample order.
-
-        Examples
-        --------
-        >>> ConfigBase().get_sampler()
-        {}
-
-        e.g.:
-
-        .. code-block:: python
-
-            sampler = {
-                0 : BaseSampler(...),
-                1 : BaseSampler(...),
-                ...
-            }
-
-        Returns
-        -------
-        dict
-            dictionary containing the sampler objects
-        """
-        return {}
-
-    def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to default feature builder methods."""
-        return {'f': f, 'num': num}
-
-    def get_default_features(self, features, f, num):
-        """
-        Build default features using `_get_default_feature_{name}` methods.
-
-        Parameters
-        ----------
-        features : list[str]
-            Names of default features to include.
-        f : float | list[float] | None
-            Frequencies used for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
-
-        Returns
-        -------
-        list
-            Instantiated feature catalog objects.
-        """
-        builder_kwargs = self._get_default_feature_kwargs(f, num)
-        default_features = []
-        for feature_name in features:
-            if feature_name not in ['idx', 'seeds']:
-                builder = getattr(self, f'_get_default_feature_{feature_name}', None)
-                if builder is None:
-                    msg = f'Unknown feature "{feature_name}".'
-                    raise ValueError(msg)
-                default_features.append(builder(**builder_kwargs))
-        return default_features
 
 
 class DatasetBase(HasPrivateTraits):
@@ -94,7 +30,7 @@ class DatasetBase(HasPrivateTraits):
         Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
     """
 
-    config = Instance(ConfigBase, desc='configuration object')
+    config = Any(desc='configuration object')
     tasks = Property(desc='number of parallel tasks for data generation')
     remote_args = Dict({})
     #: logger instance to log calculation times for each data sample
@@ -109,6 +45,9 @@ class DatasetBase(HasPrivateTraits):
         self.tasks = tasks
         if config is None:
             config = ConfigBase()
+        if not hasattr(config, 'get_sampler'):
+            msg = 'config must provide get_sampler()'
+            raise TypeError(msg)
         self.config = config
         self.remote_args = remote_args or {}
         self.logger = logger
@@ -164,6 +103,21 @@ class DatasetBase(HasPrivateTraits):
         """
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
+    def configure_pipeline(self, pipeline, features, f, num):
+        """Attach sampler and feature functions to a Pipeline."""
+        if hasattr(self.config, 'configure_pipeline'):
+            return self.config.configure_pipeline(pipeline, features, f, num)
+        feature_collection = self.get_feature_collection(features, f, num)
+        pipeline.sampler = self.config.get_sampler()
+        pipeline.features = feature_collection.get_feature_funcs()
+        return feature_collection
+
+    def _get_feature_collection_for_config(self, features, f, num):
+        """Return feature collection from the active config path."""
+        if hasattr(self.config, 'get_feature_collection'):
+            return self.config.get_feature_collection(features, f, num)
+        return self.get_feature_collection(features, f, num)
+
     def get_feature_collection(self, features, f, num):
         """
         Get the feature collection of the dataset.
@@ -189,15 +143,13 @@ class DatasetBase(HasPrivateTraits):
         Parameters
         ----------
         features : list
-            List of features included in the dataset.
-            The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The features "seeds" and "idx" are always included.
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         size : int
             Size of the dataset (number of source cases).
         f : float
-            The center frequency or list of frequencies of the dataset.
-            If None, all frequencies are included.
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
             Controls the width of the frequency bands considered; defaults to
             0 (single frequency line).
@@ -218,8 +170,7 @@ class DatasetBase(HasPrivateTraits):
         Yields
         ------
         data : dict
-            Generator that yields dataset samples as dictionaries containing the feature
-            names as keys.
+            Generator that yields dataset samples as dictionaries containing the feature names as keys.
 
         Examples
         --------
@@ -235,21 +186,14 @@ class DatasetBase(HasPrivateTraits):
             num = 3
 
             # generate the dataset
-            generator = DatasetSynthetic().generate(
-                f=f,
-                num=num,
-                split='training',
-                size=2,
-                features=features,
-            )
+            generator = DatasetSynthetic().generate(f=f, num=num, split='training', size=2, features=features)
 
             # iterate over the dataset
             for data in generator:
                 print(data)
         """
         pipeline = self.get_pipeline_instance()
-        pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        self.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
@@ -259,8 +203,7 @@ class DatasetBase(HasPrivateTraits):
         Parameters
         ----------
         features : list
-            List of features included in the dataset.
-            The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The features "seeds" and "idx" are always included.
         size : int
             Size of the dataset (number of source cases).
         name : str
@@ -268,8 +211,7 @@ class DatasetBase(HasPrivateTraits):
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
-            The center frequency or list of frequencies of the dataset.
-            If None, all frequencies are included.
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
             Controls the width of the frequency bands considered; defaults to
             0 (single frequency line).
@@ -305,19 +247,11 @@ class DatasetBase(HasPrivateTraits):
             num = 3
 
             # save the dataset
-            dataset = DatasetSynthetic().save_h5(
-                f=f,
-                num=num,
-                split='training',
-                size=10,
-                features=features,
-                name='/tmp/example.h5',
-            )
+            dataset = DatasetSynthetic().save_h5(f=f, num=num, split='training', size=10, features=features, name='/tmp/example.h5')
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
-        pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        self.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteH5Dataset(
             name=name,
@@ -336,8 +270,7 @@ if TF_FLAG:
         Parameters
         ----------
         features : list
-            List of features included in the dataset.
-            The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The features "seeds" and "idx" are always included.
         size : int
             Size of the dataset (number of source cases).
         name : str
@@ -345,8 +278,7 @@ if TF_FLAG:
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
-            The center frequency or list of frequencies of the dataset.
-            If None, all frequencies are included.
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
             Controls the width of the frequency bands considered; defaults to
             0 (single frequency line).
@@ -383,19 +315,12 @@ if TF_FLAG:
 
             # save the dataset
             dataset = DatasetSynthetic().save_tfrecord(
-                f=f,
-                num=num,
-                split='training',
-                size=10,
-                features=features,
-                name='/tmp/example.tfrecord',
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
             )
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
-        pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.features = feature_collection.get_feature_funcs()
+        feature_collection = self.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         # get features with varying length to handle them correctly in the TFRecord writer
         shape_features = []
@@ -422,11 +347,9 @@ if TF_FLAG:
         Parameters
         ----------
         features : list
-            List of features included in the dataset.
-            The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The features "seeds" and "idx" are always included.
         f : float
-            The center frequency or list of frequencies of the dataset.
-            If None, all frequencies are included.
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
             Controls the width of the frequency bands considered; defaults to
             0 (single frequency line).
@@ -446,7 +369,7 @@ if TF_FLAG:
             Output signature of the dataset.
         """
         signature = {}
-        feature_collection = self.get_feature_collection(features, f, num)
+        feature_collection = self._get_feature_collection_for_config(features, f, num)
         for feature in features:
             signature[feature] = tf.TensorSpec(
                 feature_collection.feature_tf_shape_mapper[feature],
@@ -462,15 +385,13 @@ if TF_FLAG:
         Parameters
         ----------
         features : list
-            List of features included in the dataset.
-            The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The features "seeds" and "idx" are always included.
         size : int
             Size of the dataset (number of source cases).
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         f : float
-            The center frequency or list of frequencies of the dataset.
-            If None, all frequencies are included.
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
             Controls the width of the frequency bands considered; defaults to
             0 (single frequency line).
@@ -491,15 +412,12 @@ if TF_FLAG:
         Returns
         -------
         tf.data.Dataset
-            TensorFlow dataset containing the generated data. The dataset elements have
-            the structure defined by the output_signature, which is based on the shapes
-            of dataset features.
+            TensorFlow dataset containing the generated data. The dataset elements have the structure defined
+            by the output_signature, which is based on the shapes of dataset features.
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
-        pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.features = feature_collection.get_feature_funcs()
+        self.configure_pipeline(pipeline, features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         features = features + ['idx', 'seeds']
         output_signature = self.get_output_signature(features, f=f, num=num)
@@ -514,9 +432,8 @@ if TF_FLAG:
         """Get a parser function for a TFRecord dataset.
 
         The parser function can be used to parse the TFRecord dataset into a TensorFlow dataset.
-        Complex-valued features of the dataset are encoded as two real-valued float32
-        features (real and imaginary part) stacked at the least axis of the array.
-        The parser function decodes the features back to complex-valued features.
+        Complex-valued features of the dataset are encoded as two real-valued float32 features (real and imaginary part) stacked at
+        the least axis of the array. The parser function decodes the features back to complex-valued features.
         It can be used as follows:
 
         Parameters
@@ -524,8 +441,7 @@ if TF_FLAG:
         features : list
             List of features included in the dataset.
         f : float
-            The center frequency or list of frequencies of the dataset.
-            If None, all frequencies are included.
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
             Controls the width of the frequency bands considered; defaults to
             0 (single frequency line).
@@ -559,12 +475,7 @@ if TF_FLAG:
 
             # save the dataset
             dataset = DatasetSynthetic().save_tfrecord(
-                f=f,
-                num=num,
-                split='training',
-                size=10,
-                features=features,
-                name='/tmp/example.tfrecord',
+                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
             )
 
             # parse the dataset
@@ -574,7 +485,7 @@ if TF_FLAG:
             data = next(dataset)
 
         """
-        feature_collection = self.get_feature_collection(features, f, num)
+        feature_collection = self._get_feature_collection_for_config(features, f, num)
         features = features + ['idx', 'seeds']
 
         feature_description = {}
