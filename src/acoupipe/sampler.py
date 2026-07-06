@@ -441,7 +441,7 @@ class PointSourceSampler(LocationSampler):
         for t in self.target:
             if not isinstance(t, ac.PointSource):
                 msg = 'Elements in target must be instances of class acoular.PointSource'
-                raise AttributeError(msg)
+                raise TypeError(msg)
 
     def sample_loc(self, loc):
         """Sample a single target location (internal use)."""

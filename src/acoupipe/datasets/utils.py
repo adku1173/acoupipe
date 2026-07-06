@@ -391,7 +391,7 @@ def get_all_source_signals(source_list):
     for source in source_list:
         if not isinstance(source, ac.SamplesGenerator):
             msg = 'source must be of type `acoular.SamplesGenerator`'
-            raise ValueError(msg)
+            raise TypeError(msg)
         signals = _get_signals_recursively(source, signals)
     return signals
 

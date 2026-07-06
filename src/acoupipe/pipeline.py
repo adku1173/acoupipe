@@ -240,7 +240,7 @@ class BasePipeline(DataGenerator):
         if not callable(self.features):
             if not isinstance(self.features, tuple):
                 msg = 'features attribute must be a callable or a tuple containing a callable and its arguments!'
-                raise ValueError(msg)
+                raise TypeError(msg)
             nargs = len(inspect.signature(self.features[0]).parameters)
             if nargs == 0:
                 msg = (
@@ -413,7 +413,7 @@ class DistributedPipeline(BasePipeline):
             result_id = actor.extract_features.remote(self._seeds, times, *list(self.features[1:]))
         else:
             msg = 'features attribute must be a callable or a tuple containing a callable and its arguments!'
-            raise ValueError(msg)
+            raise TypeError(msg)
         task_dict[result_id] = (
             actor,
             {'idx': self._idx, 'seeds': np.array(list(self._seeds.items()))},
@@ -472,9 +472,9 @@ class DistributedPipeline(BasePipeline):
                     finished_tasks += 1
                     try:
                         data, times, pid = ray.get(did)
-                    except Exception as exception:
+                    except Exception:
                         self.logger.info('task with id %s failed with Traceback:', task_dict[did], exc_info=True)
-                        raise exception
+                        raise
                     times[-1] = time()  # add getter time
                     actor, new_data = task_dict.pop(did)
                     data.update(new_data)  # add the remaining task_dict items to the data dict
