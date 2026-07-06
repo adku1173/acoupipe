@@ -172,9 +172,7 @@ class DatasetDummyConfig(ConfigBase):
         # Define shapes for each feature
         if feature_name == 'time_data':
             return (int(signal_length * fs), num_mics)
-        elif feature_name == 'csm':
-            return (freq_dim * num_dim, num_mics, num_mics)
-        elif feature_name == 'csmtriu':
+        elif feature_name in {'csm', 'csmtriu'}:
             return (freq_dim * num_dim, num_mics, num_mics)
         elif feature_name == 'sourcemap':
             return (freq_dim * num_dim, num_grid_points)
@@ -184,21 +182,15 @@ class DatasetDummyConfig(ConfigBase):
             return (freq_dim * num_dim, self.num_time_bins, num_mics)
         elif feature_name == 'loc':
             return (3, 3)  # (3, num_sources) with fixed 3 sources
-        elif feature_name == 'source_strength_analytic':
+        elif feature_name in {'source_strength_analytic', 'source_strength_estimated'}:
             return (freq_dim * num_dim, 3)  # (freq_bins, num_sources)
-        elif feature_name == 'source_strength_estimated':
-            return (freq_dim * num_dim, 3)  # (freq_bins, num_sources)
-        elif feature_name == 'noise_strength_analytic':
-            return (freq_dim * num_dim, num_mics)
-        elif feature_name == 'noise_strength_estimated':
+        elif feature_name in {'noise_strength_analytic', 'noise_strength_estimated'}:
             return (freq_dim * num_dim, num_mics)
         elif feature_name == 'f':
             return (freq_dim,)
         elif feature_name == 'num':
             return ()
-        elif feature_name == 'targetmap_analytic':
-            return (freq_dim * num_dim, num_grid_points)
-        elif feature_name == 'targetmap_estimated':
+        elif feature_name in {'targetmap_analytic', 'targetmap_estimated'}:
             return (freq_dim * num_dim, num_grid_points)
         elif feature_name == 'seeds':
             return (4,)  # Fixed number of seeds
