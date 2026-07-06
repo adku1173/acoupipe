@@ -93,7 +93,7 @@ extend-ignore = [
     # ===== Temporary migration guards (removed in the noted sub-issue) =====
     # no dedicated sub-issue -> general code cleanup, remove last
     "RUF015", "RUF021", "C419", "SIM108", "SIM114",  # 15
-    "PLR5501", "PLR1711", "PLW0120",                 # 15
+    "PLR5501", "PLW0120",                            # 15
     "TRY",                                           # 15  exception style (TRY003/004/201)
     "EXE002",                                        # 15  exec bit (or `chmod -x src/acoupipe/*.py`)
     "W291", "W293", "COM819", "D210", "D403", "PLR2044",  # 15  whitespace/format trivia (or `ruff format`)

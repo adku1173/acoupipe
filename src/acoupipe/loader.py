@@ -145,7 +145,6 @@ class LoadH5Dataset(BaseLoadDataset):
                         data = {key: value[()] for key, value in self.h5f[idx].items() if key in features}
                         data.update({'idx': idx})
                         yield data
-            return
 
         return sample_generator
 
