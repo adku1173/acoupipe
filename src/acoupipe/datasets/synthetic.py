@@ -360,7 +360,7 @@ class DatasetSyntheticConfig(ConfigBase):
         self.create_acoular_pipeline()
 
     @observe('mode, signal_length, fs, max_nsources, fft_params.items, mic_sig_noise')
-    def recreate_acoular_pipeline(self, event):  # noqa ARG002
+    def recreate_acoular_pipeline(self, event):  # noqa: ARG002
         self.create_acoular_pipeline()
 
     def create_acoular_pipeline(self):
@@ -490,7 +490,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'],) + self.beamformer.steer.grid.shape,
         )
 
-    def _get_default_feature_loc(self, **kwargs):  # noqa ARG002
+    def _get_default_feature_loc(self, **kwargs):  # noqa: ARG002
         return LocFeature(dtype=np.float32, shape=(3, None))
 
     def _get_default_feature_source_strength_analytic(self, **kwargs):

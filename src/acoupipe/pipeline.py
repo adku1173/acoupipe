@@ -373,7 +373,7 @@ class ActorHandler:
     def __enter__(self):
         return self.actors
 
-    def __exit__(self, type, value, traceback):  # noqa A002
+    def __exit__(self, type, value, traceback):  # noqa: A002
         for actor in self.actors:
             actor.exit.remote()
 

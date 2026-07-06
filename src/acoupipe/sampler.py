@@ -353,7 +353,7 @@ class LocationSampler(BaseSampler):
 
     def _mindist_violated(self, loc, loc_array):
         """Validate minimum distance between any two sources."""
-        if self.mindist and loc_array.size > 0:  # noqa SIM102
+        if self.mindist and loc_array.size > 0:  # noqa: SIM102
             if np.min(np.linalg.norm(loc_array - loc[:, np.newaxis], axis=0)) < self.mindist:
                 return True
         return False
