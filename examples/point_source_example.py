@@ -1,3 +1,5 @@
+"""Demonstrate source, position, and source-set sampling."""
+
 from pathlib import Path
 
 import acoular as ac
