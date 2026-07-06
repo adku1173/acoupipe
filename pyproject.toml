@@ -96,7 +96,7 @@ extend-ignore = [
     "PLR5501", "PLW0120",                            # 15
     "TRY",                                           # 15  exception style (TRY003/004/201)
     "EXE002",                                        # 15  exec bit (or `chmod -x src/acoupipe/*.py`)
-    "W293", "COM819", "D210", "D403", "PLR2044",         # 15  whitespace/format trivia (or `ruff format`)
+    "COM819", "D210", "D403", "PLR2044",                 # 15  whitespace/format trivia (or `ruff format`)
 
     # ===== Permanent — mirror Acoular's pyproject (no sub-issue; never removed) =====
     "FBT002", "FBT003",  # boolean positional args
