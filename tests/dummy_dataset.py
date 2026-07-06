@@ -161,10 +161,7 @@ class DatasetDummyConfig(ConfigBase):
             freq_dim = 1
 
         # Handle num dimension (fractional octave bands)
-        if num == 0:
-            num_dim = 1
-        else:
-            num_dim = num + 1  # Simplified
+        num_dim = 1 if num == 0 else num + 1  # Simplified
 
         # Fixed dimensions from config
         num_mics = self.num_mics
