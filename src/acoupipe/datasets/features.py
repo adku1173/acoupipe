@@ -673,7 +673,7 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
         return {name: np.real(strength)}
 
     @staticmethod
-    def calc_noise_strength_estimated2_partfreq(sampler, freq_data, fidx, name):  # noqa ARG004
+    def calc_noise_strength_estimated2_partfreq(sampler, freq_data, fidx, name):
         if freq_data._noise is None:
             return {name: np.zeros((len(fidx), freq_data.steer.mics.num_mics))}
         strength = np.array(
