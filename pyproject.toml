@@ -95,7 +95,7 @@ extend-ignore = [
 
 
 
-    "EXE002",                                        # 15  exec bit (or `chmod -x src/acoupipe/*.py`)
+
 
 
     # ===== Permanent — mirror Acoular's pyproject (no sub-issue; never removed) =====
