@@ -245,15 +245,14 @@ def get_frequency_index_range(freq, f, num):
                 stacklevel=2,
             )
             ind = None
-        else:
-            if freq[ind] != f:
-                warn(
-                    f'Queried frequency ({f:g} Hz) not in set of '
-                    'discrete FFT sample frequencies. '
-                    f'Using frequency {freq[ind]:g} Hz instead.',
-                    Warning,
-                    stacklevel=2,
-                )
+        elif freq[ind] != f:
+            warn(
+                f'Queried frequency ({f:g} Hz) not in set of '
+                'discrete FFT sample frequencies. '
+                f'Using frequency {freq[ind]:g} Hz instead.',
+                Warning,
+                stacklevel=2,
+            )
         return (ind, ind + 1)
     # fractional octave band
     if isinstance(num, list):
