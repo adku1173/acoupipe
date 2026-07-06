@@ -383,8 +383,7 @@ class LocationSampler(BaseSampler):
             new_loc = self.rvs()
             while self._bounds_violated(new_loc) or self._mindist_violated(new_loc, loc_array[:, :i]):
                 new_loc = self.rvs()
-            else:
-                loc_array[:, i] = new_loc
+            loc_array[:, i] = new_loc
         self.target = loc_array
 
     def _sample_grid(self):
@@ -462,8 +461,7 @@ class PointSourceSampler(LocationSampler):
                 new_loc = self.sample_loc(loc)
                 while self._bounds_violated(new_loc):
                     new_loc = self.sample_loc(loc)
-                else:
-                    target.loc = new_loc
+                target.loc = new_loc
 
 
 class MicGeomSampler(BaseSampler):

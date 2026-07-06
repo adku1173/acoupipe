@@ -93,7 +93,7 @@ extend-ignore = [
     # ===== Temporary migration guards (removed in the noted sub-issue) =====
     # no dedicated sub-issue -> general code cleanup, remove last
 
-    "PLW0120",                                       # 15
+
     "TRY",                                           # 15  exception style (TRY003/004/201)
     "EXE002",                                        # 15  exec bit (or `chmod -x src/acoupipe/*.py`)
 
