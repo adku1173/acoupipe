@@ -365,7 +365,7 @@ def get_point_sources_recursively(source):
 def _get_signals_recursively(source, signals):
     if hasattr(source, 'signal') and isinstance(source.signal, ac.SignalGenerator):
         signals.append(source.signal)
-    elif hasattr(source, 'sources') or hasattr(source, 'sources') and isinstance(source, ac.SamplesGenerator):
+    elif hasattr(source, 'sources') or hasattr(source, 'source'):
         if hasattr(source, 'sources'):
             for s in source.sources:
                 signals = _get_signals_recursively(s, signals)
