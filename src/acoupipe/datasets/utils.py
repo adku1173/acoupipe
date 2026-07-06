@@ -432,13 +432,13 @@ def log_execution_time(f):
 
     @wraps(f)
     def wrap(self, *args, **kw):
-        self.logger.info(f'id {self._idx}: start task.')
+        self.logger.info('id %s: start task.', self._idx)
         start = time()
         result = f(self, *args, **kw)
         end = time()
-        self.logger.info(f'id {self._idx}: finished task.')
+        self.logger.info('id %s: finished task.', self._idx)
         # self.logger.info(f"{f.__name__} args:[{args}] took: {end-start:.32f} sec")
-        self.logger.info(f'id {self._idx}: executing task took: {end - start:.32f} sec')
+        self.logger.info('id %s: executing task took: %.32f sec', self._idx, end - start)
         return result
 
     return wrap
