@@ -10,8 +10,8 @@ from pylab import colorbar, figure, imshow, plot, show
 ac.config.global_caching = 'none'
 
 rng1 = np.random.RandomState(1)  # scipy listens to numpy random seed (when scipy seed is None)
-rng2 = np.random.RandomState(2)  #
-rng3 = np.random.RandomState(3)  #
+rng2 = np.random.RandomState(2)
+rng3 = np.random.RandomState(3)
 
 z = 0.5  # distance between array and source plane
 
