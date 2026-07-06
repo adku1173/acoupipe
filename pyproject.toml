@@ -91,7 +91,7 @@ extend-exclude = ["docs/source"]   # shared config's exclude resolves to its own
 [tool.ruff.lint]
 extend-ignore = [
     # ===== Temporary migration guards (removed in the noted sub-issue) =====
-    "PGH004", "RUF100", "E741",          # 10  stale-noqa cleanup / ambiguous names
+    "PGH004", "RUF100",          # 10  stale-noqa cleanup / ambiguous names
     # no dedicated sub-issue -> general code cleanup, remove last
     "RUF015", "RUF021", "C419", "SIM108", "SIM114",  # 15
     "PLR5501", "PLR1711", "PLW0120",                 # 15
