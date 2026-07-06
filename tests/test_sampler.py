@@ -247,5 +247,5 @@ def test_valid_pipeline_funcs(base_pipeline, finput):
 def test_invalid_pipeline_funcs(base_pipeline, finput):
     _, _ = base_pipeline
     pipeline = BasePipeline(numsamples=2, features=finput)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         next(pipeline.get_data(progress_bar=False))
