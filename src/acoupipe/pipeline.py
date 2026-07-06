@@ -71,6 +71,8 @@ from numpy.random import RandomState, default_rng
 from tqdm import tqdm
 from traits.api import Callable, Dict, Either, Instance, Int, Property, Tuple
 
+logger = logging.getLogger(__name__)
+
 
 # Without the use of this decorator factory (wraps), the name of the
 # function 'f' would have been 'wrap', and the docstring of the original f() would have been lost.
@@ -315,7 +317,7 @@ class SamplerActor:
     def __init__(self, sampler, feature_func):
         # IMPORTANT: do NOT import gpuRIR before this point anywhere.
         gpu_ids = ray.get_gpu_ids()  # e.g. [3]
-        logging.error(f'ray.get_gpu_ids() = {gpu_ids}, CUDA_VISIBLE_DEVICES = {os.environ.get("CUDA_VISIBLE_DEVICES")}')
+        logger.error(f'ray.get_gpu_ids() = {gpu_ids}, CUDA_VISIBLE_DEVICES = {os.environ.get("CUDA_VISIBLE_DEVICES")}')
 
         self.sampler = sampler
         self.feature_func = feature_func
