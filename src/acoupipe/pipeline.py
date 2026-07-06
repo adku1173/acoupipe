@@ -286,7 +286,7 @@ class BasePipeline(DataGenerator):
         if self.random_seeds:
             self.validate_random_seeds()
             seed_iter = {k: iter(v) for k, v in self.random_seeds.items()}
-            nsamples = len(list(self.random_seeds.values())[0])
+            nsamples = len(next(iter(self.random_seeds.values())))
         else:
             seed_iter = None
             nsamples = self.numsamples
@@ -452,7 +452,7 @@ class DistributedPipeline(BasePipeline):
         if self.random_seeds:
             self.validate_random_seeds()
             seed_iter = {k: iter(v) for k, v in self.random_seeds.items()}
-            nsamples = len(list(self.random_seeds.values())[0])
+            nsamples = len(next(iter(self.random_seeds.values())))
         else:
             seed_iter = None
             nsamples = self.numsamples

@@ -77,9 +77,9 @@ class TargetmapFeature(BaseFeatureCatalog):
         # check if data signature exists iwth inspect
         sig = inspect.signature(strength_callable)
         if 'data' in sig.parameters:
-            strength = list(strength_callable(sampler=None, data=data).values())[0]
+            strength = next(iter(strength_callable(sampler=None, data=data).values()))
         else:
-            strength = list(strength_callable(sampler=None).values())[0]
+            strength = next(iter(strength_callable(sampler=None).values()))
         # create target map
         if type(grid) is ac.RectGrid:
             loc = loc[:2]
