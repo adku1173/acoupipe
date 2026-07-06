@@ -1,3 +1,5 @@
+"""Demonstrate microphone geometry perturbation sampling."""
+
 from pathlib import Path
 
 import acoular as ac

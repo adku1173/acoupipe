@@ -47,7 +47,7 @@ bb = ac.BeamformerBase(freq_data=ps, steer=st)
 
 
 # create a feature extraction function
-def extract_features(sampler, beamformer, whitenoise):
+def extract_features(_sampler, beamformer, _whitenoise):
     """Extract features from sampler object."""
     return {'rms': wn.rms, 'sourcemap': beamformer.synthetic(1000, 1)}
 
