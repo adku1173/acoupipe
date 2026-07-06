@@ -131,7 +131,7 @@ extend-ignore = [
 "src/acoupipe/datasets/ir.py"          = ["D100", "D103", "D413", "D417", "E501", "N806", "W505"]
 
 # --- 14 examples ---
-"examples/micgeom_sampling_example.py"   = ["D100", "INP001"]
+"examples/micgeom_sampling_example.py"   = []
 "examples/numeric_attribute_sampling.py" = ["D212"]
 "examples/pipeline_write_h5_example.py"  = []
 "examples/point_source_example.py"       = ["D100", "INP001"]
