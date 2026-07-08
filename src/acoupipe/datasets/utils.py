@@ -245,14 +245,15 @@ def get_frequency_index_range(freq, f, num):
                 stacklevel=2,
             )
             ind = None
-        elif freq[ind] != f:
-            warn(
-                f'Queried frequency ({f:g} Hz) not in set of '
-                'discrete FFT sample frequencies. '
-                f'Using frequency {freq[ind]:g} Hz instead.',
-                Warning,
-                stacklevel=2,
-            )
+        else:
+            if freq[ind] != f:
+                warn(
+                    f'Queried frequency ({f:g} Hz) not in set of '
+                    'discrete FFT sample frequencies. '
+                    f'Using frequency {freq[ind]:g} Hz instead.',
+                    Warning,
+                    stacklevel=2,
+                )
         return (ind, ind + 1)
     # fractional octave band
     if isinstance(num, list):
@@ -364,7 +365,7 @@ def get_point_sources_recursively(source):
 def _get_signals_recursively(source, signals):
     if hasattr(source, 'signal') and isinstance(source.signal, ac.SignalGenerator):
         signals.append(source.signal)
-    elif hasattr(source, 'sources') or hasattr(source, 'source'):
+    elif hasattr(source, 'sources') or hasattr(source, 'sources') and isinstance(source, ac.SamplesGenerator):
         if hasattr(source, 'sources'):
             for s in source.sources:
                 signals = _get_signals_recursively(s, signals)
@@ -391,7 +392,7 @@ def get_all_source_signals(source_list):
     for source in source_list:
         if not isinstance(source, ac.SamplesGenerator):
             msg = 'source must be of type `acoular.SamplesGenerator`'
-            raise TypeError(msg)
+            raise ValueError(msg)
         signals = _get_signals_recursively(source, signals)
     return signals
 
@@ -431,13 +432,13 @@ def log_execution_time(f):
 
     @wraps(f)
     def wrap(self, *args, **kw):
-        self.logger.info('id %s: start task.', self._idx)
+        self.logger.info(f'id {self._idx}: start task.')
         start = time()
         result = f(self, *args, **kw)
         end = time()
-        self.logger.info('id %s: finished task.', self._idx)
+        self.logger.info(f'id {self._idx}: finished task.')
         # self.logger.info(f"{f.__name__} args:[{args}] took: {end-start:.32f} sec")
-        self.logger.info('id %s: executing task took: %.32f sec', self._idx, end - start)
+        self.logger.info(f'id {self._idx}: executing task took: {end - start:.32f} sec')
         return result
 
     return wrap

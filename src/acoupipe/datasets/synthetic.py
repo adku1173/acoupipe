@@ -360,7 +360,7 @@ class DatasetSyntheticConfig(ConfigBase):
         self.create_acoular_pipeline()
 
     @observe('mode, signal_length, fs, max_nsources, fft_params.items, mic_sig_noise')
-    def recreate_acoular_pipeline(self, event):  # noqa: ARG002
+    def recreate_acoular_pipeline(self, event):  # noqa ARG002
         self.create_acoular_pipeline()
 
     def create_acoular_pipeline(self):
@@ -436,13 +436,13 @@ class DatasetSyntheticConfig(ConfigBase):
             'fftfreq': self._get_fftfreq(),
         }
 
-    def _get_default_feature_time_data(self, **kwargs):
+    def _get_default_feature_time_data(self, **kwargs):  # noqa ARG002
         if self.mode != 'welch':
             msg = "time_data feature is not possible with modes ['analytic', 'wishart']."
             raise ValueError(msg)
         return TimeDataFeature(time_data=self.freq_data.source, dtype=np.float32, shape=(kwargs['tdim'], None))
 
-    def _get_default_feature_spectrogram(self, **kwargs):
+    def _get_default_feature_spectrogram(self, **kwargs):  # noqa ARG002
         if self.mode != 'welch':
             msg = "spectrogram feature is not possible with modes ['analytic', 'wishart']."
             raise ValueError(msg)
@@ -454,7 +454,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(None, kwargs['fdim'], kwargs['mdim']),
         )
 
-    def _get_default_feature_csm(self, **kwargs):
+    def _get_default_feature_csm(self, **kwargs):  # noqa ARG002
         return CSMFeature(
             freq_data=self.freq_data,
             f=kwargs['f'],
@@ -463,7 +463,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], kwargs['mdim'], kwargs['mdim']),
         )
 
-    def _get_default_feature_csmtriu(self, **kwargs):
+    def _get_default_feature_csmtriu(self, **kwargs):  # noqa ARG002
         return CSMtriuFeature(
             freq_data=self.freq_data,
             f=kwargs['f'],
@@ -472,7 +472,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], kwargs['mdim'], kwargs['mdim']),
         )
 
-    def _get_default_feature_eigmode(self, **kwargs):
+    def _get_default_feature_eigmode(self, **kwargs):  # noqa ARG002
         return EigmodeFeature(
             freq_data=self.freq_data,
             f=kwargs['f'],
@@ -481,7 +481,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], kwargs['mdim'], kwargs['mdim']),
         )
 
-    def _get_default_feature_sourcemap(self, **kwargs):
+    def _get_default_feature_sourcemap(self, **kwargs):  # noqa ARG002
         return SourcemapFeature(
             beamformer=self.beamformer,
             f=kwargs['f'],
@@ -490,10 +490,10 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'],) + self.beamformer.steer.grid.shape,
         )
 
-    def _get_default_feature_loc(self, **kwargs):  # noqa: ARG002
+    def _get_default_feature_loc(self, **kwargs):  # noqa ARG002
         return LocFeature(dtype=np.float32, shape=(3, None))
 
-    def _get_default_feature_source_strength_analytic(self, **kwargs):
+    def _get_default_feature_source_strength_analytic(self, **kwargs):  # noqa ARG002
         return AnalyticSourceStrengthFeature(
             freq_data=self.freq_data,
             f=kwargs['f'],
@@ -502,7 +502,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], None),
         )
 
-    def _get_default_feature_source_strength_estimated(self, **kwargs):
+    def _get_default_feature_source_strength_estimated(self, **kwargs):  # noqa ARG002
         freq_data = self.fft_obs_spectra if self.mode == 'welch' else self.freq_data
         return EstimatedSourceStrengthFeature(
             freq_data=freq_data,
@@ -512,7 +512,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], None),
         )
 
-    def _get_default_feature_noise_strength_analytic(self, **kwargs):
+    def _get_default_feature_noise_strength_analytic(self, **kwargs):  # noqa ARG002
         return AnalyticNoiseStrengthFeature(
             freq_data=self.freq_data,
             f=kwargs['f'],
@@ -521,7 +521,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], kwargs['mdim']),
         )
 
-    def _get_default_feature_noise_strength_estimated(self, **kwargs):
+    def _get_default_feature_noise_strength_estimated(self, **kwargs):  # noqa ARG002
         freq_data = self.fft_spectra if self.mode == 'welch' else self.freq_data
         return EstimatedNoiseStrengthFeature(
             freq_data=freq_data,
@@ -531,7 +531,7 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], kwargs['mdim']),
         )
 
-    def _get_targetmap_feature(self, strength_type, **kwargs):
+    def _get_targetmap_feature(self, strength_type, **kwargs):  # noqa ARG002
         freq_data = (
             self.freq_data
             if strength_type == 'analytic'
@@ -549,13 +549,13 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'],) + self.grid.shape,
         )
 
-    def _get_default_feature_targetmap_analytic(self, **kwargs):
+    def _get_default_feature_targetmap_analytic(self, **kwargs):  # noqa ARG002
         return self._get_targetmap_feature('analytic', **kwargs)
 
-    def _get_default_feature_targetmap_estimated(self, **kwargs):
+    def _get_default_feature_targetmap_estimated(self, **kwargs):  # noqa ARG002
         return self._get_targetmap_feature('estimated', **kwargs)
 
-    def _get_default_feature_f(self, **kwargs):
+    def _get_default_feature_f(self, **kwargs):  # noqa ARG002
         if kwargs['f'] is None:
             all_f = kwargs['fftfreq']
         elif isinstance(kwargs['f'], list):
@@ -566,7 +566,7 @@ class DatasetSyntheticConfig(ConfigBase):
         else:
             all_f = np.array([kwargs['fftfreq'][np.searchsorted(kwargs['fftfreq'], kwargs['f'])]])
 
-        def get_f(sampler, f):
+        def get_f(sampler, f):  # noqa ARG001
             return {'f': f}
 
         return create_feature(
@@ -576,8 +576,8 @@ class DatasetSyntheticConfig(ConfigBase):
             dtype=np.float32,
         )
 
-    def _get_default_feature_num(self, **kwargs):
-        def add_num(sampler, num):
+    def _get_default_feature_num(self, **kwargs):  # noqa ARG002
+        def add_num(sampler, num):  # noqa ARG001
             return {'num': num}
 
         return create_feature(

@@ -77,9 +77,9 @@ class TargetmapFeature(BaseFeatureCatalog):
         # check if data signature exists iwth inspect
         sig = inspect.signature(strength_callable)
         if 'data' in sig.parameters:
-            strength = next(iter(strength_callable(sampler=None, data=data).values()))
+            strength = list(strength_callable(sampler=None, data=data).values())[0]
         else:
-            strength = next(iter(strength_callable(sampler=None).values()))
+            strength = list(strength_callable(sampler=None).values())[0]
         # create target map
         if type(grid) is ac.RectGrid:
             loc = loc[:2]
@@ -673,7 +673,7 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
         return {name: np.real(strength)}
 
     @staticmethod
-    def calc_noise_strength_estimated2_partfreq(sampler, freq_data, fidx, name):
+    def calc_noise_strength_estimated2_partfreq(sampler, freq_data, fidx, name):  # noqa ARG004
         if freq_data._noise is None:
             return {name: np.zeros((len(fidx), freq_data.steer.mics.num_mics))}
         strength = np.array(

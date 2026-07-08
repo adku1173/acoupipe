@@ -90,6 +90,9 @@ extend-exclude = ["docs/source"]   # shared config's exclude resolves to its own
 
 [tool.ruff.lint]
 extend-ignore = [
+    # ===== Temporary migration guards (only for datasets) =====
+    "PGH004", "RUF100", "G004", "RUF015", "PLR5501", "RUF021", "TRY004",
+
     # ===== Permanent — mirror Acoular's pyproject (no sub-issue; never removed) =====
     "FBT002", "FBT003",  # boolean positional args
     "PTH",               # os.path -> pathlib
