@@ -32,6 +32,12 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
+    "sphinx_design",  # tab-set and other design elements
+    "traits.util.trait_documenter",
+    #"numpydoc", #conda install -c anaconda numpydoc
+    "nbsphinx", # allows to include jupyter notebooks into rst documentation
+    "sphinxcontrib.bibtex", # to cite papers if necessary
+    "sphinx_gallery.gen_gallery", #extension that builds an gallery of examples from Python scripts
 ]
 
 # auto api configuration
@@ -46,6 +52,25 @@ autoapi_skip_modules = ["acoupipe.datasets.ir"]
 autoapi_python_class_content = "both"
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]
+
+# -- Sphinx-Gallery configuration --------------------------------------------
+
+sphinx_gallery_conf = {
+    # Folder(s) containing example scripts
+    "examples_dirs": "../../examples",
+    # Where the generated .rst + images are written
+    "gallery_dirs": "auto_examples",
+    # files not matching this pattern will be ignored, and not shown in the gallery
+    "filename_pattern": '/example_',
+    # Thumbnail size and fallback image matching acoular
+    "thumbnail_size": (250, 250),
+    'default_thumb_file': str(Path(__file__).parent / '_static' / 'no_image.png'),
+    # Order the subsections and files within each subsection in the gallery
+    "subsection_order": ExplicitOrder([
+        "../../examples/introductory_examples",
+    ]),
+    "within_subsection_order": "FileNameSortKey",
+}
 
 # -- Options for HTML output -------------------------------------------------
 
