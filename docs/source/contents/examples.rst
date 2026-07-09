@@ -1,20 +1,7 @@
-.. _examples:
-
 Examples
-------------
+========
 
 .. toctree::
-    :maxdepth: 1
-    :caption: Dataset Examples:
+   :maxdepth: 2
 
-    jupyter/generate
-    jupyter/load_h5
-    jupyter/load_tfrecord
-    datasets/docker
-    datasets/singularity
-
-.. toctree::
-    :maxdepth: 1
-    :caption: Module Examples:
-    
-    module/examples.rst
+   ../auto_examples/index

@@ -67,7 +67,9 @@ sphinx_gallery_conf = {
     'default_thumb_file': str(Path(__file__).parent / '_static' / 'no_image.png'),
     # Order the subsections and files within each subsection in the gallery
     "subsection_order": ExplicitOrder([
-        "../../examples/introductory_examples",
+        "../../examples/introductory_examples"
+        "../../examples/io"
+        "../../examples/deployment",
     ]),
     "within_subsection_order": "FileNameSortKey",
 }
