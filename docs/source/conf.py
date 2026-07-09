@@ -68,7 +68,7 @@ sphinx_gallery_conf = {
     # Order the subsections and files within each subsection in the gallery
     "subsection_order": ExplicitOrder([
         "../../examples/introductory_examples"
-        "../../examples/io"
+        "../../examples/pipelines"
         "../../examples/deployment",
     ]),
     "within_subsection_order": "FileNameSortKey",

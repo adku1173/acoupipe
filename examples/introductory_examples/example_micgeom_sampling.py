@@ -1,3 +1,21 @@
+"""
+Sampling Microphone Array Geometries
+====================================
+
+This example page will guide you through a brief introductory step-by-step example script and is intended to show some of the basic functionality of **AcouPipe**.
+
+Prerequisites
+-------------
+It is assumed that **AcouPipe** along with all its dependencies, as well as NumPy_, SciPy_ and matplotlib_ are installed. Other than that, only a basic understanding of **Python** syntax is required.
+"""
+
+# %%
+# One use case of **AcouPipe** is the sampling of a microphone array geometry.
+# Sampling means that, for a given array geometry, a number of samples with slight perturbations in the microphone positions is generated.
+# The purpose of **AcouPipe** is to generate large amounts of samples as quickly as possible, but for the sake of quick presentation, only a small number of samples is generated here.
+#
+# First the necessary Python modules and objects are imported.
+
 from pathlib import Path
 
 import acoular as ac
@@ -8,24 +26,36 @@ import numpy as np
 import scipy
 from numpy.random import RandomState
 
+# %%
+# Then the number of samples to be generated is set,
+
 nsamples = 10
 
-# create Microphone Geometry object
+# %%
+# the Acoular_ microphone array geometry object is initialised
+
 mics = ac.MicGeom(file=Path(ac.__file__).parent / 'xml' / 'tub_vogel64.xml')
-# define random state
+
+# %%
+# and a SciPy_ random distribution object is generated using a preset random seed in order to guarantee reproducibility.
+
 rng = RandomState(seed=1)
+normal_distribution = scipy.stats.norm(loc=0, scale=0.004)
 
-# create instantiate random distribution object
-# standard deviation, approx 1/3 min dist between mics (mindist/0.686 = 0.0409885123851)
-normal_distribution = scipy.stats.norm(loc=0, scale=0.004)  # scale=0.04/3.)
+# %%
+# Using the above definitions, the **AcouPipe** sampler object is instantiated.
 
-# create MicGeomSampler object
-mgs = MicGeomSampler(random_var=normal_distribution, random_state=rng, target=mics)
+mgs = MicGeomSampler(random_var=normal_distribution, 
+                     random_state=rng, 
+                     target=mics)
 
+# %%
+# This is then used to manipulate microphone positions according to various patterns:
+# Individual microphones are shifted along the x- and y-axis and the entire array is rotated, as well as shifted.
+# In the sequel, these deviatations are calculated, as well as displayed using matplotlib_.
+#
+# To make individual microphone positions deviate along the x-axis only, the following code is used.
 
-# =============================================================================
-# # first deviate individual microphone positions along x-axis
-# =============================================================================
 mgs.ddir = np.array([[1.0], [0], [0]])
 
 plt.figure()
@@ -37,10 +67,10 @@ plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1], marker='x', s=10, label='true po
 plt.legend()
 plt.show()
 
+# %%
+# Note that, once the **AcouPipe** Sampler object is instantiated, it suffices to set some of its attributes, notably the *direction of deviation* :code:`mgs.ddir` and then simply call :code:`mgs.sample()`.
+# It is also possible to make individual microphone positions deviate along the x-axis, as well as the y-axis, as follows.
 
-# =============================================================================
-# # second: deviate individual microphone positions along x- and y-axis
-# =============================================================================
 mgs.ddir = np.array([[1.0], [0.5], [0]])
 
 plt.figure()
@@ -52,10 +82,8 @@ plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1], marker='x', s=10, label='true po
 plt.legend()
 plt.show()
 
-
-# =============================================================================
-# third: rotate around axis
-# =============================================================================
+# %%
+# Rotating the entire array around the z-axis is done using the *rotation vector* attribute :code:`mgs.rvec`.
 
 mgs.ddir = np.array([[0.0], [0.0], [0.0]])  # no individual deviation
 
@@ -71,10 +99,9 @@ plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1], marker='x', s=10, label='true po
 plt.legend()
 plt.show()
 
-
-# =============================================================================
-# fourth: translate full array along y-axis
-# =============================================================================
+# %%
+# Finally, the *direction of translation* attribute :code:`mgs.tdir` can be set in order to translate the entire array. Here, it is shifted along the y-axis.
+# Note that the *rotation vector* attribute :code:`mgs.rvec` needs to be set to zero again.
 
 mgs.rvec = np.array([[0], [0], [0]])
 mgs.tdir = np.array([[0], [2.0], [0]])
