@@ -62,14 +62,15 @@ sphinx_gallery_conf = {
     "gallery_dirs": "auto_examples",
     # files not matching this pattern will be ignored, and not shown in the gallery
     "filename_pattern": '/example_',
+    "ignore_pattern": "wip_",
     # Thumbnail size and fallback image matching acoular
     "thumbnail_size": (250, 250),
     'default_thumb_file': str(Path(__file__).parent / '_static' / 'no_image.png'),
     # Order the subsections and files within each subsection in the gallery
     "subsection_order": ExplicitOrder([
-        "../../examples/introductory_examples"
-        "../../examples/pipelines"
-        "../../examples/deployment",
+        "../../examples/introductory_examples",
+        "../../examples/pipelines",
+        #"../../examples/deployment",
     ]),
     "within_subsection_order": "FileNameSortKey",
 }
