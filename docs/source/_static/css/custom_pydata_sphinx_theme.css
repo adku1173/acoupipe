@@ -10,3 +10,10 @@ html[data-theme="dark"] div.graphviz > object.graphviz {
   filter: brightness(0.8) invert(0.82) contrast(1.2);
   color-scheme: normal;
 }
+
+/* breathing room around sphinx-gallery code + output cells */
+.sphx-glr-script-out,
+div.highlight {
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+}

@@ -1,3 +1,7 @@
+import os
+
+os.environ["KMP_WARNINGS"] = "0" # hide runtime notice in examples
+
 from pathlib import Path
 
 import acoupipe as ap
