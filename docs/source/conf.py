@@ -1,6 +1,9 @@
 import os
-
 os.environ["KMP_WARNINGS"] = "0" # hide runtime notice in examples
+
+import logging
+logging.getLogger('ray').setLevel(logging.WARNING) # hide warnings in examples
+logging.getLogger('tensorflow').setLevel(logging.WARNING) # hide warnings in examples
 
 from pathlib import Path
 
