@@ -1,9 +1,11 @@
 import os
-os.environ["KMP_WARNINGS"] = "0" # hide runtime notice in examples
+import warnings
 
-import logging
-logging.getLogger('ray').setLevel(logging.WARNING) # hide warnings in examples
-logging.getLogger('tensorflow').setLevel(logging.WARNING) # hide warnings in examples
+# the following hides runtime warnings and notices
+os.environ["OPENBLAS_NUM_THREADS"] = "1"   
+
+warnings.filterwarnings("ignore", message=".*OpenBLAS.*")
+warnings.filterwarnings("ignore", message=".*not in set of discrete FFT sample frequencies.*")
 
 from pathlib import Path
 
@@ -81,6 +83,8 @@ sphinx_gallery_conf = {
     ]),
     "within_subsection_order": "FileNameSortKey",
 }
+
+exclude_patterns = ['auto_examples/**/*.ipynb'] # so that the notebooks for download are not used to generate the gallery
 
 # -- Options for HTML output -------------------------------------------------
 

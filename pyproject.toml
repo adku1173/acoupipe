@@ -58,6 +58,7 @@ docs = [
     "sphinx-gallery",
     "sphinxcontrib.bibtex",
     "pandoc",
+    "tensorflow"
 ]
 
 lint = [
