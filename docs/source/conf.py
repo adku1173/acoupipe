@@ -6,6 +6,7 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 warnings.filterwarnings("ignore", message=".*OpenBLAS.*")
 warnings.filterwarnings("ignore", message=".*not in set of discrete FFT sample frequencies.*")
+warnings.filterwarnings("ignore", message=".*ran out of data.*")
 
 from pathlib import Path
 
