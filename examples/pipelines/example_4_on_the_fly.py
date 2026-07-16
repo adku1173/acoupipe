@@ -80,7 +80,7 @@ model.compile(optimizer=tf.optimizers.Adam(), loss='mse')
 # how a trained model is applied. Accurate localization would require many more epochs and steps,
 # and typically a larger network.
 
-model.fit(training_dataset, validation_data=validation_dataset, epochs=1, steps_per_epoch=50, verbose=0)
+history = model.fit(training_dataset, validation_data=validation_dataset, epochs=1, steps_per_epoch=50, verbose=0)
 
 # %%
 # Finally, the trained model predicts the source location of a single test sample. As
