@@ -51,6 +51,10 @@ def prepare(data):
 
 training_dataset = training_dataset.map(prepare).batch(16)
 validation_dataset = validation_dataset.map(prepare).batch(16).cache()
+# sphinx_gallery_start_ignore
+for _ in validation_dataset:  # populate cache so no generator runs concurrently during fit
+    pass
+# sphinx_gallery_end_ignore
 
 # %%
 # A compact convolutional network regresses the two source coordinates from the
