@@ -2,14 +2,14 @@
 Sampling Microphone Array Geometries
 ====================================
 
-This example page will guide you through a brief introductory step-by-step example script and is intended to show some of the basic functionality of **AcouPipe**. 
-It is assumed that **AcouPipe** along with all its dependencies, as well as NumPy_, SciPy_ and matplotlib_ are installed. Other than that, only a basic understanding of **Python** syntax is required.
+This example page will guide you through a brief introductory step-by-step example script and is intended to show some of the basic functionality of AcouPipe. 
+It is assumed that AcouPipe along with all its dependencies, as well as NumPy_, SciPy_ and matplotlib_ are installed. Other than that, only a basic understanding of Python syntax is required.
 """
 
 # %%
-# One use case of **AcouPipe** is the sampling of a microphone array geometry.
+# One use case of AcouPipe is the sampling of a microphone array geometry.
 # Sampling means that, for a given array geometry, a number of samples with slight perturbations in the microphone positions is generated.
-# The purpose of **AcouPipe** is to generate large amounts of samples as quickly as possible, but for the sake of quick presentation, only a small number of samples is generated here.
+# The purpose of AcouPipe is to generate large amounts of samples as quickly as possible, but for the sake of quick presentation, only a small number of samples is generated here.
 #
 # First the necessary Python modules and objects are imported.
 
@@ -24,7 +24,8 @@ import scipy
 from numpy.random import RandomState
 
 # %%
-# Then the number of samples to be generated is set, the Acoular_ microphone array geometry object is initialised  and a SciPy_ random distribution object is generated using a preset random seed in order to guarantee reproducibility.
+# Then the number of samples to be generated is set, the Acoular_ :class:`MicGeom <acoular.microphones.MicGeom>` (microphone array geometry) object is initialised  
+# and a SciPy_ random distribution object is generated using a preset random seed in order to guarantee reproducibility.
 
 nsamples = 10
 mics = ac.MicGeom(file=Path(ac.__file__).parent / 'xml' / 'tub_vogel64.xml')
@@ -32,7 +33,7 @@ rng = RandomState(seed=1)
 normal_distribution = scipy.stats.norm(loc=0, scale=0.004)
 
 # %%
-# Using the above definitions, the **AcouPipe** sampler object is instantiated.
+# Using the above definitions, the Acoupipe :class:`MicGeomSampler <acoupipe.sampler.MicGeomSampler>` object is instantiated.
 
 mgs = MicGeomSampler(random_var=normal_distribution, 
                      random_state=rng, 
@@ -57,7 +58,7 @@ plt.legend()
 plt.show()
 
 # %%
-# Note that, once the **AcouPipe** Sampler object is instantiated, it suffices to set some of its attributes, notably the *direction of deviation* `mgs.ddir` and then simply call `mgs.sample()`.
+# Note that, once the :class:`MicGeomSampler <acoupipe.sampler.MicGeomSampler>` object is instantiated, it suffices to set some of its attributes, notably the *direction of deviation* ``mgs.ddir`` and then simply call :meth:`~acoupipe.sampler.MicGeomSampler.sample`.
 # It is also possible to make individual microphone positions deviate along the x-axis, as well as the y-axis, as follows.
 
 mgs.ddir = np.array([[1.0], [0.5], [0]])
@@ -72,7 +73,7 @@ plt.legend()
 plt.show()
 
 # %%
-# Rotating the entire array around the z-axis is done using the *rotation vector* attribute `mgs.rvec`.
+# Rotating the entire array around the z-axis is done using the *rotation vector* attribute ``mgs.rvec``.
 
 mgs.ddir = np.array([[0.0], [0.0], [0.0]])  # no individual deviation
 
@@ -89,8 +90,8 @@ plt.legend()
 plt.show()
 
 # %%
-# Finally, the *direction of translation* attribute `mgs.tdir` can be set in order to translate the entire array. Here, it is shifted along the y-axis.
-# Note that the *rotation vector* attribute `mgs.rvec` needs to be set to zero again.
+# Finally, the *direction of translation* attribute ``mgs.tdir`` can be set in order to translate the entire array. Here, it is shifted along the y-axis.
+# Note that the *rotation vector* attribute ``mgs.rvec`` needs to be set to zero again.
 
 mgs.rvec = np.array([[0], [0], [0]])
 mgs.tdir = np.array([[0], [2.0], [0]])

@@ -2,7 +2,7 @@
 Loading Data into TensorFlow / Keras
 ====================================
 
-Once a dataset has been written to disk it can be streamed into a TensorFlow input
+Once a dataset has been written to disk it can be streamed into a TensorFlow_ input
 pipeline for training. This example loads a stored HDF5 dataset and turns it into a
 ``tf.data.Dataset`` that a Keras model can consume, and then shows the analogous path
 for a dataset stored in the TFRecord format.
@@ -20,7 +20,7 @@ import tensorflow as tf
 # A small dataset is written to an HDF5 file, here using the cross-spectral matrix
 # (``csm``) as the input feature. Writing and loading datasets is covered in detail
 # in the
-# :ref:`HDF5 example <sphx_glr_auto_examples_pipelines_example_pipeline_HDF5.py>`.
+# :ref:`HDF5 example <sphx_glr_auto_examples_pipelines_example_1_pipeline_HDF5.py>`.
 # The features ``idx`` and ``seeds`` are always stored alongside the selected ones.
 
 DATASET_NAME = 'tensorflow_dataset.h5'
@@ -30,13 +30,13 @@ dataset.save_h5(features=['csm'], split='training', size=5, name=DATASET_NAME, p
 
 # %%
 # The stored dataset is loaded again and exposes a generator over its samples through
-# ``get_dataset_generator``.
+# :meth:`~acoupipe.loader.LoadH5Dataset.get_dataset_generator`.
 
 loader = LoadH5Dataset(name=DATASET_NAME)
 data_generator = loader.get_dataset_generator()
 
 # %%
-# To build a ``tf.data.Dataset`` from the generator, TensorFlow needs to know the
+# To build a ``tf.data.Dataset`` from the generator, TensorFlow_ needs to know the
 # structure of the yielded samples, the so called output signature. If the shapes and
 # dtypes are known, it can be written out explicitly.
 
@@ -76,7 +76,7 @@ for key, value in sample.items():
 # The same pipeline can be built from a dataset stored in the TFRecord format. There,
 # the parsing is handled by a parser function, which the dataset provides through
 # ``get_tfrecord_parser``. See the
-# :ref:`TFRecord example <sphx_glr_auto_examples_pipelines_example_pipeline_tfrecord.py>`
+# :ref:`TFRecord example <sphx_glr_auto_examples_pipelines_example_2_pipeline_tfrecord.py>`
 # for how such a parser works internally.
 
 TFRECORD_NAME = 'example_dataset.tfrecord'

@@ -86,6 +86,7 @@ sphinx_gallery_conf = {
 }
 
 exclude_patterns = ['auto_examples/**/*.ipynb'] # so that the notebooks for download are not used to generate the gallery
+intersphinx_mapping = {"acoular": ("https://acoular.org/acoular/", None),}  # links to documentations of other packages
 
 # -- Options for HTML output -------------------------------------------------
 

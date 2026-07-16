@@ -2,15 +2,15 @@
 Sampling Numeric Object Attributes
 ==================================
 
-The `~acoupipe.sampler.NumericAttributeSampler` class randomly varies a numeric
-attribute (an ``int`` or ``float``) of one or more Acoular objects according to a
+The :class:`~acoupipe.sampler.NumericAttributeSampler` class randomly varies a numeric
+attribute (an ``int`` or ``float``) of one or more Acoular_ objects according to a
 given probability distribution. Here it is used to randomize the root mean square
 (RMS) value of a white noise signal generator.
 """
 
 # %%
-# We import Acoular, the sampler, SciPy for the probability distribution and
-# matplotlib for plotting.
+# We import Acoular_, the :class:`NumericAttributeSampler <acoupipe.sampler.NumericAttributeSampler>`, SciPy_ for the probability distribution and
+# matplotlib_ for plotting.
 
 import acoular as ac
 from acoupipe.sampler import NumericAttributeSampler
@@ -20,7 +20,7 @@ import numpy as np
 import scipy.stats
 
 # %%
-# A white noise signal generator is created. Its `rms` attribute is the
+# A white noise signal generator is created. Its ``rms`` attribute is the
 # value we are going to sample.
 
 wn = ac.WNoiseGenerator(sample_freq=51200, seed=10, rms=1.0, num_samples=51200)
@@ -33,7 +33,7 @@ rayleigh_dist = scipy.stats.rayleigh(scale=5.0)
 rng = np.random.RandomState(1)
 
 # %%
-# The sampler is given the random variable, the target object(s) whose attribute
+# The :class:`NumericAttributeSampler <acoupipe.sampler.NumericAttributeSampler>` is given the random variable, the target object(s) whose attribute
 # should be manipulated, and the name of that attribute.
 
 rms_sampling = NumericAttributeSampler(
@@ -44,7 +44,7 @@ rms_sampling = NumericAttributeSampler(
 )
 
 # %%
-# Each call to `~acoupipe.sampler.NumericAttributeSampler.sample` draws a new
+# Each call to :meth:`~acoupipe.sampler.NumericAttributeSampler.sample` draws a new
 # value from the distribution and assigns it to ``wn.rms``. We repeat this many
 # times and record the resulting RMS values.
 

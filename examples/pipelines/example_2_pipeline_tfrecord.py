@@ -4,12 +4,12 @@ Writing and Loading a TFRecord Dataset
 
 This example demonstrates how AcouPipe stores a dataset in the TFRecord file format
 and, more importantly, how the stored data is parsed back into usable arrays. A small
-dataset is created with the built-in ``DatasetSynthetic`` and written to a
+dataset is created with the built-in :class:`~acoupipe.datasets.synthetic.DatasetSynthetic` and written to a
 ``.tfrecord`` file; the remainder of the example focuses on decoding it again.
 """
 
 # %%
-# First, the necessary Python modules are imported. TensorFlow is required to read
+# First, the necessary Python modules are imported. TensorFlow_ is required to read
 # TFRecord files.
 
 import acoular as ac
@@ -19,12 +19,13 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 # %%
-# A small dataset of five source cases is created with the default synthetic dataset
+# A small dataset of five source cases is created with the default :class:`~acoupipe.datasets.synthetic.DatasetSynthetic`
 # and written to a ``.tfrecord`` file. The conventional beamforming map is included by
 # selecting the ``sourcemap`` feature, together with the source locations and the
-# frequency. Internally this uses AcouPipe's ``WriteTFRecord`` writer, which works
-# analogously to the ``WriteH5Dataset`` writer shown in the
-# :ref:`HDF5 example <sphx_glr_auto_examples_pipelines_example_pipeline_HDF5.py>`.
+# frequency. Internally this uses AcouPipe's :class:`WriteTFRecord <acoupipe.writer>`
+# writer , which works analogously to the :class:`WriteH5Dataset <acoupipe.writer.WriteH5Dataset>`
+# writer shown in the
+# :ref:`HDF5 example <sphx_glr_auto_examples_pipelines_example_1_pipeline_HDF5.py>`.
 
 DATASET_NAME = 'example_dataset.tfrecord'
 
@@ -34,7 +35,7 @@ dataset.save_tfrecord(features=['sourcemap', 'loc', 'f'], f=2000, split='trainin
 # %%
 # To read the data back, a parser function describes how each stored feature is
 # decoded. Variable length features such as the flattened sourcemap are read with a
-# ``VarLenFeature`` and reshaped back to the grid shape.
+# `tf.io.VarLenFeature` and reshaped back to the grid shape.
 
 grid_shape = dataset.config.grid.shape
 

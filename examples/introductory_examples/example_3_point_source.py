@@ -10,8 +10,8 @@ each random scene a beamforming map is computed.
 """
 
 # %%
-# First, the necessary Python modules and objects are imported. ``PowerSpectra``,
-# ``SteeringVector`` and ``BeamformerBase`` come from Acoular, while the three
+# First, the necessary Python modules and objects are imported. :class:`PowerSpectra <acoular.spectra.PowerSpectra>`,
+# :class:`SteeringVector <acoular.fbeamform.SteeringVector>` and :class:`BeamformerBase <acoular.fbeamform.BeamformerBase>` come from Acoular_, while the three
 # samplers come from AcouPipe.
 
 from pathlib import Path
@@ -47,7 +47,7 @@ rayleigh_dist = scipy.stats.rayleigh(scale=5.0)
 normal_dist = scipy.stats.norm(loc=0, scale=0.1688)
 
 # %%
-# A 64 channel microphone array geometry shipped with Acoular is loaded, and ten
+# A 64 channel microphone array geometry shipped with Acoular_ is loaded, and ten
 # point sources with individual white noise signals are placed at the origin of the
 # source plane.
 
@@ -61,10 +61,10 @@ for i in range(10):
     ps_list.append(ac.PointSource(signal=wn_list[i], mics=mg, loc=(0.0, 0.0, z)))
 
 # %%
-# Next, the Acoular processing chain is set up. A ``SourceMixer`` combines the
-# active sources into a single signal. From this signal, a ``PowerSpectra`` object
-# computes the cross spectral matrix. Finally, a ``BeamformerBase`` maps the cross
-# spectral matrix onto a ``RectGrid`` that spans the source plane.
+# Next, the Acoular_ processing chain is set up. A :class:`SourceMixer <acoular.sources.SourceMixer>` combines the
+# active sources into a single signal. From this signal, a :class:`PowerSpectra <acoular.spectra.PowerSpectra>` object
+# computes the cross spectral matrix. Finally, a :class:`BeamformerBase <acoular.fbeamform.BeamformerBase>` maps the cross
+# spectral matrix onto a :class:`RectGrid <acoular.grids.RectGrid>` that spans the source plane.
 
 sm = ac.SourceMixer(sources=ps_list)
 ps = ac.PowerSpectra(source=sm, block_size=512, window='Hanning')
@@ -73,9 +73,11 @@ st = ac.SteeringVector(grid=rg, mics=mg, steer_type='true location')
 bb = ac.BeamformerBase(freq_data=ps, steer=st)
 
 # %%
-# Three samplers are defined. The first randomizes the ``rms`` of every noise
-# generator, the second shifts each source in the x-y plane within the given
-# bounds, and the third selects three distinct active sources for the mixer.
+# Three samplers are defined. The :class:`~acoupipe.sampler.NumericAttributeSampler`
+# randomizes the ``rms`` of every noise generator, the
+# :class:`~acoupipe.sampler.PointSourceSampler` shifts each source in the x-y plane
+# within the given bounds, and the :class:`~acoupipe.sampler.SourceSetSampler` selects
+# three distinct active sources for the mixer.
 
 rms_sampling = NumericAttributeSampler(
     random_var=rayleigh_dist,

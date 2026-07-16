@@ -4,8 +4,8 @@ Writing and Loading an HDF5 Dataset
 
 AcouPipe can save the features produced by a processing pipeline to disk and load
 them back later. This example builds a small pipeline, writes its output to an HDF5
-(``.h5``) file with a ``WriteH5Dataset`` writer, and then reads it back in with a
-``LoadH5Dataset`` loader.
+(``.h5``) file with a :class:`~acoupipe.writer.WriteH5Dataset` writer, and then reads
+it back in with a :class:`~acoupipe.loader.LoadH5Dataset` loader.
 """
 
 # %%
@@ -41,8 +41,8 @@ wn = ac.WNoiseGenerator(sample_freq=51200, seed=10, rms=1.0, num_samples=51200)
 rms_sampling = NumericAttributeSampler(random_var=rayleigh_dist, target=[wn], attribute='rms', random_state=rng)
 
 # %%
-# A standard Acoular beamforming chain maps the point source onto a grid. See
-# :ref:`an example setup <sphx_glr_auto_examples_introductory_examples_example_point_source.py>`
+# A standard Acoular_ beamforming chain maps the point source onto a grid. See
+# :ref:`an example setup <sphx_glr_auto_examples_introductory_examples_example_3_point_source.py>`
 # for a more detailed explanation.
 
 mg = ac.MicGeom(file=Path(ac.__file__).parent / 'xml' / 'array_64.xml')
@@ -61,7 +61,7 @@ def extract_features(sampler, beamformer, noise):
     return {'rms': noise.rms, 'sourcemap': beamformer.synthetic(4000, 1)}
 
 # %%
-# The pipeline ties the sampler and the feature function together. Here, five
+# The :class:`BasePipeline <acoupipe.datasets.base.BasePipeline>` ties the sampler and the feature function together. Here, five
 # samples are generated.
 
 pipeline = BasePipeline(sampler={1: rms_sampling}, numsamples=5, features=(extract_features, bb, wn))
@@ -102,6 +102,6 @@ fig.colorbar(im, ax=ax, label='SPL / dB')
 plt.show()
 
 # %%
-# Several writers can be chained to split features across multiple files, and the
-# same pipeline output can also be written to TFRecord files with ``WriteTFRecord``
-# for use with TensorFlow.
+# Several writers can be chained to split features across multiple files. The
+# same pipeline output can also be written to TFRecord files for use with TensorFlow
+# :ref:`(an example setup) <sphx_glr_auto_examples_pipelines_example_2_pipeline_tfrecord.py>`.

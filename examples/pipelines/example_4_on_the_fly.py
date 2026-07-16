@@ -4,7 +4,8 @@ Model Training with Data Generated on the Fly
 
 If data generation is fast enough, AcouPipe can feed a model during training without
 saving anything to disk. This example trains a small neural network for single source
-localization, generating the training data on the fly from ``DatasetSynthetic``.
+localization, generating the training data on the fly from
+:class:`~acoupipe.datasets.synthetic.DatasetSynthetic`.
 """
 
 # %%
@@ -51,8 +52,8 @@ validation_dataset = validation_dataset.map(prepare).batch(16).cache()
 
 # %%
 # A compact convolutional network regresses the two source coordinates from the
-# 32 x 32 beamforming map. For real tasks a larger architecture such as ResNet50V2 can
-# be used, at the cost of much longer training.
+# 32 x 32 beamforming map. For real tasks a larger architecture can be used, at the 
+# cost of much longer training.
 
 model = tf.keras.Sequential([
     tf.keras.layers.Input(shape=(32, 32, 1)),
