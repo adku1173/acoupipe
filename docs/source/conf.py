@@ -1,4 +1,7 @@
 import os
+# make examples run threadsafe on macos
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["NUMBA_NUM_THREADS"] = "1"
 import warnings
 
 from pathlib import Path
@@ -85,9 +88,6 @@ sphinx_gallery_conf = {
 exclude_patterns = ['auto_examples/**/*.ipynb'] # so that the notebooks for download are not used to generate the gallery
 intersphinx_mapping = {"acoular": ("https://acoular.org/acoular/", None),}  # links to documentations of other packages
 
-# make example 4 run threadsafe on macos
-os.environ["OPENBLAS_NUM_THREADS"] = "1"   
-os.environ.setdefault("NUMBA_THREADING_LAYER", "omp")
 # skip warning for examples for style issues, as they are not relevant for the examples
 warnings.filterwarnings("ignore", message=".*OpenBLAS.*")
 warnings.filterwarnings("ignore", message=".*not in set of discrete FFT sample frequencies.*")

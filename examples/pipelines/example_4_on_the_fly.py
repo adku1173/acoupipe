@@ -49,7 +49,7 @@ def prepare(data):
     return feature, label
 
 
-training_dataset = training_dataset.map(prepare).batch(16).prefetch(tf.data.AUTOTUNE)
+training_dataset = training_dataset.map(prepare).batch(16)
 validation_dataset = validation_dataset.map(prepare).batch(16).cache()
 
 # %%
