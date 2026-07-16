@@ -57,7 +57,7 @@ bb = ac.BeamformerBase(freq_data=ps, steer=st)
 # sampled ``rms`` value and the beamforming map (``sourcemap``) at 1000 Hz.
 
 
-def extract_features(beamformer, noise):
+def extract_features(sampler, beamformer, noise):
     """Return the features that are stored for each generated sample."""
     return {'rms': noise.rms, 'sourcemap': beamformer.synthetic(4000, 1)}
 

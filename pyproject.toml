@@ -173,7 +173,7 @@ extend-ignore = [
 "tests/throughput/*" = ["ALL"]
 
 # --- examples ---
-"examples/**/*.py" = ["D205", "D400", "T201", "INP001",] # these clash with sphinxgallery format and style
+"examples/**/*.py" = ["D205", "D400", "T201", "INP001", "ARG001"] # these clash with sphinxgallery format and style
 
 [project.urls]
 documentation = "https://adku1173.github.io/acoupipe/"
