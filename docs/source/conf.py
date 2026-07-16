@@ -1,7 +1,3 @@
-import os
-# make examples run threadsafe on macos
-#os.environ["OPENBLAS_NUM_THREADS"] = "1"
-#os.environ["NUMBA_NUM_THREADS"] = "1"
 import warnings
 
 from pathlib import Path
