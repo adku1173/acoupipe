@@ -1,17 +1,12 @@
 import os
 import warnings
 
-# the following hides runtime warnings and notices
-os.environ["OPENBLAS_NUM_THREADS"] = "1"   
-
-warnings.filterwarnings("ignore", message=".*OpenBLAS.*")
-warnings.filterwarnings("ignore", message=".*not in set of discrete FFT sample frequencies.*")
-warnings.filterwarnings("ignore", message=".*ran out of data.*")
-
 from pathlib import Path
+from sphinx_gallery.sorting import ExplicitOrder
 
 import acoupipe as ap
 
+<<<<<<< HEAD
 from acoular_sphinx import (
     PACKAGE_FRAME_EXTENSIONS,
     build_github_context,
@@ -20,6 +15,8 @@ from acoular_sphinx import (
     resolve_docs_build_config,
 )
 
+=======
+>>>>>>> 9709428 (fix docs ci test)
 this_dir = Path(__file__).resolve().parent
 src_dir = (this_dir / ".." / ".." / "src").resolve()
 
@@ -63,7 +60,7 @@ autoapi_python_class_content = "both"
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]
 
-# -- Sphinx-Gallery configuration --------------------------------------------
+# -- Sphinx (Gallery) configuration --------------------------------------------
 
 sphinx_gallery_conf = {
     # Folder(s) containing example scripts
@@ -87,6 +84,14 @@ sphinx_gallery_conf = {
 
 exclude_patterns = ['auto_examples/**/*.ipynb'] # so that the notebooks for download are not used to generate the gallery
 intersphinx_mapping = {"acoular": ("https://acoular.org/acoular/", None),}  # links to documentations of other packages
+
+# make example 4 run threadsafe on macos
+os.environ["OPENBLAS_NUM_THREADS"] = "1"   
+os.environ.setdefault("NUMBA_THREADING_LAYER", "omp")
+# skip warning for examples for style issues, as they are not relevant for the examples
+warnings.filterwarnings("ignore", message=".*OpenBLAS.*")
+warnings.filterwarnings("ignore", message=".*not in set of discrete FFT sample frequencies.*")
+warnings.filterwarnings("ignore", message=".*ran out of data.*")
 
 # -- Options for HTML output -------------------------------------------------
 
