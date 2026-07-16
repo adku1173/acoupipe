@@ -10,9 +10,11 @@ each random scene a beamforming map is computed.
 """
 
 # %%
-# First, the necessary Python modules and objects are imported. :class:`PowerSpectra <acoular.spectra.PowerSpectra>`,
-# :class:`SteeringVector <acoular.fbeamform.SteeringVector>` and :class:`BeamformerBase <acoular.fbeamform.BeamformerBase>` come from Acoular_, while the three
-# samplers come from AcouPipe.
+# First, the necessary Python modules and objects are imported.
+# :class:`PowerSpectra <acoular.spectra.PowerSpectra>`,
+# :class:`SteeringVector <acoular.fbeamform.SteeringVector>`
+# and :class:`BeamformerBase <acoular.fbeamform.BeamformerBase>` come from Acoular_, while the
+# three samplers come from AcouPipe.
 
 from pathlib import Path
 
@@ -30,7 +32,7 @@ import scipy.stats
 
 ac.config.global_caching = 'none'
 
-rng1 = np.random.RandomState(1)  
+rng1 = np.random.RandomState(1)
 rng2 = np.random.RandomState(2)
 rng3 = np.random.RandomState(3)
 
@@ -61,10 +63,12 @@ for i in range(10):
     ps_list.append(ac.PointSource(signal=wn_list[i], mics=mg, loc=(0.0, 0.0, z)))
 
 # %%
-# Next, the Acoular_ processing chain is set up. A :class:`SourceMixer <acoular.sources.SourceMixer>` combines the
-# active sources into a single signal. From this signal, a :class:`PowerSpectra <acoular.spectra.PowerSpectra>` object
-# computes the cross spectral matrix. Finally, a :class:`BeamformerBase <acoular.fbeamform.BeamformerBase>` maps the cross
-# spectral matrix onto a :class:`RectGrid <acoular.grids.RectGrid>` that spans the source plane.
+# Next, the Acoular_ processing chain is set up. A
+# :class:`SourceMixer <acoular.sources.SourceMixer>` combines the active sources into a single
+# signal. From this signal, a :class:`PowerSpectra <acoular.spectra.PowerSpectra>` object computes
+# the cross spectral matrix. Finally, a :class:`BeamformerBase <acoular.fbeamform.BeamformerBase>`
+# maps the cross spectral matrix onto a :class:`RectGrid <acoular.grids.RectGrid>` that spans the
+# source plane.
 
 sm = ac.SourceMixer(sources=ps_list)
 ps = ac.PowerSpectra(source=sm, block_size=512, window='Hanning')

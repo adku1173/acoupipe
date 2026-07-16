@@ -9,8 +9,9 @@ given probability distribution. Here it is used to randomize the root mean squar
 """
 
 # %%
-# We import Acoular_, the :class:`NumericAttributeSampler <acoupipe.sampler.NumericAttributeSampler>`, SciPy_ for the probability distribution and
-# matplotlib_ for plotting.
+# We import Acoular_, the
+# :class:`NumericAttributeSampler <acoupipe.sampler.NumericAttributeSampler>`, SciPy_  for the
+# probability distribution and matplotlib_ for plotting.
 
 import acoular as ac
 from acoupipe.sampler import NumericAttributeSampler
@@ -33,8 +34,9 @@ rayleigh_dist = scipy.stats.rayleigh(scale=5.0)
 rng = np.random.RandomState(1)
 
 # %%
-# The :class:`NumericAttributeSampler <acoupipe.sampler.NumericAttributeSampler>` is given the random variable, the target object(s) whose attribute
-# should be manipulated, and the name of that attribute.
+# The :class:`NumericAttributeSampler <acoupipe.sampler.NumericAttributeSampler>` is given the
+# random variable, the target object(s) whose attribute should be manipulated, and the name of
+# that attribute.
 
 rms_sampling = NumericAttributeSampler(
     random_var=rayleigh_dist,

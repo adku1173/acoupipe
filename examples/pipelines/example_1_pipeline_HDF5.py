@@ -2,10 +2,10 @@
 Writing and Loading an HDF5 Dataset
 ===================================
 
-AcouPipe can save the features produced by a processing pipeline to disk and load
-them back later. This example builds a small pipeline, writes its output to an HDF5
-(``.h5``) file with a :class:`~acoupipe.writer.WriteH5Dataset` writer, and then reads
-it back in with a :class:`~acoupipe.loader.LoadH5Dataset` loader.
+AcouPipe can save the features produced by a processing pipeline to disk and load them back later.
+This example builds a small pipeline, writes its output to an HDF5 (``.h5``) file with
+a :class:`~acoupipe.writer.WriteH5Dataset` writer, and then reads it back in with
+a :class:`~acoupipe.loader.LoadH5Dataset` loader.
 """
 
 # %%
@@ -56,19 +56,21 @@ bb = ac.BeamformerBase(freq_data=ps, steer=st)
 # The feature extraction function defines what is stored for each sample: here the
 # sampled ``rms`` value and the beamforming map (``sourcemap``) at 1000 Hz.
 
-def extract_features(sampler, beamformer, noise):
+
+def extract_features(beamformer, noise):
     """Return the features that are stored for each generated sample."""
     return {'rms': noise.rms, 'sourcemap': beamformer.synthetic(4000, 1)}
 
+
 # %%
-# The :class:`BasePipeline <acoupipe.datasets.base.BasePipeline>` ties the sampler and the feature function together. Here, five
-# samples are generated.
+# The :class:`BasePipeline <acoupipe.datasets.base.BasePipeline>` ties the sampler and the feature
+# function together. Here, five samples are generated.
 
 pipeline = BasePipeline(sampler={1: rms_sampling}, numsamples=5, features=(extract_features, bb, wn))
 
 # %%
-# The pipeline output is written to the ``.h5`` file. Some additional metadata is
-# attached and stored alongside the features.
+# The pipeline output is written to the ``.h5`` file. Some additional metadata is attached and
+# stored alongside the features.
 
 metadata = {'sample_freq': 51200, 'freq': 4000, 'bandwidth': 'octave', 'block_size': 128}
 
@@ -81,8 +83,8 @@ writer = WriteH5Dataset(
 writer.save(progress_bar=False)
 
 # %%
-# The dataset can now be loaded back from the file. The loader exposes the number of
-# stored samples and the names of the available features.
+# The dataset can now be loaded back from the file. The loader exposes the number of stored samples
+# and the names of the available features.
 
 loader = LoadH5Dataset(name=DATASET_NAME)
 print(f'number of samples: {loader.numsamples}')

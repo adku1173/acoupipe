@@ -142,12 +142,6 @@ extend-ignore = [
 "src/acoupipe/datasets/experimental.py" = ["ARG002", "ARG004", "D102", "D412", "D413", "D416", "D417", "E501", "N806", "S101", "SLF001", "W505"]
 "src/acoupipe/datasets/ir.py"          = ["D100", "D103", "D413", "D417", "E501", "N806", "W505"]
 
-# --- 14 examples ---
-"examples/micgeom_sampling_example.py"   = ["D100", "INP001"]
-"examples/numeric_attribute_sampling.py" = ["D212"]
-"examples/pipeline_writeH5_example.py"   = ["ARG001", "D212", "INP001"]
-"examples/point_source_example.py"       = ["D100", "INP001"]
-
 # --- app ---
 "app/main.py" = ["A002", "D100", "D103", "DTZ005", "E501", "INP001", "PLC0415"]  # PLC0415 = intentional lazy CLI import
 
@@ -178,6 +172,8 @@ extend-ignore = [
 # --- 13 throughput ---
 "tests/throughput/*" = ["ALL"]
 
+# --- examples ---
+"examples/**/*.py" = ["D205", "D400", "T201", "INP001",] # these clash with sphinxgallery format and style
 
 [project.urls]
 documentation = "https://adku1173.github.io/acoupipe/"

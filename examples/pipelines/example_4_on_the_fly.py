@@ -11,9 +11,9 @@ localization, generating the training data on the fly from
 # %%
 # First, the necessary Python modules are imported.
 
+import acoular as ac
 from acoupipe.datasets.synthetic import DatasetSynthetic
 
-import acoular as ac
 import matplotlib.pyplot as plt
 import tensorflow as tf
 
@@ -39,6 +39,7 @@ validation_dataset = dataset.get_tf_dataset(features=['sourcemap', 'loc'], f=100
 # and keeps only the x and y coordinates of the source as the label. The datasets are
 # then mapped, batched and prefetched.
 
+
 def prepare(data):
     """Turn a raw sample into a (normalized map, xy location) training pair."""
     feature = data['sourcemap'][0]
@@ -47,29 +48,32 @@ def prepare(data):
     label = data['loc'][:2, 0]
     return feature, label
 
+
 training_dataset = training_dataset.map(prepare).batch(16).prefetch(tf.data.AUTOTUNE)
 validation_dataset = validation_dataset.map(prepare).batch(16).cache()
 
 # %%
 # A compact convolutional network regresses the two source coordinates from the
-# 32 x 32 beamforming map. For real tasks a larger architecture can be used, at the 
+# 32 x 32 beamforming map. For real tasks a larger architecture can be used, at the
 # cost of much longer training.
 
-model = tf.keras.Sequential([
-    tf.keras.layers.Input(shape=(32, 32, 1)),
-    tf.keras.layers.Conv2D(16, 3, activation='relu'),
-    tf.keras.layers.Conv2D(32, 3, activation='relu'),
-    tf.keras.layers.GlobalAveragePooling2D(),
-    tf.keras.layers.Dense(2),
-])
+model = tf.keras.Sequential(
+    [
+        tf.keras.layers.Input(shape=(32, 32, 1)),
+        tf.keras.layers.Conv2D(16, 3, activation='relu'),
+        tf.keras.layers.Conv2D(32, 3, activation='relu'),
+        tf.keras.layers.GlobalAveragePooling2D(),
+        tf.keras.layers.Dense(2),
+    ]
+)
 model.compile(optimizer=tf.optimizers.Adam(), loss='mse')
 
 # %%
 # The model is now trained on the generated data. Because this example is executed
-# live while the documentation is built, the training is deliberately kept short 
-# to illustrate the principle. A model trained this briefly is nowhere near converged, 
-# so the prediction shown below is only a rough estimate and mainly serves to demonstrate 
-# how a trained model is applied. Accurate localization would require many more epochs and steps, 
+# live while the documentation is built, the training is deliberately kept short
+# to illustrate the principle. A model trained this briefly is nowhere near converged,
+# so the prediction shown below is only a rough estimate and mainly serves to demonstrate
+# how a trained model is applied. Accurate localization would require many more epochs and steps,
 # and typically a larger network.
 
 model.fit(training_dataset, validation_data=validation_dataset, epochs=1, steps_per_epoch=50, verbose=0)
