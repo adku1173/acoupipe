@@ -26,9 +26,6 @@ jobs:
     with:
       setup_portaudio: false
 
-  github:
-    uses: acoular/ci/.github/workflows/github.yml@main
-
   linting:
     uses: acoular/ci/.github/workflows/linting.yml@main
 
