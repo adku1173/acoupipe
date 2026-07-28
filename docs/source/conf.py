@@ -17,10 +17,9 @@ release = f"{ap.__version__}"
 
 # -- General configuration ---------------------------------------------------
 
-_SKIP = {"numpydoc", "sphinx_gallery.gen_gallery"}  # gallery: re-enable when PR #104 lands
+_SKIP = {"sphinx_gallery.gen_gallery"}  # gallery: re-enable when PR #104 lands
 extensions = [
     *(e for e in acs.PACKAGE_FRAME_EXTENSIONS if e not in _SKIP),
-    "sphinx.ext.napoleon",
     "autoapi.extension",
     "nbsphinx",
     "sphinx.ext.coverage",
@@ -47,7 +46,7 @@ html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 
 _nav_ctx = acs.build_html_context()
-for _link in _nav_ctx["acoular_nav_links"]:
+for _link in _nav_ctx["acoular_nav_links"]: # we can remove this workaround once we hardcode the full URL in acoular_sphinx
     if _link["url"].startswith("/"):
         _link["url"] = f"https://www.acoular.org{_link['url']}"
 
