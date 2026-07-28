@@ -1,7 +1,14 @@
 from pathlib import Path
 
 import acoupipe as ap
-import acoular_sphinx as acs
+
+from acoular_sphinx import (
+    PACKAGE_FRAME_EXTENSIONS,
+    build_github_context,
+    build_html_context,
+    configure_package_theme_options,
+    resolve_docs_build_config,
+)
 
 this_dir = Path(__file__).resolve().parent
 src_dir = (this_dir / ".." / ".." / "src").resolve()
@@ -19,7 +26,7 @@ release = f"{ap.__version__}"
 
 _SKIP = {"sphinx_gallery.gen_gallery"}  # gallery: re-enable when PR #104 lands
 extensions = [
-    *(e for e in acs.PACKAGE_FRAME_EXTENSIONS if e not in _SKIP),
+    *(e for e in PACKAGE_FRAME_EXTENSIONS if e not in _SKIP),
     "autoapi.extension",
     "nbsphinx",
     "sphinx.ext.coverage",
@@ -45,21 +52,21 @@ bibtex_bibfiles = ["bib/refs.bib"]
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 
-_nav_ctx = acs.build_html_context()
+_nav_ctx = build_html_context()
 for _link in _nav_ctx["acoular_nav_links"]: # we can remove this workaround once we hardcode the full URL in acoular_sphinx
     if _link["url"].startswith("/"):
         _link["url"] = f"https://www.acoular.org{_link['url']}"
 
 html_context = {
     **_nav_ctx,
-    **acs.build_github_context(
+    **build_github_context(
         github_user="adku1173",
         github_repo="acoupipe",
         doc_path="docs/source",
         github_version="master",
     ),
 }
-html_theme_options = acs.configure_package_theme_options(
+html_theme_options = configure_package_theme_options(
     package_name="AcouPipe",
     github_url="https://github.com/adku1173/acoupipe",
     pypi_project="acoupipe",
