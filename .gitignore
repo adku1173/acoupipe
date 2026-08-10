@@ -31,3 +31,8 @@ llm_context
 .*venv
 .env*
 .*env
+
+docs/source/savefig/
+
+# macOS
+.DS_Store
