@@ -43,6 +43,7 @@ maintainers = [
 
 [dependency-groups]
 docs = [
+    "acoular_sphinx @ git+https://github.com/acoular/ci.git@sphinx-v1.3#subdirectory=packages/acoular-sphinx", # or @main?
     "ipython",
     "graphviz",
     "matplotlib",

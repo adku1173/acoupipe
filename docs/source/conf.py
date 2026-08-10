@@ -2,6 +2,14 @@ from pathlib import Path
 
 import acoupipe as ap
 
+from acoular_sphinx import (
+    PACKAGE_FRAME_EXTENSIONS,
+    build_github_context,
+    build_html_context,
+    configure_package_theme_options,
+    resolve_docs_build_config,
+)
+
 this_dir = Path(__file__).resolve().parent
 src_dir = (this_dir / ".." / ".." / "src").resolve()
 
@@ -16,21 +24,14 @@ release = f"{ap.__version__}"
 
 # -- General configuration ---------------------------------------------------
 
+_SKIP = {"sphinx_gallery.gen_gallery"}  # gallery: re-enable when PR #104 lands
 extensions = [
-    "IPython.sphinxext.ipython_directive",  # Execute code during doc build
-    "IPython.sphinxext.ipython_console_highlighting",  # IPython syntax highlighting
-    "sphinx.ext.napoleon",  # needed to use google or numpy docstrings in python functions instead of rst
-    "autoapi.extension",  # automatically create the module documentation
+    *(e for e in PACKAGE_FRAME_EXTENSIONS if e not in _SKIP),
+    "autoapi.extension",
+    "nbsphinx",
     "sphinx.ext.coverage",
-    "sphinx.ext.intersphinx",  # Link to Acoular documentation
-    #"sphinx_autodoc_typehints",  #
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
-    "sphinx_design",  # tab-set and other design elements
-    "traits.util.trait_documenter",
-    #"numpydoc", #conda install -c anaconda numpydoc
-    "nbsphinx", # allows to include jupyter notebooks into rst documentation
-    "sphinxcontrib.bibtex", # to cite papers if necessary
 ]
 
 # auto api configuration
@@ -50,34 +51,28 @@ bibtex_bibfiles = ["bib/refs.bib"]
 
 html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
+
+_nav_ctx = build_html_context()
+for _link in _nav_ctx["acoular_nav_links"]: # we can remove this workaround once we hardcode the full URL in acoular_sphinx
+    if _link["url"].startswith("/"):
+        _link["url"] = f"https://www.acoular.org{_link['url']}"
+
 html_context = {
-    "github_user": "adku1173",
-    "github_repo": "acoupipe",
-    "github_version": "master",
-    "doc_path": "docs/source",
+    **_nav_ctx,
+    **build_github_context(
+        github_user="adku1173",
+        github_repo="acoupipe",
+        doc_path="docs/source",
+        github_version="master",
+    ),
 }
-html_theme_options = {
-    "logo": {
-        "alt_text": "AcouPipe - Home",
-        "text": "AcouPipe",
-    },
-    "icon_links": [
-        {
-            "name": "GitHub",
-            "url": "https://github.com/adku1173/acoupipe",
-            "icon": "fa-brands fa-square-github",
-        },
-        {
-            "name": "PyPI",
-            "url": "https://pypi.org/project/acoupipe",
-            "icon": "fa-brands fa-python",
-        },
-    ],
-    "pygments_light_style": "tango",
-    "pygments_dark_style": "monokai",
-    "header_links_before_dropdown": 5,
-    "use_edit_page_button": True,
-}
+html_theme_options = configure_package_theme_options(
+    package_name="AcouPipe",
+    github_url="https://github.com/adku1173/acoupipe",
+    pypi_project="acoupipe",
+    use_edit_page_button=True,
+)
+html_sidebars = {"**": ["sidebar-nav-bs.html"]}
 html_last_updated_fmt = "%b %d, %Y"
 html_copy_source = False
 html_css_files = ["css/custom_pydata_sphinx_theme.css"]

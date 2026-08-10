@@ -25,3 +25,7 @@ tests/throughput/results/*.png
 *.sif
 llm_docs
 llm_context
+docs/source/savefig/
+
+# macOS
+.DS_Store
