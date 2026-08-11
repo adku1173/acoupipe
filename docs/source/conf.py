@@ -5,7 +5,6 @@ from sphinx_gallery.sorting import ExplicitOrder
 
 import acoupipe as ap
 
-<<<<<<< HEAD
 from acoular_sphinx import (
     PACKAGE_FRAME_EXTENSIONS,
     build_github_context,
@@ -14,8 +13,6 @@ from acoular_sphinx import (
     resolve_docs_build_config,
 )
 
-=======
->>>>>>> 9709428 (fix docs ci test)
 this_dir = Path(__file__).resolve().parent
 src_dir = (this_dir / ".." / ".." / "src").resolve()
 
