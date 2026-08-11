@@ -25,12 +25,10 @@ tests/throughput/results/*.png
 *.sif
 llm_docs
 llm_context
-<<<<<<< HEAD
 docs/source/savefig/
 
 # macOS
 .DS_Store
-=======
 .claude/
 
 # Sphinx build output
@@ -42,6 +40,5 @@ docs/source/savefig/
 # autoapi generated API docs
 docs/source/autoapi/
 # data files written by example scripts
-**/*.h5
-examples/**/example_hdfdata_format.h5
->>>>>>> 6dfbcc6 (made docs run)
+examples/pipelines/*.h5
+examples/pipelines/*.tfrecord
