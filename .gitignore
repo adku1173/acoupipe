@@ -25,7 +25,12 @@ tests/throughput/results/*.png
 *.sif
 llm_docs
 llm_context
-docs/source/savefig/
+
+# ignore common venv folders
+.venv*
+.*venv
+.env*
+.*env
 
 # macOS
 .DS_Store
