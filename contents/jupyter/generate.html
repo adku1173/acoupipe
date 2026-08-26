@@ -1,0 +1,842 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Model training with training data generated on the fly &#8212; AcouPipe 25.05 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/nbsphinx-code-cells.css?v=2aa19091" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom_pydata_sphinx_theme.css?v=fc0817b1" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
+
+    <script src="../../_static/documentation_options.js?v=c2a68b7f"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'contents/jupyter/generate';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../../_static/acoular_favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Save and load datasets stored in HDF5 file format" href="load_h5.html" />
+    <link rel="prev" title="Examples" href="../examples.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="Aug 26, 2026"/>
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/acoular_logo_light.png" class="logo__image only-light" alt="AcouPipe - Home"/>
+    <img src="../../_static/acoular_logo_dark.png" class="logo__image only-dark pst-js-only" alt="AcouPipe - Home"/>
+  
+  
+    <p class="title logo__title">AcouPipe</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../datasets.html">Datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/synthetic.html">DatasetSynthetic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/miracle.html">DatasetMIRACLE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/sriracha.html">DatasetSRIRACHA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/store.html">Store Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modify.html">Modifying a Dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../examples.html">Examples</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../datasets/singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html">Prerequisites</a></li>
+
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/base/index.html">acoupipe.base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/config/index.html">acoupipe.config</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../autoapi/acoupipe/datasets/index.html">acoupipe.datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/base/index.html">acoupipe.datasets.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/experimental/index.html">acoupipe.datasets.experimental</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/features/index.html">acoupipe.datasets.features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/micgeom/index.html">acoupipe.datasets.micgeom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/spectra_analytic/index.html">acoupipe.datasets.spectra_analytic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/synthetic/index.html">acoupipe.datasets.synthetic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/utils/index.html">acoupipe.datasets.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/loader/index.html">acoupipe.loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/pipeline/index.html">acoupipe.pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/sampler/index.html">acoupipe.sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/version/index.html">acoupipe.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/writer/index.html">acoupipe.writer</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../examples.html" class="nav-link">Examples</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Model training with training data generated on the fly</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="Model-training-with-training-data-generated-on-the-fly">
+<h1>Model training with training data generated on the fly<a class="headerlink" href="#Model-training-with-training-data-generated-on-the-fly" title="Link to this heading">#</a></h1>
+<p>Depending on the concrete usecase, data generation speed with AcouPipe can be fast enough to directly incorporate the generated data for model training without the need of intermediate file saving.</p>
+<p>This example demonstrates how to <strong>generate training data on the fly</strong> for the most simple <strong>supervised source localization</strong> tasks.</p>
+<p>Here, the example demonstrates <strong>single source localization</strong> model training similar to [KHS19], but without predicting the source strength. For demonstration, the <strong>Beamforming map</strong> is created with calculation <code class="docutils literal notranslate"><span class="pre">mode=&quot;wishart&quot;</span></code> (no time data is simulated).</p>
+<p>To prevent thread overloading due to parallel data generation, the number of parallel numba threads was limited by exporting the variable <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">NUMBA_NUM_THREADS=1</span></code> before running the script.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import os
+os.environ[&#39;TF_CPP_MIN_LOG_LEVEL&#39;] = &#39;3&#39;
+import multiprocessing
+import numba
+import tensorflow as tf
+import ray
+ray.shutdown() # shutdown existing tasks
+ray.init(log_to_driver=False) # start a ray server (without logging the details for clean documentation)
+physical_devices = tf.config.list_physical_devices(&#39;GPU&#39;)
+
+print(&quot;Num GPUs:&quot;, len(physical_devices))
+print(&quot;Num CPUs:&quot;, multiprocessing.cpu_count())
+print(&quot;Numba number of concurrent threads:&quot;, numba.config.NUMBA_NUM_THREADS)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2023-11-14 14:28:06,089 INFO worker.py:1673 -- Started a local Ray instance.
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Num GPUs: 1
+Num CPUs: 48
+Numba number of concurrent threads: 1
+</pre></div></div>
+</div>
+<section id="Build-the-dataset-generator">
+<h2>Build the dataset generator<a class="headerlink" href="#Build-the-dataset-generator" title="Link to this heading">#</a></h2>
+<p>At first, we manipulate the dataset config to only create single source examples on a coarser grid of size <span class="math notranslate nohighlight">\(32 \times 32\)</span></p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import numpy as np
+from acoupipe.datasets.synthetic import DatasetSynthetic
+
+# create dataset (calculated on a GPU Workstation with several cpus)
+dataset = DatasetSynthetic(max_nsources=1, tasks=multiprocessing.cpu_count(), mode=&#39;wishart&#39;)
+
+# we manipulate the grid to have a coarser resolution
+dataset.config.grid.increment = 1/31 # 32 x 32 grid
+
+# build TensorFlow datasets for training and validation
+training_dataset = dataset.get_tf_dataset(
+    features=[&quot;sourcemap&quot;,&quot;loc&quot;], f=1000, split=&quot;training&quot;,size=100000000) # quasi infinite
+validation_dataset = dataset.get_tf_dataset(
+    features=[&quot;sourcemap&quot;,&quot;loc&quot;], f=1000, split=&quot;validation&quot;,size=100)
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/usr/local/lib/python3.8/dist-packages/acoupipe/datasets/features.py:104: Warning: Queried frequency (1000 Hz) not in set of discrete FFT sample frequencies. Using frequency 1071.88 Hz instead.
+  fidx = [get_frequency_index_range(
+</pre></div></div>
+</div>
+<p>The TensorFlow dataset API can be used to build a data pipeline from the data generator. Here, batches with 16 source cases are used. We use the <code class="docutils literal notranslate"><span class="pre">prefetch</span></code> method to generate data when during training steps on the GPU, where the CPUs are usually idle. For the validation_dataset, the <code class="docutils literal notranslate"><span class="pre">cache</span></code> method prevents recalculation of the validation data</p>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import tensorflow as tf
+
+def yield_features_and_labels(data):
+    feature = data[&#39;sourcemap&#39;][0]
+    f_max = tf.reduce_max(feature)
+    feature /= f_max
+    label = data[&#39;loc&#39;][:2]
+    return (feature,label)
+
+training_dataset = training_dataset.map(yield_features_and_labels).batch(16).prefetch(tf.data.AUTOTUNE)
+validation_dataset = validation_dataset.map(yield_features_and_labels).batch(16).cache()
+<br/></pre></div>
+</div>
+</div>
+</section>
+<section id="Train-the-model">
+<h2>Train the model<a class="headerlink" href="#Train-the-model" title="Link to this heading">#</a></h2>
+<p>Now, one can build the ResNet50V2 model and use the data to fit the model. This may take up to a few hours, depending on the computational infrastructure.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span># build model architecture
+model = tf.keras.Sequential(
+    tf.keras.applications.resnet_v2.ResNet50V2(
+    include_top=False,
+    weights=None,
+    input_shape=(32,32,1),
+    ))
+model.add(tf.keras.layers.Flatten())
+model.add(tf.keras.layers.Dense(2, activation=None))
+
+# compile and fit
+model.compile(optimizer=tf.optimizers.Adam(),loss=&#39;mse&#39;)
+model.fit(training_dataset,validation_data=validation_dataset, epochs=5,steps_per_epoch=10000, verbose=2)
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Epoch 1/5
+10000/10000 - 493s - loss: 0.0167 - val_loss: 0.7074 - 493s/epoch - 49ms/step
+Epoch 2/5
+10000/10000 - 443s - loss: 0.0062 - val_loss: 0.0046 - 443s/epoch - 44ms/step
+Epoch 3/5
+10000/10000 - 443s - loss: 0.0042 - val_loss: 0.0403 - 443s/epoch - 44ms/step
+Epoch 4/5
+10000/10000 - 433s - loss: 0.0019 - val_loss: 0.0104 - 433s/epoch - 43ms/step
+Epoch 5/5
+10000/10000 - 432s - loss: 0.0011 - val_loss: 0.0133 - 432s/epoch - 43ms/step
+</pre></div></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+&lt;keras.src.callbacks.History at 0x7f58804836a0&gt;
+</pre></div></div>
+</div>
+<p>After successfully training, the model can be used for source localization.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>dataset.tasks=1
+test_dataset = dataset.get_tf_dataset(
+    features=[&quot;sourcemap&quot;,&quot;loc&quot;], f=1000, split=&quot;validation&quot;,size=1, start_idx=2)
+test_dataset = test_dataset.map(yield_features_and_labels).batch(1)
+sourcemap, labels = next(iter(test_dataset))
+
+prediction = model.predict(sourcemap)[0]
+print(prediction)
+
+sourcemap = sourcemap.numpy().squeeze()
+<br/></pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+1/1 [==============================] - 0s 40ms/step
+[ 0.23072581 -0.0644986 ]
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-none notranslate"><div class="highlight"><pre><span></span>import matplotlib.pyplot as plt
+from acoular import L_p
+
+extent = dataset.config.grid.extent
+loc = labels[0]
+
+plt.figure()
+plt.imshow(L_p(sourcemap).T,
+            vmax=L_p(sourcemap.max()),
+            vmin=L_p(sourcemap.max())-15,
+            extent=extent,
+            origin=&quot;lower&quot;)
+plt.plot(prediction[0],prediction[1],&#39;x&#39;,label=&quot;prediction&quot;)
+plt.plot(loc[0],loc[1],&#39;x&#39;,label=&quot;label&quot;)
+plt.colorbar()
+plt.legend()
+plt.show()
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../../_images/contents_jupyter_generate_10_0.png" src="../../_images/contents_jupyter_generate_10_0.png" />
+</div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../examples.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Examples</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="load_h5.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Save and load datasets stored in HDF5 file format</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Build-the-dataset-generator">Build the dataset generator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#Train-the-model">Train the model</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/adku1173/acoupipe/edit/master/docs/source/contents/jupyter/generate.ipynb">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,883 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>DatasetSRIRACHA &#8212; AcouPipe 25.05 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom_pydata_sphinx_theme.css?v=fc0817b1" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
+
+    <script src="../../_static/documentation_options.js?v=c2a68b7f"></script>
+    <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'contents/datasets/sriracha';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../../_static/acoular_favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Features" href="features.html" />
+    <link rel="prev" title="DatasetMIRACLE" href="miracle.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="Aug 26, 2026"/>
+  
+    
+    <script src="../../_static/searchtools.js"></script>
+    <script src="../../_static/language_data.js"></script>
+    <script src="../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/acoular_logo_light.png" class="logo__image only-light" alt="AcouPipe - Home"/>
+    <img src="../../_static/acoular_logo_dark.png" class="logo__image only-dark pst-js-only" alt="AcouPipe - Home"/>
+  
+  
+    <p class="title logo__title">AcouPipe</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../install.html">Install</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../datasets.html">Datasets</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="synthetic.html">DatasetSynthetic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miracle.html">DatasetMIRACLE</a></li>
+<li class="toctree-l2 current active"><a class="current reference internal" href="#">DatasetSRIRACHA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="store.html">Store Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/modify.html">Modifying a Dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../examples.html">Examples</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/generate.html">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jupyter/load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module/examples.html">Prerequisites</a></li>
+
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../lit.html">Literature</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../autoapi/acoupipe/index.html">AcouPipe API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/base/index.html">acoupipe.base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/config/index.html">acoupipe.config</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../autoapi/acoupipe/datasets/index.html">acoupipe.datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/base/index.html">acoupipe.datasets.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/experimental/index.html">acoupipe.datasets.experimental</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/features/index.html">acoupipe.datasets.features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/micgeom/index.html">acoupipe.datasets.micgeom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/spectra_analytic/index.html">acoupipe.datasets.spectra_analytic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/synthetic/index.html">acoupipe.datasets.synthetic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/acoupipe/datasets/utils/index.html">acoupipe.datasets.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/loader/index.html">acoupipe.loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/pipeline/index.html">acoupipe.pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/sampler/index.html">acoupipe.sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/version/index.html">acoupipe.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/acoupipe/writer/index.html">acoupipe.writer</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../datasets.html" class="nav-link">Datasets</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">DatasetSRIRACHA</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="datasetsriracha">
+<span id="dataset-sriracha"></span><h1>DatasetSRIRACHA<a class="headerlink" href="#datasetsriracha" title="Link to this heading">#</a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">DatasetSRIRACHA</span></code> is an experimental microphone array dataset generator that builds multi-source
+scenes by convolving synthetic source signals with <strong>measured</strong> spatial room impulse responses (SRIRs)
+from the <a class="reference external" href="https://depositonce.tu-berlin.de/items/b079fd1c-999f-42cb-afd2-bcd34de6180b">SRIRACHA</a> dataset <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../lit.html#id2" title="Art J. R. Pelling, Adam Kujawski, and Ennes Sarradj. SRIRACHA: Shoebox Room Impulse Response Archive with Varying Absorption. July 2025. doi:10.14279/DEPOSITONCE-23943.">PKS25</a>]</span>. Multi-source scenes are realized by
+superposition of individually convolved source signals.</p>
+<p>SRIRACHA (Shoebox Room Impulse Response Archive with Varying Absorption) provides SRIRs measured in a
+rectangular (“shoebox”) room with two absorption conditions. The dataset comprises eight scenarios that
+combine two source–receiver plane distances, two source arrangements, and two room absorption settings.</p>
+<section id="measurement-environment-and-room-configurations">
+<h2>Measurement environment and room configurations<a class="headerlink" href="#measurement-environment-and-room-configurations" title="Link to this heading">#</a></h2>
+<p>The SRIRACHA measurements were conducted in a rigid concrete shoebox room with dimensions
+<span class="math notranslate nohighlight">\(6.22 \times 3.85 \times 3.07~\mathrm{m}\)</span> (length × width × height). Two room configurations are provided:</p>
+<ul class="simple">
+<li><p><strong>SR</strong>: “empty” shoebox room configuration with foam absorbers placed in two corners to control low-frequency decay.</p></li>
+<li><p><strong>SRA</strong>: shoebox room with additional absorption, realized by placing three absorber walls inside the room.</p></li>
+</ul>
+<p>A simplified geometry of the absorbent configuration is provided with the dataset as an <code class="docutils literal notranslate"><span class="pre">.stl</span></code> file.</p>
+<figure class="align-center" id="id2">
+<a class="reference internal image-reference" href="../../_images/sriracha_sra.png"><img alt="../../_images/sriracha_sra.png" src="../../_images/sriracha_sra.png" width="750" />
+</a>
+<figcaption>
+<p><span class="caption-text">Experimental setup rendering for the absorbent room configuration (SRA). The planar microphone array is
+mounted in front of a motorized positioning system; absorber walls are shown in brown.</span><a class="headerlink" href="#id2" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="reverberation-time-measurement">
+<h2>Reverberation time measurement<a class="headerlink" href="#reverberation-time-measurement" title="Link to this heading">#</a></h2>
+<p>For both room configurations, reverberation times were measured according to DIN-EN-ISO 3382-2 using an
+omnidirectional loudspeaker and omnidirectional microphone with an interrupted-noise procedure. The
+measurement setup (SRA configuration) is shown below.</p>
+<figure class="align-center" id="id3">
+<a class="reference internal image-reference" href="../../_images/sriracha_t60-measurement.jpg"><img alt="../../_images/sriracha_t60-measurement.jpg" src="../../_images/sriracha_t60-measurement.jpg" width="750" />
+</a>
+<figcaption>
+<p><span class="caption-text">Photograph of the reverberation-time measurement setup in the SRA configuration (omnidirectional
+dodecahedron loudspeaker, microphone array, and absorber wall).</span><a class="headerlink" href="#id3" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</section>
+<section id="scenarios">
+<h2>Scenarios<a class="headerlink" href="#scenarios" title="Link to this heading">#</a></h2>
+<p>SRIRACHA provides eight measurement scenarios. Naming follows:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SR</span></code> vs <code class="docutils literal notranslate"><span class="pre">SRA</span></code>: room configuration (empty vs absorbent),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">1</span></code> vs <code class="docutils literal notranslate"><span class="pre">2</span></code>: source–receiver plane distance (near vs far),</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">-D</span></code> suffix: dense local source arrangement.</p></li>
+</ul>
+<p>In AcouPipe, the scenario is selected via the <code class="docutils literal notranslate"><span class="pre">scenario</span></code> parameter of
+<a class="reference internal" href="../../autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetSRIRACHA" title="acoupipe.datasets.experimental.DatasetSRIRACHA"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.datasets.experimental.DatasetSRIRACHA</span></code></a>.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id4">
+<caption><span class="caption-text">Available SRIRACHA scenarios (SRIR grids and meta-data)</span><a class="headerlink" href="#id4" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 9.1%" />
+<col style="width: 20.0%" />
+<col style="width: 10.9%" />
+<col style="width: 9.1%" />
+<col style="width: 10.9%" />
+<col style="width: 10.9%" />
+<col style="width: 10.9%" />
+<col style="width: 18.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Scenario</p></th>
+<th class="head"><p>Room configuration</p></th>
+<th class="head"><p># sources</p></th>
+<th class="head"><p># mics</p></th>
+<th class="head"><p>dx = dy</p></th>
+<th class="head"><p>dz</p></th>
+<th class="head"><p>Δx = Δy</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SR1</p></td>
+<td><p>Empty shoebox room (SR)</p></td>
+<td><p>64 × 64 = 4096</p></td>
+<td><p>64</p></td>
+<td><p>146.7 cm</p></td>
+<td><p>75.3 cm</p></td>
+<td><p>23.3 mm</p></td>
+<td><p>Near distance, full grid</p></td>
+</tr>
+<tr class="row-odd"><td><p>SRA1</p></td>
+<td><p>Absorbent room (SRA)</p></td>
+<td><p>64 × 64 = 4096</p></td>
+<td><p>64</p></td>
+<td><p>146.7 cm</p></td>
+<td><p>75.3 cm</p></td>
+<td><p>23.3 mm</p></td>
+<td><p>Near distance, full grid</p></td>
+</tr>
+<tr class="row-even"><td><p>SR1-D</p></td>
+<td><p>Empty shoebox room (SR)</p></td>
+<td><p>33 × 33 = 1089</p></td>
+<td><p>64</p></td>
+<td><p>16.0 cm</p></td>
+<td><p>75.3 cm</p></td>
+<td><p>5.0 mm</p></td>
+<td><p>Near distance, dense local grid</p></td>
+</tr>
+<tr class="row-odd"><td><p>SRA1-D</p></td>
+<td><p>Absorbent room (SRA)</p></td>
+<td><p>33 × 33 = 1089</p></td>
+<td><p>64</p></td>
+<td><p>16.0 cm</p></td>
+<td><p>75.3 cm</p></td>
+<td><p>5.0 mm</p></td>
+<td><p>Near distance, dense local grid</p></td>
+</tr>
+<tr class="row-even"><td><p>SR2</p></td>
+<td><p>Empty shoebox room (SR)</p></td>
+<td><p>64 × 64 = 4096</p></td>
+<td><p>64</p></td>
+<td><p>146.7 cm</p></td>
+<td><p>147.9 cm</p></td>
+<td><p>23.3 mm</p></td>
+<td><p>Far distance, full grid</p></td>
+</tr>
+<tr class="row-odd"><td><p>SRA2</p></td>
+<td><p>Absorbent room (SRA)</p></td>
+<td><p>64 × 64 = 4096</p></td>
+<td><p>64</p></td>
+<td><p>146.7 cm</p></td>
+<td><p>148.0 cm</p></td>
+<td><p>23.3 mm</p></td>
+<td><p>Far distance, full grid</p></td>
+</tr>
+<tr class="row-even"><td><p>SR2-D</p></td>
+<td><p>Empty shoebox room (SR)</p></td>
+<td><p>33 × 33 = 1089</p></td>
+<td><p>64</p></td>
+<td><p>16.0 cm</p></td>
+<td><p>147.9 cm</p></td>
+<td><p>5.0 mm</p></td>
+<td><p>Far distance, dense local grid</p></td>
+</tr>
+<tr class="row-odd"><td><p>SRA2-D</p></td>
+<td><p>Absorbent room (SRA)</p></td>
+<td><p>33 × 33 = 1089</p></td>
+<td><p>64</p></td>
+<td><p>16.0 cm</p></td>
+<td><p>148.0 cm</p></td>
+<td><p>5.0 mm</p></td>
+<td><p>Far distance, dense local grid</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="signal-acquisition-and-post-processing">
+<h2>Signal acquisition and post-processing<a class="headerlink" href="#signal-acquisition-and-post-processing" title="Link to this heading">#</a></h2>
+<p>SRIRACHA SRIRs were acquired using a planar 64-channel microphone array (Vogel spiral, aperture 1.47 m)
+and a motorized 2D positioning system to place an excitation loudspeaker on a source plane parallel to the array.
+Excitation used an exponential sine sweep (3 s) covering 100 Hz to 16 kHz; recordings were 6 s long at 51.2 kHz
+to capture the room decay. The processed signals are resampled to <strong>32 kHz</strong> and deconvolved to obtain impulse
+responses. To reduce storage requirements, SRIRs are truncated based on a global decay criterion (instantaneous
+average energy decay of at least 60 dB).</p>
+<p>Environmental parameters (temperature and humidity) are recorded and used to compute the speed of sound.
+Source locations are provided as both nominal and corrected coordinates.</p>
+</section>
+<section id="data-format-and-coordinate-systems">
+<h2>Data format and coordinate systems<a class="headerlink" href="#data-format-and-coordinate-systems" title="Link to this heading">#</a></h2>
+<p>The dataset is distributed as HDF5 files. Conceptually, each scenario contains an impulse-response tensor of
+shape <code class="docutils literal notranslate"><span class="pre">(n_sources,</span> <span class="pre">n_mics,</span> <span class="pre">n_samples)</span></code> plus geometry and meta-data:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">/data/impulse_response</span></code>: float32 SRIR array</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/location/receiver</span></code>: float64 microphone coordinates (shape <code class="docutils literal notranslate"><span class="pre">(n_mics,</span> <span class="pre">3)</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/location/source</span></code>: float64 corrected source coordinates (shape <code class="docutils literal notranslate"><span class="pre">(n_sources,</span> <span class="pre">3)</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/location/source_raw</span></code>: float32 nominal source coordinates (shape <code class="docutils literal notranslate"><span class="pre">(n_sources,</span> <span class="pre">3)</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/metadata</span></code>: speed of sound, temperature, humidity, sampling rate, etc.</p></li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Large scenarios (e.g., <code class="docutils literal notranslate"><span class="pre">SR1</span></code>, <code class="docutils literal notranslate"><span class="pre">SR2</span></code>, <code class="docutils literal notranslate"><span class="pre">SRA1</span></code>, <code class="docutils literal notranslate"><span class="pre">SRA2</span></code>) may be split into multiple HDF5 chunks
+(e.g., <code class="docutils literal notranslate"><span class="pre">SR1-C1.h5</span></code> … <code class="docutils literal notranslate"><span class="pre">SR1-C4.h5</span></code>) to keep file sizes manageable.</p>
+</div>
+<p>The measurement coordinates are provided in a <strong>left-handed</strong> coordinate system for compatibility with MIRACLE.
+The accompanying <code class="docutils literal notranslate"><span class="pre">.stl</span></code> geometry is defined in a <strong>right-handed</strong> coordinate system; when using the <code class="docutils literal notranslate"><span class="pre">.stl</span></code> as
+reference, mirror the x-axis of the provided measurement coordinates.</p>
+</section>
+<section id="default-fft-parameters">
+<h2>Default FFT parameters<a class="headerlink" href="#default-fft-parameters" title="Link to this heading">#</a></h2>
+<p>The underlying default FFT parameters are:</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id5">
+<caption><span class="caption-text">FFT Parameters</span><a class="headerlink" href="#id5" title="Link to this table">#</a></caption>
+<tbody>
+<tr class="row-odd"><td><p>Sampling Rate</p></td>
+<td><p>fs = 32,000 Hz</p></td>
+</tr>
+<tr class="row-even"><td><p>Block size</p></td>
+<td><p>256 samples</p></td>
+</tr>
+<tr class="row-odd"><td><p>Block overlap</p></td>
+<td><p>50 %</p></td>
+</tr>
+<tr class="row-even"><td><p>Windowing</p></td>
+<td><p>von Hann / Hanning</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="randomized-properties">
+<h2>Randomized properties<a class="headerlink" href="#randomized-properties" title="Link to this heading">#</a></h2>
+<p>Several properties are randomized for each generated source case when building multi-source scenes from
+SRIRACHA. By default, source positions are sampled from the discrete SRIR grid of the selected scenario.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id6">
+<caption><span class="caption-text">Randomized properties (defaults)</span><a class="headerlink" href="#id6" title="Link to this table">#</a></caption>
+<tbody>
+<tr class="row-odd"><td><p>No. of sources</p></td>
+<td><p>Poisson distributed (<span class="math notranslate nohighlight">\(\\lambda = 3\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p>Source positions</p></td>
+<td><p>Bivariate normal distributed (<span class="math notranslate nohighlight">\(\\sigma = 0.1688 d_a\)</span>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source strength (<span class="math notranslate nohighlight">\([{Pa}^2]\)</span> at reference position)</p></td>
+<td><p>Rayleigh distributed (<span class="math notranslate nohighlight">\(\\sigma_R = 5\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p>Relative noise variance</p></td>
+<td><p>Uniform distributed (<span class="math notranslate nohighlight">\(10^{-6}\)</span>, <span class="math notranslate nohighlight">\(0.1\)</span>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="example">
+<h2>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">acoupipe.datasets.experimental</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetSRIRACHA</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">DatasetSRIRACHA</span><span class="p">(</span><span class="n">scenario</span><span class="o">=</span><span class="s2">&quot;SRA2-D&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="license-and-access">
+<h2>License and access<a class="headerlink" href="#license-and-access" title="Link to this heading">#</a></h2>
+<p>SRIRACHA is distributed under <strong>CC BY-NC-SA 4.0</strong> (non-commercial). Please ensure your intended use complies
+with the license terms.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="miracle.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">DatasetMIRACLE</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="features.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Features</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#measurement-environment-and-room-configurations">Measurement environment and room configurations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reverberation-time-measurement">Reverberation time measurement</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#scenarios">Scenarios</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#signal-acquisition-and-post-processing">Signal acquisition and post-processing</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-format-and-coordinate-systems">Data format and coordinate systems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#default-fft-parameters">Default FFT parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#randomized-properties">Randomized properties</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#example">Example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#license-and-access">License and access</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/adku1173/acoupipe/edit/master/docs/source/contents/datasets/sriracha.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1365 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Index &#8212; AcouPipe 25.05 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="_static/css/custom_pydata_sphinx_theme.css?v=fc0817b1" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
+
+    <script src="_static/documentation_options.js?v=c2a68b7f"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=f281be69"></script>
+    <script src="_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'genindex';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="_static/acoular_favicon.ico"/>
+    <link rel="index" title="Index" href="#" />
+    <link rel="search" title="Search" href="search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="Aug 26, 2026"/>
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/acoular_logo_light.png" class="logo__image only-light" alt="AcouPipe - Home"/>
+    <img src="_static/acoular_logo_dark.png" class="logo__image only-dark pst-js-only" alt="AcouPipe - Home"/>
+  
+  
+    <p class="title logo__title">AcouPipe</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="contents/install.html">Install</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="contents/datasets.html">Datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/synthetic.html">DatasetSynthetic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/miracle.html">DatasetMIRACLE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/sriracha.html">DatasetSRIRACHA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/store.html">Store Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/jupyter/modify.html">Modifying a Dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="contents/examples.html">Examples</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="contents/jupyter/generate.html">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/jupyter/load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/jupyter/load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/datasets/singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contents/module/examples.html">Prerequisites</a></li>
+
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="contents/lit.html">Literature</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="autoapi/acoupipe/index.html">AcouPipe API</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/acoupipe/base/index.html">acoupipe.base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/acoupipe/config/index.html">acoupipe.config</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/acoupipe/datasets/index.html">acoupipe.datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/acoupipe/datasets/base/index.html">acoupipe.datasets.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/acoupipe/datasets/experimental/index.html">acoupipe.datasets.experimental</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/acoupipe/datasets/features/index.html">acoupipe.datasets.features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/acoupipe/datasets/micgeom/index.html">acoupipe.datasets.micgeom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/acoupipe/datasets/spectra_analytic/index.html">acoupipe.datasets.spectra_analytic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/acoupipe/datasets/synthetic/index.html">acoupipe.datasets.synthetic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/acoupipe/datasets/utils/index.html">acoupipe.datasets.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/acoupipe/loader/index.html">acoupipe.loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/acoupipe/pipeline/index.html">acoupipe.pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/acoupipe/sampler/index.html">acoupipe.sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/acoupipe/version/index.html">acoupipe.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="autoapi/acoupipe/writer/index.html">acoupipe.writer</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+
+<h1 id="index">Index</h1>
+
+<div class="genindex-jumpbox">
+ <a href="#_"><strong>_</strong></a>
+ | <a href="#A"><strong>A</strong></a>
+ | <a href="#B"><strong>B</strong></a>
+ | <a href="#C"><strong>C</strong></a>
+ | <a href="#D"><strong>D</strong></a>
+ | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#L"><strong>L</strong></a>
+ | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
+ | <a href="#O"><strong>O</strong></a>
+ | <a href="#P"><strong>P</strong></a>
+ | <a href="#R"><strong>R</strong></a>
+ | <a href="#S"><strong>S</strong></a>
+ | <a href="#T"><strong>T</strong></a>
+ | <a href="#V"><strong>V</strong></a>
+ | <a href="#W"><strong>W</strong></a>
+ 
+</div>
+<h2 id="_">_</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils._get_signals_recursively">_get_signals_recursively() (in module acoupipe.datasets.utils)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils._handle_log">_handle_log() (in module acoupipe.datasets.utils)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="A">A</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    acoupipe
+
+      <ul>
+        <li><a href="autoapi/acoupipe/index.html#module-acoupipe">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.base
+
+      <ul>
+        <li><a href="autoapi/acoupipe/base/index.html#module-acoupipe.base">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.config
+
+      <ul>
+        <li><a href="autoapi/acoupipe/config/index.html#module-acoupipe.config">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.datasets
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/index.html#module-acoupipe.datasets">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.datasets.base
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/base/index.html#module-acoupipe.datasets.base">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.datasets.experimental
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#module-acoupipe.datasets.experimental">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.datasets.features
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#module-acoupipe.datasets.features">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.datasets.micgeom
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/micgeom/index.html#module-acoupipe.datasets.micgeom">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.datasets.spectra_analytic
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/spectra_analytic/index.html#module-acoupipe.datasets.spectra_analytic">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.datasets.synthetic
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#module-acoupipe.datasets.synthetic">module</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    acoupipe.datasets.utils
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#module-acoupipe.datasets.utils">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.loader
+
+      <ul>
+        <li><a href="autoapi/acoupipe/loader/index.html#module-acoupipe.loader">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.pipeline
+
+      <ul>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#module-acoupipe.pipeline">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.sampler
+
+      <ul>
+        <li><a href="autoapi/acoupipe/sampler/index.html#module-acoupipe.sampler">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.version
+
+      <ul>
+        <li><a href="autoapi/acoupipe/version/index.html#module-acoupipe.version">module</a>
+</li>
+      </ul></li>
+      <li>
+    acoupipe.writer
+
+      <ul>
+        <li><a href="autoapi/acoupipe/writer/index.html#module-acoupipe.writer">module</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BaseFeatureCollectionBuilder.add_custom">add_custom() (acoupipe.datasets.base.BaseFeatureCollectionBuilder method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCollectionBuilder.add_custom">(acoupipe.datasets.features.BaseFeatureCollectionBuilder method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.add_custom">(acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCollection.add_feature_func">add_feature_func() (acoupipe.datasets.features.BaseFeatureCollection method)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.AnalyticNoiseStrengthFeature">AnalyticNoiseStrengthFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.AnalyticSourceStrengthFeature">AnalyticSourceStrengthFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="B">B</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BaseFeatureCatalog">BaseFeatureCatalog (class in acoupipe.datasets.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCatalog">(class in acoupipe.datasets.features)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.BaseFeatureCatalog">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCollection">BaseFeatureCollection (class in acoupipe.datasets.features)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BaseFeatureCollectionBuilder">BaseFeatureCollectionBuilder (class in acoupipe.datasets.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCollectionBuilder">(class in acoupipe.datasets.features)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.BaseLoadDataset">BaseLoadDataset (class in acoupipe.loader)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BasePipeline">BasePipeline (class in acoupipe.datasets.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.BasePipeline">(class in acoupipe.pipeline)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/base/index.html#acoupipe.base.BaseSampler">BaseSampler (class in acoupipe.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.BaseSampler">(class in acoupipe.pipeline)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.BaseSampler">(class in acoupipe.sampler)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.BaseWriteDataset">BaseWriteDataset (class in acoupipe.writer)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BaseFeatureCollectionBuilder.build">build() (acoupipe.datasets.base.BaseFeatureCollectionBuilder method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCollectionBuilder.build">(acoupipe.datasets.features.BaseFeatureCollectionBuilder method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.build">(acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="C">C</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMFeature.calc_csm1">calc_csm1() (acoupipe.datasets.features.CSMFeature static method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMFeature.calc_csm1">(acoupipe.datasets.synthetic.CSMFeature static method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMFeature.calc_csm2">calc_csm2() (acoupipe.datasets.features.CSMFeature static method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMFeature.calc_csm2">(acoupipe.datasets.synthetic.CSMFeature static method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMtriuFeature.calc_csmtriu1">calc_csmtriu1() (acoupipe.datasets.features.CSMtriuFeature static method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu1">(acoupipe.datasets.synthetic.CSMtriuFeature static method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMtriuFeature.calc_csmtriu2">calc_csmtriu2() (acoupipe.datasets.features.CSMtriuFeature static method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu2">(acoupipe.datasets.synthetic.CSMtriuFeature static method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EigmodeFeature.calc_eigmode1">calc_eigmode1() (acoupipe.datasets.features.EigmodeFeature static method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode1">(acoupipe.datasets.synthetic.EigmodeFeature static method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EigmodeFeature.calc_eigmode2">calc_eigmode2() (acoupipe.datasets.features.EigmodeFeature static method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode2">(acoupipe.datasets.synthetic.EigmodeFeature static method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.calc_transfer">calc_transfer() (in module acoupipe.datasets.experimental)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.calc_transfer">(in module acoupipe.datasets.synthetic)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.calc_transfer">(in module acoupipe.datasets.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.complex_to_real">complex_to_real() (in module acoupipe.datasets.utils)</a>
+</li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.ContainerSampler">ContainerSampler (class in acoupipe.sampler)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.create_feature">create_feature() (in module acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.create_feature">(in module acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMFeature">CSMFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMtriuFeature">CSMtriuFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMtriuFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="D">D</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/base/index.html#acoupipe.base.DataGenerator">DataGenerator (class in acoupipe.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.DataGenerator">(class in acoupipe.loader)</a>
+</li>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.DataGenerator">(class in acoupipe.pipeline)</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.DataGenerator">(class in acoupipe.writer)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.DatasetBase">DatasetBase (class in acoupipe.datasets.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetBase">(class in acoupipe.datasets.experimental)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetBase">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetMIRACLE">DatasetMIRACLE (class in acoupipe.datasets.experimental)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetMIRACLEConfig">DatasetMIRACLEConfig (class in acoupipe.datasets.experimental)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetSRIRACHA">DatasetSRIRACHA (class in acoupipe.datasets.experimental)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetSRIRACHAConfig">DatasetSRIRACHAConfig (class in acoupipe.datasets.experimental)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetSynthetic">DatasetSynthetic (class in acoupipe.datasets.synthetic)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetSyntheticConfig">DatasetSyntheticConfig (class in acoupipe.datasets.experimental)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetSyntheticConfig">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.MicGeomSampler.deviate">deviate() (acoupipe.sampler.MicGeomSampler method)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.DistributedPipeline">DistributedPipeline (class in acoupipe.datasets.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.DistributedPipeline">(class in acoupipe.pipeline)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="E">E</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EigmodeFeature">EigmodeFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EigmodeFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EstimatedNoiseStrengthFeature">EstimatedNoiseStrengthFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EstimatedSourceStrengthFeature">EstimatedSourceStrengthFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.PowerSpectraAnalytic.fftfreq">fftfreq() (acoupipe.datasets.features.PowerSpectraAnalytic method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/spectra_analytic/index.html#acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic.fftfreq">(acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.PowerSpectraAnalytic.fftfreq">(acoupipe.datasets.synthetic.PowerSpectraAnalytic method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.DatasetBase.generate">generate() (acoupipe.datasets.base.DatasetBase method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetBase.generate">(acoupipe.datasets.experimental.DatasetBase method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetBase.generate">(acoupipe.datasets.synthetic.DatasetBase method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.generate_uniform_parametric_eq">generate_uniform_parametric_eq() (in module acoupipe.datasets.utils)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.get_all_source_signals">get_all_source_signals() (in module acoupipe.datasets.synthetic)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.get_all_source_signals">(in module acoupipe.datasets.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/base/index.html#acoupipe.base.DataGenerator.get_data">get_data() (acoupipe.base.DataGenerator method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BasePipeline.get_data">(acoupipe.datasets.base.BasePipeline method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.DistributedPipeline.get_data">(acoupipe.datasets.base.DistributedPipeline method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.WriteH5Dataset.get_data">(acoupipe.datasets.base.WriteH5Dataset method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.WriteH5Dataset.get_data">(acoupipe.datasets.utils.WriteH5Dataset method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.DataGenerator.get_data">(acoupipe.loader.DataGenerator method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.LoadH5Dataset.get_data">(acoupipe.loader.LoadH5Dataset method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.BasePipeline.get_data">(acoupipe.pipeline.BasePipeline method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.DataGenerator.get_data">(acoupipe.pipeline.DataGenerator method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.DistributedPipeline.get_data">(acoupipe.pipeline.DistributedPipeline method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.BaseWriteDataset.get_data">(acoupipe.writer.BaseWriteDataset method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.DataGenerator.get_data">(acoupipe.writer.DataGenerator method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.WriteH5Dataset.get_data">(acoupipe.writer.WriteH5Dataset method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.LoadH5Dataset.get_dataset_generator">get_dataset_generator() (acoupipe.loader.LoadH5Dataset method)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.DatasetBase.get_feature_collection">get_feature_collection() (acoupipe.datasets.base.DatasetBase method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetBase.get_feature_collection">(acoupipe.datasets.experimental.DatasetBase method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetBase.get_feature_collection">(acoupipe.datasets.synthetic.DatasetBase method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetSynthetic.get_feature_collection">(acoupipe.datasets.synthetic.DatasetSynthetic method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BaseFeatureCatalog.get_feature_func">get_feature_func() (acoupipe.datasets.base.BaseFeatureCatalog method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.AnalyticNoiseStrengthFeature.get_feature_func">(acoupipe.datasets.features.AnalyticNoiseStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.AnalyticSourceStrengthFeature.get_feature_func">(acoupipe.datasets.features.AnalyticSourceStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCatalog.get_feature_func">(acoupipe.datasets.features.BaseFeatureCatalog method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMFeature.get_feature_func">(acoupipe.datasets.features.CSMFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.CSMtriuFeature.get_feature_func">(acoupipe.datasets.features.CSMtriuFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EigmodeFeature.get_feature_func">(acoupipe.datasets.features.EigmodeFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EstimatedNoiseStrengthFeature.get_feature_func">(acoupipe.datasets.features.EstimatedNoiseStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.EstimatedSourceStrengthFeature.get_feature_func">(acoupipe.datasets.features.EstimatedSourceStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.LocFeature.get_feature_func">(acoupipe.datasets.features.LocFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.SourcemapFeature.get_feature_func">(acoupipe.datasets.features.SourcemapFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.SpectrogramFeature.get_feature_func">(acoupipe.datasets.features.SpectrogramFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.TargetmapFeature.get_feature_func">(acoupipe.datasets.features.TargetmapFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.TimeDataFeature.get_feature_func">(acoupipe.datasets.features.TimeDataFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature.get_feature_func">(acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature.get_feature_func">(acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.BaseFeatureCatalog.get_feature_func">(acoupipe.datasets.synthetic.BaseFeatureCatalog method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMFeature.get_feature_func">(acoupipe.datasets.synthetic.CSMFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.CSMtriuFeature.get_feature_func">(acoupipe.datasets.synthetic.CSMtriuFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EigmodeFeature.get_feature_func">(acoupipe.datasets.synthetic.EigmodeFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature.get_feature_func">(acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature.get_feature_func">(acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.LocFeature.get_feature_func">(acoupipe.datasets.synthetic.LocFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.SourcemapFeature.get_feature_func">(acoupipe.datasets.synthetic.SourcemapFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.SpectrogramFeature.get_feature_func">(acoupipe.datasets.synthetic.SpectrogramFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.TargetmapFeature.get_feature_func">(acoupipe.datasets.synthetic.TargetmapFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.TimeDataFeature.get_feature_func">(acoupipe.datasets.synthetic.TimeDataFeature method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.BaseFeatureCollection.get_feature_funcs">get_feature_funcs() (acoupipe.datasets.features.BaseFeatureCollection method)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.get_frequency_index_range">get_frequency_index_range() (in module acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.get_frequency_index_range">(in module acoupipe.datasets.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.get_ir">get_ir() (in module acoupipe.datasets.synthetic)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.get_point_sources_recursively">get_point_sources_recursively() (in module acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.get_point_sources_recursively">(in module acoupipe.datasets.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetMIRACLEConfig.get_sampler">get_sampler() (acoupipe.datasets.experimental.DatasetMIRACLEConfig method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetSyntheticConfig.get_sampler">(acoupipe.datasets.experimental.DatasetSyntheticConfig method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetSyntheticConfig.get_sampler">(acoupipe.datasets.synthetic.DatasetSyntheticConfig method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.get_uncorrelated_noise_source_recursively">get_uncorrelated_noise_source_recursively() (in module acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.get_uncorrelated_noise_source_recursively">(in module acoupipe.datasets.synthetic)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.get_uncorrelated_noise_source_recursively">(in module acoupipe.datasets.utils)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="L">L</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.BaseLoadDataset.load_data">load_data() (acoupipe.loader.BaseLoadDataset method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.LoadH5Dataset.load_data">(acoupipe.loader.LoadH5Dataset method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.LoadH5Dataset.load_metadata">load_metadata() (acoupipe.loader.LoadH5Dataset method)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/loader/index.html#acoupipe.loader.LoadH5Dataset">LoadH5Dataset (class in acoupipe.loader)</a>
+</li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.LocationSampler">LocationSampler (class in acoupipe.sampler)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.LocFeature">LocFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.LocFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="M">M</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.MicGeomSampler">MicGeomSampler (class in acoupipe.sampler)</a>
+</li>
+      <li>
+    module
+
+      <ul>
+        <li><a href="autoapi/acoupipe/index.html#module-acoupipe">acoupipe</a>
+</li>
+        <li><a href="autoapi/acoupipe/base/index.html#module-acoupipe.base">acoupipe.base</a>
+</li>
+        <li><a href="autoapi/acoupipe/config/index.html#module-acoupipe.config">acoupipe.config</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/index.html#module-acoupipe.datasets">acoupipe.datasets</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/base/index.html#module-acoupipe.datasets.base">acoupipe.datasets.base</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#module-acoupipe.datasets.experimental">acoupipe.datasets.experimental</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#module-acoupipe.datasets.features">acoupipe.datasets.features</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/micgeom/index.html#module-acoupipe.datasets.micgeom">acoupipe.datasets.micgeom</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/spectra_analytic/index.html#module-acoupipe.datasets.spectra_analytic">acoupipe.datasets.spectra_analytic</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#module-acoupipe.datasets.synthetic">acoupipe.datasets.synthetic</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#module-acoupipe.datasets.utils">acoupipe.datasets.utils</a>
+</li>
+        <li><a href="autoapi/acoupipe/loader/index.html#module-acoupipe.loader">acoupipe.loader</a>
+</li>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#module-acoupipe.pipeline">acoupipe.pipeline</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#module-acoupipe.sampler">acoupipe.sampler</a>
+</li>
+        <li><a href="autoapi/acoupipe/version/index.html#module-acoupipe.version">acoupipe.version</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#module-acoupipe.writer">acoupipe.writer</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.NumericAttributeSampler">NumericAttributeSampler (class in acoupipe.sampler)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="O">O</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.NumericAttributeSampler.order_samples">order_samples() (acoupipe.sampler.NumericAttributeSampler method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="P">P</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.PointSourceSampler">PointSourceSampler (class in acoupipe.sampler)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.PowerSpectraAnalytic">PowerSpectraAnalytic (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/spectra_analytic/index.html#acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic">(class in acoupipe.datasets.spectra_analytic)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.PowerSpectraAnalytic">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="R">R</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.require_ir_support">require_ir_support() (in module acoupipe.datasets.synthetic)</a>
+</li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.MicGeomSampler.rotate">rotate() (acoupipe.sampler.MicGeomSampler method)</a>
+</li>
+      <li><a href="autoapi/acoupipe/base/index.html#acoupipe.base.BaseSampler.rvs">rvs() (acoupipe.base.BaseSampler method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.BaseSampler.rvs">(acoupipe.pipeline.BaseSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.BaseSampler.rvs">(acoupipe.sampler.BaseSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.ContainerSampler.rvs">(acoupipe.sampler.ContainerSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.LocationSampler.rvs">(acoupipe.sampler.LocationSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.PointSourceSampler.rvs">(acoupipe.sampler.PointSourceSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.SetSampler.rvs">(acoupipe.sampler.SetSampler method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="S">S</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/base/index.html#acoupipe.base.BaseSampler.sample">sample() (acoupipe.base.BaseSampler method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.BaseSampler.sample">(acoupipe.pipeline.BaseSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.BaseSampler.sample">(acoupipe.sampler.BaseSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.ContainerSampler.sample">(acoupipe.sampler.ContainerSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.LocationSampler.sample">(acoupipe.sampler.LocationSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.MicGeomSampler.sample">(acoupipe.sampler.MicGeomSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.NumericAttributeSampler.sample">(acoupipe.sampler.NumericAttributeSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.PointSourceSampler.sample">(acoupipe.sampler.PointSourceSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.SetSampler.sample">(acoupipe.sampler.SetSampler method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.SourceSetSampler.sample">(acoupipe.sampler.SourceSetSampler method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.PointSourceSampler.sample_loc">sample_loc() (acoupipe.sampler.PointSourceSampler method)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.sample_signal_length">sample_signal_length() (in module acoupipe.datasets.synthetic)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.WriteH5Dataset.save">save() (acoupipe.datasets.base.WriteH5Dataset method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.WriteH5Dataset.save">(acoupipe.datasets.utils.WriteH5Dataset method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.BaseWriteDataset.save">(acoupipe.writer.BaseWriteDataset method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.WriteH5Dataset.save">(acoupipe.writer.WriteH5Dataset method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.DatasetBase.save_h5">save_h5() (acoupipe.datasets.base.DatasetBase method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetBase.save_h5">(acoupipe.datasets.experimental.DatasetBase method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.DatasetBase.save_h5">(acoupipe.datasets.synthetic.DatasetBase method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.save_tfrecord">save_tfrecord() (in module acoupipe.datasets.base)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetMIRACLEConfig.set_filename">set_filename() (acoupipe.datasets.experimental.DatasetMIRACLEConfig method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/experimental/index.html#acoupipe.datasets.experimental.DatasetSRIRACHAConfig.set_filename">(acoupipe.datasets.experimental.DatasetSRIRACHAConfig method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.set_filename">(in module acoupipe.datasets.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.SourcemapFeature.set_freq_limits">set_freq_limits() (acoupipe.datasets.features.SourcemapFeature method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.SpectraFeature.set_freq_limits">(acoupipe.datasets.features.SpectraFeature method)</a>
+</li>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.SourcemapFeature.set_freq_limits">(acoupipe.datasets.synthetic.SourcemapFeature method)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.set_pipeline_seeds">set_pipeline_seeds() (in module acoupipe.datasets.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.set_pipeline_seeds">(in module acoupipe.datasets.utils)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.SetSampler">SetSampler (class in acoupipe.sampler)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.SourcemapFeature">SourcemapFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.SourcemapFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.SourceSetSampler">SourceSetSampler (class in acoupipe.sampler)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.SpectraFeature">SpectraFeature (class in acoupipe.datasets.features)</a>
+</li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.SpectrogramFeature">SpectrogramFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.SpectrogramFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="T">T</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.TargetmapFeature">TargetmapFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.TargetmapFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/acoupipe/datasets/features/index.html#acoupipe.datasets.features.TimeDataFeature">TimeDataFeature (class in acoupipe.datasets.features)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/synthetic/index.html#acoupipe.datasets.synthetic.TimeDataFeature">(class in acoupipe.datasets.synthetic)</a>
+</li>
+      </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.tqdm_hook">tqdm_hook() (in module acoupipe.datasets.utils)</a>
+</li>
+      <li><a href="autoapi/acoupipe/sampler/index.html#acoupipe.sampler.MicGeomSampler.translate">translate() (acoupipe.sampler.MicGeomSampler method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="V">V</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.BasePipeline.validate_random_seeds">validate_random_seeds() (acoupipe.datasets.base.BasePipeline method)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/pipeline/index.html#acoupipe.pipeline.BasePipeline.validate_random_seeds">(acoupipe.pipeline.BasePipeline method)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+<h2 id="W">W</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/acoupipe/datasets/base/index.html#acoupipe.datasets.base.WriteH5Dataset">WriteH5Dataset (class in acoupipe.datasets.base)</a>
+
+      <ul>
+        <li><a href="autoapi/acoupipe/datasets/utils/index.html#acoupipe.datasets.utils.WriteH5Dataset">(class in acoupipe.datasets.utils)</a>
+</li>
+        <li><a href="autoapi/acoupipe/writer/index.html#acoupipe.writer.WriteH5Dataset">(class in acoupipe.writer)</a>
+</li>
+      </ul></li>
+  </ul></td>
+</tr></table>
+
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

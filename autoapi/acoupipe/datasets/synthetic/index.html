@@ -1,0 +1,1906 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>acoupipe.datasets.synthetic &#8212; AcouPipe 25.05 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/custom_pydata_sphinx_theme.css?v=fc0817b1" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
+
+    <script src="../../../../_static/documentation_options.js?v=c2a68b7f"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/acoupipe/datasets/synthetic/index';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../../../../_static/acoular_favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="acoupipe.datasets.utils" href="../utils/index.html" />
+    <link rel="prev" title="acoupipe.datasets.spectra_analytic" href="../spectra_analytic/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="Aug 26, 2026"/>
+  
+    
+    <script src="../../../../_static/searchtools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script src="../../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/acoular_logo_light.png" class="logo__image only-light" alt="AcouPipe - Home"/>
+    <img src="../../../../_static/acoular_logo_dark.png" class="logo__image only-dark pst-js-only" alt="AcouPipe - Home"/>
+  
+  
+    <p class="title logo__title">AcouPipe</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/install.html">Install</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../contents/datasets.html">Datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/synthetic.html">DatasetSynthetic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/miracle.html">DatasetMIRACLE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/sriracha.html">DatasetSRIRACHA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/store.html">Store Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/modify.html">Modifying a Dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../contents/examples.html">Examples</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/generate.html">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/module/examples.html">Prerequisites</a></li>
+
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/lit.html">Literature</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">AcouPipe API</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../base/index.html">acoupipe.base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config/index.html">acoupipe.config</a></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">acoupipe.datasets</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">acoupipe.datasets.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../experimental/index.html">acoupipe.datasets.experimental</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../features/index.html">acoupipe.datasets.features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../micgeom/index.html">acoupipe.datasets.micgeom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../spectra_analytic/index.html">acoupipe.datasets.spectra_analytic</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">acoupipe.datasets.synthetic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../utils/index.html">acoupipe.datasets.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../loader/index.html">acoupipe.loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/index.html">acoupipe.pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sampler/index.html">acoupipe.sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version/index.html">acoupipe.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writer/index.html">acoupipe.writer</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">acoupipe</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">acoupipe.datasets</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">acoupipe.datasets.synthetic</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-acoupipe.datasets.synthetic">
+<span id="acoupipe-datasets-synthetic"></span><h1>acoupipe.datasets.synthetic<a class="headerlink" href="#module-acoupipe.datasets.synthetic" title="Link to this heading">#</a></h1>
+<p>Contains classes for the generation of microphone array data from synthesized signals for acoustic testing applications.</p>
+<blockquote>
+<div><p>Currently, the following dataset generators are available:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#acoupipe.datasets.synthetic.DatasetSynthetic" title="acoupipe.datasets.synthetic.DatasetSynthetic"><code class="xref py py-class docutils literal notranslate"><span class="pre">DatasetSynthetic</span></code></a>: A simple and fast method that relies on synthetic white noise signals and spatially stationary sources radiating under anechoic conditions.</p></li>
+</ul>
+</div></blockquote>
+<figure class="align-center" id="id5">
+<span id="default-measurement-setup"></span><a class="reference internal image-reference" href="../../../../_images/msm_layout.png"><img alt="../../../../_images/msm_layout.png" src="../../../../_images/msm_layout.png" width="750" />
+</a>
+<figcaption>
+<p><span class="caption-text">Default measurement setup used in the <a class="reference internal" href="#module-acoupipe.datasets.synthetic" title="acoupipe.datasets.synthetic"><code class="xref py py-mod docutils literal notranslate"><span class="pre">acoupipe.datasets.synthetic</span></code></a> module.</span><a class="headerlink" href="#id5" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetBase">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">DatasetBase</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetBase" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>Base class for generating microphone array datasets with specified features and labels.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>config</strong><span class="classifier">ConfigBase</span></dt><dd><p>Configuration object for dataset generation.</p>
+</dd>
+<dt><strong>tasks</strong><span class="classifier">int</span></dt><dd><p>Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetBase.get_feature_collection">
+<span class="sig-name descname"><span class="pre">get_feature_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetBase.get_feature_collection" title="Link to this definition">#</a></dt>
+<dd><p>Get the feature collection of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>BaseFeatureCollection</dt><dd><p>BaseFeatureCollection object.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetBase.generate">
+<span class="sig-name descname"><span class="pre">generate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'training'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetBase.generate" title="Link to this definition">#</a></dt>
+<dd><p>Generate dataset samples iteratively.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>features</strong><span class="classifier">list</span></dt><dd><p>List of features included in the dataset.
+The features “seeds” and “idx” are always included.</p>
+</dd>
+<dt><strong>split</strong><span class="classifier">str</span></dt><dd><p>Split name for the dataset (‘training’, ‘validation’ or ‘test’). Defaults to ‘training’.</p>
+</dd>
+<dt><strong>size</strong><span class="classifier">int</span></dt><dd><p>Size of the dataset (number of source cases).</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>The center frequency or list of frequencies of the dataset.
+If None, all frequencies are included.</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">integer</span></dt><dd><p>Controls the width of the frequency bands considered; defaults to
+0 (single frequency line).</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>num</p></th>
+<th class="head"><p>frequency band width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>single frequency line</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>octave band</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>third-octave band</p></td>
+</tr>
+<tr class="row-odd"><td><p>n</p></td>
+<td><p>1/n-octave band</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+<dt><strong>start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Starting sample index (default is 0).</p>
+</dd>
+<dt><strong>progress_bar</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to show a progress bar (default is True).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>data</strong><span class="classifier">dict</span></dt><dd><p>Generator that yields dataset samples as dictionaries containing the feature
+names as keys.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Generate features iteratively (example below requires a dataset configuration).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">acoupipe.datasets.synthetic</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+
+<span class="c1"># define the features</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;csm&#39;</span><span class="p">,</span> <span class="s1">&#39;source_strength_analytic&#39;</span><span class="p">,</span> <span class="s1">&#39;loc&#39;</span><span class="p">]</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">num</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="c1"># generate the dataset</span>
+<span class="n">generator</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span>
+    <span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+    <span class="n">num</span><span class="o">=</span><span class="n">num</span><span class="p">,</span>
+    <span class="n">split</span><span class="o">=</span><span class="s1">&#39;training&#39;</span><span class="p">,</span>
+    <span class="n">size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># iterate over the dataset</span>
+<span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">generator</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetBase.save_h5">
+<span class="sig-name descname"><span class="pre">save_h5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">split</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'training'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetBase.save_h5" title="Link to this definition">#</a></dt>
+<dd><p>Save dataset to a HDF5 file.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>features</strong><span class="classifier">list</span></dt><dd><p>List of features included in the dataset.
+The features “seeds” and “idx” are always included.</p>
+</dd>
+<dt><strong>size</strong><span class="classifier">int</span></dt><dd><p>Size of the dataset (number of source cases).</p>
+</dd>
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the HDF5 file.</p>
+</dd>
+<dt><strong>split</strong><span class="classifier">str</span></dt><dd><p>Split name for the dataset (‘training’, ‘validation’ or ‘test’). Defaults to ‘training’.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>The center frequency or list of frequencies of the dataset.
+If None, all frequencies are included.</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">integer</span></dt><dd><p>Controls the width of the frequency bands considered; defaults to
+0 (single frequency line).</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>num</p></th>
+<th class="head"><p>frequency band width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>single frequency line</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>octave band</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>third-octave band</p></td>
+</tr>
+<tr class="row-odd"><td><p>n</p></td>
+<td><p>1/n-octave band</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+<dt><strong>start_idx</strong><span class="classifier">int, optional</span></dt><dd><p>Starting sample index (default is 0).</p>
+</dd>
+<dt><strong>progress_bar</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to show a progress bar (default is True).</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>None</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>Save features to a HDF5 file (example requires proper file path).</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">acoupipe.datasets.synthetic</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+
+<span class="c1"># define the features</span>
+<span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;csm&#39;</span><span class="p">,</span> <span class="s1">&#39;source_strength_analytic&#39;</span><span class="p">,</span> <span class="s1">&#39;loc&#39;</span><span class="p">]</span>
+<span class="n">f</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="n">num</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="c1"># save the dataset</span>
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span><span class="o">.</span><span class="n">save_h5</span><span class="p">(</span>
+    <span class="n">f</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+    <span class="n">num</span><span class="o">=</span><span class="n">num</span><span class="p">,</span>
+    <span class="n">split</span><span class="o">=</span><span class="s1">&#39;training&#39;</span><span class="p">,</span>
+    <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">features</span><span class="o">=</span><span class="n">features</span><span class="p">,</span>
+    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;/tmp/example.h5&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">AnalyticNoiseStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.BaseSpectra</span></dt><dd><p>The frequency data to calculate the feature for.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">AnalyticSourceStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.BaseSpectra</span></dt><dd><p>The frequency data to calculate the feature for.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.BaseFeatureCatalog">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">BaseFeatureCatalog</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>BaseFeatureCatalog base class for handling feature funcs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>dtype</strong><span class="classifier">callable</span></dt><dd><p>Numpy dtype of the feature.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.BaseFeatureCatalog.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">BaseFeatureCollectionBuilder</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">traits.api.HasPrivateTraits</span></code></p>
+<p>BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>feature_collection</strong><span class="classifier">BaseFeatureCollection</span></dt><dd><p>BaseFeatureCollection object.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.add_custom">
+<span class="sig-name descname"><span class="pre">add_custom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.add_custom" title="Link to this definition">#</a></dt>
+<dd><p>Add a custom feature to the BaseFeatureCollection.</p>
+<p>The custom feature_func should be a callable that takes a sampler as input
+and returns a dictionary of feature name and feature data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>feature_func</strong><span class="classifier">callable</span></dt><dd><p>Feature to be added.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.build">
+<span class="sig-name descname"><span class="pre">build</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.build" title="Link to this definition">#</a></dt>
+<dd><p>Build a BaseFeatureCollection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>BaseFeatureCollection</dt><dd><p>BaseFeatureCollection object.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">CSMFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>CSMFeature class for handling cross-spectral matrix calculation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature (default=’csm’).</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.PowerSpectra</span></dt><dd><p>The object which calculates the cross-spectral matrix.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMFeature.calc_csm1">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">calc_csm1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMFeature.calc_csm1" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.PowerSpectra</span></dt><dd><p>power spectra to calculate the csm feature</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.array</dt><dd><p>The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMFeature.calc_csm2">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">calc_csm2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMFeature.calc_csm2" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.PowerSpectra</span></dt><dd><p>power spectra to calculate the csm feature</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples, optional</span></dt><dd><p>list of tuples containing the start and end indices of the frequency bands to
+be considered,
+by default None</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.array</dt><dd><p>The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics)
+with numfreq depending on the number of frequencies in fidx.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Return the callable for calculating the cross-spectral matrix.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMtriuFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">CSMtriuFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMtriuFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.BaseSpectra</span></dt><dd><p>The frequency data to calculate the feature for.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu1">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">calc_csmtriu1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu1" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.PowerSpectra</span></dt><dd><p>power spectra to calculate the csm feature</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.array</dt><dd><p>The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu2">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">calc_csmtriu2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu2" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the cross-spectral matrix (CSM) from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.PowerSpectra</span></dt><dd><p>power spectra to calculate the csm feature</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples, optional</span></dt><dd><p>list of tuples containing the start and end indices of the frequency bands to
+be considered,
+by default None</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.array</dt><dd><p>The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics)
+with numfreq depending on the number of frequencies in fidx.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.CSMtriuFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.CSMtriuFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EigmodeFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">EigmodeFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.EigmodeFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.BaseSpectra</span></dt><dd><p>The frequency data to calculate the feature for.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode1">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">calc_eigmode1</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode1" title="Link to this definition">#</a></dt>
+<dd><p>Calculate eigenvalue-scaled eigenvectors of the CSM from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.PowerSpectra</span></dt><dd><p>power spectra to calculate the csm feature</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.array</dt><dd><p>The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode2">
+<span class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">calc_eigmode2</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sampler</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freq_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fidx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode2" title="Link to this definition">#</a></dt>
+<dd><p>Calculate eigenvalue-scaled eigenvectors of the CSM from time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.PowerSpectra</span></dt><dd><p>power spectra to calculate the csm feature</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples, optional</span></dt><dd><p>list of tuples containing the start and end indices of the frequency bands to
+be considered,
+by default None</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>numpy.array</dt><dd><p>The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics) with numfreq
+depending on the number of frequencies in fidx.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EigmodeFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.EigmodeFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">EstimatedNoiseStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.BaseSpectra</span></dt><dd><p>The frequency data to calculate the feature for.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">EstimatedSourceStrengthFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>Handles the calculation of features in the frequency domain.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.BaseSpectra</span></dt><dd><p>The frequency data to calculate the feature for.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.LocFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">LocFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.LocFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog" title="acoupipe.datasets.synthetic.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>BaseFeatureCatalog base class for handling feature funcs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>dtype</strong><span class="classifier">callable</span></dt><dd><p>Numpy dtype of the feature.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.LocFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.LocFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.SourcemapFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">SourcemapFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.SourcemapFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog" title="acoupipe.datasets.synthetic.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>Handle the generation of sourcemaps obtained with microphone array methods.</p>
+<dl class="field-list">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature (default=’sourcemap’).</p>
+</dd>
+<dt><strong>beamformer</strong><span class="classifier">instance of class acoular.BeamformerBase</span></dt><dd><p>The beamformer to calculate the sourcemap.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>The center frequency or list of frequencies of the dataset.
+If None, all frequencies are included.</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">integer</span></dt><dd><p>Controls the width of the frequency bands considered; defaults to
+0 (single frequency line).</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>num</p></th>
+<th class="head"><p>frequency band width</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>single frequency line</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>octave band</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>third-octave band</p></td>
+</tr>
+<tr class="row-odd"><td><p>n</p></td>
+<td><p>1/n-octave band</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be
+considered. Is determined automatically from attr:<cite>f</cite> and attr:<cite>num</cite>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.SourcemapFeature.set_freq_limits">
+<span class="sig-name descname"><span class="pre">set_freq_limits</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.SourcemapFeature.set_freq_limits" title="Link to this definition">#</a></dt>
+<dd><p>Set the beamformer frequency limits to calculate only the necessary frequencies.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.SourcemapFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.SourcemapFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Return the callable for calculating the sourcemap.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.SpectrogramFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">SpectrogramFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.SpectrogramFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">SpectraFeature</span></code></p>
+<p>SpectrogramFeature class for handling spectrogram features.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature (default=’spectrogram’).</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">instance of class acoular.RFFT</span></dt><dd><p>The object which calculates the spectrogram data.</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+<dt><strong>fidx</strong><span class="classifier">list of tuples</span></dt><dd><p>List of tuples containing the start and end indices of the frequency bands to be considered.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.SpectrogramFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.SpectrogramFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.TargetmapFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">TargetmapFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.TargetmapFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog" title="acoupipe.datasets.synthetic.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>BaseFeatureCatalog base class for handling feature funcs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature.</p>
+</dd>
+<dt><strong>dtype</strong><span class="classifier">callable</span></dt><dd><p>Numpy dtype of the feature.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.TargetmapFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.TargetmapFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Will return a method depending on the class parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.TimeDataFeature">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">TimeDataFeature</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.TimeDataFeature" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog" title="acoupipe.datasets.synthetic.BaseFeatureCatalog"><code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a></p>
+<p>TimeDataFeature class for handling time data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>name</strong><span class="classifier">str</span></dt><dd><p>Name of the feature (default=’time_data’).</p>
+</dd>
+<dt><strong>time_data</strong><span class="classifier">instance of class acoular.SamplesGenerator</span></dt><dd><p>The source delivering the time data.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.TimeDataFeature.get_feature_func">
+<span class="sig-name descname"><span class="pre">get_feature_func</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.TimeDataFeature.get_feature_func" title="Link to this definition">#</a></dt>
+<dd><p>Return the callable for calculating the time data.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.create_feature">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">create_feature</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">feature_func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.create_feature" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.get_ir">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">get_ir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sample_freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">room_dim</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mloc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sloc</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rt60</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">c</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">343.0</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.get_ir" title="Link to this definition">#</a></dt>
+<dd><p>Get impulse responses for the unsupported developer-only synthetic IR dataset.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.require_ir_support">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">require_ir_support</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.require_ir_support" title="Link to this definition">#</a></dt>
+<dd><p>Validate that the unsupported developer-only IR dataset support is installed.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.PowerSpectraAnalytic">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">PowerSpectraAnalytic</span></span><a class="headerlink" href="#acoupipe.datasets.synthetic.PowerSpectraAnalytic" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">acoular.PowerSpectraImport</span></code></p>
+<p>Provides a dummy class for using pre-calculated CSMs.</p>
+<p>This class does not calculate the CSM. Instead, the user can inject one or multiple existing
+CSMs by setting the <code class="xref py py-attr docutils literal notranslate"><span class="pre">csm</span></code> attribute. This can be useful when algorithms shall be
+evaluated with existing CSMs. The frequency or frequencies contained by the CSM must be set via
+the <code class="xref py py-attr docutils literal notranslate"><span class="pre">frequencies</span></code> attribute. The attr:<cite>num_channels</cite> attributes is determined on the basis
+of the CSM shape. In contrast to the <code class="xref py py-class docutils literal notranslate"><span class="pre">PowerSpectra</span></code> object, the attributes
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">sample_freq</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">source</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">block_size</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">window</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">overlap</span></code>,
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">cached</span></code>, and <code class="xref py py-attr docutils literal notranslate"><span class="pre">num_blocks</span></code> have no functionality.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.PowerSpectraAnalytic.fftfreq">
+<span class="sig-name descname"><span class="pre">fftfreq</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.PowerSpectraAnalytic.fftfreq" title="Link to this definition">#</a></dt>
+<dd><p>Return the Discrete Fourier Transform sample frequencies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>f</strong><span class="classifier">ndarray</span></dt><dd><p>Array of length <em>block_size/2+1</em> containing the sample frequencies.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.calc_transfer">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">calc_transfer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocksize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fftfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.calc_transfer" title="Link to this definition">#</a></dt>
+<dd><p>Compute one-sided transfer functions H(f) from (measured) impulse responses on a
+target rFFT bin grid defined by <cite>blocksize</cite>, returning only <cite>fftfreq</cite>.</p>
+<p>The function enforces that the FFT length is a power-of-two by zero-padding the
+impulse responses to nfft = 2**ceil(log2(max(L, blocksize))), where L is the IR length.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>ir</strong><span class="classifier">ndarray</span></dt><dd><p>Impulse responses. The time axis is given by <cite>time_axis</cite>.
+Common shapes are (n_channels, n_samples) with time_axis=1,
+or (n_samples, n_channels) with time_axis=0.</p>
+</dd>
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>Sampling frequency in Hz.</p>
+</dd>
+<dt><strong>blocksize</strong><span class="classifier">int</span></dt><dd><p>Target block size defining the desired rFFT bin grid (power-of-two).
+The associated bin centers are f_k = k*fs/blocksize, k=0..blocksize//2.</p>
+</dd>
+<dt><strong>fftfreq</strong><span class="classifier">array_like of int or float, optional</span></dt><dd><p>Desired frequency bins to return.</p>
+<ul class="simple">
+<li><p>If integer dtype: interpreted as rFFT bin indices on the <cite>blocksize</cite> grid,
+i.e., k in [0, blocksize//2]. This case is exact because both blocksize and
+nfft are powers-of-two, hence nfft/blocksize is integer and mapping is exact.</p></li>
+<li><p>If float dtype: interpreted as frequencies in Hz. Values are mapped to the
+nearest rFFT bin of the computed FFT grid; a ValueError is raised if the
+frequency is not (approximately) on the grid.</p></li>
+</ul>
+<p>If None, all one-sided bins of the computed FFT are returned.</p>
+</dd>
+<dt><strong>time_axis</strong><span class="classifier">int, optional</span></dt><dd><p>Axis of <cite>ir</cite> corresponding to time samples. Default: -1.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>H_sel</strong><span class="classifier">ndarray (complex)</span></dt><dd><p>One-sided transfer function values at the requested bins. The returned array
+has the same shape as <cite>ir</cite>, except the time axis is replaced by a frequency axis.
+If fftfreq is None, this frequency axis has length nfft//2+1.
+Otherwise, it has length len(fftfreq).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.get_all_source_signals">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">get_all_source_signals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.get_all_source_signals" title="Link to this definition">#</a></dt>
+<dd><p>Get all signals from a list of <cite>acoular.SamplesGenerator</cite> derived objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>source_list</strong><span class="classifier">list</span></dt><dd><p>list of <cite>acoular.SamplesGenerator</cite> derived objects</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list</dt><dd><p>list of all <cite>acoular.SignalGenerator</cite> derived objects</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.get_uncorrelated_noise_source_recursively">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">get_uncorrelated_noise_source_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.get_uncorrelated_noise_source_recursively" title="Link to this definition">#</a></dt>
+<dd><p>Recursively get all uncorrelated noise sources from a <cite>acoular.TimeInOut</cite> object.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>source</strong><span class="classifier">instance of class <cite>acoular.TimeInOut</cite></span></dt><dd><p>the source object</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list</dt><dd><p>list of all uncorrelated noise sources</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetSynthetic">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">DatasetSynthetic</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'welch'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mic_pos_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mic_sig_noise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snap_to_grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_signal_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signal_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">13720.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_nsources</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_nsources</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tasks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remote_args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logger</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetSynthetic" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../base/index.html#acoupipe.datasets.base.DatasetBase" title="acoupipe.datasets.base.DatasetBase"><code class="xref py py-obj docutils literal notranslate"><span class="pre">acoupipe.datasets.base.DatasetBase</span></code></a></p>
+<p><cite>DatasetSynthetic</cite> is a purely synthetic microphone array source case generator.</p>
+<p>DatasetSynthetic relies on synthetic source signals from which the features are extracted and has been used in different publications,
+e.g. <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../../../../contents/lit.html#id4" title="Adam Kujawski, Gert Herold, and Ennes Sarradj. A Deep Learning Method for Grid-Free Localization and Quantification of Sound Sources. The Journal of the Acoustical Society of America, 146(3):EL225-EL231, 2019. doi:10.1121/1.5126020.">KHS19</a>]</span>, <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../../../../contents/lit.html#id8" title="Adam Kujawski and Ennes Sarradj. Fast grid-free strength mapping of multiple sound sources from microphone array data using a transformer architecture. The Journal of the Acoustical Society of America, 152(5):2543–2556, 2022. doi:10.1121/10.0015005.">KS22</a>]</span>, <span class="bibtex-citation" id="id3">[<a class="reference internal" href="../../../../contents/lit.html#id7" title="Luoyi Feng, Ming Zan, Linsen Huang, and Zhongming Xu. A double-step grid-free method for sound source identification using deep learning. Applied Acoustics, 201:109099, 2022. doi:10.1016/j.apacoust.2022.109099.">FZHX22</a>]</span>. The default virtual simulation setup consideres a 64 channel microphone
+array and a planar observation area, as shown in the <a class="reference internal" href="#default-measurement-setup">default measurement setup</a> figure.</p>
+<p><strong>Default environmental properties</strong></p>
+<div class="pst-scrollable-table-container"><span id="environmental-characteristics"></span><table class="table" id="id6">
+<caption><span class="caption-text">Default Environmental Characteristics</span><a class="headerlink" href="#id6" title="Link to this table">#</a></caption>
+<tbody>
+<tr class="row-odd"><td><p>Environment</p></td>
+<td><p>Anechoic, Resting, Homogeneous Fluid</p></td>
+</tr>
+<tr class="row-even"><td><p>Speed of sound</p></td>
+<td><p>343 m/s</p></td>
+</tr>
+<tr class="row-odd"><td><p>Microphone Array</p></td>
+<td><p>Vogel’s spiral, <span class="math notranslate nohighlight">\(M=64\)</span>, Aperture Size 1 m</p></td>
+</tr>
+<tr class="row-even"><td><p>Observation Area</p></td>
+<td><p>x,y in [-0.5,0.5], z=0.5</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source Type</p></td>
+<td><p>Monopole</p></td>
+</tr>
+<tr class="row-even"><td><p>Source Signals</p></td>
+<td><p>Uncorrelated White Noise (<span class="math notranslate nohighlight">\(T=5\,s\)</span>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Default FFT parameters</strong></p>
+<p>The underlying default FFT parameters are:</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id7">
+<caption><span class="caption-text">FFT Parameters</span><a class="headerlink" href="#id7" title="Link to this table">#</a></caption>
+<tbody>
+<tr class="row-odd"><td><p>Sampling Rate</p></td>
+<td><p>He = 40, fs=13720 Hz</p></td>
+</tr>
+<tr class="row-even"><td><p>Block size</p></td>
+<td><p>128 Samples</p></td>
+</tr>
+<tr class="row-odd"><td><p>Block overlap</p></td>
+<td><p>50 %</p></td>
+</tr>
+<tr class="row-even"><td><p>Windowing</p></td>
+<td><p>von Hann / Hanning</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Default randomized properties</strong></p>
+<p>Several properties of the dataset are randomized for each source case when generating the data. Their respective distributions,
+are closely related to <span class="bibtex-citation" id="id4">[<a class="reference internal" href="../../../../contents/lit.html#id14" title="Gert Herold and Ennes Sarradj. Performance analysis of microphone array methods. Journal of Sound and Vibration, 401:152–168, 2017.">HS17</a>]</span>. As such, the the microphone positions are spatially disturbed
+to account for uncertainties in the microphone placement. The number of sources, their positions, and strength is randomly chosen.
+Uncorrelated white noise is added to the microphone channels by default.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id8">
+<caption><span class="caption-text">Randomized properties</span><a class="headerlink" href="#id8" title="Link to this table">#</a></caption>
+<tbody>
+<tr class="row-odd"><td><p>Sensor Position Deviation [m]</p></td>
+<td><p>Bivariate normal distributed (<span class="math notranslate nohighlight">\(\sigma = 0.001)\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>No. of Sources</p></td>
+<td><p>Poisson distributed (<span class="math notranslate nohighlight">\(\lambda=3\)</span>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Source Positions [m]</p></td>
+<td><p>Bivariate normal distributed (<span class="math notranslate nohighlight">\(\sigma = 0.1688\)</span>)</p></td>
+</tr>
+<tr class="row-even"><td><p>Source Strength (<span class="math notranslate nohighlight">\([{Pa}^2]\)</span> at reference position)</p></td>
+<td><p>Rayleigh distributed (<span class="math notranslate nohighlight">\(\sigma_{R}=5\)</span>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Relative Noise Variance</p></td>
+<td><p>Uniform distributed (<span class="math notranslate nohighlight">\(10^{-6}\)</span>, <span class="math notranslate nohighlight">\(0.1\)</span>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<section id="example">
+<h3>Example<a class="headerlink" href="#example" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">acoupipe.datasets.synthetic</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatasetSynthetic</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DatasetSynthetic</span><span class="p">()</span>
+<span class="n">dataset_generator</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">generate_dataset</span><span class="p">(</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;sourcemap&#39;</span><span class="p">,</span> <span class="s1">&#39;loc&#39;</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="s1">&#39;num&#39;</span><span class="p">],</span>  <span class="c1"># choose the features to extract</span>
+    <span class="n">f</span><span class="o">=</span><span class="p">[</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">2000</span><span class="p">,</span> <span class="mi">3000</span><span class="p">],</span>  <span class="c1"># choose the frequencies to extract</span>
+    <span class="n">split</span><span class="o">=</span><span class="s1">&#39;training&#39;</span><span class="p">,</span>  <span class="c1"># choose the split of the dataset</span>
+    <span class="n">size</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>  <span class="c1"># choose the size of the dataset</span>
+<span class="p">)</span>
+
+<span class="c1"># get the first data sample</span>
+<span class="n">data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">dataset_generator</span><span class="p">)</span>
+
+<span class="c1"># print the keys of the dataset</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+</pre></div>
+</div>
+<p><strong>Initialization Parameters</strong></p>
+<p>Initialize the DatasetSynthetic object.</p>
+<p>The input parameters are passed to the DatasetSyntheticConfig object, which creates
+all necessary objects for the simulation of microphone array data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>mode</strong><span class="classifier">str</span></dt><dd><p>Type of calculation method. Can be either <code class="code docutils literal notranslate"><span class="pre">welch</span></code>, <code class="code docutils literal notranslate"><span class="pre">analytic</span></code> or <code class="code docutils literal notranslate"><span class="pre">wishart</span></code>.
+Defaults to <code class="code docutils literal notranslate"><span class="pre">welch</span></code>.</p>
+</dd>
+<dt><strong>mic_pos_noise</strong><span class="classifier">bool</span></dt><dd><p>Apply positional noise to microphone geometry. Defaults to True.</p>
+</dd>
+<dt><strong>mic_sig_noise</strong><span class="classifier">bool</span></dt><dd><p>Apply additional uncorrelated white noise to microphone signals. Defaults to True.</p>
+</dd>
+<dt><strong>snap_to_grid</strong><span class="classifier">bool</span></dt><dd><p>Snap source locations to grid. The grid is defined in the config object as
+config.grid. Defaults to False.</p>
+</dd>
+<dt><strong>random_signal_length</strong><span class="classifier">bool</span></dt><dd><p>Randomize signal length. Defaults to False. If True, the signal length is
+uniformly sampled from the interval [1s,10s].</p>
+</dd>
+<dt><strong>signal_length</strong><span class="classifier">float</span></dt><dd><p>Length of the signal in seconds. Defaults to 5 seconds.</p>
+</dd>
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>Sampling frequency in Hz. Defaults to 13720 Hz.</p>
+</dd>
+<dt><strong>min_nsources</strong><span class="classifier">int</span></dt><dd><p>Minimum number of sources in the dataset. Defaults to 1.</p>
+</dd>
+<dt><strong>max_nsources</strong><span class="classifier">int</span></dt><dd><p>Maximum number of sources in the dataset. Defaults to 10.</p>
+</dd>
+<dt><strong>tasks</strong><span class="classifier">int</span></dt><dd><p>Number of parallel tasks. Defaults to 1.</p>
+</dd>
+<dt><strong>remote_args</strong><span class="classifier">dict</span></dt><dd><p>Dictionary of keyword arguments passed to the remote actors when using Ray for parallelization. Defaults to None.</p>
+</dd>
+<dt><strong>logger</strong><span class="classifier">logging.Logger</span></dt><dd><p>Logger object. Defaults to None.</p>
+</dd>
+<dt><strong>config</strong><span class="classifier">DatasetSyntheticConfig</span></dt><dd><p>Configuration object. Defaults to None. If None, a default configuration
+object is created.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetSynthetic.get_feature_collection">
+<span class="sig-name descname"><span class="pre">get_feature_collection</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">features</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetSynthetic.get_feature_collection" title="Link to this definition">#</a></dt>
+<dd><p>Get the feature collection of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>BaseFeatureCollection</dt><dd><p>BaseFeatureCollection object.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.sample_signal_length">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">sample_signal_length</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.sample_signal_length" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetSyntheticConfig">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.synthetic.</span></span><span class="sig-name descname"><span class="pre">DatasetSyntheticConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetSyntheticConfig" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">acoupipe.datasets.base.ConfigBase</span></code></p>
+<p>Default Configuration class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Attributes<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>Sampling frequency in Hz.</p>
+</dd>
+<dt><strong>signal_length</strong><span class="classifier">float</span></dt><dd><p>Length of the source signals in seconds.</p>
+</dd>
+<dt><strong>max_nsources</strong><span class="classifier">int</span></dt><dd><p>Maximum number of sources.</p>
+</dd>
+<dt><strong>min_nsources</strong><span class="classifier">int</span></dt><dd><p>Minimum number of sources.</p>
+</dd>
+<dt><strong>mode</strong><span class="classifier">str</span></dt><dd><p>Type of CSM calculation method.</p>
+</dd>
+<dt><strong>mic_pos_noise</strong><span class="classifier">bool</span></dt><dd><p>Apply positional noise to microphone geometry.</p>
+</dd>
+<dt><strong>mic_sig_noise</strong><span class="classifier">bool</span></dt><dd><p>Apply signal noise to microphone signals.</p>
+</dd>
+<dt><strong>snap_to_grid</strong><span class="classifier">bool</span></dt><dd><p>Snap source locations to grid.</p>
+</dd>
+<dt><strong>random_signal_length</strong><span class="classifier">bool</span></dt><dd><p>Randomize signal length (Default: uniformly sampled signal length [1s,10s]).</p>
+</dd>
+<dt><strong>fft_params</strong><span class="classifier">dict</span></dt><dd><p>FFT parameters with default items <code class="code docutils literal notranslate"><span class="pre">block_size=128</span></code>,
+<code class="code docutils literal notranslate"><span class="pre">overlap=&quot;50%&quot;</span></code>, <code class="code docutils literal notranslate"><span class="pre">window=&quot;Hanning&quot;</span></code> and <code class="code docutils literal notranslate"><span class="pre">precision=&quot;complex64&quot;</span></code>.</p>
+</dd>
+<dt><strong>env</strong><span class="classifier">ac.Environment</span></dt><dd><p>Instance of acoular.Environment defining the environmental coditions,
+i.e. the speed of sound.</p>
+</dd>
+<dt><strong>mics</strong><span class="classifier">ac.MicGeom</span></dt><dd><p>Instance of acoular.MicGeom defining the microphone array geometry.</p>
+</dd>
+<dt><strong>noisy_mics</strong><span class="classifier">ac.MicGeom</span></dt><dd><p>a second instance of acoular.MicGeom defining the noisy microphone array geometry.</p>
+</dd>
+<dt><strong>obs</strong><span class="classifier">ac.MicGeom</span></dt><dd><p>Instance of acoular.MicGeom defining the observation point which is used as the
+reference position when calculating the source strength.</p>
+</dd>
+<dt><strong>grid</strong><span class="classifier">ac.RectGrid</span></dt><dd><p>Instance of acoular.RectGrid defining the grid on which the Beamformer calculates
+the source map and on which the targetmap feature is calculated.</p>
+</dd>
+<dt><strong>source_grid</strong><span class="classifier">ac.Grid</span></dt><dd><p>Instance of acoular.Grid. Only relevant if <code class="xref py py-attr docutils literal notranslate"><span class="pre">snap_to_grid</span></code> is <code class="code docutils literal notranslate"><span class="pre">True</span></code>.
+Then, the source locations are snapped to this grid. Default is a copy of <code class="xref py py-attr docutils literal notranslate"><span class="pre">grid</span></code>.</p>
+</dd>
+<dt><strong>beamformer</strong><span class="classifier">ac.BeamformerBase</span></dt><dd><p>Instance of acoular.BeamformerBase defining the beamformer used to calculate the sourcemap.</p>
+</dd>
+<dt><strong>steer</strong><span class="classifier">ac.SteeringVector</span></dt><dd><p>Instance of acoular.SteeringVector defining the steering vector used to calculate the sourcemap.</p>
+</dd>
+<dt><strong>freq_data</strong><span class="classifier">ac.PowerSpectra</span></dt><dd><p>Instance of acoular.PowerSpectra defining the frequency domain data. Only used if <code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code> is
+<code class="code docutils literal notranslate"><span class="pre">welch</span></code>. Otherwise, an instance of <a class="reference internal" href="../spectra_analytic/index.html#acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic" title="acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.datasets.spectra_analytic.PowerSpectraAnalytic</span></code></a>
+is used.</p>
+</dd>
+<dt><strong>fft_spectra</strong><span class="classifier">ac.RFFT</span></dt><dd><p>Instance of acoular.RFFT used to calculate the spectrogram data. Only used if <code class="xref py py-attr docutils literal notranslate"><span class="pre">mode</span></code> is
+<code class="code docutils literal notranslate"><span class="pre">welch</span></code>.</p>
+</dd>
+<dt><strong>fft_obs_spectra</strong><span class="classifier">ac.PowerSpectra</span></dt><dd><p>Instance of acoular.PowerSpectra used to calculate the source strength at the observation point given in
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">obs</span></code>.</p>
+</dd>
+<dt><strong>signals</strong><span class="classifier">list</span></dt><dd><p>List of signals.</p>
+</dd>
+<dt><strong>sources</strong><span class="classifier">list</span></dt><dd><p>List of sources.</p>
+</dd>
+<dt><strong>mic_noise_signal</strong><span class="classifier">ac.SignalGenerator</span></dt><dd><p>Noise signal configuration object.</p>
+</dd>
+<dt><strong>mic_noise_source</strong><span class="classifier">ac.UncorrelatedNoiseSource</span></dt><dd><p>Noise source configuration object.</p>
+</dd>
+<dt><strong>micgeom_sampler</strong><span class="classifier">sp.MicGeomSampler</span></dt><dd><p>Sampler that applies positional noise to the microphone geometry.</p>
+</dd>
+<dt><strong>location_sampler</strong><span class="classifier">sp.LocationSampler</span></dt><dd><p>Source location sampler that samples the locations of the sound sources.</p>
+</dd>
+<dt><strong>rms_sampler</strong><span class="classifier">sp.ContainerSampler</span></dt><dd><p>Signal RMS sampler that samples the RMS values of the source signals.</p>
+</dd>
+<dt><strong>nsources_sampler</strong><span class="classifier">sp.NumericAttributeSampler</span></dt><dd><p>Number of sources sampler.</p>
+</dd>
+<dt><strong>mic_noise_sampler</strong><span class="classifier">sp.ContainerSampler</span></dt><dd><p>Microphone noise sampler that creates random uncorrelated noise at the microphones.</p>
+</dd>
+<dt><strong>signal_length_sampler</strong><span class="classifier">sp.ContainerSampler</span></dt><dd><p>Signal length sampler that samples the length of the source signals. Only used if <code class="xref py py-attr docutils literal notranslate"><span class="pre">random_signal_length</span></code> is <code class="code docutils literal notranslate"><span class="pre">True</span></code>.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.synthetic.DatasetSyntheticConfig.get_sampler">
+<span class="sig-name descname"><span class="pre">get_sampler</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.synthetic.DatasetSyntheticConfig.get_sampler" title="Link to this definition">#</a></dt>
+<dd><p>Return a dict of the sampler objects of type <a class="reference internal" href="../../base/index.html#acoupipe.base.BaseSampler" title="acoupipe.base.BaseSampler"><code class="xref py py-class docutils literal notranslate"><span class="pre">acoupipe.base.BaseSampler</span></code></a>.</p>
+<p>this function has to be manually defined in a dataset subclass.
+It includes the sampler objects as values. The key defines the idx in the sample order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>dict</dt><dd><p>dictionary containing the sampler objects</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">ConfigBase</span><span class="p">()</span><span class="o">.</span><span class="n">get_sampler</span><span class="p">()</span>
+<span class="go">{}</span>
+</pre></div>
+</div>
+<p>e.g.:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sampler</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="mi">0</span> <span class="p">:</span> <span class="n">BaseSampler</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+    <span class="mi">1</span> <span class="p">:</span> <span class="n">BaseSampler</span><span class="p">(</span><span class="o">...</span><span class="p">),</span>
+    <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../spectra_analytic/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">acoupipe.datasets.spectra_analytic</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../utils/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">acoupipe.datasets.utils</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetBase"><code class="docutils literal notranslate"><span class="pre">DatasetBase</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetBase.get_feature_collection"><code class="docutils literal notranslate"><span class="pre">DatasetBase.get_feature_collection()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetBase.generate"><code class="docutils literal notranslate"><span class="pre">DatasetBase.generate()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetBase.save_h5"><code class="docutils literal notranslate"><span class="pre">DatasetBase.save_h5()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature"><code class="docutils literal notranslate"><span class="pre">AnalyticNoiseStrengthFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.AnalyticNoiseStrengthFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">AnalyticNoiseStrengthFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature"><code class="docutils literal notranslate"><span class="pre">AnalyticSourceStrengthFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.AnalyticSourceStrengthFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">AnalyticSourceStrengthFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog"><code class="docutils literal notranslate"><span class="pre">BaseFeatureCatalog</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.BaseFeatureCatalog.get_feature_func"><code class="docutils literal notranslate"><span class="pre">BaseFeatureCatalog.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder"><code class="docutils literal notranslate"><span class="pre">BaseFeatureCollectionBuilder</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.add_custom"><code class="docutils literal notranslate"><span class="pre">BaseFeatureCollectionBuilder.add_custom()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.BaseFeatureCollectionBuilder.build"><code class="docutils literal notranslate"><span class="pre">BaseFeatureCollectionBuilder.build()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMFeature"><code class="docutils literal notranslate"><span class="pre">CSMFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMFeature.calc_csm1"><code class="docutils literal notranslate"><span class="pre">CSMFeature.calc_csm1()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMFeature.calc_csm2"><code class="docutils literal notranslate"><span class="pre">CSMFeature.calc_csm2()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">CSMFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMtriuFeature"><code class="docutils literal notranslate"><span class="pre">CSMtriuFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu1"><code class="docutils literal notranslate"><span class="pre">CSMtriuFeature.calc_csmtriu1()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMtriuFeature.calc_csmtriu2"><code class="docutils literal notranslate"><span class="pre">CSMtriuFeature.calc_csmtriu2()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.CSMtriuFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">CSMtriuFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EigmodeFeature"><code class="docutils literal notranslate"><span class="pre">EigmodeFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode1"><code class="docutils literal notranslate"><span class="pre">EigmodeFeature.calc_eigmode1()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EigmodeFeature.calc_eigmode2"><code class="docutils literal notranslate"><span class="pre">EigmodeFeature.calc_eigmode2()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EigmodeFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">EigmodeFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature"><code class="docutils literal notranslate"><span class="pre">EstimatedNoiseStrengthFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EstimatedNoiseStrengthFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">EstimatedNoiseStrengthFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature"><code class="docutils literal notranslate"><span class="pre">EstimatedSourceStrengthFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.EstimatedSourceStrengthFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">EstimatedSourceStrengthFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.LocFeature"><code class="docutils literal notranslate"><span class="pre">LocFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.LocFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">LocFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.SourcemapFeature"><code class="docutils literal notranslate"><span class="pre">SourcemapFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.SourcemapFeature.set_freq_limits"><code class="docutils literal notranslate"><span class="pre">SourcemapFeature.set_freq_limits()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.SourcemapFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">SourcemapFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.SpectrogramFeature"><code class="docutils literal notranslate"><span class="pre">SpectrogramFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.SpectrogramFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">SpectrogramFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.TargetmapFeature"><code class="docutils literal notranslate"><span class="pre">TargetmapFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.TargetmapFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">TargetmapFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.TimeDataFeature"><code class="docutils literal notranslate"><span class="pre">TimeDataFeature</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.TimeDataFeature.get_feature_func"><code class="docutils literal notranslate"><span class="pre">TimeDataFeature.get_feature_func()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.create_feature"><code class="docutils literal notranslate"><span class="pre">create_feature()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.get_ir"><code class="docutils literal notranslate"><span class="pre">get_ir()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.require_ir_support"><code class="docutils literal notranslate"><span class="pre">require_ir_support()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.PowerSpectraAnalytic"><code class="docutils literal notranslate"><span class="pre">PowerSpectraAnalytic</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.PowerSpectraAnalytic.fftfreq"><code class="docutils literal notranslate"><span class="pre">PowerSpectraAnalytic.fftfreq()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.calc_transfer"><code class="docutils literal notranslate"><span class="pre">calc_transfer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.get_all_source_signals"><code class="docutils literal notranslate"><span class="pre">get_all_source_signals()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.get_uncorrelated_noise_source_recursively"><code class="docutils literal notranslate"><span class="pre">get_uncorrelated_noise_source_recursively()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetSynthetic"><code class="docutils literal notranslate"><span class="pre">DatasetSynthetic</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetSynthetic.get_feature_collection"><code class="docutils literal notranslate"><span class="pre">DatasetSynthetic.get_feature_collection()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.sample_signal_length"><code class="docutils literal notranslate"><span class="pre">sample_signal_length()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetSyntheticConfig"><code class="docutils literal notranslate"><span class="pre">DatasetSyntheticConfig</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.synthetic.DatasetSyntheticConfig.get_sampler"><code class="docutils literal notranslate"><span class="pre">DatasetSyntheticConfig.get_sampler()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/adku1173/acoupipe/edit/master/docs/source/autoapi/acoupipe/datasets/synthetic/index.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

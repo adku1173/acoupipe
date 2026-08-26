@@ -1,0 +1,896 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>acoupipe.datasets.utils &#8212; AcouPipe 25.05 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=a95f357e85573c9b56d5" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/css/custom_pydata_sphinx_theme.css?v=fc0817b1" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../../../../_static/scripts/fontawesome.js?digest=a95f357e85573c9b56d5"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5" />
+
+    <script src="../../../../_static/documentation_options.js?v=c2a68b7f"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../../../_static/copybutton.js?v=f281be69"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/acoupipe/datasets/utils/index';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="icon" href="../../../../_static/acoular_favicon.ico"/>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="acoupipe.loader" href="../../loader/index.html" />
+    <link rel="prev" title="acoupipe.datasets.synthetic" href="../synthetic/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="" />
+    <meta name="docbuild:last-update" content="Aug 26, 2026"/>
+  
+    
+    <script src="../../../../_static/searchtools.js"></script>
+    <script src="../../../../_static/language_data.js"></script>
+    <script src="../../../../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class="col-lg-3 navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/acoular_logo_light.png" class="logo__image only-light" alt="AcouPipe - Home"/>
+    <img src="../../../../_static/acoular_logo_dark.png" class="logo__image only-dark pst-js-only" alt="AcouPipe - Home"/>
+  
+  
+    <p class="title logo__title">AcouPipe</p>
+  
+</a></div>
+    
+  </div>
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item"><nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/">
+        Home
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/acoular/">
+        Acoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://acoular.github.io/spectacoular/">
+        SpectAcoular
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://adku1173.github.io/acoupipe/">
+        AcouPipe
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://blog.acoular.org">
+        Blog
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link nav-external" href="https://github.com/orgs/acoular/discussions">
+        Community
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="https://www.acoular.org/contributing/">
+        Contributing
+      </a>
+    </li>
+    
+    
+    
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
+    <li><button class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/adku1173/acoupipe" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://pypi.org/project/acoupipe" title="PyPI" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><img src="../../../../_static/pypi.svg" class="icon-link-image" alt="PyPI"/></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <div class="bd-toc-item navbar-nav"><p aria-level="2" class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/install.html">Install</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../contents/datasets.html">Datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/quickstart.html">Quickstart</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/synthetic.html">DatasetSynthetic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/miracle.html">DatasetMIRACLE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/sriracha.html">DatasetSRIRACHA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/features.html">Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/store.html">Store Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/modify.html">Modifying a Dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../contents/examples.html">Examples</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/generate.html">Model training with training data generated on the fly</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/load_h5.html">Save and load datasets stored in HDF5 file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/jupyter/load_tfrecord.html">Save and load datasets stored in TFRecord file format</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/docker.html">Simulation with Docker</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/datasets/singularity.html">Simulation with Singularity on a High-Performance Cluster (HPC)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../contents/module/examples.html">Prerequisites</a></li>
+
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../contents/lit.html">Literature</a></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">AcouPipe API</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../base/index.html">acoupipe.base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../config/index.html">acoupipe.config</a></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">acoupipe.datasets</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">acoupipe.datasets.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../experimental/index.html">acoupipe.datasets.experimental</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../features/index.html">acoupipe.datasets.features</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../micgeom/index.html">acoupipe.datasets.micgeom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../spectra_analytic/index.html">acoupipe.datasets.spectra_analytic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../synthetic/index.html">acoupipe.datasets.synthetic</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">acoupipe.datasets.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../loader/index.html">acoupipe.loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../pipeline/index.html">acoupipe.pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../sampler/index.html">acoupipe.sampler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../version/index.html">acoupipe.version</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../writer/index.html">acoupipe.writer</a></li>
+</ul>
+</details></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../index.html" class="nav-link">acoupipe</a></li>
+    
+    
+    <li class="breadcrumb-item"><a href="../index.html" class="nav-link">acoupipe.datasets</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">acoupipe.datasets.utils</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-acoupipe.datasets.utils">
+<span id="acoupipe-datasets-utils"></span><h1>acoupipe.datasets.utils<a class="headerlink" href="#module-acoupipe.datasets.utils" title="Link to this heading">#</a></h1>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.WriteH5Dataset">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">WriteH5Dataset</span></span><a class="headerlink" href="#acoupipe.datasets.utils.WriteH5Dataset" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-obj docutils literal notranslate"><span class="pre">BaseWriteDataset</span></code></p>
+<p>Class intended to write data to a <cite>.h5</cite> file.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.WriteH5Dataset.save">
+<span class="sig-name descname"><span class="pre">save</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.WriteH5Dataset.save" title="Link to this definition">#</a></dt>
+<dd><p>Save the <a class="reference internal" href="#acoupipe.datasets.utils.WriteH5Dataset.get_data" title="acoupipe.datasets.utils.WriteH5Dataset.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a> output of the <code class="xref py py-attr docutils literal notranslate"><span class="pre">source</span></code> to .h5 file format.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.WriteH5Dataset.get_data">
+<span class="sig-name descname"><span class="pre">get_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.WriteH5Dataset.get_data" title="Link to this definition">#</a></dt>
+<dd><p>Save the source data to a <cite>*.h5</cite> file and yield it to the next object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>dict</dt><dd><p>Dictionary containing a sample of the data set
+{feature_name[key] : feature[values]}.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.calc_transfer">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">calc_transfer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">blocksize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fftfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.calc_transfer" title="Link to this definition">#</a></dt>
+<dd><p>Compute one-sided transfer functions H(f) from (measured) impulse responses on a
+target rFFT bin grid defined by <cite>blocksize</cite>, returning only <cite>fftfreq</cite>.</p>
+<p>The function enforces that the FFT length is a power-of-two by zero-padding the
+impulse responses to nfft = 2**ceil(log2(max(L, blocksize))), where L is the IR length.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>ir</strong><span class="classifier">ndarray</span></dt><dd><p>Impulse responses. The time axis is given by <cite>time_axis</cite>.
+Common shapes are (n_channels, n_samples) with time_axis=1,
+or (n_samples, n_channels) with time_axis=0.</p>
+</dd>
+<dt><strong>fs</strong><span class="classifier">float</span></dt><dd><p>Sampling frequency in Hz.</p>
+</dd>
+<dt><strong>blocksize</strong><span class="classifier">int</span></dt><dd><p>Target block size defining the desired rFFT bin grid (power-of-two).
+The associated bin centers are f_k = k*fs/blocksize, k=0..blocksize//2.</p>
+</dd>
+<dt><strong>fftfreq</strong><span class="classifier">array_like of int or float, optional</span></dt><dd><p>Desired frequency bins to return.</p>
+<ul class="simple">
+<li><p>If integer dtype: interpreted as rFFT bin indices on the <cite>blocksize</cite> grid,
+i.e., k in [0, blocksize//2]. This case is exact because both blocksize and
+nfft are powers-of-two, hence nfft/blocksize is integer and mapping is exact.</p></li>
+<li><p>If float dtype: interpreted as frequencies in Hz. Values are mapped to the
+nearest rFFT bin of the computed FFT grid; a ValueError is raised if the
+frequency is not (approximately) on the grid.</p></li>
+</ul>
+<p>If None, all one-sided bins of the computed FFT are returned.</p>
+</dd>
+<dt><strong>time_axis</strong><span class="classifier">int, optional</span></dt><dd><p>Axis of <cite>ir</cite> corresponding to time samples. Default: -1.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt><strong>H_sel</strong><span class="classifier">ndarray (complex)</span></dt><dd><p>One-sided transfer function values at the requested bins. The returned array
+has the same shape as <cite>ir</cite>, except the time axis is replaced by a frequency axis.
+If fftfreq is None, this frequency axis has length nfft//2+1.
+Otherwise, it has length len(fftfreq).</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.tqdm_hook">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">tqdm_hook</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">t</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.tqdm_hook" title="Link to this definition">#</a></dt>
+<dd><p>Wrap tqdm instance according to <a class="github reference external" href="https://github.com/tqdm/tqdm/blob/master/examples/tqdm_wget.py">tqdm/tqdm</a>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils._handle_log">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">_handle_log</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils._handle_log" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.generate_uniform_parametric_eq">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">generate_uniform_parametric_eq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_points</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.generate_uniform_parametric_eq" title="Link to this definition">#</a></dt>
+<dd><p>Generate a random parametric EQ cascase.</p>
+<p>Method according to [Nercessian 2020](<a class="reference external" href="https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf">https://dafx2020.mdw.ac.at/proceedings/papers/DAFx2020_paper_7.pdf</a>).
+This method is part of the <a class="reference external" href="https://github.com/csteinmetz1/IIRNet">IIRNet project</a>.
+License: Apache License 2.0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>coef</dt><dd></dd>
+<dt>mag</dt><dd></dd>
+<dt>phs</dt><dd></dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.get_frequency_index_range">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">get_frequency_index_range</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">freq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">f</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.get_frequency_index_range" title="Link to this definition">#</a></dt>
+<dd><p>Return the left and right indices that define the frequency range to integrate over.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>freq</strong><span class="classifier">numpy.array</span></dt><dd><p>frequency vector (can be determined by evaluating <cite>freqdata()</cite> method
+at a <cite>acoular.PowerSpectra</cite> instance)</p>
+</dd>
+<dt><strong>f</strong><span class="classifier">float</span></dt><dd><p>the frequency (or center frequency) of interest</p>
+</dd>
+<dt><strong>num</strong><span class="classifier">int</span></dt><dd><p>the frequency band (0: single frequency line, 1: octave band, 3: third octave band)</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>tuple</dt><dd><p>left and right index that belongs to the frequency of interest</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.set_pipeline_seeds">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">set_pipeline_seeds</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pipeline</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_idx</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'training'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.set_pipeline_seeds" title="Link to this definition">#</a></dt>
+<dd><p>Create the random seed list for each sampler object held by the pipeline.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>pipeline</strong><span class="classifier">instance of class BasePipeline</span></dt><dd><p>the pipeline object holding the sampler classes</p>
+</dd>
+<dt><strong>start_idx</strong><span class="classifier">int</span></dt><dd><p>start index to be calculated by the pipeline</p>
+</dd>
+<dt><strong>size</strong><span class="classifier">int</span></dt><dd><p>number of samples to be yielded by the pipeline</p>
+</dd>
+<dt><strong>dataset</strong><span class="classifier">str, optional</span></dt><dd><p>the data set type, by default “training”. Choose from [“training”,”validation”]</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.set_filename">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">set_filename</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">writer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.set_filename" title="Link to this definition">#</a></dt>
+<dd><p>Set the filename of the dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>writer</strong><span class="classifier">instance of class BaseWriteDataset</span></dt><dd><p>the writer object holding the filename</p>
+</dd>
+<dt><strong>path</strong><span class="classifier">str, optional</span></dt><dd><p>the path to the dataset, current directory by default</p>
+</dd>
+<dt><strong>*args</strong><span class="classifier">str</span></dt><dd><p>concatenated strings to be used as the filename</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.complex_to_real">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">complex_to_real</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.complex_to_real" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.get_point_sources_recursively">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">get_point_sources_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.get_point_sources_recursively" title="Link to this definition">#</a></dt>
+<dd><p>Recursively get all point sources from a <cite>acoular.TimeInOut</cite> object.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>source</strong><span class="classifier">instance of class <cite>acoular.TimeInOut</cite></span></dt><dd><p>the source object</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list</dt><dd><p>list of all sources</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils._get_signals_recursively">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">_get_signals_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">signals</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils._get_signals_recursively" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.get_all_source_signals">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">get_all_source_signals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_list</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.get_all_source_signals" title="Link to this definition">#</a></dt>
+<dd><p>Get all signals from a list of <cite>acoular.SamplesGenerator</cite> derived objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>source_list</strong><span class="classifier">list</span></dt><dd><p>list of <cite>acoular.SamplesGenerator</cite> derived objects</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list</dt><dd><p>list of all <cite>acoular.SignalGenerator</cite> derived objects</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="acoupipe.datasets.utils.get_uncorrelated_noise_source_recursively">
+<span class="sig-prename descclassname"><span class="pre">acoupipe.datasets.utils.</span></span><span class="sig-name descname"><span class="pre">get_uncorrelated_noise_source_recursively</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#acoupipe.datasets.utils.get_uncorrelated_noise_source_recursively" title="Link to this definition">#</a></dt>
+<dd><p>Recursively get all uncorrelated noise sources from a <cite>acoular.TimeInOut</cite> object.</p>
+<dl class="field-list">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl>
+<dt><strong>source</strong><span class="classifier">instance of class <cite>acoular.TimeInOut</cite></span></dt><dd><p>the source object</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>list</dt><dd><p>list of all uncorrelated noise sources</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../synthetic/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">acoupipe.datasets.synthetic</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../loader/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">acoupipe.loader</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.WriteH5Dataset"><code class="docutils literal notranslate"><span class="pre">WriteH5Dataset</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.WriteH5Dataset.save"><code class="docutils literal notranslate"><span class="pre">WriteH5Dataset.save()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.WriteH5Dataset.get_data"><code class="docutils literal notranslate"><span class="pre">WriteH5Dataset.get_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.calc_transfer"><code class="docutils literal notranslate"><span class="pre">calc_transfer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.tqdm_hook"><code class="docutils literal notranslate"><span class="pre">tqdm_hook()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils._handle_log"><code class="docutils literal notranslate"><span class="pre">_handle_log()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.generate_uniform_parametric_eq"><code class="docutils literal notranslate"><span class="pre">generate_uniform_parametric_eq()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.get_frequency_index_range"><code class="docutils literal notranslate"><span class="pre">get_frequency_index_range()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.set_pipeline_seeds"><code class="docutils literal notranslate"><span class="pre">set_pipeline_seeds()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.set_filename"><code class="docutils literal notranslate"><span class="pre">set_filename()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.complex_to_real"><code class="docutils literal notranslate"><span class="pre">complex_to_real()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.get_point_sources_recursively"><code class="docutils literal notranslate"><span class="pre">get_point_sources_recursively()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils._get_signals_recursively"><code class="docutils literal notranslate"><span class="pre">_get_signals_recursively()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.get_all_source_signals"><code class="docutils literal notranslate"><span class="pre">get_all_source_signals()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#acoupipe.datasets.utils.get_uncorrelated_noise_source_recursively"><code class="docutils literal notranslate"><span class="pre">get_uncorrelated_noise_source_recursively()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/adku1173/acoupipe/edit/master/docs/source/autoapi/acoupipe/datasets/utils/index.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=a95f357e85573c9b56d5"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=a95f357e85573c9b56d5"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright Adam Kujawski, Art Pelling, Simon Jekosch, Ennes Sarradj.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.19.0.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
