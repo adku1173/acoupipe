@@ -91,15 +91,8 @@ extend-exclude = ["docs/source"]   # shared config's exclude resolves to its own
 
 [tool.ruff.lint]
 extend-ignore = [
-    # ===== Temporary migration guards (removed in the noted sub-issue) =====
-    "G004", "LOG015",                    # 11  logging
-    "PGH004", "RUF100", "E741",          # 10  stale-noqa cleanup / ambiguous names
-    # no dedicated sub-issue -> general code cleanup, remove last
-    "RUF015", "RUF021", "C419", "SIM108", "SIM114",  # 15
-    "PLR5501", "PLR1711", "PLW0120",                 # 15
-    "TRY",                                           # 15  exception style (TRY003/004/201)
-    "EXE002",                                        # 15  exec bit (or `chmod -x src/acoupipe/*.py`)
-    "W291", "W293", "COM819", "D210", "D403", "PLR2044",  # 15  whitespace/format trivia (or `ruff format`)
+    # ===== Temporary migration guards (only for datasets) =====
+    "PGH004", "RUF100", "G004", "RUF015", "PLR5501", "RUF021", "TRY004",
 
     # ===== Permanent — mirror Acoular's pyproject (no sub-issue; never removed) =====
     "FBT002", "FBT003",  # boolean positional args
@@ -140,12 +133,6 @@ extend-ignore = [
 # --- src: 8 experimental datasets ---
 "src/acoupipe/datasets/experimental.py" = ["ARG002", "ARG004", "D102", "D412", "D413", "D416", "D417", "E501", "N806", "S101", "SLF001", "W505"]
 "src/acoupipe/datasets/ir.py"          = ["D100", "D103", "D413", "D417", "E501", "N806", "W505"]
-
-# --- 14 examples ---
-"examples/micgeom_sampling_example.py"   = ["D100", "INP001"]
-"examples/numeric_attribute_sampling.py" = ["D212"]
-"examples/pipeline_writeH5_example.py"   = ["ARG001", "D212", "INP001"]
-"examples/point_source_example.py"       = ["D100", "INP001"]
 
 # --- app ---
 "app/main.py" = ["A002", "D100", "D103", "DTZ005", "E501", "INP001", "PLC0415"]  # PLC0415 = intentional lazy CLI import

@@ -71,6 +71,8 @@ from numpy.random import RandomState, default_rng
 from tqdm import tqdm
 from traits.api import Callable, Dict, Either, Instance, Int, Property, Tuple
 
+logger = logging.getLogger(__name__)
+
 
 # Without the use of this decorator factory (wraps), the name of the
 # function 'f' would have been 'wrap', and the docstring of the original f() would have been lost.
@@ -79,13 +81,13 @@ def log_execution_time(f):
 
     @wraps(f)
     def wrap(self, *args, **kw):
-        self.logger.info(f'id {self._idx}: start task.')
+        self.logger.info('id %s: start task.', self._idx)
         start = time()
         result = f(self, *args, **kw)
         end = time()
-        self.logger.info(f'id {self._idx}: finished task.')
+        self.logger.info('id %s: finished task.', self._idx)
         # self.logger.info(f"{f.__name__} args:[{args}] took: {end-start:.32f} sec")
-        self.logger.info(f'id {self._idx}: executing task took: {end - start:.32f} sec')
+        self.logger.info('id %s: executing task took: %.32f sec', self._idx, end - start)
         return result
 
     return wrap
@@ -238,7 +240,7 @@ class BasePipeline(DataGenerator):
         if not callable(self.features):
             if not isinstance(self.features, tuple):
                 msg = 'features attribute must be a callable or a tuple containing a callable and its arguments!'
-                raise ValueError(msg)
+                raise TypeError(msg)
             nargs = len(inspect.signature(self.features[0]).parameters)
             if nargs == 0:
                 msg = (
@@ -284,7 +286,7 @@ class BasePipeline(DataGenerator):
         if self.random_seeds:
             self.validate_random_seeds()
             seed_iter = {k: iter(v) for k, v in self.random_seeds.items()}
-            nsamples = len(list(self.random_seeds.values())[0])
+            nsamples = len(next(iter(self.random_seeds.values())))
         else:
             seed_iter = None
             nsamples = self.numsamples
@@ -315,7 +317,11 @@ class SamplerActor:
     def __init__(self, sampler, feature_func):
         # IMPORTANT: do NOT import gpuRIR before this point anywhere.
         gpu_ids = ray.get_gpu_ids()  # e.g. [3]
-        logging.error(f'ray.get_gpu_ids() = {gpu_ids}, CUDA_VISIBLE_DEVICES = {os.environ.get("CUDA_VISIBLE_DEVICES")}')
+        logger.error(
+            'ray.get_gpu_ids() = %s, CUDA_VISIBLE_DEVICES = %s',
+            gpu_ids,
+            os.environ.get('CUDA_VISIBLE_DEVICES'),
+        )
 
         self.sampler = sampler
         self.feature_func = feature_func
@@ -367,7 +373,7 @@ class ActorHandler:
     def __enter__(self):
         return self.actors
 
-    def __exit__(self, type, value, traceback):  # noqa A002
+    def __exit__(self, type, value, traceback):  # noqa: A002
         for actor in self.actors:
             actor.exit.remote()
 
@@ -392,14 +398,14 @@ class DistributedPipeline(BasePipeline):
     remote_args = Dict()
 
     def _log_execution_time(self, task_index, times, pid):
-        self.logger.info(f'id {task_index} on pid {pid}: scheduling task took: {times[1] - times[0]:.32f} sec')
-        self.logger.info(f'id {task_index} on pid {pid}: executing task took: {times[2] - times[1]:.32f} sec')
-        self.logger.info(f'id {task_index} on pid {pid}: retrieving result took: {times[3] - times[2]:.32f} sec')
-        self.logger.info(f'id {task_index} on pid {pid}: full time: {times[3] - times[0]:.32f} sec')
+        self.logger.info('id %s on pid %s: scheduling task took: %.32f sec', task_index, pid, times[1] - times[0])
+        self.logger.info('id %s on pid %s: executing task took: %.32f sec', task_index, pid, times[2] - times[1])
+        self.logger.info('id %s on pid %s: retrieving result took: %.32f sec', task_index, pid, times[3] - times[2])
+        self.logger.info('id %s on pid %s: full time: %.32f sec', task_index, pid, times[3] - times[0])
         # self.logger.info(f"{f.__name__} args:[{args}] took: {end - start:.4f} sec")
 
     def _sample_and_schedule_task(self, actor, task_dict):
-        self.logger.info(f'id {self._idx}: start task.')
+        self.logger.info('id %s: start task.', self._idx)
         times = [time(), None, None, None]  # (schedule timestamp, execution timestamp, stop timestamp, get timestamp)
         if callable(self.features):
             result_id = actor.extract_features.remote(self._seeds, times)  # calculation is started in new remote task
@@ -407,7 +413,7 @@ class DistributedPipeline(BasePipeline):
             result_id = actor.extract_features.remote(self._seeds, times, *list(self.features[1:]))
         else:
             msg = 'features attribute must be a callable or a tuple containing a callable and its arguments!'
-            raise ValueError(msg)
+            raise TypeError(msg)
         task_dict[result_id] = (
             actor,
             {'idx': self._idx, 'seeds': np.array(list(self._seeds.items()))},
@@ -446,7 +452,7 @@ class DistributedPipeline(BasePipeline):
         if self.random_seeds:
             self.validate_random_seeds()
             seed_iter = {k: iter(v) for k, v in self.random_seeds.items()}
-            nsamples = len(list(self.random_seeds.values())[0])
+            nsamples = len(next(iter(self.random_seeds.values())))
         else:
             seed_iter = None
             nsamples = self.numsamples
@@ -466,13 +472,13 @@ class DistributedPipeline(BasePipeline):
                     finished_tasks += 1
                     try:
                         data, times, pid = ray.get(did)
-                    except Exception as exception:
-                        self.logger.info(f'task with id {task_dict[did]} failed with Traceback:', exc_info=True)
-                        raise exception
+                    except Exception:
+                        self.logger.info('task with id %s failed with Traceback:', task_dict[did], exc_info=True)
+                        raise
                     times[-1] = time()  # add getter time
                     actor, new_data = task_dict.pop(did)
                     data.update(new_data)  # add the remaining task_dict items to the data dict
-                    self.logger.info(f'id {data["idx"]} on pid {pid}: finished task.')
+                    self.logger.info('id %s on pid %s: finished task.', data['idx'], pid)
                     self._log_execution_time(data['idx'], times, pid)
                     if (nsamples + start_idx - 1 - self._idx) > 0:  # directly _schedule next task
                         self._update_sample_index_and_seeds(seed_iter)

@@ -353,7 +353,7 @@ class LocationSampler(BaseSampler):
 
     def _mindist_violated(self, loc, loc_array):
         """Validate minimum distance between any two sources."""
-        if self.mindist and loc_array.size > 0:  # noqa SIM102
+        if self.mindist and loc_array.size > 0:  # noqa: SIM102
             if np.min(np.linalg.norm(loc_array - loc[:, np.newaxis], axis=0)) < self.mindist:
                 return True
         return False
@@ -383,8 +383,7 @@ class LocationSampler(BaseSampler):
             new_loc = self.rvs()
             while self._bounds_violated(new_loc) or self._mindist_violated(new_loc, loc_array[:, :i]):
                 new_loc = self.rvs()
-            else:
-                loc_array[:, i] = new_loc
+            loc_array[:, i] = new_loc
         self.target = loc_array
 
     def _sample_grid(self):
@@ -442,7 +441,7 @@ class PointSourceSampler(LocationSampler):
         for t in self.target:
             if not isinstance(t, ac.PointSource):
                 msg = 'Elements in target must be instances of class acoular.PointSource'
-                raise AttributeError(msg)
+                raise TypeError(msg)
 
     def sample_loc(self, loc):
         """Sample a single target location (internal use)."""
@@ -462,8 +461,7 @@ class PointSourceSampler(LocationSampler):
                 new_loc = self.sample_loc(loc)
                 while self._bounds_violated(new_loc):
                     new_loc = self.sample_loc(loc)
-                else:
-                    target.loc = new_loc
+                target.loc = new_loc
 
 
 class MicGeomSampler(BaseSampler):

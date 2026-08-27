@@ -113,18 +113,18 @@ def test_numeric_attribute_sampler_order(numeric_attribute_sampler):
     """Assert that ordering of numeric samples works."""
     sampler = numeric_attribute_sampler
     sampler.sample()
-    l = [t.attribute for t in sampler.target]
-    assert l[0] != min(l) and l[-1] != max(l)
+    values = [t.attribute for t in sampler.target]
+    assert values[0] != min(values) and values[-1] != max(values)
 
     sampler.order = 'ascending'
     sampler.sample()
-    l = [t.attribute for t in sampler.target]
-    assert l[0] == min(l) and l[-1] == max(l)
+    values = [t.attribute for t in sampler.target]
+    assert values[0] == min(values) and values[-1] == max(values)
 
     sampler.order = 'descending'
     sampler.sample()
-    l = [t.attribute for t in sampler.target]
-    assert l[0] == max(l) and l[-1] == min(l)
+    values = [t.attribute for t in sampler.target]
+    assert values[0] == max(values) and values[-1] == min(values)
 
 
 def test_numeric_attribute_sampler_normalization(numeric_attribute_sampler):
@@ -132,8 +132,8 @@ def test_numeric_attribute_sampler_normalization(numeric_attribute_sampler):
     sampler = numeric_attribute_sampler
     sampler.normalize = True
     sampler.sample()
-    l = [t.attribute for t in sampler.target]
-    assert max(l) == 1.0
+    values = [t.attribute for t in sampler.target]
+    assert max(values) == 1.0
 
 
 @pytest.mark.parametrize(
@@ -247,5 +247,5 @@ def test_valid_pipeline_funcs(base_pipeline, finput):
 def test_invalid_pipeline_funcs(base_pipeline, finput):
     _, _ = base_pipeline
     pipeline = BasePipeline(numsamples=2, features=finput)
-    with pytest.raises(ValueError):
+    with pytest.raises((TypeError, ValueError)):
         next(pipeline.get_data(progress_bar=False))
