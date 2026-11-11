@@ -15,10 +15,10 @@ def test_cleanup(create_dataset):
     Also pins the bug that the cleanup removes the output of custom features.
     """
 
-    def custom_with_data(sampler, data):  # noqa ARG001
+    def custom_with_data(sampler, data):  # noqa: ARG001
         return {'custom_with_data': 1}
 
-    def custom_without_data(sampler):  # noqa ARG001
+    def custom_without_data(sampler):  # noqa: ARG001
         return {'custom_without_data': 1}
 
     features = [
