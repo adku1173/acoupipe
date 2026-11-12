@@ -707,6 +707,71 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
         raise NotImplementedError(msg)
 
 
+def combine_feature_funcs(feature_funcs):
+    """
+    Combine feature functions into a single callable.
+
+    The returned callable calls the feature functions in the given order and merges
+    their outputs into one dictionary. Feature functions that accept a ``data``
+    parameter receive the dictionary of all previously calculated outputs.
+
+    Parameters
+    ----------
+    feature_funcs : list of callable
+        Feature functions. Each function takes a ``sampler`` and optionally ``data``
+        as keyword arguments and returns a dictionary of feature names and values.
+
+    Returns
+    -------
+    callable
+        Function with signature ``f(sampler) -> dict`` that calculates all features.
+    """
+
+    def calc_features(sampler, feature_funcs):
+        data = {}
+        for ffunc in feature_funcs:
+            # Check if ffunc accepts a 'data' parameter
+            sig = inspect.signature(ffunc)
+            if 'data' in sig.parameters:
+                data.update(ffunc(sampler=sampler, data=data))
+            else:
+                data.update(ffunc(sampler=sampler))
+        return data
+
+    return partial(calc_features, feature_funcs=feature_funcs)
+
+
+def get_tf_mappers(feature_objects):
+    """
+    Get the TensorFlow encoders, shapes and dtypes of features.
+
+    The features ``idx`` and ``seeds``, which are added to each sample by the
+    pipeline, are always included first, followed by the given features in list
+    order. Requires TensorFlow, since the encodings are inferred with ``infer_tf_encoding``.
+    (see TF_FLAG).
+
+    Parameters
+    ----------
+    feature_objects : list of BaseFeatureCatalog
+        Feature objects providing ``name``, ``dtype`` and ``shape``.
+
+    Returns
+    -------
+    encoders : dict
+        Feature names mapped to the encoder functions used for TFRecord files.
+    shapes : dict
+        Feature names mapped to the TensorFlow shapes.
+    dtypes : dict
+        Feature names mapped to the TensorFlow dtypes.
+    """
+    encoders, shapes, dtypes = {}, {}, {}
+    specs = [('idx', np.int32, ()), ('seeds', np.int32, (None, 2))]
+    specs += [(feature.name, feature.dtype, feature.shape) for feature in feature_objects]
+    for name, dtype, shape in specs:
+        encoders[name], dtypes[name], shapes[name] = infer_tf_encoding(dtype, shape)
+    return encoders, shapes, dtypes
+
+
 class BaseFeatureCollection(HasPrivateTraits):
     """
     BaseFeatureCollection base class for handling feature funcs.
