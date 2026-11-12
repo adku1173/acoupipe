@@ -4,7 +4,7 @@ import logging
 from functools import partial
 
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
+from acoupipe.datasets.features import BaseFeatureCatalog, combine_feature_funcs, get_tf_mappers
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
@@ -164,24 +164,56 @@ class DatasetBase(HasPrivateTraits):
         """
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
-    def get_feature_collection(self, features, f, num):
+    def get_features(self, features, f, num):
         """
-        Get the feature collection of the dataset.
+        Get the feature function and the feature objects of the dataset.
+
+        Custom feature objects (BaseFeatureCatalog instances) come first, followed by the
+        default features requested by name. The prepare function of the config, if
+        available, is called before all feature functions. No cleanup is applied, so
+        auxiliary outputs of the prepare function remain in the samples.
+
+        Parameters
+        ----------
+        features : list
+            List of features included in the dataset. Contains names of default
+            features (str) and/or custom feature objects (BaseFeatureCatalog).
+        f : float
+            The center frequency or list of frequencies of the dataset.
+            If None, all frequencies are included.
+        num : integer
+            Controls the width of the frequency bands considered; defaults to
+            0 (single frequency line).
+
+            ===  =====================
+            num  frequency band width
+            ===  =====================
+            0    single frequency line
+            1    octave band
+            3    third-octave band
+            n    1/n-octave band
+            ===  =====================
 
         Returns
         -------
-        BaseFeatureCollection
-            BaseFeatureCollection object.
+        feature_func : callable
+            Single combined callable with signature ``f(sampler) -> dict`` (see
+            :func:`~acoupipe.datasets.features.combine_feature_funcs`). It chains the
+            prepare function (if available) and the feature functions of all requested
+            features, and returns their merged outputs as one dictionary.
+        feature_objects : list of BaseFeatureCatalog
+            Feature objects in the order in which they are calculated.
         """
-        # handle all custom features (BaseFeatureCatalog instances)
-        feature_instances = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        # order differs from DatasetSynthetic (default features first, with cleanup)
+        feature_objects = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
         if hasattr(self.config, 'get_default_features'):
             default_feature_names = [feat for feat in features if isinstance(feat, str)]
-            feature_instances += self.config.get_default_features(default_feature_names, f, num)
-        builder = BaseFeatureCollectionBuilder(features=feature_instances)
+            feature_objects += self.config.get_default_features(default_feature_names, f, num)
+        feature_funcs = []
         if hasattr(self.config, 'get_prepare_func'):
-            builder.add_custom(self.config.get_prepare_func())  # add prepare function
-        return builder.build()  # finally build the feature collection
+            feature_funcs.append(self.config.get_prepare_func())
+        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
+        return combine_feature_funcs(feature_funcs), feature_objects
 
     def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
@@ -249,7 +281,7 @@ class DatasetBase(HasPrivateTraits):
         """
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        pipeline.features, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
@@ -317,7 +349,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features = self.get_feature_collection(features, f, num).get_feature_funcs()
+        pipeline.features, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteH5Dataset(
             name=name,
@@ -394,12 +426,12 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.features = feature_collection.get_feature_funcs()
+        pipeline.features, feature_objects = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
+        encoders, shapes, _ = get_tf_mappers(feature_objects)
         # get features with varying length to handle them correctly in the TFRecord writer
         shape_features = []
-        for feature, shape in feature_collection.feature_tf_shape_mapper.items():
+        for feature, shape in shapes.items():
             # if more then one None in shape, we have a varying length feature
             if list(shape).count(None) > 1:
                 shape_features.append(feature)
@@ -408,7 +440,7 @@ if TF_FLAG:
             name=name,
             source=pipeline,
             shape_features=shape_features,
-            encoder_funcs=feature_collection.feature_tf_encoder_mapper,
+            encoder_funcs=encoders,
         ).save(
             progress_bar,
             start_idx,
@@ -446,12 +478,10 @@ if TF_FLAG:
             Output signature of the dataset.
         """
         signature = {}
-        feature_collection = self.get_feature_collection(features, f, num)
+        _, feature_objects = self.get_features(features, f, num)
+        _, shapes, dtypes = get_tf_mappers(feature_objects)
         for feature in features:
-            signature[feature] = tf.TensorSpec(
-                feature_collection.feature_tf_shape_mapper[feature],
-                feature_collection.feature_tf_dtype_mapper[feature],
-            )
+            signature[feature] = tf.TensorSpec(shapes[feature], dtypes[feature])
         return signature
 
     DatasetBase.get_output_signature = get_output_signature
@@ -498,8 +528,7 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.features = feature_collection.get_feature_funcs()
+        pipeline.features, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         features = features + ['idx', 'seeds']
         output_signature = self.get_output_signature(features, f=f, num=num)
@@ -574,14 +603,14 @@ if TF_FLAG:
             data = next(dataset)
 
         """
-        feature_collection = self.get_feature_collection(features, f, num)
+        _, feature_objects = self.get_features(features, f, num)
+        encoders, shapes, dtypes = get_tf_mappers(feature_objects)
         features = features + ['idx', 'seeds']
 
         feature_description = {}
-        shapes = dict(feature_collection.feature_tf_shape_mapper)  # make a copy
 
         for feature in features:
-            dtype = feature_collection.feature_tf_dtype_mapper[feature]
+            dtype = dtypes[feature]
             if dtype in [tf.complex64, tf.complex128]:  # complex not supported for tfrecord files
                 shapes[feature] = shapes[feature] + (2,)
                 dtype = tf.float32 if dtype == tf.complex64 else tf.float64
@@ -614,7 +643,7 @@ if TF_FLAG:
                     # Dynamic shape provided but value already dense
                     value = tf.reshape(value, tf.cast(shape_tensor, tf.int32))
 
-                encoder = feature_collection.feature_tf_encoder_mapper[feature]
+                encoder = encoders[feature]
                 if encoder is complex_list_feature:
                     value = tf.complex(value[..., 0], value[..., 1])
 
