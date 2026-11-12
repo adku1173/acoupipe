@@ -12,7 +12,7 @@ import pickle
 from pathlib import Path
 
 from acoupipe.datasets.base import ConfigBase, DatasetBase
-from acoupipe.datasets.features import BaseFeatureCatalog, create_feature
+from acoupipe.datasets.features import BaseFeatureCatalog, combine_feature_funcs, create_feature
 
 import numpy as np
 from traits.api import Bool, Dict, Enum, Float, Instance, Int
@@ -365,31 +365,29 @@ class DatasetDummy(DatasetBase):
         self._cache_hits = 0
         self._cache_misses = 0
 
-    def get_feature_collection(self, features, f, num):
-        """Get the feature collection with dummy features."""
+    def get_features(self, features, f, num):
+        """Get the feature function and the feature objects with dummy features."""
         # Handle custom features
         custom_features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
         default_feature_names = [feat for feat in features if isinstance(feat, str)]
 
         # Get default features from config
         default_features = self.config.get_default_features(default_feature_names, f, num)
+        feature_objects = default_features + custom_features
 
-        # Build feature collection
-        from acoupipe.datasets.features import BaseFeatureCollectionBuilder
-
-        builder = BaseFeatureCollectionBuilder(features=default_features + custom_features)
+        feature_funcs = []
 
         # Add prepare function if available
         if hasattr(self.config, 'get_prepare_func'):
-            builder.add_custom(self.config.get_prepare_func())
+            feature_funcs.append(self.config.get_prepare_func())
 
-        feature_collection = builder.build()
+        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
 
         # Add cleanup function
         if hasattr(self.config, 'get_cleanup_func'):
-            builder.add_custom(self.config.get_cleanup_func(features))
+            feature_funcs.append(self.config.get_cleanup_func(features))
 
-        return feature_collection
+        return combine_feature_funcs(feature_funcs), feature_objects
 
     def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dummy dataset samples.
@@ -557,14 +555,16 @@ class DatasetDummy(DatasetBase):
             msg = 'TensorFlow is not available. Cannot save to TFRecord format.'
             raise ImportError(msg)
 
+        from acoupipe.datasets.features import get_tf_mappers
         from acoupipe.writer import WriteTFRecord
 
-        # Get the feature collection to get the TF shape and dtype mappings
-        feature_collection = self.get_feature_collection(features, f, num)
+        # Get the TF encoder and shape mappings of the features
+        _, feature_objects = self.get_features(features, f, num)
+        encoders, shapes, _ = get_tf_mappers(feature_objects)
 
         # Get features with varying length to handle them correctly in the TFRecord writer
         shape_features = []
-        for feature, shape in feature_collection.feature_tf_shape_mapper.items():
+        for feature, shape in shapes.items():
             # if more than one None in shape, we have a varying length feature
             if list(shape).count(None) > 1:
                 shape_features.append(feature)
@@ -614,7 +614,7 @@ class DatasetDummy(DatasetBase):
             name=name,
             source=pipeline,
             shape_features=shape_features,
-            encoder_funcs=feature_collection.feature_tf_encoder_mapper,
+            encoder_funcs=encoders,
         ).save(progress_bar, start_idx)
 
     def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
@@ -683,9 +683,6 @@ class DatasetDummy(DatasetBase):
             raise ImportError(msg)
 
         import tensorflow as tf
-
-        # Get the feature collection to get the output signature
-        feature_collection = self.get_feature_collection(features, f, num)
 
         # Add mandatory features
         all_features = list(features) + ['idx', 'seeds']
