@@ -41,7 +41,7 @@ The following code snippet shows how to store the data in HDF5 format:
        ...:                 split='training', size=10, f=[2000], num=0, 
        ...:                 name='/tmp/training_dataset.h5')
 
-A more in-depth example on how to save and load the data, and how to create a TensorFlow-ready pipeline from file can be found in the :ref:`Save and load datasets stored in HDF5 file format <Examples>` example.
+A more in-depth example on how to save and load the data, and how to create a TensorFlow-ready pipeline from file can be found in the :ref:`Save and load datasets stored in HDF5 file format <sphx_glr_auto_examples_pipelines_example_1_pipeline_HDF5.py>` example.
 
 TFRecord format
 ---------------
@@ -59,4 +59,4 @@ The following code snippet shows how to store the data in TFRecord format:
        ...:                       split='training', size=10, f=[2000], num=0, 
        ...:                       name='/tmp/training_dataset.tfrecord')
 
-A more in-depth example on how to save and load the data, and how to create a TensorFlow-ready pipeline from file can be found in the :ref:`Save and load datasets stored in TFRecord file format <Examples>` example.
+A more in-depth example on how to save and load the data, and how to create a TensorFlow-ready pipeline from file can be found in the :ref:`Save and load datasets stored in TFRecord file format <sphx_glr_auto_examples_pipelines_example_2_pipeline_tfrecord.py>` example.

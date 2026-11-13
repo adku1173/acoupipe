@@ -1,4 +1,7 @@
+import warnings
+
 from pathlib import Path
+from sphinx_gallery.sorting import ExplicitOrder
 
 import acoupipe as ap
 
@@ -32,6 +35,12 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.doctest",
     "sphinx.ext.githubpages",
+    "sphinx_design",  # tab-set and other design elements
+    "traits.util.trait_documenter",
+    #"numpydoc", #conda install -c anaconda numpydoc
+    "nbsphinx", # allows to include jupyter notebooks into rst documentation
+    "sphinxcontrib.bibtex", # to cite papers if necessary
+    "sphinx_gallery.gen_gallery", #extension that builds an gallery of examples from Python scripts
 ]
 
 # auto api configuration
@@ -46,6 +55,36 @@ autoapi_skip_modules = ["acoupipe.datasets.ir"]
 autoapi_python_class_content = "both"
 # the bibfle
 bibtex_bibfiles = ["bib/refs.bib"]
+
+# -- Sphinx (Gallery) configuration --------------------------------------------
+
+sphinx_gallery_conf = {
+    # Folder(s) containing example scripts
+    "examples_dirs": "../../examples",
+    # Where the generated .rst + images are written
+    "gallery_dirs": "auto_examples",
+    # files not matching this pattern will be ignored, and not shown in the gallery
+    "filename_pattern": '/example_',
+    "ignore_pattern": "wip_",
+    # Thumbnail size and fallback image matching acoular
+    "thumbnail_size": (250, 250),
+    'default_thumb_file': str(Path(__file__).parent / '_static' / 'no_image.png'),
+    # Order the subsections and files within each subsection in the gallery
+    "subsection_order": ExplicitOrder([
+        "../../examples/introductory_examples",
+        "../../examples/pipelines",
+        #"../../examples/deployment",
+    ]),
+    "within_subsection_order": "FileNameSortKey",
+}
+
+exclude_patterns = ['auto_examples/**/*.ipynb'] # so that the notebooks for download are not used to generate the gallery
+intersphinx_mapping = {"acoular": ("https://acoular.org/acoular/", None),}  # links to documentations of other packages
+
+# skip warning for examples for style issues, as they are not relevant for the examples
+warnings.filterwarnings("ignore", message=".*OpenBLAS.*")
+warnings.filterwarnings("ignore", message=".*not in set of discrete FFT sample frequencies.*")
+warnings.filterwarnings("ignore", message=".*ran out of data.*")
 
 # -- Options for HTML output -------------------------------------------------
 

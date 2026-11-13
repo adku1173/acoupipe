@@ -32,7 +32,18 @@ llm_context
 .env*
 .*env
 
-docs/source/savefig/
-
 # macOS
 .DS_Store
+.claude/
+
+# Sphinx build output
+docs/build/
+# sphinx-gallery generated output
+docs/source/auto_examples/**/*
+docs/source/sg_execution_times.rst
+docs/source/savefig/
+# autoapi generated API docs
+docs/source/autoapi/
+# data files written by example scripts
+examples/pipelines/*.h5
+examples/pipelines/*.tfrecord

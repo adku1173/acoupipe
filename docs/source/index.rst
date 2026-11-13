@@ -12,7 +12,7 @@ AcouPipe
 
    contents/install.rst
    contents/datasets.rst
-   contents/examples.rst
+   auto_examples/index.rst
    contents/lit.rst
    AcouPipe API <../autoapi/acoupipe/index>
 

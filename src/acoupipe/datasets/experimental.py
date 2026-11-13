@@ -235,7 +235,7 @@ class DatasetMIRACLE(DatasetBase):
         srir_dir : str, optional
             Path to the directory where the SRIR files are stored. Default is None, which
             sets the path to the `irdl` cache directory (overridable via the ``IRDL_DATA_DIR`` environment
-           variable). The SRIR files are downloaded from the `MIRACLE`_ dataset if not already present.
+            variable). The SRIR files are downloaded from the `MIRACLE`_ dataset if not already present.
         scenario : str, optional
             Scenario of the dataset. One of 'A1', 'A2', 'D1', 'R2'.
         dataset_split : str or None, optional

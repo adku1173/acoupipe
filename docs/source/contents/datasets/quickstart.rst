@@ -90,4 +90,4 @@ Now, the data can be plotted, e.g. by using the `matplotlib`_ library:
        ...: plt.ylabel('y (m)')
 
 
-A more in-depth example on how to generate the data, and how to create a TensorFlow-ready pipeline that produces data on the fly can be found in the :ref:`Model training with training data generated on the fly <Examples>` example.
+A more in-depth example on how to generate the data, and how to create a TensorFlow-ready pipeline that produces data on the fly can be found in the :ref:`Model training with training data generated on the fly <sphx_glr_auto_examples_pipelines_example_4_on_the_fly.py>` example.
