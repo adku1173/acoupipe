@@ -167,6 +167,7 @@ extend-ignore = [
 "tests/synthetic_test_config.py"               = ["D102"]
 "tests/test_dataset_tf.py"                     = ["ARG001", "PLC0415", "S101", "SIM118"]
 "tests/test_dummy_dataset.py"                  = ["B007", "B905", "F841", "PLC0415", "PLW1508", "S101", "SLF001"]
+"tests/test_features.py"                       = ["S101"]
 "tests/test_ir.py"                             = ["ARG001", "ARG005", "D100", "D103", "EM101", "S101", "SLF001"]
 "tests/test_loader.py"                         = ["D100", "S101"]
 "tests/test_random_state.py"                   = ["D101", "S101", "T201"]

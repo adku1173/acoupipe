@@ -11,7 +11,7 @@ from acoupipe.datasets.utils import (
 
 import numpy as np
 from numpy.linalg import eigh
-from traits.api import Callable, Dict, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
+from traits.api import Callable, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
 
 if TF_FLAG:
     from acoupipe.writer import infer_tf_encoding
@@ -707,106 +707,69 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
         raise NotImplementedError(msg)
 
 
-class BaseFeatureCollection(HasPrivateTraits):
+def combine_feature_funcs(feature_funcs):
     """
-    BaseFeatureCollection base class for handling feature funcs.
+    Combine feature functions into a single callable.
 
-    Attributes
+    The returned callable calls the feature functions in the given order and merges
+    their outputs into one dictionary. Feature functions that accept a ``data``
+    parameter receive the dictionary of all previously calculated outputs.
+
+    Parameters
     ----------
-    feature_funcs : list
-        List of feature_funcs.
+    feature_funcs : list of callable
+        Feature functions. Each function takes a ``sampler`` and optionally ``data``
+        as keyword arguments and returns a dictionary of feature names and values.
+
+    Returns
+    -------
+    callable
+        Function with signature ``f(sampler) -> dict`` that calculates all features.
     """
 
-    feature_funcs = List(desc='list of feature_funcs')
-    feature_tf_encoder_mapper = Dict(desc='feature encoder mapper')
-    feature_tf_shape_mapper = Dict(desc='feature shape mapper')
-    feature_tf_dtype_mapper = Dict(desc='feature dtype mapper')
+    def calc_features(sampler, feature_funcs):
+        data = {}
+        for ffunc in feature_funcs:
+            # Check if ffunc accepts a 'data' parameter
+            sig = inspect.signature(ffunc)
+            if 'data' in sig.parameters:
+                data.update(ffunc(sampler=sampler, data=data))
+            else:
+                data.update(ffunc(sampler=sampler))
+        return data
 
-    def add_feature_func(self, feature_func):
-        """
-        Add a feature_func to the BaseFeatureCollection.
-
-        Parameters
-        ----------
-        feature_func : str
-            Feature to be added.
-        """
-        self.feature_funcs.append(feature_func)
-
-    def get_feature_funcs(self):
-        """
-        Get all feature_funcs of the BaseFeatureCollection.
-
-        Returns
-        -------
-        list
-            List of feature_funcs.
-        """
-
-        def calc_features(sampler, feature_funcs):
-            data = {}
-            for ffunc in feature_funcs:
-                # Check if ffunc accepts a 'data' parameter
-                sig = inspect.signature(ffunc)
-                if 'data' in sig.parameters:
-                    data.update(ffunc(sampler=sampler, data=data))
-                else:
-                    data.update(ffunc(sampler=sampler))
-            return data
-
-        return partial(calc_features, feature_funcs=self.feature_funcs)
+    return partial(calc_features, feature_funcs=feature_funcs)
 
 
-class BaseFeatureCollectionBuilder(HasPrivateTraits):
+def get_tf_mappers(feature_objects):
     """
-    BaseFeatureCollectionBuilder base class for building a BaseFeatureCollection.
+    Get the TensorFlow encoders, shapes and dtypes of features.
 
-    Attributes
+    The features ``idx`` and ``seeds``, which are added to each sample by the
+    pipeline, are always included first, followed by the given features in list
+    order. Requires TensorFlow, since the encodings are inferred with ``infer_tf_encoding``.
+    (see TF_FLAG).
+
+    Parameters
     ----------
-    feature_collection : BaseFeatureCollection
-        BaseFeatureCollection object.
+    feature_objects : list of BaseFeatureCatalog
+        Feature objects providing ``name``, ``dtype`` and ``shape``.
+
+    Returns
+    -------
+    encoders : dict
+        Feature names mapped to the encoder functions used for TFRecord files.
+    shapes : dict
+        Feature names mapped to the TensorFlow shapes.
+    dtypes : dict
+        Feature names mapped to the TensorFlow dtypes.
     """
-
-    features = List(Instance(BaseFeatureCatalog), desc='list of feature instances')
-    feature_collection = Instance(BaseFeatureCollection, args=(), desc='BaseFeatureCollection object')
-
-    def add_custom(self, feature_func):
-        """
-        Add a custom feature to the BaseFeatureCollection.
-
-        The custom feature_func should be a callable that takes a sampler as input
-        and returns a dictionary of feature name and feature data.
-
-        Parameters
-        ----------
-        feature_func : callable
-            Feature to be added.
-        """
-        self.feature_collection.add_feature_func(feature_func)
-
-    def build(self):
-        """
-        Build a BaseFeatureCollection.
-
-        Returns
-        -------
-        BaseFeatureCollection
-            BaseFeatureCollection object.
-        """
-        self._add_mapper('idx', np.int32, ())
-        self._add_mapper('seeds', np.int32, (None, 2))
-        for feature in self.features:
-            self.feature_collection.add_feature_func(feature.get_feature_func())
-            self._add_mapper(feature.name, feature.dtype, feature.shape)
-        return self.feature_collection
-
-    def _add_mapper(self, name, dtype, shape):
-        if not TF_FLAG:
-            return
-        encoder, tf_dtype, tf_shape = infer_tf_encoding(dtype, shape)
-        self.feature_collection.feature_tf_encoder_mapper[name] = encoder
-        self.feature_collection.feature_tf_shape_mapper[name] = tf_shape
-        self.feature_collection.feature_tf_dtype_mapper[name] = tf_dtype
+    encoders, shapes, dtypes = {}, {}, {}
+    specs = [('idx', np.int32, ()), ('seeds', np.int32, (None, 2))]
+    specs += [(feature.name, feature.dtype, feature.shape) for feature in feature_objects]
+    for name, dtype, shape in specs:
+        encoders[name], dtypes[name], shapes[name] = infer_tf_encoding(dtype, shape)
+    return encoders, shapes, dtypes
 
 
 def create_feature(feature_func, name, shape, dtype):

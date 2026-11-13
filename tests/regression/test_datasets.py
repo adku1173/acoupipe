@@ -1,5 +1,6 @@
 import acoular as ac
 from acoupipe.datasets.experimental import DatasetMIRACLEConfig
+from acoupipe.datasets.features import get_tf_mappers
 
 from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS, START_IDX, TEST_SIGNAL_LENGTH
 
@@ -56,8 +57,9 @@ def test_get_feature_shapes(mode, feature, num, f, create_dataset):
 
     dataset = create_dataset(mode)
     data = next(dataset.generate(f=f, num=num, features=[feature], split='training', size=1, progress_bar=False))
-    feature_collection = dataset.get_feature_collection(features=[feature], f=f, num=num)
-    desired_shape = feature_collection.feature_tf_shape_mapper[feature]
+    _, feature_objects = dataset.get_features(features=[feature], f=f, num=num)
+    _, shapes, _ = get_tf_mappers(feature_objects)
+    desired_shape = shapes[feature]
     for i in range(len(desired_shape)):
         if desired_shape[i] is not None:
             assert desired_shape[i] == data[feature].shape[i]
