@@ -40,6 +40,6 @@ def get_pipeline(nsamples):
     sms = SourceSetSampler(replace=False, target=[sm], set=ps_list, random_state=RandomState(4))
 
     pipeline = BasePipeline(
-        sampler={1: nas, 2: mgs, 3: pss, 4: sms}, numsamples=nsamples, features=lambda sampler: {'data': True}
+        sampler={1: nas, 2: mgs, 3: pss, 4: sms}, numsamples=nsamples, feature_func=lambda sampler: {'data': True}
     )
     return pipeline

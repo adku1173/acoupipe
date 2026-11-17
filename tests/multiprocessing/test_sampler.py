@@ -36,7 +36,7 @@ def test_distributed_pipeline_non_equal_length_random_seeds_input(distributed_pi
 )
 def test_distributed_pipeline_valid_pipeline_funcs(distributed_pipeline, finput):
     _, _ = distributed_pipeline
-    pipeline = DistributedPipeline(numsamples=2, features=finput)
+    pipeline = DistributedPipeline(numsamples=2, feature_func=finput)
     data = next(pipeline.get_data(progress_bar=False))
     assert data['res']
 
@@ -51,6 +51,6 @@ def test_distributed_pipeline_valid_pipeline_funcs(distributed_pipeline, finput)
 )
 def test_distributed_pipeline_invalid_pipeline_funcs(distributed_pipeline, finput):
     _, _ = distributed_pipeline
-    pipeline = DistributedPipeline(numsamples=2, features=finput)
+    pipeline = DistributedPipeline(numsamples=2, feature_func=finput)
     with pytest.raises(ValueError):
         next(pipeline.get_data(progress_bar=False))

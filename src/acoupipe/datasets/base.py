@@ -305,7 +305,7 @@ class DatasetBase(HasPrivateTraits):
         """
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, _ = self.get_features(features, f, num)
+        pipeline.feature_func, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
@@ -373,7 +373,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, _ = self.get_features(features, f, num)
+        pipeline.feature_func, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteH5Dataset(
             name=name,
@@ -450,7 +450,7 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, feature_objects = self.get_features(features, f, num)
+        pipeline.feature_func, feature_objects = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         encoders, shapes, _ = get_tf_mappers(feature_objects)
         # get features with varying length to handle them correctly in the TFRecord writer
@@ -552,7 +552,7 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, _ = self.get_features(features, f, num)
+        pipeline.feature_func, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         features = features + ['idx', 'seeds']
         output_signature = self.get_output_signature(features, f=f, num=num)
