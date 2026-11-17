@@ -257,8 +257,10 @@ def test_deprecated_features_alias():
     def finput(sampler):  # noqa: ARG001
         return {'res': True}
 
-    pipeline = BasePipeline(numsamples=2, features=finput)
+    with pytest.warns(DeprecationWarning, match='BasePipeline.features is deprecated'):
+        pipeline = BasePipeline(numsamples=2, features=finput)
     assert pipeline.feature_func is finput
-    assert pipeline.features is finput
+    with pytest.warns(DeprecationWarning, match='BasePipeline.features is deprecated'):
+        assert pipeline.features is finput
     data = next(pipeline.get_data(progress_bar=False))
     assert data['res']

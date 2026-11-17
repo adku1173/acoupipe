@@ -60,6 +60,7 @@ The example returns the following output:
 import inspect
 import logging
 import os
+import warnings
 from functools import wraps
 from time import time
 
@@ -239,10 +240,20 @@ class BasePipeline(DataGenerator):
 
     def _get_features(self):
         """Return :attr:`feature_func` (deprecated alias)."""
+        warnings.warn(
+            'BasePipeline.features is deprecated, use BasePipeline.feature_func instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.feature_func
 
     def _set_features(self, feature_func):
         """Set :attr:`feature_func` (deprecated alias)."""
+        warnings.warn(
+            'BasePipeline.features is deprecated, use BasePipeline.feature_func instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self.feature_func = feature_func
 
     def _validate_feature_func(self):

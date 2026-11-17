@@ -16,6 +16,7 @@ from traits.api import Callable, Either, Enum, Float, HasPrivateTraits, Instance
 if TF_FLAG:
     from acoupipe.writer import infer_tf_encoding
 import inspect
+import warnings
 
 
 class Feature(HasPrivateTraits):
@@ -39,7 +40,17 @@ class Feature(HasPrivateTraits):
         return
 
 
-BaseFeatureCatalog = Feature  # deprecated alias
+def __getattr__(name):
+    """Return :class:`Feature` for the deprecated name ``BaseFeatureCatalog``."""
+    if name == 'BaseFeatureCatalog':
+        warnings.warn(
+            'BaseFeatureCatalog is deprecated, use Feature instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return Feature
+    msg = f'module {__name__!r} has no attribute {name!r}'
+    raise AttributeError(msg)
 
 
 class TimeDataFeature(Feature):
