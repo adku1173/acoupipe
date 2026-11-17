@@ -775,6 +775,35 @@ def get_tf_mappers(feature_objects):
     return encoders, shapes, dtypes
 
 
+def remove_unrequested(sampler, data, keep):  # noqa: ARG001
+    """
+    Remove all outputs from a sample dictionary that were not requested.
+
+    Used as the last function of a combined feature function (see
+    :func:`combine_feature_funcs`) to remove auxiliary outputs, e.g. of the prepare
+    function. The dictionary is modified in-place, since `combine_feature_funcs`
+    merges the returned dictionary into ``data``.
+    The keys ``idx`` and ``seeds`` are added afterwards by the pipeline and are not affected.
+
+    Parameters
+    ----------
+    sampler : dict
+        Sampler objects of the pipeline (unused).
+    data : dict
+        Outputs of all previously called feature functions.
+    keep : list of str
+        Names of the outputs to keep.
+
+    Returns
+    -------
+    dict
+        The modified ``data`` dictionary.
+    """
+    for key in [key for key in data if key not in keep]:
+        del data[key]
+    return data
+
+
 def create_feature(feature_func, name, shape, dtype):
     class _CustomFeature(Feature):
         def get_feature_func(self):

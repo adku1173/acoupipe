@@ -12,7 +12,7 @@ import pickle
 from pathlib import Path
 
 from acoupipe.datasets.base import ConfigBase, DatasetBase
-from acoupipe.datasets.features import Feature, combine_feature_funcs, create_feature
+from acoupipe.datasets.features import create_feature
 
 import numpy as np
 from traits.api import Bool, Dict, Enum, Float, Instance, Int
@@ -364,30 +364,6 @@ class DatasetDummy(DatasetBase):
         self.regenerate_cache = regenerate_cache
         self._cache_hits = 0
         self._cache_misses = 0
-
-    def get_features(self, features, f, num):
-        """Get the feature function and the feature objects with dummy features."""
-        # Handle custom features
-        custom_features = [feat for feat in features if isinstance(feat, Feature)]
-        default_feature_names = [feat for feat in features if isinstance(feat, str)]
-
-        # Get default features from config
-        default_features = self.config.get_default_features(default_feature_names, f, num)
-        feature_objects = default_features + custom_features
-
-        feature_funcs = []
-
-        # Add prepare function if available
-        if hasattr(self.config, 'get_prepare_func'):
-            feature_funcs.append(self.config.get_prepare_func())
-
-        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
-
-        # Add cleanup function
-        if hasattr(self.config, 'get_cleanup_func'):
-            feature_funcs.append(self.config.get_cleanup_func(features))
-
-        return combine_feature_funcs(feature_funcs), feature_objects
 
     def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Generate dummy dataset samples.
