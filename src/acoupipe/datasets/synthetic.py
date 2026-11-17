@@ -404,7 +404,7 @@ class DatasetSyntheticConfig(ConfigBase):
         return None if self.random_signal_length else int(self.signal_length * self.fs)
 
     def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to default feature builder methods."""
+        """Return keyword arguments passed to the `_get_default_feature_{name}` methods."""
         return {
             'f': f,
             'num': num,

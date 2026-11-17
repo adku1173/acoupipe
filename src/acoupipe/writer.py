@@ -254,8 +254,8 @@ if TF_FLAG:
 
         #: Dictionary with encoding functions (dict values) to convert data yielded
         #: by the pipeline to binary .tfrecord format.
-        #: The key values of this dictionary are the feature names specified
-        #: in the :attr:`features` attribute of the :attr:`source` object.
+        #: The key values of this dictionary are the feature names of the
+        #: samples yielded by the :attr:`source` object.
         encoder_funcs = Dict(
             key_trait=Str(),
             value_trait=Callable(),

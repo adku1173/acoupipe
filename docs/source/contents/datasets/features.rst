@@ -171,7 +171,7 @@ The conventional beamforming map is calculated by processing the CSM with the co
 
 The equation is evaluated for a spatial grid.
 
-The conventional beamforming map is a feature with AcouPipe when the features attribute is set to :code:`features=['sourcemap']`.
+The conventional beamforming map is a feature with AcouPipe when the features argument is set to :code:`features=['sourcemap']`.
 For convenience, the sound radiation is assumed to come from a monopole. 
 Different steering vector formulations exist in the literature, varying in terms of spatial precision and accuracy in determining the source strength. 
 Formulation III according to :cite:`Sarradj2012` is used as the default, which is defined as:

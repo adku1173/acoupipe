@@ -103,7 +103,7 @@ class DatasetDummyConfig(ConfigBase):
         return {}
 
     def get_default_features(self, features, f, num):
-        """Build dummy feature catalog objects."""
+        """Build dummy feature objects."""
         default_features = []
         for feature_name in features:
             if feature_name in ['idx', 'seeds']:

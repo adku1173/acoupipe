@@ -19,7 +19,7 @@ import inspect
 
 
 class Feature(HasPrivateTraits):
-    """Feature base class for handling feature funcs.
+    """Base class for features.
 
     Attributes
     ----------

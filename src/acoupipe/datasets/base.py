@@ -49,7 +49,7 @@ class ConfigBase(HasPrivateTraits):
         return {}
 
     def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to default feature builder methods."""
+        """Return keyword arguments passed to the `_get_default_feature_{name}` methods."""
         return {'f': f, 'num': num}
 
     def get_default_features(self, features, f, num):
@@ -67,18 +67,18 @@ class ConfigBase(HasPrivateTraits):
 
         Returns
         -------
-        list
-            Instantiated feature catalog objects.
+        list of Feature
+            Feature objects of the requested default features.
         """
-        builder_kwargs = self._get_default_feature_kwargs(f, num)
+        feature_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
             if feature_name not in ['idx', 'seeds']:
-                builder = getattr(self, f'_get_default_feature_{feature_name}', None)
-                if builder is None:
+                get_feature = getattr(self, f'_get_default_feature_{feature_name}', None)
+                if get_feature is None:
                     msg = f'Unknown feature "{feature_name}".'
                     raise ValueError(msg)
-                default_features.append(builder(**builder_kwargs))
+                default_features.append(get_feature(**feature_kwargs))
         return default_features
 
     def get_prepare_func(self):
