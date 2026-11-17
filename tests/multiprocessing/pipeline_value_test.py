@@ -39,6 +39,6 @@ def get_distributed_pipeline(nsamples=100, num_workers=1):
         sampler={1: nas, 2: mgs, 3: pss, 4: sms},
         numsamples=nsamples,
         numworkers=num_workers,
-        features=lambda sampler: {'data': True},
+        feature_func=lambda sampler: {'data': True},
     )
     return pipeline

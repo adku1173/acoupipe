@@ -4,7 +4,7 @@ import logging
 from functools import partial
 
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.features import BaseFeatureCatalog, combine_feature_funcs, get_tf_mappers
+from acoupipe.datasets.features import Feature, combine_feature_funcs, get_tf_mappers, remove_unrequested
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
@@ -49,7 +49,7 @@ class ConfigBase(HasPrivateTraits):
         return {}
 
     def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to default feature builder methods."""
+        """Return keyword arguments passed to the `_get_default_feature_{name}` methods."""
         return {'f': f, 'num': num}
 
     def get_default_features(self, features, f, num):
@@ -67,19 +67,40 @@ class ConfigBase(HasPrivateTraits):
 
         Returns
         -------
-        list
-            Instantiated feature catalog objects.
+        list of Feature
+            Feature objects of the requested default features.
         """
-        builder_kwargs = self._get_default_feature_kwargs(f, num)
+        feature_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
             if feature_name not in ['idx', 'seeds']:
-                builder = getattr(self, f'_get_default_feature_{feature_name}', None)
-                if builder is None:
+                get_feature = getattr(self, f'_get_default_feature_{feature_name}', None)
+                if get_feature is None:
                     msg = f'Unknown feature "{feature_name}".'
                     raise ValueError(msg)
-                default_features.append(builder(**builder_kwargs))
+                default_features.append(get_feature(**feature_kwargs))
         return default_features
+
+    def get_prepare_func(self):
+        """
+        Return the prepare function of the configuration.
+
+        The prepare function is called once per sample, before all feature functions.
+        Its outputs (e.g. source locations or source strengths) are passed to all
+        feature functions and can be used for their calculations. Afterwards, these
+        outputs are removed from the sample unless they are requested as features.
+
+        Subclasses that need a preparation step override this method and return a
+        single callable. Several preparation steps should be combined within this
+        callable.
+
+        Returns
+        -------
+        callable or None
+            Function with signature ``f(sampler) -> dict``, or None if no
+            preparation is needed (default).
+        """
+        return
 
 
 class DatasetBase(HasPrivateTraits):
@@ -166,18 +187,19 @@ class DatasetBase(HasPrivateTraits):
 
     def get_features(self, features, f, num):
         """
-        Get the feature function and the feature objects of the dataset.
+        Get the combined feature function and the feature objects of the dataset.
 
-        Custom feature objects (BaseFeatureCatalog instances) come first, followed by the
-        default features requested by name. The prepare function of the config, if
-        available, is called before all feature functions. No cleanup is applied, so
-        auxiliary outputs of the prepare function remain in the samples.
+        The feature functions are called in the following order: the prepare
+        function of the config (if any), the default features requested by name,
+        the custom feature objects (Feature instances) and finally a cleanup that
+        removes all outputs that were not requested (see
+        :func:`~acoupipe.datasets.features.remove_unrequested`).
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. Contains names of default
-            features (str) and/or custom feature objects (BaseFeatureCatalog).
+            features (str) and/or custom feature objects (Feature).
         f : float
             The center frequency or list of frequencies of the dataset.
             If None, all frequencies are included.
@@ -199,20 +221,22 @@ class DatasetBase(HasPrivateTraits):
         feature_func : callable
             Single combined callable with signature ``f(sampler) -> dict`` (see
             :func:`~acoupipe.datasets.features.combine_feature_funcs`). It chains the
-            prepare function (if available) and the feature functions of all requested
-            features, and returns their merged outputs as one dictionary.
-        feature_objects : list of BaseFeatureCatalog
+            prepare function, the feature functions of all requested features and the
+            cleanup, and returns their merged outputs as one dictionary.
+        feature_objects : list of Feature
             Feature objects in the order in which they are calculated.
         """
-        # order differs from DatasetSynthetic (default features first, with cleanup)
-        feature_objects = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
-        if hasattr(self.config, 'get_default_features'):
-            default_feature_names = [feat for feat in features if isinstance(feat, str)]
-            feature_objects += self.config.get_default_features(default_feature_names, f, num)
         feature_funcs = []
-        if hasattr(self.config, 'get_prepare_func'):
-            feature_funcs.append(self.config.get_prepare_func())
+        prepare_func = self.config.get_prepare_func()
+        if prepare_func is not None:
+            feature_funcs.append(prepare_func)
+        default_feature_names = [feat for feat in features if isinstance(feat, str)]
+        default_features = self.config.get_default_features(default_feature_names, f, num)
+        custom_features = [feat for feat in features if isinstance(feat, Feature)]
+        feature_objects = default_features + custom_features
         feature_funcs += [feature.get_feature_func() for feature in feature_objects]
+        keep = default_feature_names + [feature.name for feature in custom_features]
+        feature_funcs.append(partial(remove_unrequested, keep=keep))
         return combine_feature_funcs(feature_funcs), feature_objects
 
     def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
@@ -281,7 +305,7 @@ class DatasetBase(HasPrivateTraits):
         """
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, _ = self.get_features(features, f, num)
+        pipeline.feature_func, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
@@ -349,7 +373,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, _ = self.get_features(features, f, num)
+        pipeline.feature_func, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         WriteH5Dataset(
             name=name,
@@ -426,7 +450,7 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, feature_objects = self.get_features(features, f, num)
+        pipeline.feature_func, feature_objects = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         encoders, shapes, _ = get_tf_mappers(feature_objects)
         # get features with varying length to handle them correctly in the TFRecord writer
@@ -528,7 +552,7 @@ if TF_FLAG:
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.features, _ = self.get_features(features, f, num)
+        pipeline.feature_func, _ = self.get_features(features, f, num)
         set_pipeline_seeds(pipeline, start_idx, size, split)
         features = features + ['idx', 'seeds']
         output_signature = self.get_output_signature(features, f=f, num=num)

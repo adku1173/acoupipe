@@ -23,7 +23,6 @@ from acoupipe.datasets.base import ConfigBase, DatasetBase
 from acoupipe.datasets.features import (
     AnalyticNoiseStrengthFeature,
     AnalyticSourceStrengthFeature,
-    BaseFeatureCatalog,
     CSMFeature,
     CSMtriuFeature,
     EigmodeFeature,
@@ -34,7 +33,6 @@ from acoupipe.datasets.features import (
     SpectrogramFeature,
     TargetmapFeature,
     TimeDataFeature,
-    combine_feature_funcs,
     create_feature,
 )
 from acoupipe.datasets.ir import get_ir, require_ir_support
@@ -192,56 +190,6 @@ class DatasetSynthetic(DatasetBase):
                 random_signal_length=random_signal_length,
             )
         super().__init__(config=config, tasks=tasks, logger=logger, remote_args=remote_args)
-
-    def get_features(self, features, f, num):
-        """
-        Get the feature function and the feature objects of the dataset.
-
-        The default features requested by name come first, followed by the custom
-        feature objects (BaseFeatureCatalog instances). The prepare function of the
-        config is called before and the cleanup function after all feature functions.
-        The cleanup removes all outputs that are not listed in ``features``.
-
-        Parameters
-        ----------
-        features : list
-            List of features included in the dataset. Contains names of default
-            features (str) and/or custom feature objects (BaseFeatureCatalog).
-        f : float
-            The center frequency or list of frequencies of the dataset.
-            If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
-
-        Returns
-        -------
-        feature_func : callable
-            Single combined callable with signature ``f(sampler) -> dict`` (see
-            :func:`~acoupipe.datasets.features.combine_feature_funcs`). It chains the
-            prepare function, the feature functions of all requested features and the
-            cleanup function, and returns their merged outputs as one dictionary.
-        feature_objects : list of BaseFeatureCatalog
-            Feature objects in the order in which they are calculated.
-        """
-        # order differs from DatasetBase (custom features first, without cleanup)
-        custom_features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
-        default_feature_names = [feat for feat in features if isinstance(feat, str)]
-        default_features = self.config.get_default_features(default_feature_names, f, num)
-        feature_objects = default_features + custom_features
-        feature_funcs = [self.config.get_prepare_func()]
-        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
-        feature_funcs.append(self.config.get_cleanup_func(features))
-        return combine_feature_funcs(feature_funcs), feature_objects
 
 
 def sample_rms(nsources, rng):
@@ -456,7 +404,7 @@ class DatasetSyntheticConfig(ConfigBase):
         return None if self.random_signal_length else int(self.signal_length * self.fs)
 
     def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to default feature builder methods."""
+        """Return keyword arguments passed to the `_get_default_feature_{name}` methods."""
         return {
             'f': f,
             'num': num,
@@ -925,16 +873,6 @@ class DatasetSyntheticConfig(ConfigBase):
         else:
             prepare_func = partial(self.calc_analytic_prepare_func, mics=self.mics, freq_data=self.beamformer.freq_data)
         return prepare_func
-
-    def get_cleanup_func(self, features):
-        def cleanup_func(sampler, data):
-            # remove all items not in features
-            keys_to_remove = [key for key in data if key not in features]
-            for key in keys_to_remove:
-                del data[key]
-            return data
-
-        return cleanup_func
 
 
 class DatasetSyntheticISMConfig(DatasetSyntheticConfig):

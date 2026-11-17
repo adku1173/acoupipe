@@ -38,7 +38,7 @@ attribute holding a list of :code:`BaseSampler` derived instances.
         numsamples=5,
         # random_seeds = [range(5)],
         sampler=[rms_sampler],
-        features=calculate_squared_rms,
+        feature_func=calculate_squared_rms,
     )
 
     for data in pipeline.get_data():
@@ -60,6 +60,7 @@ The example returns the following output:
 import inspect
 import logging
 import os
+import warnings
 from functools import wraps
 from time import time
 
@@ -95,7 +96,7 @@ class BasePipeline(DataGenerator):
     """Control the random process and iteratively extract and pass a specified amount of data.
 
     This class can be used to calculate data (extract features)
-    by assigning a name and a callable function to :attr:`features`.
+    by assigning a name and a callable function to :attr:`feature_func`.
     Furthermore this class automatically controles the sampling of instances
     of type :class:`BaseSampler` specified to the :attr:`sampler` list.
     Re-seeding is performed at each iteration if :attr:`random_seeds` are
@@ -117,12 +118,15 @@ class BasePipeline(DataGenerator):
 
     #: feature method for the extraction/generation of features and labels.
     #: one can either pass a callable
-    #: (e.g. `features = `lambda sampler: {"feature_name" : sampler.target}`).
+    #: (e.g. `feature_func = `lambda sampler: {"feature_name" : sampler.target}`).
     #: Note that the callable must accept a list of :class:`acoupipe.base.BaseSampler`
     #: objects as first argument.
     #: Alternatively, if further arguments are necessary, one can pass a tuple containing the
-    #: callable and their arguments (e.g.: `features = (some_func, arg1, arg2, ...)}`).
-    features = Either(Callable, Tuple, desc='feature method for the extraction/generation of features and labels')
+    #: callable and their arguments (e.g.: `feature_func = (some_func, arg1, arg2, ...)}`).
+    feature_func = Either(Callable, Tuple, desc='feature method for the extraction/generation of features and labels')
+
+    #: deprecated alias of :attr:`feature_func`.
+    features = Property(desc='deprecated alias of feature_func')
 
     #: a dict with values of `range(seeds)` associated with sampler objects in :attr:`sampler`.
     #: A new seed will be collected from each range object during an evaluation
@@ -189,13 +193,13 @@ class BasePipeline(DataGenerator):
     @log_execution_time
     def _extract_features(self):
         """Calculate features."""
-        if callable(self.features):
-            return self.features(self.sampler)
-        if isinstance(self.features, tuple):
-            return self.features[0](self.sampler, *list(self.features[1:]))
-        if self.features is None:
+        if callable(self.feature_func):
+            return self.feature_func(self.sampler)
+        if isinstance(self.feature_func, tuple):
+            return self.feature_func[0](self.sampler, *list(self.feature_func[1:]))
+        if self.feature_func is None:
             return {}
-        msg = 'features attribute must be a callable or a tuple containing a callable and its arguments!'
+        msg = 'feature_func attribute must be a callable or a tuple containing a callable and its arguments!'
         raise ValueError(msg)
 
     def _update_sample_index_and_seeds(self, seed_iter=None):
@@ -234,19 +238,37 @@ class BasePipeline(DataGenerator):
         else:
             self._random_seeds = random_seeds
 
+    def _get_features(self):
+        """Return :attr:`feature_func` (deprecated alias)."""
+        warnings.warn(
+            'BasePipeline.features is deprecated, use BasePipeline.feature_func instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.feature_func
+
+    def _set_features(self, feature_func):
+        """Set :attr:`feature_func` (deprecated alias)."""
+        warnings.warn(
+            'BasePipeline.features is deprecated, use BasePipeline.feature_func instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.feature_func = feature_func
+
     def _validate_feature_func(self):
-        if not callable(self.features):
-            if not isinstance(self.features, tuple):
-                msg = 'features attribute must be a callable or a tuple containing a callable and its arguments!'
+        if not callable(self.feature_func):
+            if not isinstance(self.feature_func, tuple):
+                msg = 'feature_func attribute must be a callable or a tuple containing a callable and its arguments!'
                 raise ValueError(msg)
-            nargs = len(inspect.signature(self.features[0]).parameters)
+            nargs = len(inspect.signature(self.feature_func[0]).parameters)
             if nargs == 0:
                 msg = (
                     'feature functions at must accept at least one argument in order to pass a list of sampler objects!'
                     ' E.g. lambda sampler: {...}'
                 )
                 raise ValueError(msg)
-            if nargs > 1 and len(self.features[1:]) == nargs:
+            if nargs > 1 and len(self.feature_func[1:]) == nargs:
                 msg = (
                     'Number of arguments of feature function matches the number of arguments in the tuple!'
                     ' An additional argument is missing to pass the sampler objects!'
@@ -256,7 +278,7 @@ class BasePipeline(DataGenerator):
                     msg,
                 )
         else:
-            nargs = len(inspect.signature(self.features).parameters)
+            nargs = len(inspect.signature(self.feature_func).parameters)
             if nargs == 0:
                 msg = (
                     'feature functions at must accept at least one argument in order to pass a list of sampler objects!'
@@ -376,7 +398,7 @@ class DistributedPipeline(BasePipeline):
     """Class to calculate data (extract features) in parallel to build large datasets.
 
     This class can be used to calculate data (extract various features)
-    by assigning a name and a callable function to :attr:`features`.
+    by assigning a name and a callable function to :attr:`feature_func`.
     Furthermore this class automatically controles the sampling of instances
     of type :class:`BaseSampler` specified to the :attr:`sampler` list.
     Re-seeding is performed at each iteration if :attr:`random_seeds` are
@@ -401,12 +423,12 @@ class DistributedPipeline(BasePipeline):
     def _sample_and_schedule_task(self, actor, task_dict):
         self.logger.info(f'id {self._idx}: start task.')
         times = [time(), None, None, None]  # (schedule timestamp, execution timestamp, stop timestamp, get timestamp)
-        if callable(self.features):
+        if callable(self.feature_func):
             result_id = actor.extract_features.remote(self._seeds, times)  # calculation is started in new remote task
-        elif isinstance(self.features, tuple):
-            result_id = actor.extract_features.remote(self._seeds, times, *list(self.features[1:]))
+        elif isinstance(self.feature_func, tuple):
+            result_id = actor.extract_features.remote(self._seeds, times, *list(self.feature_func[1:]))
         else:
-            msg = 'features attribute must be a callable or a tuple containing a callable and its arguments!'
+            msg = 'feature_func attribute must be a callable or a tuple containing a callable and its arguments!'
             raise ValueError(msg)
         task_dict[result_id] = (
             actor,
@@ -452,7 +474,7 @@ class DistributedPipeline(BasePipeline):
             nsamples = self.numsamples
         nworkers = min(nsamples, self.numworkers)
         progress_bar = tqdm(range(nsamples), colour='#1f77b4', disable=(not progress_bar))
-        feature_func = self.features if callable(self.features) else self.features[0]
+        feature_func = self.feature_func if callable(self.feature_func) else self.feature_func[0]
         task_dict = {}
         finished_tasks = 0
         with ActorHandler(nworkers, self.sampler, feature_func, remote_args=self.remote_args) as actors:

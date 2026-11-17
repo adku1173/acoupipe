@@ -53,7 +53,7 @@ def extract_features(sampler, beamformer, whitenoise):
 
 
 # create Pipeline
-pipeline = BasePipeline(sampler={1: rms_sampling}, numsamples=1, features=(extract_features, bb, wn))
+pipeline = BasePipeline(sampler={1: rms_sampling}, numsamples=1, feature_func=(extract_features, bb, wn))
 
 # %% save data to file
 

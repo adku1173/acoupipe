@@ -16,10 +16,11 @@ from traits.api import Callable, Either, Enum, Float, HasPrivateTraits, Instance
 if TF_FLAG:
     from acoupipe.writer import infer_tf_encoding
 import inspect
+import warnings
 
 
-class BaseFeatureCatalog(HasPrivateTraits):
-    """BaseFeatureCatalog base class for handling feature funcs.
+class Feature(HasPrivateTraits):
+    """Base class for features.
 
     Attributes
     ----------
@@ -39,7 +40,20 @@ class BaseFeatureCatalog(HasPrivateTraits):
         return
 
 
-class TimeDataFeature(BaseFeatureCatalog):
+def __getattr__(name):
+    """Return :class:`Feature` for the deprecated name ``BaseFeatureCatalog``."""
+    if name == 'BaseFeatureCatalog':
+        warnings.warn(
+            'BaseFeatureCatalog is deprecated, use Feature instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return Feature
+    msg = f'module {__name__!r} has no attribute {name!r}'
+    raise AttributeError(msg)
+
+
+class TimeDataFeature(Feature):
     """TimeDataFeature class for handling time data.
 
     Attributes
@@ -62,7 +76,7 @@ class TimeDataFeature(BaseFeatureCatalog):
         return partial(_calc_time_data, time_data=self.time_data, name=self.name, dtype=self.dtype)
 
 
-class TargetmapFeature(BaseFeatureCatalog):
+class TargetmapFeature(Feature):
     name = Str('targetmap')
     freq_data = Instance(ac.BaseSpectra, desc='cross spectral matrix calculation class')
     f = Either(None, Float, List(Float), desc='frequency')
@@ -113,7 +127,7 @@ class TargetmapFeature(BaseFeatureCatalog):
         )
 
 
-class SourcemapFeature(BaseFeatureCatalog):
+class SourcemapFeature(Feature):
     """Handle the generation of sourcemaps obtained with microphone array methods.
 
     Attributes
@@ -190,7 +204,7 @@ class SourcemapFeature(BaseFeatureCatalog):
         return partial(self.calc_beamformer2, beamformer=self.beamformer, name=self.name)
 
 
-class SpectraFeature(BaseFeatureCatalog):
+class SpectraFeature(Feature):
     """Handles the calculation of features in the frequency domain.
 
     Attributes
@@ -461,7 +475,7 @@ class EigmodeFeature(SpectraFeature):
         return partial(self.calc_eigmode2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
 
 
-class LocFeature(BaseFeatureCatalog):
+class LocFeature(Feature):
     name = Str('loc')
 
     def get_feature_func(self):
@@ -752,7 +766,7 @@ def get_tf_mappers(feature_objects):
 
     Parameters
     ----------
-    feature_objects : list of BaseFeatureCatalog
+    feature_objects : list of Feature
         Feature objects providing ``name``, ``dtype`` and ``shape``.
 
     Returns
@@ -772,9 +786,38 @@ def get_tf_mappers(feature_objects):
     return encoders, shapes, dtypes
 
 
+def remove_unrequested(sampler, data, keep):  # noqa: ARG001
+    """
+    Remove all outputs from a sample dictionary that were not requested.
+
+    Used as the last function of a combined feature function (see
+    :func:`combine_feature_funcs`) to remove auxiliary outputs, e.g. of the prepare
+    function. The dictionary is modified in-place, since `combine_feature_funcs`
+    merges the returned dictionary into ``data``.
+    The keys ``idx`` and ``seeds`` are added afterwards by the pipeline and are not affected.
+
+    Parameters
+    ----------
+    sampler : dict
+        Sampler objects of the pipeline (unused).
+    data : dict
+        Outputs of all previously called feature functions.
+    keep : list of str
+        Names of the outputs to keep.
+
+    Returns
+    -------
+    dict
+        The modified ``data`` dictionary.
+    """
+    for key in [key for key in data if key not in keep]:
+        del data[key]
+    return data
+
+
 def create_feature(feature_func, name, shape, dtype):
-    class Feature(BaseFeatureCatalog):
+    class _CustomFeature(Feature):
         def get_feature_func(self):
             return feature_func
 
-    return Feature(name=name, shape=shape, dtype=dtype)
+    return _CustomFeature(name=name, shape=shape, dtype=dtype)
