@@ -18,8 +18,8 @@ if TF_FLAG:
 import inspect
 
 
-class BaseFeatureCatalog(HasPrivateTraits):
-    """BaseFeatureCatalog base class for handling feature funcs.
+class Feature(HasPrivateTraits):
+    """Feature base class for handling feature funcs.
 
     Attributes
     ----------
@@ -39,7 +39,10 @@ class BaseFeatureCatalog(HasPrivateTraits):
         return
 
 
-class TimeDataFeature(BaseFeatureCatalog):
+BaseFeatureCatalog = Feature  # deprecated alias
+
+
+class TimeDataFeature(Feature):
     """TimeDataFeature class for handling time data.
 
     Attributes
@@ -62,7 +65,7 @@ class TimeDataFeature(BaseFeatureCatalog):
         return partial(_calc_time_data, time_data=self.time_data, name=self.name, dtype=self.dtype)
 
 
-class TargetmapFeature(BaseFeatureCatalog):
+class TargetmapFeature(Feature):
     name = Str('targetmap')
     freq_data = Instance(ac.BaseSpectra, desc='cross spectral matrix calculation class')
     f = Either(None, Float, List(Float), desc='frequency')
@@ -113,7 +116,7 @@ class TargetmapFeature(BaseFeatureCatalog):
         )
 
 
-class SourcemapFeature(BaseFeatureCatalog):
+class SourcemapFeature(Feature):
     """Handle the generation of sourcemaps obtained with microphone array methods.
 
     Attributes
@@ -190,7 +193,7 @@ class SourcemapFeature(BaseFeatureCatalog):
         return partial(self.calc_beamformer2, beamformer=self.beamformer, name=self.name)
 
 
-class SpectraFeature(BaseFeatureCatalog):
+class SpectraFeature(Feature):
     """Handles the calculation of features in the frequency domain.
 
     Attributes
@@ -461,7 +464,7 @@ class EigmodeFeature(SpectraFeature):
         return partial(self.calc_eigmode2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
 
 
-class LocFeature(BaseFeatureCatalog):
+class LocFeature(Feature):
     name = Str('loc')
 
     def get_feature_func(self):
@@ -752,7 +755,7 @@ def get_tf_mappers(feature_objects):
 
     Parameters
     ----------
-    feature_objects : list of BaseFeatureCatalog
+    feature_objects : list of Feature
         Feature objects providing ``name``, ``dtype`` and ``shape``.
 
     Returns
@@ -773,8 +776,8 @@ def get_tf_mappers(feature_objects):
 
 
 def create_feature(feature_func, name, shape, dtype):
-    class Feature(BaseFeatureCatalog):
+    class _CustomFeature(Feature):
         def get_feature_func(self):
             return feature_func
 
-    return Feature(name=name, shape=shape, dtype=dtype)
+    return _CustomFeature(name=name, shape=shape, dtype=dtype)

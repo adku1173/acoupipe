@@ -12,7 +12,7 @@ import pickle
 from pathlib import Path
 
 from acoupipe.datasets.base import ConfigBase, DatasetBase
-from acoupipe.datasets.features import BaseFeatureCatalog, combine_feature_funcs, create_feature
+from acoupipe.datasets.features import Feature, combine_feature_funcs, create_feature
 
 import numpy as np
 from traits.api import Bool, Dict, Enum, Float, Instance, Int
@@ -368,7 +368,7 @@ class DatasetDummy(DatasetBase):
     def get_features(self, features, f, num):
         """Get the feature function and the feature objects with dummy features."""
         # Handle custom features
-        custom_features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        custom_features = [feat for feat in features if isinstance(feat, Feature)]
         default_feature_names = [feat for feat in features if isinstance(feat, str)]
 
         # Get default features from config

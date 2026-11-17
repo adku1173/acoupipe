@@ -4,7 +4,7 @@ import logging
 from functools import partial
 
 from acoupipe.config import TF_FLAG
-from acoupipe.datasets.features import BaseFeatureCatalog, combine_feature_funcs, get_tf_mappers
+from acoupipe.datasets.features import Feature, combine_feature_funcs, get_tf_mappers
 from acoupipe.datasets.utils import set_pipeline_seeds
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
@@ -168,7 +168,7 @@ class DatasetBase(HasPrivateTraits):
         """
         Get the feature function and the feature objects of the dataset.
 
-        Custom feature objects (BaseFeatureCatalog instances) come first, followed by the
+        Custom feature objects (Feature instances) come first, followed by the
         default features requested by name. The prepare function of the config, if
         available, is called before all feature functions. No cleanup is applied, so
         auxiliary outputs of the prepare function remain in the samples.
@@ -177,7 +177,7 @@ class DatasetBase(HasPrivateTraits):
         ----------
         features : list
             List of features included in the dataset. Contains names of default
-            features (str) and/or custom feature objects (BaseFeatureCatalog).
+            features (str) and/or custom feature objects (Feature).
         f : float
             The center frequency or list of frequencies of the dataset.
             If None, all frequencies are included.
@@ -201,11 +201,11 @@ class DatasetBase(HasPrivateTraits):
             :func:`~acoupipe.datasets.features.combine_feature_funcs`). It chains the
             prepare function (if available) and the feature functions of all requested
             features, and returns their merged outputs as one dictionary.
-        feature_objects : list of BaseFeatureCatalog
+        feature_objects : list of Feature
             Feature objects in the order in which they are calculated.
         """
         # order differs from DatasetSynthetic (default features first, with cleanup)
-        feature_objects = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        feature_objects = [feat for feat in features if isinstance(feat, Feature)]
         if hasattr(self.config, 'get_default_features'):
             default_feature_names = [feat for feat in features if isinstance(feat, str)]
             feature_objects += self.config.get_default_features(default_feature_names, f, num)

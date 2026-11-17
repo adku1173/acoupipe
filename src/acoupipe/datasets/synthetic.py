@@ -23,12 +23,12 @@ from acoupipe.datasets.base import ConfigBase, DatasetBase
 from acoupipe.datasets.features import (
     AnalyticNoiseStrengthFeature,
     AnalyticSourceStrengthFeature,
-    BaseFeatureCatalog,
     CSMFeature,
     CSMtriuFeature,
     EigmodeFeature,
     EstimatedNoiseStrengthFeature,
     EstimatedSourceStrengthFeature,
+    Feature,
     LocFeature,
     SourcemapFeature,
     SpectrogramFeature,
@@ -198,7 +198,7 @@ class DatasetSynthetic(DatasetBase):
         Get the feature function and the feature objects of the dataset.
 
         The default features requested by name come first, followed by the custom
-        feature objects (BaseFeatureCatalog instances). The prepare function of the
+        feature objects (Feature instances). The prepare function of the
         config is called before and the cleanup function after all feature functions.
         The cleanup removes all outputs that are not listed in ``features``.
 
@@ -206,7 +206,7 @@ class DatasetSynthetic(DatasetBase):
         ----------
         features : list
             List of features included in the dataset. Contains names of default
-            features (str) and/or custom feature objects (BaseFeatureCatalog).
+            features (str) and/or custom feature objects (Feature).
         f : float
             The center frequency or list of frequencies of the dataset.
             If None, all frequencies are included.
@@ -230,11 +230,11 @@ class DatasetSynthetic(DatasetBase):
             :func:`~acoupipe.datasets.features.combine_feature_funcs`). It chains the
             prepare function, the feature functions of all requested features and the
             cleanup function, and returns their merged outputs as one dictionary.
-        feature_objects : list of BaseFeatureCatalog
+        feature_objects : list of Feature
             Feature objects in the order in which they are calculated.
         """
         # order differs from DatasetBase (custom features first, without cleanup)
-        custom_features = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        custom_features = [feat for feat in features if isinstance(feat, Feature)]
         default_feature_names = [feat for feat in features if isinstance(feat, str)]
         default_features = self.config.get_default_features(default_feature_names, f, num)
         feature_objects = default_features + custom_features
