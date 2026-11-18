@@ -334,13 +334,12 @@ class BasePipeline(DataGenerator):
 class SamplerActor:
     """Actor class to sample data."""
 
-    def __init__(self, sampler, feature_func):
+    def __init__(self, sampler_and_feature_func):
         # IMPORTANT: do NOT import gpuRIR before this point anywhere.
         gpu_ids = ray.get_gpu_ids()  # e.g. [3]
         logging.error(f'ray.get_gpu_ids() = {gpu_ids}, CUDA_VISIBLE_DEVICES = {os.environ.get("CUDA_VISIBLE_DEVICES")}')
 
-        self.sampler = sampler
-        self.feature_func = feature_func
+        self.sampler, self.feature_func = sampler_and_feature_func
         self.sampler_order = list(self.sampler.keys())
         self.sampler_order.sort()
 
@@ -378,12 +377,12 @@ class SamplerActor:
 
 class ActorHandler:
     def __init__(self, numworkers, sampler, feature_func, remote_args=None):
+        # Samplers and feature functions may share objects, e.g. a ParameterSet that samplers
+        # modify and features read. Ray serializes each argument separately, so both are
+        # stored as one object to preserve shared references within every actor.
+        sampler_and_feature_func = ray.put((sampler, feature_func))
         self.actors = [
-            SamplerActor.options(**(remote_args or {})).remote(
-                sampler=sampler,
-                feature_func=feature_func,
-            )
-            for _ in range(numworkers)
+            SamplerActor.options(**(remote_args or {})).remote(sampler_and_feature_func) for _ in range(numworkers)
         ]
 
     def __enter__(self):

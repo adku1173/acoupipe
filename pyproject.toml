@@ -164,6 +164,7 @@ extend-ignore = [
 "tests/pipeline_value_test.py"                 = ["ARG005", "D103", "RET504"]
 "tests/regression/__init__.py"                 = ["D104"]
 "tests/regression/multiprocessing/__init__.py" = ["D104"]
+"tests/regression/multiprocessing/test_config_distributed.py" = ["S101"]
 "tests/regression/multiprocessing/test_datasets.py" = ["D100"]
 "tests/regression/test_datasets.py"            = ["ARG005", "D100", "D103", "S101", "SIM118", "W505"]
 "tests/synthetic_test_config.py"               = ["D102"]
@@ -214,22 +215,7 @@ explicit = true
 testpaths = "tests"
 pythonpath = ["src"]
 addopts = "-v --durations=10 --cov-report=html --cov-report=term-missing"
-norecursedirs = ["multiprocessing"] # default pytest collection and current CI do not descend into tests/multiprocessing
-
-[tool.coverage.run]
-omit = [
-    "src/acoupipe/base.py",
-    "src/acoupipe/datasets/base/dataset.py",
-    "src/acoupipe/datasets/base/legacy_config.py",
-]
-
-[tool.coverage.report]
-skip_covered = false
-show_missing = true
-
-[tool.coverage.html]
-directory = "htmlcov"
-# Note: regression tests are in tests/regression/ and are discovered normally
+norecursedirs = ["tests/multiprocessing"] # outdated; tests/regression/multiprocessing is always collected
 markers = [
     "multiprocessing: marks tests that require multiprocessing (deselect with '-m \"not multiprocessing\"')",
 ]
@@ -244,6 +230,20 @@ filterwarnings = [
     # Suppress warnings about unclosed files in tables at the end of the tests
     "ignore:Closing remaining open file*:tables.exceptions.UnclosedFileWarning",
 ]
+
+[tool.coverage.run]
+omit = [
+    "src/acoupipe/base.py",
+    "src/acoupipe/datasets/base/dataset.py",
+    "src/acoupipe/datasets/base/legacy_config.py",
+]
+
+[tool.coverage.report]
+skip_covered = false
+show_missing = true
+
+[tool.coverage.html]
+directory = "htmlcov"
 
 [tool.hatch.build.targets.sdist]
 include = [
