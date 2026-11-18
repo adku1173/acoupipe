@@ -2,6 +2,7 @@ from acoular import ImportGrid
 
 import numpy as np
 import pytest
+from numpy.random import default_rng
 
 
 def change_seed(psa):
@@ -48,52 +49,33 @@ def change_steer(psa):
     return psa
 
 
-@pytest.mark.parametrize(
-    'attr, func, value',
-    [
-        ('seed', change_seed, [False, False]),
-        ('mode', change_mode, [False, False]),
-        ('overlap', change_overlap, [False, False]),
-        ('num_samples', change_num_samples, [False, False]),
-        ('noise', change_noise, [False, False]),
-        ('ind_low', change_indices, [False, False]),
-        ('Q', change_Q, [True, False]),
-        ('steer', change_steer, [True, False]),
-    ],
-)
-def test_noise_cached_property(psa, attr, func, value):
-    psa.mode = 'wishart'
-    noise1 = psa._noise.copy()
-    csm1 = psa.csm.copy()
-    func(psa)
-    noise2 = psa._noise.copy()
-    csm2 = psa.csm.copy()
-    assert np.allclose(noise1, noise2) == value[0]
-    assert np.allclose(csm1, csm2) == value[1]
+def change_window(psa):
+    psa.window = 'Hanning'
+    return psa
 
 
 @pytest.mark.parametrize(
-    'attr, func, value',
+    'func',
     [
-        ('seed', change_seed, [False, False]),
-        ('mode', change_mode, [False, False]),
-        ('overlap', change_overlap, [False, False]),
-        ('num_samples', change_num_samples, [False, False]),
-        ('noise', change_noise, [True, False]),
-        ('ind_low', change_indices, [False, False]),
-        ('Q', change_Q, [False, False]),
-        ('steer', change_steer, [True, False]),
+        change_seed,
+        change_mode,
+        change_overlap,
+        change_num_samples,
+        change_noise,
+        change_indices,
+        change_Q,
+        change_steer,
+        change_window,
     ],
 )
-def test_Q_cached_property(psa, attr, func, value):
+def test_wishart_csm_cached_property(psa, func):
+    """The Wishart CSM must be recalculated whenever one of its dependencies changes."""
     psa.mode = 'wishart'
-    Q1 = psa._Q.copy()
     csm1 = psa.csm.copy()
+    assert np.array_equal(csm1, psa.csm)  # unchanged inputs -> identical result
     func(psa)
-    Q2 = psa._Q.copy()
     csm2 = psa.csm.copy()
-    assert np.allclose(Q1, Q2) == value[0]
-    assert np.allclose(csm1, csm2) == value[1]
+    assert not np.allclose(csm1, csm2)
 
 
 def test_wishart_spectra(psa):
@@ -122,3 +104,77 @@ def test_wishart_spectra(psa):
     csm1 = csm2
     csm2 = psa.csm
     assert not np.allclose(csm1, csm2)
+
+
+def _random_hpd_matrix(dim, rng):
+    X = rng.normal(size=(dim, dim)) + 1j * rng.normal(size=(dim, dim))
+    return X @ X.conj().T + np.eye(dim)
+
+
+def test_sample_wishart_moments(psa):
+    r"""Check the first two moments of :math:`\alpha \hat{C} \sim \mathcal{CW}(\alpha, C)`.
+
+    For the complex Wishart distribution, :math:`E[\hat{C}] = C` and
+    :math:`E[|\hat{C}_{ij} - C_{ij}|^2] = C_{ii} C_{jj} / \alpha`.
+    """
+    psa.num_samples = 256 * 8  # small number of degrees of freedom -> large effect of a bias
+    df = psa.df_eq
+    rng = default_rng(0)
+    C = _random_hpd_matrix(4, rng)
+    samples = np.array([psa._sample_wishart(C, rng) for _ in range(20000)])
+    np.testing.assert_allclose(samples.mean(0), C, rtol=0, atol=0.03 * np.abs(C).max())
+    var = (np.abs(samples - C) ** 2).mean(0)
+    var_expected = np.outer(C.diagonal().real, C.diagonal().real) / df
+    np.testing.assert_allclose(var, var_expected, rtol=0.05)
+
+
+def _sample_csm_at_index(psa, index, nsamples):
+    psa.ind_low = index
+    psa.ind_high = index + 1
+    psa.mode = 'analytic'
+    C = psa.csm[index].copy()
+    psa.mode = 'wishart'
+    samples = []
+    for seed in range(nsamples):
+        psa.seed = seed
+        samples.append(psa.csm[index].copy())
+    return C, np.array(samples)
+
+
+def test_wishart_csm_includes_cross_terms(psa):
+    r"""The sample CSM must follow :math:`\alpha \hat{C} \sim \mathcal{CW}(\alpha, H Q H^H + N)`.
+
+    Sampling the source and noise CSM separately neglects the signal-noise cross terms and
+    underestimates the variance of the off-diagonal elements.
+    """
+    psa.num_samples = 256 * 8
+    df = psa.df_eq
+    C, samples = _sample_csm_at_index(psa, index=20, nsamples=4000)
+    np.testing.assert_allclose(samples.mean(0), C, rtol=0, atol=0.05 * np.abs(C).max())
+    var = (np.abs(samples - C) ** 2).mean(0)
+    var_expected = np.outer(C.diagonal().real, C.diagonal().real) / df
+    np.testing.assert_allclose(var, var_expected, rtol=0.1)
+
+
+def test_wishart_csm_without_noise(psa):
+    """Without noise, the CSM is sampled in source space (C = H Q H^H is singular)."""
+    psa.noise = None
+    nsources = psa.Q.shape[1]
+    C, samples = _sample_csm_at_index(psa, index=20, nsamples=2000)
+    np.testing.assert_allclose(samples.mean(0), C, rtol=0, atol=0.05 * np.abs(C).max())
+    # rank of each sample is limited by the number of sources
+    eigvals = np.linalg.eigvalsh(samples)
+    assert np.all(np.abs(eigvals[:, :-nsources]) < 1e-10 * eigvals[:, -1:])
+
+
+@pytest.mark.parametrize('noise', [True, False])
+def test_wishart_df_too_small(psa, noise):
+    if not noise:
+        psa.noise = None
+    dim = psa.steer.mics.num_mics if noise else psa.Q.shape[1]
+    psa.mode = 'wishart'
+    psa.overlap = 'None'
+    psa.num_samples = psa.block_size * (dim - 1)
+    assert psa.df_eq <= dim - 1
+    with pytest.raises(ValueError, match='degrees of freedom'):
+        _ = psa.csm

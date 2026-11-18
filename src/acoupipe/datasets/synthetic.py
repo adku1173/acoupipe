@@ -148,7 +148,8 @@ class DatasetSynthetic(DatasetBase):
         ----------
         mode : str
             Type of calculation method. Can be either :code:`welch`, :code:`analytic` or :code:`wishart`.
-            Defaults to :code:`welch`.
+            Defaults to :code:`welch`. The features :code:`time_data`, :code:`spectrogram` and the
+            :code:`*_estimated` features are only available with :code:`welch`.
         mic_pos_noise : bool
             Apply positional noise to microphone geometry. Defaults to True.
         mic_sig_noise : bool
@@ -225,7 +226,8 @@ class DatasetSyntheticConfig(ConfigBase):
     min_nsources : int
         Minimum number of sources.
     mode : str
-        Type of CSM calculation method.
+        Type of CSM calculation method. The features :code:`time_data`, :code:`spectrogram` and the
+        :code:`*_estimated` features are only available with :code:`welch`.
     mic_pos_noise : bool
         Apply positional noise to microphone geometry.
     mic_sig_noise : bool
@@ -415,15 +417,11 @@ class DatasetSyntheticConfig(ConfigBase):
         }
 
     def _get_default_feature_time_data(self, **kwargs):  # noqa ARG002
-        if self.mode != 'welch':
-            msg = "time_data feature is not possible with modes ['analytic', 'wishart']."
-            raise ValueError(msg)
+        self._raise_if_not_welch('time_data')
         return TimeDataFeature(time_data=self.freq_data.source, dtype=np.float32, shape=(kwargs['tdim'], None))
 
     def _get_default_feature_spectrogram(self, **kwargs):  # noqa ARG002
-        if self.mode != 'welch':
-            msg = "spectrogram feature is not possible with modes ['analytic', 'wishart']."
-            raise ValueError(msg)
+        self._raise_if_not_welch('spectrogram')
         return SpectrogramFeature(
             freq_data=self.fft_spectra,
             f=kwargs['f'],
@@ -480,10 +478,15 @@ class DatasetSyntheticConfig(ConfigBase):
             shape=(kwargs['fdim'], None),
         )
 
+    def _raise_if_not_welch(self, feature_name):
+        if self.mode != 'welch':
+            msg = f"{feature_name} feature is not possible with modes ['analytic', 'wishart']."
+            raise ValueError(msg)
+
     def _get_default_feature_source_strength_estimated(self, **kwargs):  # noqa ARG002
-        freq_data = self.fft_obs_spectra if self.mode == 'welch' else self.freq_data
+        self._raise_if_not_welch('source_strength_estimated')
         return EstimatedSourceStrengthFeature(
-            freq_data=freq_data,
+            freq_data=self.fft_obs_spectra,
             f=kwargs['f'],
             num=kwargs['num'],
             dtype=np.float32,
@@ -500,9 +503,9 @@ class DatasetSyntheticConfig(ConfigBase):
         )
 
     def _get_default_feature_noise_strength_estimated(self, **kwargs):  # noqa ARG002
-        freq_data = self.fft_spectra if self.mode == 'welch' else self.freq_data
+        self._raise_if_not_welch('noise_strength_estimated')
         return EstimatedNoiseStrengthFeature(
-            freq_data=freq_data,
+            freq_data=self.fft_spectra,
             f=kwargs['f'],
             num=kwargs['num'],
             dtype=np.float32,
@@ -510,11 +513,11 @@ class DatasetSyntheticConfig(ConfigBase):
         )
 
     def _get_targetmap_feature(self, strength_type, **kwargs):  # noqa ARG002
-        freq_data = (
-            self.freq_data
-            if strength_type == 'analytic'
-            else (self.fft_obs_spectra if self.mode == 'welch' else self.freq_data)
-        )
+        if strength_type == 'analytic':
+            freq_data = self.freq_data
+        else:
+            self._raise_if_not_welch(f'targetmap_{strength_type}')
+            freq_data = self.fft_obs_spectra
         return TargetmapFeature(
             freq_data=freq_data,
             f=kwargs['f'],

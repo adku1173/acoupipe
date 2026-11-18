@@ -10,27 +10,25 @@ from acoupipe.datasets.synthetic import DatasetSynthetic
 
 #%% targetmap example
 
-fig, axs = plt.subplots(1, 2, figsize=(6, 3), sharey=True, sharex=True)
+fig, axs = plt.subplots(1, 1, figsize=(3.5, 3.5))
 fig.suptitle("Target Sourcemap ($f=2000$ Hz, $J=5$)", fontsize=12)
 
-mode = "analytic"
-for i, feature in enumerate(["targetmap_analytic", "targetmap_estimated"]):
+feature = "targetmap_analytic"
+dataset = DatasetSynthetic(mode="wishart")
+# generate data for frequency 2000 Hz (single frequency)
+data_generator = dataset.generate(features=[feature, "f"],
+                                    split="training", size=1, f=[2000], num=0, start_idx=1)
+data_sample = next(data_generator)
 
-    dataset = DatasetSynthetic(mode=mode)
-    # generate data for frequency 2000 Hz (single frequency)
-    data_generator = dataset.generate(features=[feature, "f"],
-                                        split="training", size=1, f=[2000], num=0, start_idx=1)
-    data_sample = next(data_generator)
+extent = dataset.config.grid.extent
 
-    extent = dataset.config.grid.extent
+# sound pressure level
+Lm = ac.L_p(data_sample[feature]).T
+Lm_max = Lm.max()
+Lm_min = Lm.max() - 20
 
-    # sound pressure level
-    Lm = ac.L_p(data_sample[feature]).T
-    Lm_max = Lm.max()
-    Lm_min = Lm.max() - 20
-
-    axs[i].set_title(f"{feature}")
-    axs[i].imshow(Lm, vmax=Lm_max, vmin=Lm_min, extent=extent, origin="lower")
+axs.set_title(f"{feature}")
+axs.imshow(Lm, vmax=Lm_max, vmin=Lm_min, extent=extent, origin="lower")
 
 dpath = Path(__file__).parent.parent.parent / "_static"
 fig.savefig(dpath / "targetmap_example.png", dpi=300)
@@ -136,8 +134,30 @@ fig.savefig(dpath / "csmtriu_example.png", dpi=300)
 
 #%% eigmode example
 
+fig, axs = plt.subplots(1, 3, figsize=(9, 3), sharey=True, sharex=True)
+fig.suptitle("Eigenmodes ($f=2000$ Hz, $J=5$)", fontsize=12)
+
+for i, mode in enumerate(["welch", "analytic", "wishart"]):
+
+    dataset = DatasetSynthetic(mode=mode)
+    # generate data for frequency 2000 Hz (single frequency)
+    data_generator = dataset.generate(features=["eigmode", "f"],
+                                        split="training", size=1, f=[2000], num=0, start_idx=1)
+    data_sample = next(data_generator)
+
+    # real part of the eigenvalue-scaled eigenvectors (columns sorted by ascending eigenvalue)
+    axs[i].set_title(f"mode={mode}")
+    axs[i].imshow(np.real(data_sample["eigmode"][0]))
+    axs[i].set_xticks([])
+    axs[i].set_yticks([])
+
+dpath = Path(__file__).parent.parent.parent / "_static"
+fig.savefig(dpath / "eigmode_example.png", dpi=300)
+
+#%% eigenvalue example
+
 fig, axs = plt.subplots(1, 1, figsize=(3, 3), sharey=True, sharex=True)
-fig.suptitle("CSM Eigenvalues ($f=2000$ Hz, $J=5$)", fontsize=12)
+fig.suptitle("CSM Eigenvalues ($f=2000$ Hz, $J=5$)", fontsize=10)
 
 for mode in ["welch", "analytic", "wishart"]:
 
@@ -167,7 +187,7 @@ fig.savefig(dpath / "eigval_example.png", dpi=300)
 fig, axs = plt.subplots(1, 1, figsize=(4, 4), sharey=True, sharex=True)
 fig.suptitle("Analytic Source Strength ($J=5$, idx=1)", fontsize=12)
 
-dataset = DatasetSynthetic(mode="analytic")
+dataset = DatasetSynthetic(mode="wishart")
 # generate data for frequency 2000 Hz (single frequency)
 data_generator = dataset.generate(features=["source_strength_analytic","f"],
                                     split="training", size=1, num=0, start_idx=1)
@@ -185,26 +205,5 @@ dpath = Path(__file__).parent.parent.parent / "_static"
 fig.savefig(dpath / "source_strength_analytic_example.png", dpi=300)
 
 
-# %% estimated
-
-fig, axs = plt.subplots(1, 1, figsize=(4, 4), sharey=True, sharex=True)
-fig.suptitle("Estimated Source Strength ($J=5$, idx=1)", fontsize=12)
-
-dataset = DatasetSynthetic(mode="wishart")
-# generate data for frequency 2000 Hz (single frequency)
-data_generator = dataset.generate(features=["source_strength_estimated","f"],
-                                    split="training", size=1, num=0, start_idx=1)
-data_sample = next(data_generator)
-
-for j, source_strength in enumerate(data_sample["source_strength_estimated"].T):
-    axs.plot(data_sample["f"],ac.L_p(source_strength), label=f"source {j+1}")
-axs.set_xlabel("Frequency (Hz)")
-axs.set_ylabel("Sound Pressure Level (dB)")
-plt.semilogx()
-plt.legend()
-plt.tight_layout()
-
-dpath = Path(__file__).parent.parent.parent / "_static"
-fig.savefig(dpath / "source_strength_estimated_example.png", dpi=300)
 
 # %%
