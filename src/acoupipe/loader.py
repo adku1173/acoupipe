@@ -10,9 +10,17 @@ from acoular import config
 from acoupipe.base import DataGenerator
 
 from h5py import File as H5File
+from h5py import Group
 from traits.api import CInt, Dict, File, Instance, List, Property, cached_property, on_trait_change
 
 config.h5library = 'h5py'
+
+
+def _read_value(value):
+    """Read groups as nested dictionaries and datasets as their stored values."""
+    if isinstance(value, Group):
+        return {key: _read_value(item) for key, item in value.items()}
+    return value[()]
 
 
 class BaseLoadDataset(DataGenerator):
@@ -35,7 +43,8 @@ class LoadH5Dataset(BaseLoadDataset):
 
     This class loads data from `*.h5` files and
     provides information like the number of
-    samples (:attr:`numsamples`).
+    samples (:attr:`numsamples`). Nested groups in samples and metadata are
+    returned as dictionaries; datasets retain their stored shapes and dtypes.
     """
 
     #: Full name of the .h5 file with data.
@@ -91,7 +100,7 @@ class LoadH5Dataset(BaseLoadDataset):
         if 'metadata' in indices:
             indices.remove('metadata')
             for feature in self.h5f['/metadata']:
-                self.metadata[feature] = self.h5f['/metadata'][feature][()]
+                self.metadata[feature] = _read_value(self.h5f['/metadata'][feature])
         int_indices = list(map(int, indices))
         int_indices.sort()
         self.indices = list(map(str, int_indices))
@@ -122,8 +131,8 @@ class LoadH5Dataset(BaseLoadDataset):
         Parameters
         ----------
         features : list, optional
-            a list with names of the features to be yielded by the generator, by default None,
-            meaning that all features will be considered.
+            Names of top-level features to yield, by default None (all features).
+            Selecting a nested feature includes its entire dictionary.
 
         Returns
         -------
@@ -136,13 +145,13 @@ class LoadH5Dataset(BaseLoadDataset):
             if features is None:
                 for idx in indices:
                     if idx != 'metadata':
-                        data = {key: value[()] for key, value in self.h5f[idx].items()}
+                        data = {key: _read_value(value) for key, value in self.h5f[idx].items()}
                         data.update({'idx': idx})
                         yield data
             else:
                 for idx in indices:
                     if idx != 'metadata':
-                        data = {key: value[()] for key, value in self.h5f[idx].items() if key in features}
+                        data = {key: _read_value(value) for key, value in self.h5f[idx].items() if key in features}
                         data.update({'idx': idx})
                         yield data
             return
@@ -161,6 +170,6 @@ class LoadH5Dataset(BaseLoadDataset):
         indices = list(self.h5f.keys())
         for idx in indices:
             if idx != 'metadata':
-                data = {key: value[()] for key, value in self.h5f[idx].items()}
+                data = {key: _read_value(value) for key, value in self.h5f[idx].items()}
                 data.update({'idx': idx})
                 yield data

@@ -4,8 +4,13 @@ These tests verify that HDF5 file saving works correctly, decoupled from
 acoustic correctness testing (which is done in regression tests).
 """
 
+from acoupipe.loader import LoadH5Dataset
+from acoupipe.pipeline import BasePipeline
+from acoupipe.writer import WriteH5Dataset
+
 from .dummy_dataset import DatasetDummy
 
+import numpy as np
 import pytest
 
 
@@ -58,3 +63,61 @@ def test_save_and_load_h5(feature, dummy_dataset, temp_dir):
         assert '0' in f
         assert '1' in f
         assert feature in f['0']
+
+
+def assert_nested_equal(actual, expected):
+    """Compare nested dictionaries, including array shapes and dtypes."""
+    if isinstance(expected, dict):
+        assert actual.keys() == expected.keys()
+        for key, value in expected.items():
+            assert_nested_equal(actual[key], value)
+    else:
+        np.testing.assert_array_equal(actual, expected, strict=True)
+
+
+@pytest.mark.parametrize('write_method', ['save', 'get_data'])
+@pytest.mark.parametrize('write_features', [[], ['method']])
+@pytest.mark.parametrize(
+    ('read_method', 'read_features'),
+    [('get_data', None), ('get_dataset_generator', None), ('get_dataset_generator', ['method'])],
+)
+def test_nested_h5_roundtrip(write_method, write_features, read_method, read_features, tmp_path):
+    """Round-trip nested samples and metadata through both writers and readers."""
+    samples = [
+        {
+            'flat': np.array([1 + 2j, 3], dtype=np.complex64),
+            'method': {
+                'sourcemap': np.arange(6, dtype=np.float32).reshape(2, 3),
+                'time': 0.125,
+                'specific_level_error': np.zeros((2, nsources)),
+                'solver_info': {'iterations': np.array([2, 3], dtype=np.int16), 'converged': True},
+                'empty': {},
+            },
+        }
+        for nsources in (1, 2)
+    ]
+    values = iter(samples)
+    pipeline = BasePipeline(numsamples=2, feature_func=lambda _sampler: next(values))
+    metadata = {'version': 1, 'solver': {'tolerance': 1e-6, 'empty': {}}}
+    filename = str(tmp_path / 'nested.h5')
+    writer = WriteH5Dataset(source=pipeline, name=filename, features=write_features, metadata=metadata)
+    if write_method == 'save':
+        writer.save(progress_bar=False)
+    else:
+        list(writer.get_data(progress_bar=False))
+
+    loader = LoadH5Dataset(name=filename)
+    with loader.h5f:
+        assert loader.numsamples == 2
+        assert set(loader.features) == ({'idx', 'method'} if write_features else {'idx', 'seeds', 'flat', 'method'})
+        assert_nested_equal(loader.metadata, metadata)
+        if read_method == 'get_data':
+            loaded = list(loader.get_data())
+        else:
+            loaded = list(loader.get_dataset_generator(features=read_features)())
+        assert len(loaded) == 2
+        for index, (actual, sample) in enumerate(zip(loaded, samples, strict=True), start=1):
+            expected = {'idx': str(index), 'method': sample['method']}
+            if not write_features and read_features is None:
+                expected.update(flat=sample['flat'], seeds=np.array([]))
+            assert_nested_equal(actual, expected)

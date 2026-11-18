@@ -31,6 +31,16 @@ from h5py import File as H5File
 from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
 
 
+def _write_value(group, name, value):
+    """Write dictionaries as groups and other values as datasets."""
+    if isinstance(value, dict):
+        subgroup = group.create_group(name)
+        for key, item in value.items():
+            _write_value(subgroup, key, item)
+    else:
+        group.create_dataset(name, data=value)
+
+
 class BaseWriteDataset(DataGenerator):
     """Base class intended to write data to a specific file format.
 
@@ -66,7 +76,13 @@ class BaseWriteDataset(DataGenerator):
 
 
 class WriteH5Dataset(BaseWriteDataset):
-    """Class intended to write data to a `.h5` file."""
+    """Write samples to a `.h5` file.
+
+    Nested dictionaries in samples and metadata are stored as groups, including
+    empty dictionaries. Leaves must be supported by :func:`h5py.Group.create_dataset`.
+    Keys must be individual HDF5 names without '/' separators. Feature selection
+    applies to top-level names and includes all descendants of selected features.
+    """
 
     #: Name of the file to be saved.
     name = File(filter=['*.h5'], desc='name of data file')
@@ -100,22 +116,15 @@ class WriteH5Dataset(BaseWriteDataset):
         return None
 
     def _add_data(self, f5h, data, subf):
-        dataset_idx = str(data['idx'])
-        # create a group for each Sample
-        f5h.create_group(dataset_idx)
-        # store dict in the group
-        if not subf:
-            [f5h.create_dataset(f'{dataset_idx}/{key}', data=value) for key, value in data.items()]
-        else:
-            [f5h.create_dataset(f'{dataset_idx}/{key}', data=value) for key, value in data.items() if key in subf]
+        group = f5h.create_group(str(data['idx']))
+        for key, value in data.items():
+            if not subf or key in subf:
+                _write_value(group, key, value)
 
     def _add_metadata(self, f5h):
         """Add metadata to .h5 file."""
-        nitems = len(self.metadata.items())
-        if nitems > 0:
-            f5h.create_group('metadata')
-            for key, value in self.metadata.items():
-                f5h.create_dataset(f'metadata/{key}', data=value)
+        if self.metadata:
+            _write_value(f5h, 'metadata', self.metadata)
 
     def save(self, progress_bar=True, start_idx=1):
         """Save the :meth:`get_data()` output of the :attr:`source` to .h5 file format."""
