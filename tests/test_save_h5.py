@@ -4,6 +4,7 @@ These tests verify that HDF5 file saving works correctly, decoupled from
 acoustic correctness testing (which is done in regression tests).
 """
 
+from acoupipe import writer as writer_module
 from acoupipe.loader import LoadH5Dataset
 from acoupipe.pipeline import BasePipeline
 from acoupipe.writer import WriteH5Dataset
@@ -12,6 +13,7 @@ from .dummy_dataset import DatasetDummy
 
 import numpy as np
 import pytest
+from h5py import File as H5File
 
 
 @pytest.fixture
@@ -63,6 +65,59 @@ def test_save_and_load_h5(feature, dummy_dataset, temp_dir):
         assert '0' in f
         assert '1' in f
         assert feature in f['0']
+
+
+@pytest.mark.parametrize(
+    ('method', 'outcome'),
+    [
+        ('save', 'done'),
+        ('save', 'error'),
+        ('get_data', 'done'),
+        ('get_data', 'error'),
+        ('get_data', 'close'),
+        ('get_data', 'stop'),
+    ],
+)
+def test_writer_closes_file(method, outcome, tmp_path, monkeypatch):
+    """Close the real file on completion, source errors and stream cancellation."""
+    opened = []
+
+    def open_file(*args, **kwargs):
+        file = H5File(*args, **kwargs)
+        opened.append(file)
+        return file
+
+    def calculate(_sampler):
+        if outcome == 'error':
+            msg = 'source failed'
+            raise ValueError(msg)
+        return {'value': 1}
+
+    monkeypatch.setattr(writer_module, 'H5File', open_file)
+    pipeline = BasePipeline(numsamples=2, feature_func=calculate)
+    writer = WriteH5Dataset(source=pipeline, name=str(tmp_path / 'close.h5'))
+
+    def run():
+        if method == 'save':
+            writer.save(progress_bar=False)
+        else:
+            list(writer.get_data(progress_bar=False))
+
+    if outcome == 'error':
+        with pytest.raises(ValueError, match='source failed'):
+            run()
+    elif outcome == 'done':
+        run()
+    else:
+        stream = writer.get_data(progress_bar=False)
+        next(stream)
+        if outcome == 'close':
+            stream.close()
+        else:
+            writer.writeflag = False
+            list(stream)
+    assert len(opened) == 1
+    assert not opened[0].id.valid
 
 
 def assert_nested_equal(actual, expected):

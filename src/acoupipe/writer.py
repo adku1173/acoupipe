@@ -119,16 +119,17 @@ class WriteH5Dataset(BaseWriteDataset):
 
     def save(self, progress_bar=True, start_idx=1):
         """Save the :meth:`get_data()` output of the :attr:`source` to .h5 file format."""
-        f5h = self.get_file()
-        subf = self.get_filtered_features()
-        for data in self.source.get_data(progress_bar, start_idx):
-            self._add_data(f5h, data, subf)
-        self._add_metadata(f5h)
-        f5h.flush()
-        f5h.close()
+        with self.get_file() as f5h:
+            subf = self.get_filtered_features()
+            for data in self.source.get_data(progress_bar, start_idx):
+                self._add_data(f5h, data, subf)
+            self._add_metadata(f5h)
 
     def get_data(self, progress_bar=True, start_idx=1):
         """Save the source data to a `*.h5` file and yield it to the next object.
+
+        When stopping consumption early, close the generator explicitly to
+        release the file immediately.
 
         Returns
         -------
@@ -137,17 +138,15 @@ class WriteH5Dataset(BaseWriteDataset):
             {feature_name[key] : feature[values]}.
         """
         self.writeflag = True
-        f5h = self.get_file()
-        subf = self.get_filtered_features()
-        for data in self.source.get_data(progress_bar, start_idx):
-            if not self.writeflag:
-                return
-            self._add_data(f5h, data, subf)
-            yield data
-            f5h.flush()
-        self._add_metadata(f5h)
-        f5h.flush()
-        f5h.close()
+        with self.get_file() as f5h:
+            subf = self.get_filtered_features()
+            for data in self.source.get_data(progress_bar, start_idx):
+                if not self.writeflag:
+                    return
+                self._add_data(f5h, data, subf)
+                yield data
+                f5h.flush()
+            self._add_metadata(f5h)
 
 
 if TF_FLAG:
