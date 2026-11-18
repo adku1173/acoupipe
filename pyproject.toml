@@ -219,7 +219,8 @@ norecursedirs = ["multiprocessing"] # default pytest collection and current CI d
 [tool.coverage.run]
 omit = [
     "src/acoupipe/base.py",
-    "src/acoupipe/datasets/base.py",
+    "src/acoupipe/datasets/base/dataset.py",
+    "src/acoupipe/datasets/base/legacy_config.py",
 ]
 
 [tool.coverage.report]
