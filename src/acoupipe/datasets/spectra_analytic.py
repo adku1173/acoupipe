@@ -62,10 +62,6 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     #: (set from block_size and overlap).
     num_blocks = Property(desc='overall number of FFT blocks')
 
-    _Q = Property()
-
-    _noise = Property()
-
     Q = CArray(shape=(None, None, None), dtype=complex, desc='source strengths matrix')
 
     noise = Either(CArray(shape=(None, None, None), dtype=complex), None, default=None, desc='noise covariance matrix')
@@ -74,6 +70,12 @@ class PowerSpectraAnalytic(PowerSpectraImport):
 
     custom_transfer = Either(None, CArray, default=None)
 
+    #: Mode of calculation of the cross spectral matrix. With 'analytic', the expected
+    #: cross spectral matrix :math:`C = H Q H^H + N` is returned. With 'wishart', a sample
+    #: cross spectral matrix is drawn from the complex Wishart distribution
+    #: :math:`\alpha \hat{C} \sim \mathcal{CW}(\alpha, C)` with :math:`\alpha` = :attr:`df_eq`.
+    #: If :attr:`noise` is None, the (nonsingular) source matrix :math:`Q` is used as the scale
+    #: matrix instead, i.e. :math:`\hat{C} = H \hat{Q} H^H`.
     mode = Either('analytic', 'wishart', default='analytic', desc='mode of calculation of the cross spectral matrix')
 
     #: the state of the random variable. only relevant if :attr:`mode` is 'wishart'
@@ -92,7 +94,6 @@ class PowerSpectraAnalytic(PowerSpectraImport):
     # internal identifier
     digest = Property(
         depends_on=[
-            '_csmsum',
             'seed',
             'mode',
             'steer.digest',
@@ -103,7 +104,9 @@ class PowerSpectraAnalytic(PowerSpectraImport):
             'sample_freq',
             'block_size',
             'overlap',
+            'window',
             'num_samples',
+            'custom_transfer',
         ],
     )
 
@@ -168,73 +171,84 @@ class PowerSpectraAnalytic(PowerSpectraImport):
             msg = 'The number of frequencies must match the number of rows in the noise matrix!'
             raise ValueError(msg)
 
+    def _validate_df_eq(self, dim):
+        if self.df_eq <= dim - 1:
+            msg = (
+                f'Wishart sampling requires the equivalent degrees of freedom (df_eq={self.df_eq:.2f}) '
+                f'to exceed dim - 1 = {dim - 1}, where dim is the dimension of the scale matrix. '
+                'Increase num_samples or decrease block_size.'
+            )
+            raise ValueError(msg)
+
     def _sample_wishart(self, scale, rng):
+        r"""Draw a sample CSM with :math:`\alpha \hat{C} \sim \mathcal{CW}(\alpha, \Sigma)`.
+
+        Uses Bartlett's decomposition :math:`W = T T^H \sim \mathcal{CW}(\alpha, I)` with a lower
+        triangular :math:`T` and the linear transformation property with the Cholesky factor
+        :math:`\Sigma = R R^H`, i.e. :math:`\hat{C} = \alpha^{-1} (R T)(R T)^H`.
+
+        Parameters
+        ----------
+        scale : numpy.ndarray
+            Hermitian positive definite scale matrix :math:`\Sigma` of shape (dim, dim).
+        rng : numpy.random.Generator
+            Random number generator.
+
+        Returns
+        -------
+        numpy.ndarray
+            Sample cross spectral matrix of shape (dim, dim).
+        """
         df = self.df_eq
         dim = scale.shape[0]
+        R = spla.cholesky(scale, lower=True)
+        T = np.zeros((dim, dim), dtype=complex)
+        # off-diagonal elements: standard complex normal, t_ij ~ CN(0, 1)
         n_tril = dim * (dim - 1) // 2
-        C = spla.cholesky(scale, lower=True)
-        covariances = rng.normal(size=n_tril) + 1j * rng.normal(size=n_tril)
-        covariances *= np.sqrt(0.5)
-        variances = np.r_[[rng.gamma(df - dim + i, scale=1, size=1) ** 0.5 for i in range(dim)]]
-        A = np.zeros(C.shape, dtype=complex)
-        # input the covariances
-        tril_idx = np.tril_indices(dim, k=-1)
-        A[tril_idx] = covariances
-        # Input the variances
-        A[np.diag_indices(dim)] = variances.astype(complex)[:, 0]
-        # build matrix
-        CA = np.dot(C, A)
-        return np.dot(CA, CA.conjugate().T) / df
+        T[np.tril_indices(dim, k=-1)] = (rng.normal(size=n_tril) + 1j * rng.normal(size=n_tril)) * np.sqrt(0.5)
+        # diagonal elements: row i (0-based) of the lower triangular T has i off-diagonal entries,
+        # hence t_ii^2 ~ Gamma(df - i, 1) such that E[W_ii] = df
+        T[np.diag_indices(dim)] = np.sqrt(rng.gamma(df - np.arange(dim), scale=1.0))
+        A = R @ T
+        return A @ A.conj().T / df
+
+    def _get_transfer(self):
+        """Return the transfer matrix H of shape (num_freqs, num_mics, num_sources)."""
+        if self.custom_transfer is not None:
+            self._validate_custom_transfer()
+            return self.custom_transfer
+        fftfreq = self.fftfreq()
+        H = np.zeros((fftfreq.shape[0], self.steer.mics.num_mics, self.Q.shape[1]), dtype=complex)
+        for i in self.indices:  # calculate only the indices that are needed
+            H[i] = self.steer.transfer(fftfreq[i]).T
+        return H
 
     @property_depends_on(
-        'seed, mode, block_size, overlap, sample_freq, num_samples, Q, noise, ind_low, ind_high, steer.digest, custom_transfer',
+        'seed, mode, block_size, overlap, window, sample_freq, num_samples, Q, noise, ind_low, ind_high, '
+        'steer.digest, custom_transfer',
     )
     def _get_csm(self):
-        # self._validate_freq_data()
-        if self.custom_transfer is None:
-            return self._calc_csm()
-        self._validate_custom_transfer()
-        return self._calc_csm_custom()
-
-    def _calc_csm(self):
-        Q = self._Q
-        fftfreq = self.fftfreq()
-        H = np.zeros((fftfreq.shape[0], self.steer.mics.num_mics, Q.shape[1]), dtype=complex)
-        for i in self.indices:  # calculate only the indices that are needed
-            H[i] = self.steer.transfer(fftfreq[i]).T  # transfer functions
-        csm = H @ Q @ H.swapaxes(2, 1).conjugate()
-        if self.noise is not None:
-            csm += self._noise
-        return csm
-
-    def _calc_csm_custom(self):
-        Q = self._Q
-        H = self.custom_transfer
-        csm = H @ Q @ H.swapaxes(2, 1).conjugate()
-        if self.noise is not None:
-            csm += self._noise
-        return csm
-
-    @property_depends_on('seed, mode, block_size, overlap, sample_freq, num_samples, Q, ind_low, ind_high')
-    def _get__Q(self):
+        H = self._get_transfer()
         if self.mode == 'analytic':
-            return self.Q
-        fftfreq = self.fftfreq()
-        Q = np.zeros((fftfreq.shape[0], self.Q.shape[1], self.Q.shape[1]), dtype=complex)
-        for i in self.indices:
-            rng = default_rng([self.seed, i])
-            Q[i] = self._sample_wishart(self.Q[i], rng)
-        return Q
-
-    @property_depends_on('seed, mode, block_size, overlap, sample_freq, num_samples, noise, ind_low, ind_high')
-    def _get__noise(self):
+            csm = H @ self.Q @ H.swapaxes(2, 1).conjugate()
+            if self.noise is not None:
+                csm += self.noise
+            return csm
+        # mode == 'wishart'
+        csm = np.zeros((H.shape[0], H.shape[1], H.shape[1]), dtype=complex)
         if self.noise is not None:
-            if self.mode == 'analytic':
-                return self.noise
-            fftfreq = self.fftfreq()
-            noise = np.zeros((fftfreq.shape[0], self.noise.shape[1], self.noise.shape[1]), dtype=complex)
+            # sample in microphone space with scale matrix C = H Q H^H + N
+            # (includes the signal-noise cross terms)
+            self._validate_df_eq(H.shape[1])
             for i in self.indices:
-                rng = default_rng([self.seed + 1, i])
-                noise[i] = self._sample_wishart(self.noise[i], rng)
-            return noise
-        return None
+                rng = default_rng([self.seed, i])
+                C = H[i] @ self.Q[i] @ H[i].conj().T + self.noise[i]
+                csm[i] = self._sample_wishart(C, rng)
+        else:
+            # without noise, C = H Q H^H is singular (rank <= number of sources);
+            # sampling in source space with scale matrix Q and transforming with H is equivalent
+            self._validate_df_eq(self.Q.shape[1])
+            for i in self.indices:
+                rng = default_rng([self.seed, i])
+                csm[i] = H[i] @ self._sample_wishart(self.Q[i], rng) @ H[i].conj().T
+        return csm

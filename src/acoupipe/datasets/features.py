@@ -53,6 +53,20 @@ def __getattr__(name):
     raise AttributeError(msg)
 
 
+def _raise_if_analytic_spectra(freq_data, name):
+    """Raise a ValueError if an estimated strength is requested from analytic or Wishart spectra.
+
+    The sample CSM of :class:`PowerSpectraAnalytic` in Wishart mode is drawn jointly for sources and
+    noise. Separate estimates of the source and noise strength therefore do not exist.
+    """
+    if isinstance(freq_data, PowerSpectraAnalytic):
+        msg = (
+            f"Feature '{name}' is only available with mode='welch'. With modes ['analytic', 'wishart'], "
+            'use the corresponding analytic feature instead.'
+        )
+        raise ValueError(msg)
+
+
 class TimeDataFeature(Feature):
     """TimeDataFeature class for handling time data.
 
@@ -512,15 +526,6 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
     ref_mic = Either(Int, None, default=None, desc='reference microphone index')
 
     @staticmethod
-    def calc_source_strength_estimated_wishart(sampler, data, freq_data, fidx, name):
-        strength = np.stack([freq_data._Q[i].diagonal().real for i in range(freq_data.fftfreq().shape[0])], axis=0)
-        if data.get('h_sq') is not None:
-            strength *= data['h_sq']
-        if fidx is None:
-            return {name: strength}
-        return {name: np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])}
-
-    @staticmethod
     def calc_source_strength_estimated(sampler, freq_data, fidx, name):
         init_source = freq_data.source
         sources = get_point_sources_recursively(init_source)
@@ -543,14 +548,8 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
         return {name: strength}
 
     def get_feature_func(self):
+        _raise_if_analytic_spectra(self.freq_data, self.name)
         self.set_freq_limits()
-        if isinstance(self.freq_data, PowerSpectraAnalytic):
-            return partial(
-                self.calc_source_strength_estimated_wishart,
-                freq_data=self.freq_data,
-                fidx=self.fidx,
-                name=self.name,
-            )
         return partial(
             self.calc_source_strength_estimated,
             freq_data=self.freq_data,
@@ -678,36 +677,8 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
         msg = 'Only one uncorrelated noise source is supported.'
         raise ValueError(msg)
 
-    @staticmethod
-    def calc_noise_strength_estimated2_fullfreq(sampler, freq_data, name):
-        freqs = freq_data.fftfreq()
-        if freq_data._noise is None:
-            return {name: np.zeros((freqs.shape[0], freq_data.steer.mics.num_mics))}
-        strength = np.stack([freq_data._noise[i].diagonal() for i in range(freqs.shape[0])], axis=0)
-        return {name: np.real(strength)}
-
-    @staticmethod
-    def calc_noise_strength_estimated2_partfreq(sampler, freq_data, fidx, name):  # noqa ARG004
-        if freq_data._noise is None:
-            return {name: np.zeros((len(fidx), freq_data.steer.mics.num_mics))}
-        strength = np.array(
-            [freq_data._noise[indices[0] : indices[1]].sum(0).diagonal() for indices in fidx],
-            dtype=complex,
-        )
-        return {name: np.real(strength)}
-
     def get_feature_func(self):
-        if isinstance(self.freq_data, PowerSpectraAnalytic):
-            self.set_freq_limits()
-            if self.fidx is None:
-                return partial(self.calc_noise_strength_estimated2_fullfreq, freq_data=self.freq_data, name=self.name)
-            return partial(
-                self.calc_noise_strength_estimated2_partfreq,
-                freq_data=self.freq_data,
-                fidx=self.fidx,
-                name=self.name,
-            )
-
+        _raise_if_analytic_spectra(self.freq_data, self.name)
         if isinstance(self.freq_data, ac.RFFT):
             if self.fidx is None:
                 return partial(self.calc_noise_strength_estimated1_fullfreq, freq_data=self.freq_data, name=self.name)

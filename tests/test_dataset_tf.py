@@ -55,8 +55,8 @@ def test_get_tf_dataset(mode, feature, num, f, mic_sig_noise, create_dataset, te
     """
     if num == 3 and f is None:
         pytest.skip('Invalid combination of num=3 and f=None')
-    if mode == 'analytic' and '_estimated' in feature:
-        pytest.skip('Feature not supported in analytic mode')
+    if mode != 'welch' and '_estimated' in feature:
+        pytest.skip('Feature not supported in non-welch mode')
     if mode != 'welch' and feature in ['spectrogram', 'time_data']:
         pytest.skip('Feature not supported in non-welch mode')
 

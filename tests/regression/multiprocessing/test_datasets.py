@@ -21,8 +21,8 @@ pytestmark = [
 @pytest.mark.parametrize('num', [0])
 def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, snapshot):
     """Test generate method of the datasets in multiprocessing mode."""
-    if mode == 'analytic' and '_estimated' in feature:
-        pytest.skip('Feature not supported in analytic mode')
+    if mode != 'welch' and '_estimated' in feature:
+        pytest.skip('Feature not supported in non-welch mode')
     if mode != 'welch' and feature in ['spectrogram', 'time_data']:
         pytest.skip('Feature not supported in non-welch mode')
 
@@ -49,8 +49,8 @@ def test_multiprocessing_values_correct(mode, feature, f, num, create_dataset, s
 @pytest.mark.parametrize('num', [0])
 def test_miracle_multiprocessing_values_correct(mode, feature, f, num, create_miracle_dataset, snapshot):
     """Test generate method of the datasets in multiprocessing mode."""
-    if mode == 'analytic' and '_estimated' in feature:
-        pytest.skip('Feature not supported in analytic mode')
+    if mode != 'welch' and '_estimated' in feature:
+        pytest.skip('Feature not supported in non-welch mode')
     if mode != 'welch' and feature in ['spectrogram', 'time_data']:
         pytest.skip('Feature not supported in non-welch mode')
 

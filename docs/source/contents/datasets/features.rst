@@ -94,30 +94,32 @@ If the matrix :math:`\mathbb{E}[\mathbf{q} \mathbf{q}^{\text{H}}] = \mathbf{Q} \
 
 .. math::
 
-   \mathbf{C} = \mathbb{E}[\mathbf{p}\mathbf{p}^{\text{H}}] = \mathbf{H} \mathbf{Q} \mathbf{H}^{\text{H}}
+   \mathbf{C} = \mathbb{E}[\mathbf{p}\mathbf{p}^{\text{H}}] = \mathbf{H} \mathbf{Q} \mathbf{H}^{\text{H}} + \mathbf{N}
 
-where :math:`\mathbb{E}[\cdot]` denotes the expectation operator. This enables a fast calculation of the CSM but neglects uncertainties that stem from a limited number of snapshots.
+where :math:`\mathbb{E}[\cdot]` denotes the expectation operator and :math:`\mathbf{N} = \mathbb{E}[\mathbf{n}\mathbf{n}^{\text{H}}]` is the CSM of the (uncorrelated) microphone noise. This enables a fast calculation of the CSM but neglects uncertainties that stem from a limited number of snapshots.
 
 
 Wishart-distributed CSM (:code:`mode="wishart"`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-By assuming stationary sources with non-deterministic source signals, a snapshot deficient CSM can be sampled. 
-Given the matrix :math:`\mathbf{Q}`, it is possible to approximate :math:`\mathbf{Q}` using the Cholesky decomposition :math:`\mathbf{Q}(\omega) = \mathbf{U}\mathbf{U}^{\mathsf{H}}` and the Bartlett decomposition:
+By assuming stationary sources and noise with circular complex Gaussian Fourier coefficients, a snapshot deficient CSM can be sampled directly from the complex Wishart distribution
 
 .. math::
 
-   \hat{\mathbf{Q}}  = \frac{1}{n} \mathbf{U} \mathbf{A} \mathbf{U}^{\mathsf{H}}
+   \alpha \hat{\mathbf{C}} \sim \mathcal{W}_{\mathbb{C}}(\alpha, \mathbf{C}),
 
-Here, :math:`\mathbf{A}` is generated for :math:`n` different degrees of freedom, representing the number of snapshots. The distribution of :math:`\mathbf{A}` follows a complex Wishart distribution :math:`\mathcal{W}_{\mathbb{C}} (n,\mathrm{I})`.
-
-Sampling the cross-spectral matrix is then achieved by multiplying the Wishart-distributed source matrix with the transfer matrix :math:`\mathbf{H}`:
+where :math:`\mathbf{C}` is the analytic CSM (including the noise) and :math:`\alpha` is the equivalent number of degrees of freedom of Welch's method, which accounts for the window function and the overlap of the FFT blocks.
+Using the Cholesky decomposition :math:`\mathbf{C} = \mathbf{R}\mathbf{R}^{\mathsf{H}}` and the Bartlett decomposition :math:`\mathbf{W} = \mathbf{T}\mathbf{T}^{\mathsf{H}} \sim \mathcal{W}_{\mathbb{C}}(\alpha, \mathbf{I})`, the sample CSM is obtained as
 
 .. math::
 
-   \hat{\mathbf{C}}_{\mathcal{W}} = \mathbf{H} \hat{\mathbf{Q}} \mathbf{H}^{\mathsf{H}}.
+   \hat{\mathbf{C}}_{\mathcal{W}} = \frac{1}{\alpha} \mathbf{R} \mathbf{T} \mathbf{T}^{\mathsf{H}} \mathbf{R}^{\mathsf{H}}.
 
-This method is computationally efficient and allows to sample the CSM for a varying number of snapshots with the same computational burden as with a single snapshot. However, the Wishart-distributed CSM is only an approximation of a snapshot deficient CSM.
+Since the CSM is sampled jointly for sources and noise, no separate estimates of the source and noise strength exist and the :code:`*_estimated` features are not available with :code:`mode="wishart"`.
+If no microphone noise is present, :math:`\mathbf{C}` is singular. In this case, the source CSM is sampled with :math:`\alpha \hat{\mathbf{Q}} \sim \mathcal{W}_{\mathbb{C}}(\alpha, \mathbf{Q})` and :math:`\hat{\mathbf{C}}_{\mathcal{W}} = \mathbf{H} \hat{\mathbf{Q}} \mathbf{H}^{\mathsf{H}}`, which is equivalent.
+The sampling requires :math:`\alpha > M - 1` (or :math:`\alpha > J - 1` without noise).
+
+This method is computationally efficient and allows to sample the CSM for a varying number of snapshots with the same computational burden as with a single snapshot. However, the Wishart-distributed CSM is only an approximation of a snapshot deficient CSM obtained with Welch's method, since overlapping and windowed blocks are not statistically independent.
 
 
 
@@ -193,11 +195,11 @@ The representation slightly differs, depending on the choosen CSM calculation mo
 Target Sourcemap (:code:`'targetmap_analytic'`, :code:`'targetmap_estimated'`)
 ------------------------------------------------------------------------------
 
-The target sourcemap provides a sparse mapping of the true source strength on a pre-defined grid. The mapped strength can be either the analytic source strength (:code:`'targetmap_analytic'`) or an estimate of the source strength (:code:`'targetmap_estimated'`). The representation slightly differs as can be seen for the following example extracted from `DatasetSynthetic`:
+The target sourcemap provides a sparse mapping of the true source strength on a pre-defined grid. The mapped strength can be either the analytic source strength (:code:`'targetmap_analytic'`) or an estimate of the source strength (:code:`'targetmap_estimated'`, only available with :code:`mode='welch'`). The following example of the analytic target sourcemap is extracted from `DatasetSynthetic`:
 
 .. image:: ../../_static/targetmap_example.png
     :align: center
-    :width: 600
+    :width: 300
 
 
 The underlying grid is defined by the :code:`dataset.config.grid` attribute of the dataset. Since the true locations of the sources do not necessarily coincide with the grid points, the source strength is attributed to the closest grid points when generating the targetmap. If it is desired to only sample source locations that coincide with the grid points, the attribute :code:`dataset.snap_to_grid` can be set to :code:`True` when creating the dataset e.g. with: 
@@ -226,11 +228,7 @@ Estimated source strength (:code:`'source_strength_estimated'`)
 The estimated source strength is the block-wise averaged squared sound pressure amplitude :math:`1/B p^2_j(\mathbf{r}_0,f)` with respect to a reference position :math:`\mathbf{r}_0`, where B is the number of time data blocks. The data is stored in a Numpy array of shape (F,J) with F beeing the number of frequency bins and J is the number of sources.
 The reference position :math:`\mathbf{r}_0` is set to the microphone closest to the origin of the coordinate system by default. 
 
-The representation of the estimated source strength slightly differs, depending on the choosen calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`). With :code:`mode='analytic'`, the estimated source strength equals the analytic source strength. With :code:`mode='welch'`, the estimated source strength is calculated according to Welch's method. With :code:`mode='wishart'`, the estimated source strength is a snapshot deficient approximation of the analytic source strength. 
-
-.. image:: ../../_static/source_strength_estimated_example.png
-   :align: center
-   :width: 300
+The estimated source strength is calculated according to Welch's method and is only available with :code:`mode='welch'`. With :code:`mode='analytic'` or :code:`mode='wishart'`, requesting this feature raises a :code:`ValueError`.
 
 
 Analytic noise power (:code:`'noise_strength_analytic'`)
@@ -243,7 +241,7 @@ Estimated noise power (:code:`'noise_strength_estimated'`)
 
 The estimated noise power is the block-wise averaged squared sound pressure amplitude :math:`1/B p^2(\mathbf{r}_m,f)` at each m-th microphone, where B is the number of time data blocks. The data is stored in a Numpy array of shape (F,M), where F is the number of frequency bins and M is the number of microphones. 
 
-The representation of the estimated noise power slightly differs, depending on the choosen calculation mode (:code:`analytic`, :code:`welch` or :code:`wishart`). With :code:`mode='analytic'`, the estimated noise power equals the analytic noise power. With :code:`mode='welch'`, the estimated noise power is calculated according to Welch's method. With :code:`mode='wishart'`, the estimated noise power is a snapshot deficient approximation of the analytic noise power.
+The estimated noise power is calculated according to Welch's method and is only available with :code:`mode='welch'`. With :code:`mode='analytic'` or :code:`mode='wishart'`, requesting this feature raises a :code:`ValueError`.
 
 
 Sound source locations (:code:`'loc'`)
