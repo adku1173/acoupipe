@@ -25,20 +25,11 @@ from os import path
 from acoular import config
 from acoupipe.base import DataGenerator
 from acoupipe.config import TF_FLAG
+from acoupipe.utils import write_h5_value
 
 import numpy as np
 from h5py import File as H5File
 from traits.api import Bool, Callable, Dict, File, Instance, List, Str, Trait
-
-
-def _write_value(group, name, value):
-    """Write dictionaries as groups and other values as datasets."""
-    if isinstance(value, dict):
-        subgroup = group.create_group(name)
-        for key, item in value.items():
-            _write_value(subgroup, key, item)
-    else:
-        group.create_dataset(name, data=value)
 
 
 class BaseWriteDataset(DataGenerator):
@@ -119,12 +110,12 @@ class WriteH5Dataset(BaseWriteDataset):
         group = f5h.create_group(str(data['idx']))
         for key, value in data.items():
             if not subf or key in subf:
-                _write_value(group, key, value)
+                write_h5_value(group, key, value)
 
     def _add_metadata(self, f5h):
         """Add metadata to .h5 file."""
         if self.metadata:
-            _write_value(f5h, 'metadata', self.metadata)
+            write_h5_value(f5h, 'metadata', self.metadata)
 
     def save(self, progress_bar=True, start_idx=1):
         """Save the :meth:`get_data()` output of the :attr:`source` to .h5 file format."""
