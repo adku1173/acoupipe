@@ -14,7 +14,7 @@ pipeline configuration.
 from acoupipe.base import BaseSampler
 from acoupipe.datasets.base.callbacks import call_with_supported_context
 from acoupipe.datasets.base.parameters import ParameterSet
-from acoupipe.datasets.features import BaseFeatureCatalog, BaseFeatureCollectionBuilder
+from acoupipe.datasets.features import Feature, combine_feature_funcs, create_feature
 from acoupipe.sampler import AttributeSampler
 
 from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, List
@@ -514,16 +514,21 @@ class Config(HasPrivateTraits):
 
         return parameter_feature
 
-    def get_feature_collection(self, features, f, num):
-        """Build the feature collection for this config.
+    def get_features(self, features, f, num):
+        """Get the combined feature function and the feature objects of this config.
 
-        This method assembles all the features (default, parameter, and custom)
-        into a feature collection that can be used by the pipeline.
+        The feature functions are called in the following order: the registered
+        prepare callbacks, the ``get_prepare_func`` hook of a subclass (if any),
+        the custom feature objects (Feature instances) and the requested default
+        features, the requested ParameterSet attributes, the registered feature
+        callbacks and finally the ``get_cleanup_func`` hook of a subclass (if any).
+
+        Outputs that were not requested are not removed by default.
 
         Parameters
         ----------
-        features : list of str or BaseFeatureCatalog, optional
-            The list of feature names or feature catalog instances to include.
+        features : list of str or Feature, optional
+            The list of feature names or feature objects to include.
         f : float or list of float or None
             Frequencies used for frequency-dependent features.
         num : int
@@ -531,12 +536,17 @@ class Config(HasPrivateTraits):
 
         Returns
         -------
-        BaseFeatureCollectionBuilder
-            The assembled feature collection.
+        feature_func : callable
+            Single combined callable with signature ``f(sampler) -> dict`` (see
+            :func:`~acoupipe.datasets.features.combine_feature_funcs`).
+        feature_objects : list of Feature
+            Feature objects providing ``name``, ``dtype`` and ``shape`` metadata
+            (e.g. for :func:`~acoupipe.datasets.features.get_tf_mappers`). This
+            includes registered feature callbacks with ``dtype`` and ``shape``.
         """
         features = [] if features is None else list(features)
         registered_feature_names = set(self._registered_feature_names)
-        feature_instances = [feat for feat in features if isinstance(feat, BaseFeatureCatalog)]
+        feature_objects = [feat for feat in features if isinstance(feat, Feature)]
         parameter_feature_funcs = []
         default_feature_names = []
 
@@ -549,54 +559,28 @@ class Config(HasPrivateTraits):
             else:
                 parameter_feature_funcs.append(parameter_feature)
 
-        feature_instances += self.get_default_features(default_feature_names, f, num)
-        builder = BaseFeatureCollectionBuilder(features=feature_instances)
-        for prepare_func in self._registered_prepare_funcs:
-            builder.add_custom(prepare_func)
+        feature_objects += self.get_default_features(default_feature_names, f, num)
+
+        feature_funcs = list(self._registered_prepare_funcs)
         prepare_hook = self._get_config_hook('get_prepare_func')
         if prepare_hook is not None:
-            builder.add_custom(prepare_hook())
-        feature_collection = builder.build()
-        for parameter_feature in parameter_feature_funcs:
-            builder.add_custom(parameter_feature)
-        for name, (dtype, shape) in self._registered_feature_metadata.items():
-            builder.add_mapper(name, dtype, shape)
-        for feature_func in self._registered_feature_funcs:
-            builder.add_custom(feature_func)
+            prepare_func = prepare_hook()
+            if prepare_func is not None:
+                feature_funcs.append(prepare_func)
+        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
+        feature_funcs += parameter_feature_funcs
+        for name, feature_func in zip(self._registered_feature_names, self._registered_feature_funcs, strict=True):
+            feature_funcs.append(feature_func)
+            if name in self._registered_feature_metadata:
+                dtype, shape = self._registered_feature_metadata[name]
+                feature_objects.append(create_feature(feature_func, name=name, shape=shape, dtype=dtype))
         cleanup_hook = self._get_config_hook('get_cleanup_func')
         if cleanup_hook is not None:
-            builder.add_custom(cleanup_hook(features))
-        return feature_collection
-
-    def configure_pipeline(self, pipeline, features, f, num):
-        """Attach this config's samplers and feature functions to a Pipeline.
-
-        This method configures the pipeline with the samplers and features
-        registered in this config.
-
-        Parameters
-        ----------
-        pipeline : BasePipeline
-            The pipeline to configure.
-        features : list of str or BaseFeatureCatalog
-            The list of feature names or feature catalog instances to include.
-        f : float or list of float or None
-            Frequencies used for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
-
-        Returns
-        -------
-        BaseFeatureCollectionBuilder
-            The configured feature collection.
-        """
-        feature_collection = self.get_feature_collection(features, f, num)
-        pipeline.sampler = self.get_sampler()
-        pipeline.features = feature_collection.get_feature_funcs()
-        return feature_collection
+            feature_funcs.append(cleanup_hook(features))
+        return combine_feature_funcs(feature_funcs), feature_objects
 
     def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to default feature builder methods.
+        """Return keyword arguments passed to the `_get_default_feature_{name}` methods.
 
         Parameters
         ----------
@@ -608,12 +592,12 @@ class Config(HasPrivateTraits):
         Returns
         -------
         dict
-            Keyword arguments for default feature builders.
+            Keyword arguments for the `_get_default_feature_{name}` methods.
         """
         return {'f': f, 'num': num}
 
     def get_default_features(self, features, f, num):
-        """Build default features using builder methods.
+        """Build default features using `_get_default_feature_{name}` methods.
 
         For each feature name, this method looks for a corresponding
         `_get_default_feature_{name}` method and calls it with the
@@ -630,23 +614,23 @@ class Config(HasPrivateTraits):
 
         Returns
         -------
-        list
-            List of default feature catalog instances.
+        list of Feature
+            Feature objects of the requested default features.
 
         Raises
         ------
         ValueError
-            If a feature name does not have a corresponding builder method.
+            If a feature name does not have a corresponding `_get_default_feature_{name}` method.
         """
-        builder_kwargs = self._get_default_feature_kwargs(f, num)
+        feature_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
             if feature_name not in ['idx', 'seeds']:
-                builder = getattr(self, f'_get_default_feature_{feature_name}', None)
-                if builder is None:
+                get_feature = getattr(self, f'_get_default_feature_{feature_name}', None)
+                if get_feature is None:
                     msg = f'Unknown feature "{feature_name}".'
                     raise ValueError(msg)
-                default_features.append(builder(**builder_kwargs))
+                default_features.append(get_feature(**feature_kwargs))
         return default_features
 
 
