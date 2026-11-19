@@ -16,7 +16,6 @@ IMPLEMENTED_FEATURES = [
     'sourcemap',
     'eigmode',
     'spectrogram',
-    'seeds',
     'idx',
     'loc',
     'source_strength_analytic',

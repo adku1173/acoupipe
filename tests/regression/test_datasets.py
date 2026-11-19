@@ -1,6 +1,6 @@
 import acoular as ac
-from acoupipe.datasets.experimental import DatasetMIRACLEConfig
 from acoupipe.datasets.features import get_tf_mappers
+from acoupipe.datasets.miracle.legacy_config import DatasetMIRACLEConfig
 
 from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS, START_IDX, TEST_SIGNAL_LENGTH
 
@@ -134,8 +134,8 @@ def test_sourcemap_max(mode, num, create_dataset):
     data = next(gen)
     sourcemap_max = ac.L_p(data['sourcemap'].max())
     source_strength = ac.L_p(data[f'source_strength_{strength_type}'].max())
-    # the Wishart-distributed CSM fluctuates around the analytic source strength
-    atol = 5e-1 if mode == 'wishart' else 1e-1
+    # the Welch-estimated and Wishart-distributed CSMs fluctuate around the analytic source strength
+    atol = 1e-1 if mode == 'analytic' else 5e-1
     np.testing.assert_allclose(sourcemap_max, source_strength, atol=atol)
 
 

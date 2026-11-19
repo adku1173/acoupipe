@@ -4,7 +4,7 @@ This module contains test-specific configuration classes that should not be expo
 in the public API.
 """
 
-from acoupipe.datasets.experimental import DatasetMIRACLEConfig
+from acoupipe.datasets.miracle.legacy_config import DatasetMIRACLEConfig
 
 import numpy as np
 

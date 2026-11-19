@@ -1,0 +1,791 @@
+import inspect
+import warnings
+from functools import partial
+
+import acoular as ac
+from acoupipe.datasets._shared.utils import (
+    get_frequency_index_range,
+    get_point_sources_recursively,
+    get_uncorrelated_noise_source_recursively,
+)
+from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
+
+import numpy as np
+from numpy.linalg import eigh
+from traits.api import Callable, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
+
+
+class Feature(HasPrivateTraits):
+    """Base class for features.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature.
+    dtype : callable
+        Numpy dtype of the feature.
+
+    """
+
+    name = Str
+    dtype = Callable
+    shape = Tuple
+
+    def get_feature_func(self):
+        """Will return a method depending on the class parameters."""
+        return
+
+
+def __getattr__(name):
+    """Return :class:`Feature` for the deprecated name ``BaseFeatureCatalog``."""
+    if name == 'BaseFeatureCatalog':
+        warnings.warn(
+            'BaseFeatureCatalog is deprecated, use Feature instead.',
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return Feature
+    msg = f'module {__name__!r} has no attribute {name!r}'
+    raise AttributeError(msg)
+
+
+def _raise_if_analytic_spectra(freq_data, name):
+    """Raise a ValueError if an estimated strength is requested from analytic or Wishart spectra.
+
+    The sample CSM of :class:`PowerSpectraAnalytic` in Wishart mode is drawn jointly for sources and
+    noise. Separate estimates of the source and noise strength therefore do not exist.
+    """
+    if isinstance(freq_data, PowerSpectraAnalytic):
+        msg = (
+            f"Feature '{name}' is only available with mode='welch'. With modes ['analytic', 'wishart'], "
+            'use the corresponding analytic feature instead.'
+        )
+        raise ValueError(msg)
+
+
+class TimeDataFeature(Feature):
+    """TimeDataFeature class for handling time data.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='time_data').
+    time_data : instance of class acoular.SamplesGenerator
+        The source delivering the time data.
+    """
+
+    name = Str('time_data')
+    time_data = Instance(ac.SamplesGenerator, desc='time data')
+
+    def get_feature_func(self):
+        """Return the callable for calculating the time data."""
+
+        def _calc_time_data(sampler, time_data, name, dtype):
+            return {name: dtype(ac.tools.return_result(time_data))}
+
+        return partial(_calc_time_data, time_data=self.time_data, name=self.name, dtype=self.dtype)
+
+
+class TargetmapFeature(Feature):
+    name = Str('targetmap')
+    freq_data = Instance(ac.BaseSpectra, desc='cross spectral matrix calculation class')
+    f = Either(None, Float, List(Float), desc='frequency')
+    num = Int
+    ref_mic = Either(Int, None, default=None, desc='reference microphone index')
+    strength_type = Either('analytic', 'estimated', desc='source strength type')
+    grid = Instance(ac.Grid, desc='grid')
+
+    @staticmethod
+    def get_targetmap(sampler, data, grid, strength_callable, name):
+        loc = data['loc']
+        # check if data signature exists iwth inspect
+        sig = inspect.signature(strength_callable)
+        if 'data' in sig.parameters:
+            strength = list(strength_callable(sampler=None, data=data).values())[0]
+        else:
+            strength = list(strength_callable(sampler=None).values())[0]
+        # create target map
+        if type(grid) is ac.RectGrid:
+            loc = loc[:2]
+        elif type(grid) is ac.RectGrid3D:
+            loc = loc[:3]
+        else:
+            msg = f'Unknown grid type {type(grid)}.'
+            raise NotImplementedError(msg)
+            # other grid types in Acoular do not provide an index method!
+        target_map = np.zeros((strength.shape[0],) + grid.shape)
+        for j in range(loc.shape[1]):
+            index = grid.index(*loc[:, j])
+            target_map[(slice(None),) + index] += strength[:, j]
+        return {name: target_map}
+
+    def get_feature_func(self):
+        if self.strength_type == 'analytic':
+            strength_feature = AnalyticSourceStrengthFeature
+        else:
+            strength_feature = EstimatedSourceStrengthFeature
+        strength_callable = strength_feature(
+            freq_data=self.freq_data,
+            f=self.f,
+            num=self.num,
+        ).get_feature_func()
+        return partial(
+            self.get_targetmap,
+            grid=self.grid,
+            strength_callable=strength_callable,
+            name=self.name,
+        )
+
+
+class SourcemapFeature(Feature):
+    """Handle the generation of sourcemaps obtained with microphone array methods.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='sourcemap').
+    beamformer : instance of class acoular.BeamformerBase
+        The beamformer to calculate the sourcemap.
+    f : float
+        The center frequency or list of frequencies of the dataset.
+        If None, all frequencies are included.
+    num : integer
+        Controls the width of the frequency bands considered; defaults to
+        0 (single frequency line).
+
+        ===  =====================
+        num  frequency band width
+        ===  =====================
+        0    single frequency line
+        1    octave band
+        3    third-octave band
+        n    1/n-octave band
+        ===  =====================
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be
+        considered. Is determined automatically from attr:`f` and attr:`num`.
+    """
+
+    name = Str('sourcemap')
+    beamformer = Instance(ac.BeamformerBase, desc='beamformer')
+    f = Either(None, Float, List(Float), desc='frequency')
+    num = Int
+    fidx = Property(desc='frequency indices')
+
+    def _get_fidx(self):
+        """Return a list of tuples containing the frequency indices."""
+        if self.f is not None:
+            f = [self.f] if isinstance(self.f, float | int) else self.f
+            fidx = [get_frequency_index_range(self.beamformer.freq_data.fftfreq(), f_, self.num) for f_ in f]
+        else:
+            if self.num != 0:
+                msg = 'Frequencies "f" must be given if a fractional octave band is specified.'
+                raise ValueError(msg)
+            fidx = None
+        return fidx
+
+    def set_freq_limits(self):
+        """Set the beamformer frequency limits to calculate only the necessary frequencies."""
+        if self.beamformer.freq_data is not None:
+            if self.fidx is not None:
+                self.beamformer.freq_data.ind_low = min([f[0] for f in self.fidx])
+                self.beamformer.freq_data.ind_high = max([f[1] for f in self.fidx])
+            else:
+                self.beamformer.freq_data.ind_low = 0
+                self.beamformer.freq_data.ind_high = None
+
+    @staticmethod
+    def calc_beamformer1(sampler, beamformer, f, num, name):
+        sm = np.array([beamformer.synthetic(freq, num=num) for freq in f])
+        return {name: sm}
+
+    @staticmethod
+    def calc_beamformer2(sampler, beamformer, name):
+        f = beamformer.freq_data.fftfreq()
+        sm = np.array([beamformer.synthetic(freq, num=0) for freq in f])
+        return {name: sm}
+
+    def get_feature_func(self):
+        """Return the callable for calculating the sourcemap."""
+        self.set_freq_limits()
+        if self.f is not None:
+            f = [self.f] if isinstance(self.f, float | int) else self.f
+            return partial(self.calc_beamformer1, beamformer=self.beamformer, f=f, num=self.num, name=self.name)
+        return partial(self.calc_beamformer2, beamformer=self.beamformer, name=self.name)
+
+
+class SpectraFeature(Feature):
+    """Handles the calculation of features in the frequency domain.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature.
+    freq_data : instance of class acoular.BaseSpectra
+        The frequency data to calculate the feature for.
+    f : float
+        the frequency (or center frequency) of interest
+    num : int
+        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be considered.
+    """
+
+    freq_data = Instance(ac.BaseSpectra, desc='spectrogram')
+    f = Either(None, Float, List(Float), desc='frequency')
+    num = Int
+    fidx = Property(desc='frequency indices')
+
+    def _get_fidx(self):
+        if self.f is not None:
+            f = [self.f] if isinstance(self.f, float | int) else self.f
+            fidx = [get_frequency_index_range(self.freq_data.fftfreq(), f_, self.num) for f_ in f]
+        else:
+            if self.num != 0:
+                msg = 'Frequencies "f" must be given if a fractional octave band is specified.'
+                raise ValueError(msg)
+            fidx = None
+        return fidx
+
+    def set_freq_limits(self):
+        """Set the beamformer frequency limits to calculate only the necessary frequencies."""
+        if self.freq_data is not None:
+            if self.fidx is not None:
+                self.freq_data.ind_low = min([f[0] for f in self.fidx])
+                self.freq_data.ind_high = max([f[1] for f in self.fidx])
+            else:
+                self.freq_data.ind_low = 0
+                self.freq_data.ind_high = None
+
+
+class SpectrogramFeature(SpectraFeature):
+    """SpectrogramFeature class for handling spectrogram features.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='spectrogram').
+    freq_data : instance of class acoular.RFFT
+        The object which calculates the spectrogram data.
+    f : float
+        the frequency (or center frequency) of interest
+    num : int
+        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be considered.
+    """
+
+    name = Str('spectrogram')
+    freq_data = Instance(ac.RFFT, desc='spectrogram')
+
+    @staticmethod
+    def calc_spectrogram1(sampler, freq_data, name):
+        spectrogram = ac.tools.return_result(freq_data).reshape((-1, freq_data.num_freqs, freq_data.num_channels))
+        return {name: spectrogram}
+
+    @staticmethod
+    def calc_spectrogram2(sampler, freq_data, fidx, name):
+        spectrogram = ac.tools.return_result(freq_data).reshape((-1, freq_data.num_freqs, freq_data.num_channels))
+        spectrogram = np.array(
+            [spectrogram[:, indices[0] : indices[1]].sum(1) for indices in fidx],
+            dtype=complex,
+        ).swapaxes(0, 1)
+        return {name: spectrogram}
+
+    def get_feature_func(self):
+        if self.fidx is None:
+            return partial(self.calc_spectrogram1, freq_data=self.freq_data, name=self.name)
+        return partial(self.calc_spectrogram2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
+
+
+class CSMFeature(SpectraFeature):
+    """CSMFeature class for handling cross-spectral matrix calculation.
+
+    Attributes
+    ----------
+    name : str
+        Name of the feature (default='csm').
+    freq_data : instance of class acoular.PowerSpectra
+        The object which calculates the cross-spectral matrix.
+    f : float
+        the frequency (or center frequency) of interest
+    num : int
+        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+    fidx : list of tuples
+        List of tuples containing the start and end indices of the frequency bands to be considered.
+    """
+
+    name = Str('csm')
+    freq_data = Instance(ac.PowerSpectra, desc='cross spectral matrix')
+
+    @staticmethod
+    def calc_csm1(sampler, freq_data, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+
+        Returns
+        -------
+        numpy.array
+            The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+        """
+        return {name: freq_data.csm[:]}
+
+    @staticmethod
+    def calc_csm2(sampler, freq_data, fidx, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+        fidx : list of tuples, optional
+            list of tuples containing the start and end indices of the frequency bands to
+            be considered,
+            by default None
+
+
+        Returns
+        -------
+        numpy.array
+            The complex-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics)
+            with numfreq depending on the number of frequencies in fidx.
+        """
+        csm = freq_data.csm[:]
+        csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
+        return {name: csm}
+
+    def get_feature_func(self):
+        """Return the callable for calculating the cross-spectral matrix."""
+        self.set_freq_limits()
+        if self.fidx is None:
+            return partial(self.calc_csm1, freq_data=self.freq_data, name=self.name)
+        return partial(self.calc_csm2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
+
+
+class CSMtriuFeature(SpectraFeature):
+    name = Str('csmtriu')
+    freq_data = Instance(ac.PowerSpectra, desc='cross spectral matrix calculation class')
+
+    @staticmethod
+    def transform(csm):
+        csmtriu_real = np.zeros(csm.shape)
+        csm_triu_imag = np.zeros(csm.shape)
+        num_mics = csm.shape[1]
+        for i in range(csm.shape[0]):
+            csmtriu_real[i][np.triu_indices(num_mics)] = np.real(csm[i])[
+                np.triu_indices(num_mics)
+            ]  # add real part at upper triangular matrix
+            csm_triu_imag[i][np.triu_indices(num_mics)] = np.imag(csm[i])[np.triu_indices(num_mics)]
+        return csmtriu_real + csm_triu_imag.transpose(0, 2, 1)
+
+    @staticmethod
+    def calc_csmtriu1(sampler, freq_data, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+
+        Returns
+        -------
+        numpy.array
+            The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics).
+        """
+        return {name: CSMtriuFeature.transform(freq_data.csm[:])}
+
+    @staticmethod
+    def calc_csmtriu2(sampler, freq_data, fidx, name):
+        """Calculate the cross-spectral matrix (CSM) from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+        fidx : list of tuples, optional
+            list of tuples containing the start and end indices of the frequency bands to
+            be considered,
+            by default None
+
+
+        Returns
+        -------
+        numpy.array
+            The real-valued cross-spectral matrix with shape (numfreq, num_mics, num_mics)
+            with numfreq depending on the number of frequencies in fidx.
+        """
+        csm = freq_data.csm[:]
+        csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
+        return {name: CSMtriuFeature.transform(csm)}
+
+    def get_feature_func(self):
+        self.set_freq_limits()
+        if self.fidx is None:
+            return partial(self.calc_csmtriu1, freq_data=self.freq_data, name=self.name)
+        return partial(self.calc_csmtriu2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
+
+
+class EigmodeFeature(SpectraFeature):
+    name = Str('eigmode')
+    freq_data = Instance(ac.PowerSpectra, desc='cross spectral matrix calculation class')
+
+    @staticmethod
+    def transform(csm):
+        eva, eve = eigh(csm)
+        return eva[:, np.newaxis, :] * eve[:]
+
+    @staticmethod
+    def calc_eigmode1(sampler, freq_data, name):
+        """Calculate eigenvalue-scaled eigenvectors of the CSM from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+
+        Returns
+        -------
+        numpy.array
+            The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics).
+        """
+        return {name: EigmodeFeature.transform(freq_data.csm[:])}
+
+    @staticmethod
+    def calc_eigmode2(sampler, freq_data, fidx, name):
+        """Calculate eigenvalue-scaled eigenvectors of the CSM from time data.
+
+        Parameters
+        ----------
+        freq_data : instance of class acoular.PowerSpectra
+            power spectra to calculate the csm feature
+        fidx : list of tuples, optional
+            list of tuples containing the start and end indices of the frequency bands to
+            be considered,
+            by default None
+
+
+        Returns
+        -------
+        numpy.array
+            The eigenvalue scaled eigenvectors with shape (numfreq, num_mics, num_mics) with numfreq
+            depending on the number of frequencies in fidx.
+        """
+        csm = freq_data.csm[:]
+        csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
+        return {name: EigmodeFeature.transform(csm)}
+
+    def get_feature_func(self):
+        self.set_freq_limits()
+        if self.fidx is None:
+            return partial(self.calc_eigmode1, freq_data=self.freq_data, name=self.name)
+        return partial(self.calc_eigmode2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
+
+
+class LocFeature(Feature):
+    name = Str('loc')
+
+    def get_feature_func(self):
+        def get_loc(sampler, data, name):
+            return {name: data['loc']}
+
+        return partial(get_loc, name=self.name)
+
+
+class AnalyticSourceStrengthFeature(SpectraFeature):
+    name = Str('source_strength_analytic')
+
+    @staticmethod
+    def calc_source_strength_analytic(sampler, data, freq_data, fidx, name):
+        nfft = freq_data.fftfreq().shape[0]
+        strength = np.tile(data['prms_sq'] / nfft, (nfft, 1))
+        if data.get('h_sq') is not None:
+            strength *= data['h_sq']
+        if fidx is None:
+            return {name: strength}
+        return {name: np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])}
+
+    def get_feature_func(self):
+        return partial(
+            self.calc_source_strength_analytic,
+            freq_data=self.freq_data,
+            fidx=self.fidx,
+            name=self.name,
+        )
+
+
+class EstimatedSourceStrengthFeature(SpectraFeature):
+    name = Str('source_strength_estimated')
+    ref_mic = Either(Int, None, default=None, desc='reference microphone index')
+
+    @staticmethod
+    def calc_source_strength_estimated(sampler, freq_data, fidx, name):
+        init_source = freq_data.source
+        sources = get_point_sources_recursively(init_source)
+        nfft = freq_data.fftfreq().shape[0]
+
+        if fidx is None:
+            strength = np.zeros((nfft, len(sources)))
+            for j, src in enumerate(sources):
+                freq_data.source = src
+                strength[:, j] = np.real(freq_data.csm[:, 0, 0])
+        else:
+            strength = np.zeros((len(fidx), len(sources)))
+            for j, src in enumerate(sources):
+                freq_data.source = src
+                csm = freq_data.csm[:]
+                strength[:, j] = np.real(
+                    np.array([csm[indices[0] : indices[1]].sum(0).diagonal() for indices in fidx], dtype=complex),
+                ).reshape((-1,))
+        freq_data.source = init_source  # reset source in case of subsequent feature calculation
+        return {name: strength}
+
+    def get_feature_func(self):
+        _raise_if_analytic_spectra(self.freq_data, self.name)
+        self.set_freq_limits()
+        return partial(
+            self.calc_source_strength_estimated,
+            freq_data=self.freq_data,
+            fidx=self.fidx,
+            name=self.name,
+        )
+
+
+class AnalyticNoiseStrengthFeature(SpectraFeature):
+    name = Str('noise_strength_analytic')
+    cross_strength = Enum(False)  # can later be extended for cross-power values
+    freq_data = Instance(ac.BaseSpectra, desc='cross spectral matrix calculation class')
+
+    @staticmethod
+    def calc_noise_strength_analytic1_fullfreq(sampler, freq_data, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        nfft = freq_data.fftfreq().shape[0]
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((freq_data.fftfreq().shape[0], num_mics))}
+        if len(sources) == 1:
+            source = sources[0]
+            mdim = source.mics.num_mics
+            if isinstance(source.signal, ac.WNoiseGenerator):
+                strength = np.ones((nfft, mdim)) * (source.signal.rms**2 / nfft)
+            else:
+                msg = f'Cannot handle source signal type {source.signal.__class__.__name__}.'
+                raise NotImplementedError(msg)
+        else:
+            msg = 'Only one uncorrelated noise source is supported.'
+            raise ValueError(msg)
+        return {name: strength}
+
+    @staticmethod
+    def calc_noise_strength_analytic1_partfreq(sampler, freq_data, fidx, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((len(fidx), num_mics))}
+        if len(sources) == 1:
+            nfft = freq_data.fftfreq().shape[0]
+            source = sources[0]
+            mdim = source.mics.num_mics
+            if isinstance(source.signal, ac.WNoiseGenerator):
+                strength = np.ones((nfft, mdim)) * (source.signal.rms**2 / nfft)
+            else:
+                msg = f'Cannot handle source signal type {source.signal.__class__.__name__}.'
+                raise NotImplementedError(msg)
+        else:
+            msg = 'Only one uncorrelated noise source is supported.'
+            raise ValueError(msg)
+        return {name: np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])}
+
+    @staticmethod
+    def calc_noise_strength_analytic2_fullfreq(sampler, freq_data, name):
+        if freq_data.noise is None:
+            return {name: np.zeros((freq_data.fftfreq().shape[0], freq_data.steer.mics.num_mics))}
+        freqs = freq_data.fftfreq()
+        strength = np.stack([freq_data.noise[i].diagonal() for i in range(freqs.shape[0])], axis=0)
+        return {name: np.real(strength)}
+
+    @staticmethod
+    def calc_noise_strength_analytic2_partfreq(sampler, freq_data, fidx, name):
+        if freq_data.noise is None:
+            return {name: np.zeros((len(fidx), freq_data.steer.mics.num_mics))}
+        strength = np.array(
+            [freq_data.noise[indices[0] : indices[1]].sum(0).diagonal() for indices in fidx],
+            dtype=complex,
+        )
+        return {name: np.real(strength)}
+
+    def get_feature_func(self):
+        if isinstance(self.freq_data, PowerSpectraAnalytic):
+            self.set_freq_limits()
+            if self.fidx is None:
+                return partial(self.calc_noise_strength_analytic2_fullfreq, freq_data=self.freq_data, name=self.name)
+            return partial(
+                self.calc_noise_strength_analytic2_partfreq,
+                freq_data=self.freq_data,
+                fidx=self.fidx,
+                name=self.name,
+            )
+
+        if isinstance(self.freq_data, ac.BaseSpectra):
+            if self.fidx is None:
+                return partial(self.calc_noise_strength_analytic1_fullfreq, freq_data=self.freq_data, name=self.name)
+            return partial(
+                self.calc_noise_strength_analytic1_partfreq,
+                freq_data=self.freq_data,
+                fidx=self.fidx,
+                name=self.name,
+            )
+        msg = f'No feature function with freq_data type {self.freq_data.__class__.__name__}.'
+        raise NotImplementedError(msg)
+
+
+class EstimatedNoiseStrengthFeature(SpectraFeature):
+    name = Str('noise_strength_estimated')
+
+    @staticmethod
+    def calc_noise_strength_estimated1_fullfreq(sampler, freq_data, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((freq_data.fftfreq().shape[0], num_mics))}
+        if len(sources) == 1:
+            freq_data.source = sources[0]
+            strength = ac.tools.return_result(source=ac.AutoPowerSpectra(source=freq_data)).mean(0)
+            return {name: strength.reshape(freq_data.num_freqs, freq_data.num_channels)}
+        msg = 'Only one uncorrelated noise source is supported.'
+        raise ValueError(msg)
+
+    @staticmethod
+    def calc_noise_strength_estimated1_partfreq(sampler, freq_data, fidx, name):
+        sources = get_uncorrelated_noise_source_recursively(freq_data.source)
+        if len(sources) == 0:
+            num_mics = get_point_sources_recursively(freq_data.source)[0].mics.num_mics
+            return {name: np.zeros((len(fidx), num_mics))}
+        if len(sources) == 1:
+            freq_data.source = sources[0]
+            strength = ac.tools.return_result(source=ac.AutoPowerSpectra(source=freq_data)).mean(0)
+            strength = strength.reshape(freq_data.num_freqs, freq_data.num_channels)
+            strength = np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])
+            return {name: strength}
+        msg = 'Only one uncorrelated noise source is supported.'
+        raise ValueError(msg)
+
+    def get_feature_func(self):
+        _raise_if_analytic_spectra(self.freq_data, self.name)
+        if isinstance(self.freq_data, ac.RFFT):
+            if self.fidx is None:
+                return partial(self.calc_noise_strength_estimated1_fullfreq, freq_data=self.freq_data, name=self.name)
+            return partial(
+                self.calc_noise_strength_estimated1_partfreq,
+                freq_data=self.freq_data,
+                fidx=self.fidx,
+                name=self.name,
+            )
+        msg = f'Unsupported freq_data type {self.freq_data.__class__}.'
+        raise NotImplementedError(msg)
+
+
+def combine_feature_funcs(feature_funcs):
+    """
+    Combine feature functions into a single callable.
+
+    The returned callable calls the feature functions in the given order and merges
+    their outputs into one dictionary. Feature functions that accept a ``data``
+    parameter receive the dictionary of all previously calculated outputs.
+
+    Parameters
+    ----------
+    feature_funcs : list of callable
+        Feature functions. Each function takes a ``sampler`` and optionally ``data``
+        as keyword arguments and returns a dictionary of feature names and values.
+
+    Returns
+    -------
+    callable
+        Function with signature ``f(sampler) -> dict`` that calculates all features.
+    """
+
+    def calc_features(sampler, feature_funcs):
+        data = {}
+        for ffunc in feature_funcs:
+            # Check if ffunc accepts a 'data' parameter
+            sig = inspect.signature(ffunc)
+            if 'data' in sig.parameters:
+                data.update(ffunc(sampler=sampler, data=data))
+            else:
+                data.update(ffunc(sampler=sampler))
+        return data
+
+    return partial(calc_features, feature_funcs=feature_funcs)
+
+
+def get_tf_mappers(feature_objects):
+    """
+    Get the TensorFlow encoders, shapes and dtypes of features.
+
+    The feature ``idx``, which is added to each sample by the pipeline, is always included
+    first, followed by the given features in list order. Requires TensorFlow, since the
+    encodings are inferred with :func:`~acoupipe.tf.encodings.infer_tf_encoding`.
+
+    Parameters
+    ----------
+    feature_objects : list of Feature
+        Feature objects providing ``name``, ``dtype`` and ``shape``.
+
+    Returns
+    -------
+    encoders : dict
+        Feature names mapped to the encoder functions used for TFRecord files.
+    shapes : dict
+        Feature names mapped to the TensorFlow shapes.
+    dtypes : dict
+        Feature names mapped to the TensorFlow dtypes.
+    """
+    from acoupipe.tf.encodings import infer_tf_encoding  # noqa: PLC0415
+
+    encoders, shapes, dtypes = {}, {}, {}
+    specs = [('idx', np.int32, ())]
+    specs += [(feature.name, feature.dtype, feature.shape) for feature in feature_objects]
+    for name, dtype, shape in specs:
+        encoders[name], dtypes[name], shapes[name] = infer_tf_encoding(dtype, shape)
+    return encoders, shapes, dtypes
+
+
+def remove_unrequested(sampler, data, keep):  # noqa: ARG001
+    """
+    Remove all outputs from a sample dictionary that were not requested.
+
+    Used as the last function of a combined feature function (see
+    :func:`combine_feature_funcs`) to remove auxiliary outputs, e.g. of the prepare
+    function. The dictionary is modified in-place, since `combine_feature_funcs`
+    merges the returned dictionary into ``data``.
+    The key ``idx`` is added afterwards by the pipeline and is not affected.
+
+    Parameters
+    ----------
+    sampler : dict
+        Sampler objects of the pipeline (unused).
+    data : dict
+        Outputs of all previously called feature functions.
+    keep : list of str
+        Names of the outputs to keep.
+
+    Returns
+    -------
+    dict
+        The modified ``data`` dictionary.
+    """
+    for key in [key for key in data if key not in keep]:
+        del data[key]
+    return data
+
+
+def create_feature(feature_func, name, shape, dtype):
+    class _CustomFeature(Feature):
+        def get_feature_func(self):
+            return feature_func
+
+    return _CustomFeature(name=name, shape=shape, dtype=dtype)

@@ -92,7 +92,8 @@ loader_rms = LoadH5Dataset(name='rms_' + DATASET_NAME)
 # %% Alternatively one can write the data to a TFRecord file
 
 try:
-    from acoupipe.writer import WriteTFRecord, float_feature, float_list_feature
+    from acoupipe.tf.encodings import float_list_feature
+    from acoupipe.tf.writer import WriteTFRecord
 except ImportError:
     sys.exit()
 
@@ -105,7 +106,9 @@ writer_sourcemap = WriteTFRecord(
     encoder_funcs={'sourcemap': float_list_feature},
 )
 
-writer_rms = WriteTFRecord(source=writer_sourcemap, name='rms_' + DATASET_NAME, encoder_funcs={'rms_': float_feature})
+writer_rms = WriteTFRecord(
+    source=writer_sourcemap, name='rms_' + DATASET_NAME, encoder_funcs={'rms_': float_list_feature}
+)
 
 writer_rms.save()
 

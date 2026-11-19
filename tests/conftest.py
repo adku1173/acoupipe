@@ -1,11 +1,17 @@
 import os
+
+# Under `uv run`, Ray would start the workers in a copy of the project with a separately built
+# environment and an empty numba cache, which concurrently starting workers corrupt. The workers
+# must use the test environment instead. Ray reads this variable when it is imported.
+os.environ['RAY_ENABLE_UV_RUN_RUNTIME_ENV'] = '0'
+
 import shutil
 import tempfile
 from pathlib import Path
 
 from acoular import ImportGrid, SteeringVector
-from acoupipe.datasets.experimental import DatasetMIRACLE
-from acoupipe.datasets.spectra_analytic import PowerSpectraAnalytic
+from acoupipe.datasets import DatasetMIRACLE
+from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.synthetic import DatasetSynthetic
 from acoupipe.sampler import ContainerSampler, LocationSampler, NumericAttributeSampler
 from acoupipe.writer import WriteH5Dataset
@@ -124,22 +130,14 @@ def container_sampler():
 
 @pytest.fixture
 def base_pipeline():
-    size = 1
-    pipeline = get_pipeline(size)
-    test_seeds = {1: range(1, 1 + size), 2: range(2, 2 + size), 3: range(3, 3 + size), 4: range(4, 4 + size)}
-    return pipeline, test_seeds
+    return get_pipeline(1)
 
 
 @pytest.fixture
 def h5_test_file():
     """Create and clean up a temporary HDF5 test file."""
     pipeline = get_pipeline(5)
-    pipeline.random_seeds = {
-        1: range(1, 6),
-        2: range(2, 7),
-        3: range(3, 8),
-        4: range(4, 9),
-    }
+    pipeline.seed = (1,)
     temp_dir = tempfile.mkdtemp()
     file_path = os.path.join(temp_dir, 'test_data.h5')
     writer = WriteH5Dataset(source=pipeline, name=file_path)

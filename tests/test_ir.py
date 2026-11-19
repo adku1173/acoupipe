@@ -1,6 +1,6 @@
 import importlib
 
-from acoupipe.datasets import ir
+from acoupipe.datasets.ism import ir
 
 import pytest
 
