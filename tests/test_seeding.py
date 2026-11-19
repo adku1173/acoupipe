@@ -2,7 +2,7 @@
 
 from acoupipe.datasets import Config, Dataset
 from acoupipe.datasets.base.parameters import ParameterSet
-from acoupipe.datasets.synthetic import DatasetSyntheticConfig
+from acoupipe.datasets.synthetic import DatasetSynthetic, DatasetSyntheticConfig
 
 import pytest
 from scipy.stats import norm
@@ -52,6 +52,13 @@ def test_parameter_path_can_be_sampled_once():
     """A parameter path identifies the random stream of its sampler and must therefore be unique."""
     with pytest.raises(ValueError, match='already sampled'):
         create_config(['a', 'a'])
+
+
+def test_synthetic_dataset_accepts_seed_and_samples_per_task():
+    """Configure the dataset seed and remote batch size at construction."""
+    dataset = DatasetSynthetic(tasks=2, seed=7, samples_per_task=3)
+    assert dataset.seed == 7
+    assert dataset.samples_per_task == 3
 
 
 def test_legacy_config_samples_in_key_order():

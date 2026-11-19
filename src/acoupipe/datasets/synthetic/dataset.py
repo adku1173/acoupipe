@@ -97,6 +97,9 @@ class DatasetSynthetic(DatasetBase):
         remote_args=None,
         logger=None,
         config=None,
+        *,
+        samples_per_task=16,
+        seed=0,
     ):
         """Initialize the DatasetSynthetic object.
 
@@ -136,6 +139,10 @@ class DatasetSynthetic(DatasetBase):
         config : DatasetSyntheticConfig
             Configuration object. Defaults to None. If None, a default configuration
             object is created.
+        samples_per_task : int
+            Maximum number of samples calculated per remote call. Defaults to 16.
+        seed : int
+            Non-negative dataset seed. Defaults to 0.
         """
         if config is None:
             config = DatasetSyntheticConfig(
@@ -149,7 +156,14 @@ class DatasetSynthetic(DatasetBase):
                 snap_to_grid=snap_to_grid,
                 random_signal_length=random_signal_length,
             )
-        super().__init__(config=config, tasks=tasks, logger=logger, remote_args=remote_args)
+        super().__init__(
+            config=config,
+            tasks=tasks,
+            logger=logger,
+            remote_args=remote_args,
+            samples_per_task=samples_per_task,
+            seed=seed,
+        )
 
 
 __all__ = ['DatasetSynthetic']

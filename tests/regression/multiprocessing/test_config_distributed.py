@@ -25,10 +25,10 @@ def create_config():
     return config
 
 
-def generate(tasks, size=4, samples_per_task=16):
+def generate(tasks, size=4, samples_per_task=16, start_idx=0):
     """Generate samples with the given number of tasks, keyed by sample index."""
-    dataset = Dataset(config=create_config(), tasks=tasks, samples_per_task=samples_per_task)
-    samples = dataset.generate(features=FEATURES, size=size, progress_bar=False)
+    dataset = Dataset(config=create_config(), tasks=tasks, samples_per_task=samples_per_task, seed=7)
+    samples = dataset.generate(features=FEATURES, size=size, start_idx=start_idx, progress_bar=False)
     return {sample['idx']: sample for sample in samples}
 
 
@@ -45,10 +45,10 @@ def test_distributed_samples_reach_parameter_outputs_features_and_prepare_callba
 
 @pytest.mark.parametrize('samples_per_task', [1, 3])
 def test_samples_per_task_matches_sequential_generation(samples_per_task):
-    """Tasks with several samples, including shorter final tasks, reproduce sequential samples."""
-    sequential = generate(tasks=1, size=7)
-    distributed = generate(tasks=2, size=7, samples_per_task=samples_per_task)
-    assert distributed.keys() == sequential.keys()
-    for idx, expected in sequential.items():
+    """A parallel subrange reproduces the same indices and values as a full sequential run."""
+    sequential = generate(tasks=1, size=12)
+    distributed = generate(tasks=2, size=7, samples_per_task=samples_per_task, start_idx=5)
+    assert distributed.keys() == set(range(5, 12))
+    for idx, sample in distributed.items():
         for name in FEATURES:
-            assert np.array_equal(distributed[idx][name], expected[name])
+            assert np.array_equal(sample[name], sequential[idx][name])

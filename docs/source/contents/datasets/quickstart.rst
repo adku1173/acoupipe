@@ -102,8 +102,7 @@ tasks and of :code:`start_idx`. A single sample can be regenerated with
 
 .. code-block:: python
 
-    dataset = DatasetSynthetic()
-    dataset.seed = 1  # an independent realization of all splits
+    dataset = DatasetSynthetic(seed=1)  # an independent realization of all splits
 
 Different split names (e.g. :code:`'training'`, :code:`'validation'`, :code:`'test'` or custom names) and
 different seeds yield statistically independent samples. Each sampler draws from its own random stream, so
@@ -121,8 +120,7 @@ scheduling overhead for samples that are fast to compute. The sample order is no
 
 .. code-block:: python
 
-    dataset = DatasetSynthetic(tasks=8)
-    dataset.samples_per_task = 16
+    dataset = DatasetSynthetic(tasks=8, samples_per_task=16)
 
 .. warning::
 
