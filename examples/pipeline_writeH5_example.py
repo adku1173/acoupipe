@@ -92,7 +92,7 @@ loader_rms = LoadH5Dataset(name='rms_' + DATASET_NAME)
 # %% Alternatively one can write the data to a TFRecord file
 
 try:
-    from acoupipe.writer import WriteTFRecord, float_list_feature
+    from acoupipe.tfrecord import WriteTFRecord, float_list_feature
 except ImportError:
     sys.exit()
 

@@ -532,7 +532,7 @@ class DatasetDummy(DatasetBase):
             raise ImportError(msg)
 
         from acoupipe.datasets.features import get_tf_mappers
-        from acoupipe.writer import WriteTFRecord
+        from acoupipe.tfrecord import WriteTFRecord
 
         # Get the TF encoder and shape mappings of the features
         _, feature_objects = self.get_features(features, f, num)
