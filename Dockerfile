@@ -6,9 +6,6 @@ FROM tensorflow/tensorflow:latest-gpu-jupyter AS jupyter-gpu
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 ENV PIP_ROOT_USER_ACTION=ignore
 
-# custom acoular version
-RUN pip install acoular>=24.03
-
 # copy needed scripts to workingdir
 COPY . /tmp/acoupipe
 RUN cd /tmp/acoupipe
@@ -25,6 +22,9 @@ FROM python:3.11 AS base
 # root priviliges
 ENV NUMBA_CACHE_DIR=/tmp/numba_cache
 ENV PIP_ROOT_USER_ACTION=ignore
+# users without root privileges (docker run --user) have no writable home directory,
+# which is required by Ray
+ENV HOME=/tmp
 
 # set the working directory in the container
 WORKDIR /src
@@ -39,8 +39,6 @@ RUN bash -c 'echo "$(pip --version)"'
 #RUN git clone https://kujawski:${TOKEN}@git.tu-berlin.de/acoular-dev/kujawski/acoular.git /tmp/acoular
 #RUN pip install /tmp/acoular
 #RUN rm -r /tmp/acoular
-
-RUN pip install acoular>=24.03
 
 # copy needed scripts to workingdir
 COPY . /tmp/acoupipe
