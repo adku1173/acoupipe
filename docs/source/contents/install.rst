@@ -158,10 +158,13 @@ If  Docker_ is allready installed, simply pull the latest image with the command
     $ docker pull adku1173/acoupipe:latest-full
 
 
+.. _known-issues:
+
 Known Issues
 ------------
 
 **Parallel generation with** ``uv run``: for ``tasks > 1``, Ray starts the workers with the same ``uv run``
 command in a copy of the working directory. With ``--no-sync``, worker startup fails; otherwise, the workers
-use a separately built environment. Run the script with the environment's Python or set
+build a separate environment with an empty Numba cache, into which they compile concurrently and may crash
+(``LLVM ERROR: Symbol not found``). Run the script with the environment's Python or set
 ``RAY_ENABLE_UV_RUN_RUNTIME_ENV=0``.

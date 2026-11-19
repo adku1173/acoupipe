@@ -1,19 +1,12 @@
+import logging
 from functools import wraps
 from time import time
+from warnings import warn
 
 import acoular as ac
-from acoupipe.config import TF_FLAG
-from acoupipe.writer import WriteH5Dataset
 
 import numpy as np
 import scipy.signal
-
-if TF_FLAG:
-    from acoupipe.writer import WriteTFRecord
-import logging
-from datetime import datetime
-from os.path import join
-from warnings import warn
 
 
 def calc_transfer(ir, fs, blocksize, fftfreq, time_axis=-1):
@@ -305,29 +298,6 @@ def set_pipeline_seeds(pipeline, start_idx, size, dataset='training'):
     pipeline.random_seeds = {
         i: range(off + (i * soff) + start_idx, off + (i * soff) + size + start_idx) for i in sampler_keys
     }
-
-
-def set_filename(writer, path='.', *args):
-    """Set the filename of the dataset.
-
-    Parameters
-    ----------
-    writer : instance of class BaseWriteDataset
-        the writer object holding the filename
-    path : str, optional
-        the path to the dataset, current directory by default
-    *args : str
-        concatenated strings to be used as the filename
-    """
-    name = f'{args[0]}'
-    for arg in args[1:]:
-        name += f'_{arg}'
-    name += f'_{datetime.now().strftime("%d-%b-%Y")}'  # noqa: DTZ005
-    if isinstance(writer, WriteH5Dataset):
-        name += '.h5'
-    if TF_FLAG and isinstance(writer, WriteTFRecord):
-        name += '.tfrecord'
-    writer.name = join(path, name)
 
 
 def complex_to_real(func):

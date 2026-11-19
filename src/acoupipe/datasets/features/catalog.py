@@ -1,7 +1,8 @@
+import inspect
+import warnings
 from functools import partial
 
 import acoular as ac
-from acoupipe.config import TF_FLAG
 from acoupipe.datasets._shared.utils import (
     get_frequency_index_range,
     get_point_sources_recursively,
@@ -12,11 +13,6 @@ from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 import numpy as np
 from numpy.linalg import eigh
 from traits.api import Callable, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
-
-if TF_FLAG:
-    from acoupipe.writer import infer_tf_encoding
-import inspect
-import warnings
 
 
 class Feature(HasPrivateTraits):
@@ -732,8 +728,8 @@ def get_tf_mappers(feature_objects):
 
     The features ``idx`` and ``seeds``, which are added to each sample by the
     pipeline, are always included first, followed by the given features in list
-    order. Requires TensorFlow, since the encodings are inferred with ``infer_tf_encoding``.
-    (see TF_FLAG).
+    order. Requires TensorFlow, since the encodings are inferred with
+    :func:`~acoupipe.tf.encodings.infer_tf_encoding`.
 
     Parameters
     ----------
@@ -749,6 +745,8 @@ def get_tf_mappers(feature_objects):
     dtypes : dict
         Feature names mapped to the TensorFlow dtypes.
     """
+    from acoupipe.tf.encodings import infer_tf_encoding  # noqa: PLC0415
+
     encoders, shapes, dtypes = {}, {}, {}
     specs = [('idx', np.int32, ()), ('seeds', np.int32, (None, 2))]
     specs += [(feature.name, feature.dtype, feature.shape) for feature in feature_objects]

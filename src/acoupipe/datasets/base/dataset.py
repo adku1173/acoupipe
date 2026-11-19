@@ -3,7 +3,6 @@
 import logging
 from functools import partial
 
-from acoupipe.config import TF_FLAG
 from acoupipe.datasets._shared.utils import set_pipeline_seeds
 from acoupipe.datasets.base.legacy_config import ConfigBase
 from acoupipe.datasets.features import Feature, combine_feature_funcs, get_tf_mappers, remove_unrequested
@@ -11,11 +10,6 @@ from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
 
 from traits.api import Any, Dict, HasPrivateTraits, Instance, Int, Property
-
-if TF_FLAG:
-    from acoupipe.writer import WriteTFRecord, complex_list_feature
-
-    import tensorflow as tf
 
 
 class DatasetBase(HasPrivateTraits):
@@ -293,12 +287,6 @@ class DatasetBase(HasPrivateTraits):
             source=pipeline,
         ).save(progress_bar, start_idx)  # start the calculation
 
-
-if TF_FLAG:
-    from acoupipe.writer import WriteTFRecord, complex_list_feature
-
-    import tensorflow as tf
-
     def save_tfrecord(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Save dataset to a .tfrecord file.
 
@@ -353,6 +341,8 @@ if TF_FLAG:
                 f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
             )
         """
+        from acoupipe.tf.writer import WriteTFRecord  # noqa: PLC0415
+
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
@@ -375,8 +365,6 @@ if TF_FLAG:
             progress_bar,
             start_idx,
         )
-
-    DatasetBase.save_tfrecord = save_tfrecord
 
     def get_output_signature(self, features, f=None, num=0):
         """Get the output signature of the dataset.
@@ -405,14 +393,14 @@ if TF_FLAG:
         dict
             Output signature of the dataset.
         """
+        import tensorflow as tf  # noqa: PLC0415
+
         signature = {}
         _, feature_objects = self.get_features(features, f, num)
         _, shapes, dtypes = get_tf_mappers(feature_objects)
         for feature in features:
             signature[feature] = tf.TensorSpec(shapes[feature], dtypes[feature])
         return signature
-
-    DatasetBase.get_output_signature = get_output_signature
 
     def get_tf_dataset(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=False):
         """Get a TensorFlow dataset from the generated data.
@@ -450,6 +438,8 @@ if TF_FLAG:
             TensorFlow dataset containing the generated data. The dataset elements have the structure defined
             by the output_signature, which is based on the shapes of dataset features.
         """
+        import tensorflow as tf  # noqa: PLC0415
+
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
@@ -461,8 +451,6 @@ if TF_FLAG:
             partial(self._generate, pipeline=pipeline, start_idx=start_idx, progress_bar=progress_bar),
             output_signature=output_signature,
         )
-
-    DatasetBase.get_tf_dataset = get_tf_dataset
 
     def get_tfrecord_parser(self, features, f, num):
         """Get a parser function for a TFRecord dataset.
@@ -521,6 +509,10 @@ if TF_FLAG:
             data = next(dataset)
 
         """
+        from acoupipe.tf.encodings import complex_list_feature  # noqa: PLC0415
+
+        import tensorflow as tf  # noqa: PLC0415
+
         _, feature_objects = self.get_features(features, f, num)
         encoders, shapes, dtypes = get_tf_mappers(feature_objects)
         features = features + ['idx', 'seeds']
@@ -569,5 +561,3 @@ if TF_FLAG:
             return data
 
         return _parse_function
-
-    DatasetBase.get_tfrecord_parser = get_tfrecord_parser
