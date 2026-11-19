@@ -1,3 +1,5 @@
+.. _hpc-singularity:
+
 Simulation with Singularity on a High-Performance Cluster (HPC)
 ---------------------------------------------------------------
 
@@ -33,6 +35,11 @@ be scheduled with the SLURM_ job manager and by using a Singularity_ image.
 
     IMGNAME=<path to your image>/acoupipe.sif
 
+    # compile the Numba functions of Acoular once per node into a node-local cache
+    # before any Ray worker starts (the AcouPipe images already set this directory)
+    export NUMBA_CACHE_DIR=/tmp/numba_cache
+    srun --nodes=${SLURM_JOB_NUM_NODES} --ntasks-per-node=1 singularity exec -B $(pwd) $IMGNAME python -c "import acoular"
+
     let "worker_num=(${SLURM_NTASKS}-1)" # The variable $SLURM_NTASKS gives the total number of cores requested in a job. (tasks-per-node * nodes)
     let "cpu_num=(${SLURM_NTASKS})"
     echo "Number of workers" $worker_num
@@ -59,3 +66,11 @@ be scheduled with the SLURM_ job manager and by using a Singularity_ image.
     sleep 10
 
     singularity exec -B $(pwd) $IMGNAME python -u $(pwd)/main.py --head=${ip_head} --task_list ${total_cores}
+
+.. warning::
+
+    Ray starts several workers per node at the same time. If they compile Acoular's Numba functions
+    into an empty cache concurrently, the cache can become inconsistent and the workers crash with
+    :code:`LLVM ERROR: Symbol not found`. Therefore, the job script fills the cache on every node
+    before starting Ray. Use a node-local :code:`NUMBA_CACHE_DIR` rather than a directory on a
+    shared file system, which all nodes would write to at the same time.

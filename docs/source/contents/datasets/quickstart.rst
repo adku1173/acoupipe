@@ -112,4 +112,13 @@ scheduling overhead for samples that are fast to compute. The sample order is no
     environment before starting Python or the Ray cluster (:code:`ray start`). Otherwise, every worker
     starts as many threads as there are CPU cores, and the workers slow each other down severely.
 
+.. warning::
+
+    Acoular compiles its Numba functions when it is imported and caches them on disk. If several
+    workers compile into an empty cache at the same time, the cache can become inconsistent and the
+    workers crash with :code:`LLVM ERROR: Symbol not found`. On a single machine, the main process
+    fills the cache before the workers start, as long as the workers use the same Python environment
+    (see :ref:`known-issues` for :code:`uv run`). On clusters, fill a node-local cache on every node
+    before starting the Ray workers, see :ref:`hpc-singularity`.
+
 A more in-depth example on how to generate the data, and how to create a TensorFlow-ready pipeline that produces data on the fly can be found in the :ref:`Model training with training data generated on the fly <Examples>` example.
