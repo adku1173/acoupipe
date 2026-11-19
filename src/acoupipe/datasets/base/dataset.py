@@ -252,6 +252,57 @@ class DatasetBase(HasPrivateTraits):
         _set_pipeline_seed(pipeline, size, split, self.seed)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
+    def get_ray_dataset(self, features, size, split='training', f=None, num=0, start_idx=0):
+        """Return the dataset samples as a lazy :class:`ray.data.Dataset`.
+
+        The samples are calculated by :attr:`tasks` Ray Data actors, each calculating up to
+        :attr:`samples_per_task` samples per call. The dataset can be consumed directly, e.g. with
+        ``iter_torch_batches()``, or written to file formats supported by Ray Data. Complex
+        features are stored as two real columns ``<name>_real`` and ``<name>_imag``. Requires
+        Ray Data (``ray[data]``).
+
+        Parameters
+        ----------
+        features : list
+            List of features included in the dataset. The feature "idx" is always included.
+        size : int
+            Size of the dataset (number of source cases).
+        split : str
+            Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
+        f : float
+            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
+        num : integer
+            Controls the width of the frequency bands considered; defaults to
+            0 (single frequency line), see :meth:`generate`.
+        start_idx : int, optional
+            Starting sample index (default is 0).
+
+        Returns
+        -------
+        ray.data.Dataset
+            Dataset with one row per sample and the features and "idx" as columns.
+
+        Examples
+        --------
+        Write CSMs to Parquet files (example requires a dataset configuration).
+
+        .. code-block:: python
+
+            from acoupipe.datasets.synthetic import DatasetSynthetic
+
+            dataset = DatasetSynthetic(tasks=4).get_ray_dataset(features=['csm'], f=1000, size=100)
+            dataset.write_parquet('/tmp/csm')  # columns csm_real, csm_imag, idx
+        """
+        from acoupipe.raydata.pipeline import RayDataPipeline  # noqa: PLC0415
+
+        pipeline = RayDataPipeline(
+            numworkers=self.tasks, samples_per_task=self.samples_per_task, remote_args=self.remote_args
+        )
+        pipeline.sampler = self.config.get_sampler()
+        pipeline.feature_func, _ = self.get_features(features, f, num)
+        _set_pipeline_seed(pipeline, size, split, self.seed)
+        return pipeline.get_dataset(start_idx=start_idx)
+
     def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
         """Save dataset to a HDF5 file.
 

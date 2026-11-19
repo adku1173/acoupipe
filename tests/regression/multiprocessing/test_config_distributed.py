@@ -52,3 +52,25 @@ def test_samples_per_task_matches_sequential_generation(samples_per_task):
     for idx, sample in distributed.items():
         for name in FEATURES:
             assert np.array_equal(sample[name], sequential[idx][name])
+
+
+def test_ray_dataset_matches_sequential_generation():
+    """Ray Data actors reproduce the sequential samples and split complex features."""
+    features = [*FEATURES, 'phasor']
+
+    def create_dataset(**kwargs):
+        config = create_config()
+        config.feature('phasor', lambda parameters: np.exp(1j * parameters.c))
+        return Dataset(config=config, seed=7, **kwargs)
+
+    sequential = create_dataset().generate(features=features, size=7, progress_bar=False)
+    sequential = {sample['idx']: sample for sample in sequential}
+    ray_dataset = create_dataset(tasks=2, samples_per_task=3).get_ray_dataset(features=features, size=7)
+    rows = {int(row['idx']): row for row in ray_dataset.iter_rows()}
+    assert rows.keys() == sequential.keys()
+    for idx, expected in sequential.items():
+        for name in FEATURES:
+            assert np.array_equal(rows[idx][name], expected[name])
+        assert 'phasor' not in rows[idx]
+        assert rows[idx]['phasor_real'] == expected['phasor'].real
+        assert rows[idx]['phasor_imag'] == expected['phasor'].imag

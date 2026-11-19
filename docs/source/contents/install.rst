@@ -108,7 +108,7 @@ AcouPipe uses PEP 735 dependency groups for optional dependencies. The following
 
 * ``docs`` - Documentation building (Sphinx, IPython, matplotlib, etc.)
 * ``lint`` - Code quality tools (ruff)
-* ``test`` - Testing tools (pytest, pytest-cov, pytest-regtest, tensorflow, pandas)
+* ``test`` - Testing tools (pytest, pytest-cov, pytest-regtest, tensorflow, pandas, ray[data])
 * ``dev`` - All development dependencies (combines docs, lint, and test)
 * ``unsupported`` - Experimental dependencies (pyroomacoustics)
 
@@ -135,7 +135,7 @@ To install with additional dependency groups:
         .. code-block:: console
 
             $ pip install -e .
-            $ pip install pytest pytest-cov pytest-regtest tensorflow pandas  # test deps
+            $ pip install pytest pytest-cov pytest-regtest tensorflow pandas "ray[data]"  # test deps
             $ pip install sphinx matplotlib ipython sphinx-autoapi nbsphinx   # docs deps
 
 
