@@ -1,7 +1,5 @@
 """Distributed generation must see the same sampled ParameterSet values as sequential generation."""
 
-import sys
-
 from acoupipe.datasets import Config, Dataset
 from acoupipe.datasets.base.parameters import ParameterSet
 
@@ -36,8 +34,6 @@ def generate(tasks, size=4, samples_per_task=16):
 
 def test_distributed_samples_reach_parameter_outputs_features_and_prepare_callbacks():
     """Each actor must sample into the ParameterSet that its features and prepare callbacks read."""
-    if sys.platform == 'darwin':
-        pytest.skip('Ray tests are not stable on macOS runners')
     sequential = generate(tasks=1)
     distributed = generate(tasks=2)
     assert distributed.keys() == sequential.keys()
@@ -50,8 +46,6 @@ def test_distributed_samples_reach_parameter_outputs_features_and_prepare_callba
 @pytest.mark.parametrize('samples_per_task', [1, 3])
 def test_samples_per_task_matches_sequential_generation(samples_per_task):
     """Tasks with several samples, including shorter final tasks, reproduce sequential samples."""
-    if sys.platform == 'darwin':
-        pytest.skip('Ray tests are not stable on macOS runners')
     sequential = generate(tasks=1, size=7)
     distributed = generate(tasks=2, size=7, samples_per_task=samples_per_task)
     assert distributed.keys() == sequential.keys()
