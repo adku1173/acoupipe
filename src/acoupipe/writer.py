@@ -25,6 +25,7 @@ from os import path
 from acoular import config
 from acoupipe.base import DataGenerator
 from acoupipe.config import TF_FLAG
+from acoupipe.utils import write_h5_value
 
 import numpy as np
 from h5py import File as H5File
@@ -66,7 +67,13 @@ class BaseWriteDataset(DataGenerator):
 
 
 class WriteH5Dataset(BaseWriteDataset):
-    """Class intended to write data to a `.h5` file."""
+    """Write samples to a `.h5` file.
+
+    Nested dictionaries in samples and metadata are stored as groups, including
+    empty dictionaries. Leaves must be supported by :func:`h5py.Group.create_dataset`.
+    Keys must be individual HDF5 names without '/' separators. Feature selection
+    applies to top-level names and includes all descendants of selected features.
+    """
 
     #: Name of the file to be saved.
     name = File(filter=['*.h5'], desc='name of data file')
@@ -100,35 +107,29 @@ class WriteH5Dataset(BaseWriteDataset):
         return None
 
     def _add_data(self, f5h, data, subf):
-        dataset_idx = str(data['idx'])
-        # create a group for each Sample
-        f5h.create_group(dataset_idx)
-        # store dict in the group
-        if not subf:
-            [f5h.create_dataset(f'{dataset_idx}/{key}', data=value) for key, value in data.items()]
-        else:
-            [f5h.create_dataset(f'{dataset_idx}/{key}', data=value) for key, value in data.items() if key in subf]
+        group = f5h.create_group(str(data['idx']))
+        for key, value in data.items():
+            if not subf or key in subf:
+                write_h5_value(group, key, value)
 
     def _add_metadata(self, f5h):
         """Add metadata to .h5 file."""
-        nitems = len(self.metadata.items())
-        if nitems > 0:
-            f5h.create_group('metadata')
-            for key, value in self.metadata.items():
-                f5h.create_dataset(f'metadata/{key}', data=value)
+        if self.metadata:
+            write_h5_value(f5h, 'metadata', self.metadata)
 
     def save(self, progress_bar=True, start_idx=1):
         """Save the :meth:`get_data()` output of the :attr:`source` to .h5 file format."""
-        f5h = self.get_file()
-        subf = self.get_filtered_features()
-        for data in self.source.get_data(progress_bar, start_idx):
-            self._add_data(f5h, data, subf)
-        self._add_metadata(f5h)
-        f5h.flush()
-        f5h.close()
+        with self.get_file() as f5h:
+            subf = self.get_filtered_features()
+            for data in self.source.get_data(progress_bar, start_idx):
+                self._add_data(f5h, data, subf)
+            self._add_metadata(f5h)
 
     def get_data(self, progress_bar=True, start_idx=1):
         """Save the source data to a `*.h5` file and yield it to the next object.
+
+        When stopping consumption early, close the generator explicitly to
+        release the file immediately.
 
         Returns
         -------
@@ -137,17 +138,15 @@ class WriteH5Dataset(BaseWriteDataset):
             {feature_name[key] : feature[values]}.
         """
         self.writeflag = True
-        f5h = self.get_file()
-        subf = self.get_filtered_features()
-        for data in self.source.get_data(progress_bar, start_idx):
-            if not self.writeflag:
-                return
-            self._add_data(f5h, data, subf)
-            yield data
-            f5h.flush()
-        self._add_metadata(f5h)
-        f5h.flush()
-        f5h.close()
+        with self.get_file() as f5h:
+            subf = self.get_filtered_features()
+            for data in self.source.get_data(progress_bar, start_idx):
+                if not self.writeflag:
+                    return
+                self._add_data(f5h, data, subf)
+                yield data
+                f5h.flush()
+            self._add_metadata(f5h)
 
 
 if TF_FLAG:
