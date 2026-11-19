@@ -7,21 +7,30 @@ Creating and saving the dataset as a file is made simple by utilizing an existin
 
     docker pull adku1173/acoupipe:latest-full
 
-This image encompasses the simulation source code along with an up-to-date version of Acoular_, **AcouPipe**, and Tensorflow_.
+This image encompasses the simulation source code along with an up-to-date version of Acoular_ and **AcouPipe**.
+Tensorflow_ is not included. It has to be installed additionally to store datasets in the TFRecord format (:code:`--format tfrecord`).
+
+The simulation is started with the ``app/main.py`` script of the AcouPipe repository, which is also contained in the image under ``/app/main.py``.
+Since the current working directory is bound to ``/app`` below, copy the script to the current working directory first,
+either from the ``app`` directory of the AcouPipe repository or from the image:
+
+.. code-block:: bash
+
+    docker run --rm --user "$(id -u)":"$(id -g)" -v $(pwd):/out adku1173/acoupipe:latest-full cp /app/main.py /out/
 
 To initiate the dataset generation, run a Docker container with the following command:
 
 .. code-block:: bash
 
     SPLIT='training'
-    #SIZE=<enter desired size of the dataset>
+    SIZE=<enter desired size of the dataset>
     NTASKS=<enter the number of parallel tasks> # should match the number of CPUs on the host
     
     docker run -e NUMBA_NUM_THREADS=1 -it --user "$(id -u)":"$(id -g)" -v $(pwd):/app adku1173/acoupipe:latest-full python /app/main.py --tasks=$NTASKS --size=$SIZE --split=$SPLIT --features 'csm'
 
 Take note that the current user on the host is specified as the user of the Docker environment using the additional argument :code:`--user "$(id -u)":"$(id -g)"`. Running the container as a root user is not recommended. It's essential to bind a directory where the dataset files are stored to the container. With the command :code:`-v $(pwd):/app`, the current working directory on Linux or macOS hosts is bound.
 
-The simulation is capable of running on multiple CPU threads concurrently, enhancing computation speed. Users can specify the exact number of threads using the :code:`--tasks`` argument. To prevent thread overloading caused by multiple parallel processes, we enforce Numba to use only one thread by passing the environment variable :code:`NUMBA_NUM_THREADS=1`. For demonstration purposes, the script calculates the training split.
+The simulation is capable of running on multiple CPU threads concurrently, enhancing computation speed. Users can specify the exact number of threads using the :code:`--tasks` argument. To prevent thread overloading caused by multiple parallel processes, we enforce Numba to use only one thread by passing the environment variable :code:`NUMBA_NUM_THREADS=1`. For demonstration purposes, the script calculates the training split.
 After starting the main script, a progress bar should appear that logs the current simulation status:
 
 .. code-block:: bash
