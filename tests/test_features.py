@@ -34,7 +34,7 @@ def test_cleanup(create_dataset):
     dataset = create_dataset(mode='analytic')
     data = next(dataset.generate(features=features, f=1000, num=0, split='training', size=1, progress_bar=False))
 
-    assert set(data.keys()) == {'idx', 'seeds', 'loc', 'custom_with_data', 'custom_without_data'}
+    assert set(data.keys()) == {'idx', 'loc', 'custom_with_data', 'custom_without_data'}
 
 
 def test_feature_order():

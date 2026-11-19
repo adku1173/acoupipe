@@ -18,12 +18,15 @@ First the necessary Python modules and objects are imported.
 
 .. code-block:: Python
 
+    from pathlib import Path
+
+    import acoular as ac
+    from acoupipe.sampler import MicGeomSampler
+
+    import matplotlib.pyplot as plt
     import numpy as np
     import scipy
     from numpy.random import RandomState
-    import matplotlib.pyplot as plt
-    from acoular import MicGeom
-    from acoupipe import MicGeomSampler
 
 Then the number of samples to be generated is set,
 
@@ -35,7 +38,7 @@ the Acoular_ microphone array geometry object is initialised
 
 .. code-block:: Python
 
-    mics = MicGeom(file="array64_d0o686.xml")
+    mics = ac.MicGeom(file=Path(ac.__file__).parent / 'xml' / 'tub_vogel64.xml')
 
 and a SciPy_ random distribution object is generated using a preset random seed in order to guarantee reproducibility.
 
@@ -67,7 +70,7 @@ To make individual microphone positions deviate along the x-axis only, the follo
     for _ in range(nsamples):
         mgs.sample()
         plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
+    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 
@@ -86,7 +89,7 @@ It is also possible to make individual microphone positions deviate along the x-
     for _ in range(nsamples):
         mgs.sample()
         plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
+    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 
@@ -107,7 +110,7 @@ Rotating the entire array around the z-axis is done using the *rotation vector* 
     for _ in range(nsamples):
         mgs.sample()
         plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
+    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 
@@ -127,11 +130,11 @@ Note that the *rotation vector* attribute :code:`mgs.rvec` needs to be set to ze
     for _ in range(nsamples):
         mgs.sample()
         plt.scatter(mics.pos[0], mics.pos[1],marker="o",s=1,color="gray")
-    plt.scatter(mgs.pos_init[0], mgs.pos_init[1],marker='x',s=10,label="true positions")
+    plt.scatter(mgs.mpos_init[0], mgs.mpos_init[1],marker='x',s=10,label="true positions")
     plt.legend()    
     plt.show()
 
 .. figure:: ../../_static/example_4.png
     :width: 780
 
-Generating samples with **AcouPipe** can be as simple as that. The etire script can be found at :download:`micgeom_sampling_example.py <../../../../examples/micgeom_sampling_example.py>`.
+Generating samples with **AcouPipe** can be as simple as that. The entire script can be found at :download:`micgeom_sampling_example.py <../../../../examples/micgeom_sampling_example.py>`.

@@ -91,7 +91,7 @@ Here is an example citation in BibTeX format:
    url = {https://link.springer.com/10.1007/s11042-023-16947-w},
    }
 
-When using the MIRACLE dataset (:class:`~acoupipe.datasets.experimental.DatasetMIRACLE`), please also cite :cite:`Kujawski2024`:
+When using the MIRACLE dataset (:class:`~acoupipe.datasets.miracle.dataset.DatasetMIRACLE`), please also cite :cite:`Kujawski2024`:
 
 .. code-block:: bibtex
 
@@ -104,7 +104,7 @@ When using the MIRACLE dataset (:class:`~acoupipe.datasets.experimental.DatasetM
    year = {2024},
    }
 
-When using the SRIRACHA dataset (:class:`~acoupipe.datasets.experimental.DatasetSRIRACHA`), please also cite :cite:`Pelling2025`:
+When using the SRIRACHA dataset (:class:`~acoupipe.datasets.sriracha.dataset.DatasetSRIRACHA`), please also cite :cite:`Pelling2025`:
 
 .. code-block:: bibtex
 

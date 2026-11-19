@@ -115,7 +115,7 @@ This reduces storage requirements and enables:
 
 - generation of **portable** datasets of manageable size,
 - **on-the-fly** data generation during training,
-- **reproducibility** via stored random seeds and deterministic pipelines.
+- **reproducibility**, since each sample is determined by the dataset seed, split and sample index.
 
 Quick start
 ===========
@@ -145,13 +145,13 @@ faster data generation.
    print(data_sample.keys())  # dict_keys(['sourcemap', 'loc', 'f'])
 
 For reverberant scenes with measured room acoustics, AcouPipe also provides
-``DatasetSRIRACHA`` in ``acoupipe.datasets.experimental``. The scenario name encodes the room
-configuration (``SR`` empty, ``SRA`` absorbent), the source-receiver plane distance (``1`` near,
-``2`` far), and an optional dense local grid (``-D``).
+``DatasetSRIRACHA`` through the public ``acoupipe.datasets`` package façade. The scenario name encodes
+the room configuration (``SR`` empty, ``SRA`` absorbent), the source-receiver plane distance
+(``1`` near, ``2`` far), and an optional dense local grid (``-D``).
 
 .. code-block:: python
 
-   from acoupipe.datasets.experimental import DatasetSRIRACHA
+   from acoupipe.datasets import DatasetSRIRACHA
 
    srir_dir = None  # or path to local SRIRACHA HDF5 files
 

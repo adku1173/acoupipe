@@ -94,5 +94,4 @@ def test_save_tfrecord_roundtrip(feature, kwargs, create_dataset, temp_dir):
     loaded = sorted(loaded, key=lambda d: int(d['idx']))
     for data_generated, data_loaded in zip(generated, loaded, strict=True):
         assert int(data_loaded['idx']) == data_generated['idx']
-        np.testing.assert_array_equal(data_loaded['seeds'].numpy(), data_generated['seeds'])
         np.testing.assert_allclose(data_loaded[feature].numpy(), data_generated[feature], rtol=1e-5, atol=1e-8)

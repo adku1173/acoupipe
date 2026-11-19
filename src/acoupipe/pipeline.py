@@ -24,7 +24,7 @@ attribute holding a list of :code:`BaseSampler` derived instances.
 
     random_var = norm(loc=1.0, scale=0.5)
 
-    n1 = ac.WNoiseGenerator(sample_freq=24000, numsamples=24000 * 5, rms=1.0, seed=1)
+    n1 = ac.WNoiseGenerator(sample_freq=24000, num_samples=24000 * 5, rms=1.0, seed=1)
 
     rms_sampler = NumericAttributeSampler(target=[n1], attribute='rms', random_var=random_var)
 
@@ -36,7 +36,7 @@ attribute holding a list of :code:`BaseSampler` derived instances.
 
     pipeline = BasePipeline(
         numsamples=5,
-        # random_seeds = [range(5)],
+        seed=(1,),
         sampler=[rms_sampler],
         feature_func=calculate_squared_rms,
     )
@@ -50,17 +50,18 @@ The example returns the following output:
 .. code-block:: bash
 
     100%|██████████| 5/5 [00:00<00:00, 2250.65it/s]
-    {'idx': 0, 'seeds': array([[0, 0]]), 'rms_sq': 1.1296822432174416}
-    {'idx': 1, 'seeds': array([[0, 1]]), 'rms_sq': 1.3754413005160537}
-    {'idx': 2, 'seeds': array([[0, 2]]), 'rms_sq': 1.197988677085426}
-    {'idx': 3, 'seeds': array([[0, 3]]), 'rms_sq': 4.082256836394099}
-    {'idx': 4, 'seeds': array([[0, 4]]), 'rms_sq': 0.454416774044029}
+    {'idx': 1, 'rms_sq': 1.6044704682820132}
+    {'idx': 2, 'rms_sq': 0.15967766038023368}
+    {'idx': 3, 'rms_sq': 0.8928756755969107}
+    {'idx': 4, 'rms_sq': 0.8034323227265465}
+    {'idx': 5, 'rms_sq': 1.2420686428150722}
 """
 
 import inspect
 import logging
 import os
 import warnings
+import zlib
 from functools import wraps
 from time import time
 
@@ -68,9 +69,43 @@ from acoupipe.base import BaseSampler, DataGenerator
 
 import numpy as np
 import ray
-from numpy.random import RandomState, default_rng
+from numpy.random import RandomState, SeedSequence, default_rng
 from tqdm import tqdm
 from traits.api import Callable, Dict, Either, Instance, Int, Property, Tuple
+
+
+def seed_key(name):
+    """Return a non-negative integer key of a name, e.g. of a sampler or dataset split.
+
+    The key is identical in every Python process, unlike the randomized ``hash()`` of strings.
+    """
+    return zlib.crc32(name.encode())
+
+
+def reseed_sampler(sampler, seed, idx):
+    """Re-seed each object in the sampler dict for the data sample with index idx.
+
+    The object with key k receives the random stream of ``SeedSequence([*seed, idx, k])``. Streams
+    of different keys, indices or seeds are statistically independent, and the stream of an object
+    does not depend on the other objects in the dict.
+    """
+    for k in sampler:
+        seed_sequence = SeedSequence([*seed, idx, k])
+        if isinstance(sampler[k], BaseSampler):
+            sampler[k].random_state = default_rng(seed_sequence)
+        elif isinstance(sampler[k], RandomState):
+            sampler[k].seed(seed_sequence.generate_state(4))
+        elif isinstance(sampler[k], np.random.Generator):
+            sampler[k] = np.random.Generator(sampler[k].bit_generator.__class__(seed_sequence))
+        else:
+            sampler[k].seed = int(seed_sequence.generate_state(1)[0])
+
+
+def sample_all(sampler):
+    """Invoke the :meth:`sample` method of all :class:`BaseSampler` objects in dict order."""
+    for value in sampler.values():
+        if isinstance(value, BaseSampler):
+            value.sample()
 
 
 # Without the use of this decorator factory (wraps), the name of the
@@ -99,12 +134,15 @@ class BasePipeline(DataGenerator):
     by assigning a name and a callable function to :attr:`feature_func`.
     Furthermore this class automatically controles the sampling of instances
     of type :class:`BaseSampler` specified to the :attr:`sampler` list.
-    Re-seeding is performed at each iteration if :attr:`random_seeds` are
-    given.
+    Before each data sample, all objects in :attr:`sampler` are re-seeded from :attr:`seed`, the
+    sample index and their key (see :func:`reseed_sampler`).
     """
 
-    #: a dictionary with instances of :class:`~acoupipe.base.BaseSampler` derived classes as keys
-    #: alternatively, the dict can contain objects of type
+    #: a dictionary with instances of :class:`~acoupipe.base.BaseSampler` derived classes as values
+    #: and non-negative integers as keys. The samplers are invoked in dict order. The key
+    #: identifies the random stream of a sampler, so that the samples of a sampler do not change
+    #: if other samplers are added or removed.
+    #: Alternatively, the dict can contain objects of type
     #: :class:`numpy.random._generator.Generator` or :class:`numpy.random.RandomState`
     #: for control reasons
     #: (e.g. :code:`sampler = {0 : rms_sampler, 1 : numpy.random.RandomState(1)}`).
@@ -112,8 +150,7 @@ class BasePipeline(DataGenerator):
     #: (e.g. :code:`sampler = [rms_sampler, numpy.random.RandomState(1)]`).
     #: which is then converted to a dictionary with the indices of the list as keys.
     sampler = Property(
-        desc='Dictionary with instances of BaseSampler derived classes as values '
-        'and their sample order indices as keys',
+        desc='Dictionary with instances of BaseSampler derived classes as values and their random stream keys as keys',
     )
 
     #: feature method for the extraction/generation of features and labels.
@@ -128,35 +165,21 @@ class BasePipeline(DataGenerator):
     #: deprecated alias of :attr:`feature_func`.
     features = Property(desc='deprecated alias of feature_func')
 
-    #: a dict with values of `range(seeds)` associated with sampler objects in :attr:`sampler`.
-    #: A new seed will be collected from each range object during an evaluation
-    #: of the :meth:`get_data()` generator.
-    #: This seed is used to initialize an instance of
-    #: :class:`numpy.random._generator.Generator` which is passed to
-    #: the :attr:`random_state` of the samplers in :attr:`sampler`.
-    #: If not given, :meth:`get_data()` relies on
-    #: :attr:`numsamples`.
-    random_seeds = Property(desc='Dictionary of seeds associated with sampler objects')
+    #: tuple of non-negative integers that, together with the sample index and the sampler key,
+    #: seeds the samplers of each data sample, e.g. ``(dataset_seed, split_key)``.
+    seed = Tuple(desc='non-negative integers seeding the samplers together with sample index and sampler key')
 
     #: number of samples to calculate by :meth:`get_data()`.
-    #: Will be superseded by the :attr:`random_seeds` attribute if specified.
-    numsamples = Int(
-        0,
-        desc='number of data samples to calculate. Will be superseded by the random_seeds attribute if specified',
-    )
+    numsamples = Int(0, desc='number of data samples to calculate')
 
     #: logger instance to log calculation times for each data sample
     logger = Property(desc='Logger instance to log timing statistics')
 
     _idx = Int(0, desc='Internal running index')
 
-    _seeds = Dict(key_trait=Int, value_trait=Int, desc='Internal running seeds')
-
     _logger = Instance(logging.Logger, desc='Internal logger instance')
 
     _sampler = Dict(key_trait=Int)
-
-    _random_seeds = Either(Dict(key_trait=Int), None)
 
     def _get_logger(self):
         if self._logger is None:
@@ -180,16 +203,6 @@ class BasePipeline(DataGenerator):
         logger.addHandler(stream_handler)
         return logger
 
-    def validate_random_seeds(self):
-        """Validate specified random seeds."""
-        if self.random_seeds:
-            if len(self.random_seeds.keys()) != len(self.sampler.keys()):
-                msg = 'Number of given range objects in random_seeds and number of sampler objects need to be equal!'
-                raise ValueError(msg)
-            if len(set(map(len, self.random_seeds.values()))) != 1:
-                msg = 'Length of range objects in random_seeds list must be equal!'
-                raise ValueError(msg)
-
     @log_execution_time
     def _extract_features(self):
         """Calculate features."""
@@ -202,24 +215,6 @@ class BasePipeline(DataGenerator):
         msg = 'feature_func attribute must be a callable or a tuple containing a callable and its arguments!'
         raise ValueError(msg)
 
-    def _update_sample_index_and_seeds(self, seed_iter=None):
-        """Update seeds and running index for the current data sample of the dataset."""
-        self._idx += 1
-        if not self.random_seeds:
-            return
-        self._seeds = {k: next(seed_iter[k]) for k in seed_iter}
-        for k in self.sampler:
-            if isinstance(self.sampler[k], BaseSampler):
-                self.sampler[k].random_state = default_rng(self._seeds[k])
-                # self.logger.error(f"update {self.sampler[k].__class__.__name__}, "
-                #     f"state: {self.sampler[k].random_state.__getstate__()}")
-            elif isinstance(self.sampler[k], RandomState):
-                self.sampler[k].seed(self._seeds[k])
-            elif isinstance(self.sampler[k], np.random.Generator):
-                self.sampler[k] = np.random.Generator(self.sampler[k].bit_generator.__class__(seed=self._seeds[k]))
-            else:
-                self.sampler[k].seed = self._seeds[k]
-
     def _get_sampler(self):
         return self._sampler
 
@@ -228,15 +223,6 @@ class BasePipeline(DataGenerator):
             self._sampler = dict(enumerate(sampler))
         else:
             self._sampler = sampler
-
-    def _get_random_seeds(self):
-        return self._random_seeds
-
-    def _set_random_seeds(self, random_seeds):
-        if isinstance(random_seeds, list):
-            self._random_seeds = dict(enumerate(random_seeds))
-        else:
-            self._random_seeds = random_seeds
 
     def _get_features(self):
         """Return :attr:`feature_func` (deprecated alias)."""
@@ -287,7 +273,7 @@ class BasePipeline(DataGenerator):
                 raise ValueError(msg)
 
     def get_data(self, progress_bar=True, start_idx=1):
-        """Provide the extracted features, sampler seeds and indices.
+        """Provide the extracted features and indices.
 
         Parameters
         ----------
@@ -299,31 +285,15 @@ class BasePipeline(DataGenerator):
         Yields
         ------
         dict
-            a sample of the dataset containing the extracted feature data, seeds, and index
+            a sample of the dataset containing the extracted feature data and index
         """
         self._validate_feature_func()
-        self._idx = start_idx - 1
-        if self.random_seeds:
-            self.validate_random_seeds()
-            seed_iter = {k: iter(v) for k, v in self.random_seeds.items()}
-            nsamples = len(list(self.random_seeds.values())[0])
-        else:
-            seed_iter = None
-            nsamples = self.numsamples
-        sampler_order = list(self.sampler.keys())
-        sampler_order.sort()
-        pbar = tqdm(
-            iterable=range(start_idx, nsamples + start_idx),
-            total=nsamples,
-            colour='#1f77b4',
-            disable=(not progress_bar),
-        )
-        for _ in range(nsamples):
-            self._update_sample_index_and_seeds(seed_iter)
-            for i in sampler_order:
-                if isinstance(self.sampler[i], BaseSampler):
-                    self.sampler[i].sample()
-            data = {'idx': self._idx, 'seeds': np.array(list(self._seeds.items()))}
+        pbar = tqdm(total=self.numsamples, colour='#1f77b4', disable=(not progress_bar))
+        for idx in range(start_idx, start_idx + self.numsamples):
+            self._idx = idx
+            reseed_sampler(self.sampler, self.seed, idx)
+            sample_all(self.sampler)
+            data = {'idx': idx}
             data.update(self._extract_features())
             yield data
             pbar.update(1)
@@ -334,57 +304,37 @@ class BasePipeline(DataGenerator):
 class SamplerActor:
     """Actor class to sample data."""
 
-    def __init__(self, sampler, feature_func):
+    def __init__(self, state):
         # IMPORTANT: do NOT import gpuRIR before this point anywhere.
         gpu_ids = ray.get_gpu_ids()  # e.g. [3]
         logging.error(f'ray.get_gpu_ids() = {gpu_ids}, CUDA_VISIBLE_DEVICES = {os.environ.get("CUDA_VISIBLE_DEVICES")}')
 
-        self.sampler = sampler
-        self.feature_func = feature_func
-        self.sampler_order = list(self.sampler.keys())
-        self.sampler_order.sort()
+        self.sampler, self.feature_func, self.seed = state
 
-    def sample(self, seeds):
-        """Invoke the :meth:`sample` function of one or more :class:`BaseSampler` instances."""
-        self.set_new_seed(seeds)
-        for k in self.sampler_order:
-            if isinstance(self.sampler[k], BaseSampler):
-                self.sampler[k].sample()
+    def sample(self, idx):
+        """Re-seed and invoke all :class:`BaseSampler` objects of the data sample with index idx."""
+        reseed_sampler(self.sampler, self.seed, idx)
+        sample_all(self.sampler)
         return self.sampler
 
-    def extract_features(self, seeds, times, *feature_args):
-        """Remote calculation of all features."""
+    def extract_features(self, indices, times, *feature_args):
+        """Remote calculation of all features for each sample index in indices."""
         times[1] = time()
-        data = self.feature_func(self.sample(seeds), *feature_args)
+        data = [self.feature_func(self.sample(idx), *feature_args) for idx in indices]
         times[2] = time()
         return (data, times, os.getpid())
-
-    def set_new_seed(self, seeds=None):
-        """Re-seeds :class:`BaseSampler` instances specified in :attr:`sampler` dict."""
-        if seeds:
-            for k in self.sampler:
-                if isinstance(self.sampler[k], BaseSampler):
-                    self.sampler[k].random_state = default_rng(seeds[k])
-                elif isinstance(self.sampler[k], RandomState):
-                    self.sampler[k].seed(seeds[k])
-                elif isinstance(self.sampler[k], np.random.Generator):
-                    self.sampler[k] = np.random.Generator(self.sampler[k].bit_generator.__class__(seed=seeds[k]))
-                else:
-                    self.sampler[k].seed = seeds[k]
 
     def exit(self):
         ray.actor.exit_actor()
 
 
 class ActorHandler:
-    def __init__(self, numworkers, sampler, feature_func, remote_args=None):
-        self.actors = [
-            SamplerActor.options(**(remote_args or {})).remote(
-                sampler=sampler,
-                feature_func=feature_func,
-            )
-            for _ in range(numworkers)
-        ]
+    def __init__(self, numworkers, sampler, feature_func, seed, remote_args=None):
+        # Samplers and feature functions may share objects, e.g. a ParameterSet that samplers
+        # modify and features read. Ray serializes each argument separately, so both are
+        # stored as one object to preserve shared references within every actor.
+        state = ray.put((sampler, feature_func, seed))
+        self.actors = [SamplerActor.options(**(remote_args or {})).remote(state) for _ in range(numworkers)]
 
     def __enter__(self):
         return self.actors
@@ -401,13 +351,28 @@ class DistributedPipeline(BasePipeline):
     by assigning a name and a callable function to :attr:`feature_func`.
     Furthermore this class automatically controles the sampling of instances
     of type :class:`BaseSampler` specified to the :attr:`sampler` list.
-    Re-seeding is performed at each iteration if :attr:`random_seeds` are
-    given.
+    Each worker re-seeds the samplers from :attr:`seed`, the sample index and the sampler key, so
+    that the samples do not depend on the number of workers.
+
+    Each remote task calculates up to :attr:`samples_per_task` data samples before returning them.
+    Since the samples of a task are serialized together, feature functions must not return objects
+    that are modified in place by subsequent sampling.
+
+    .. warning::
+
+        Set ``NUMBA_NUM_THREADS=1``, ``OMP_NUM_THREADS=1``, ``OPENBLAS_NUM_THREADS=1`` and
+        ``MKL_NUM_THREADS=1`` before starting Python or the Ray cluster. Otherwise, every worker
+        starts as many threads as there are CPU cores, and the workers slow each other down.
     """
 
     #: number of workers to be used for parallel calculation (usually number of CPUs).
     #: each worker is associated with a stateless task.
     numworkers = Int(1, desc='number of tasks to be performed in parallel (usually number of CPUs)')
+
+    #: maximum number of data samples calculated per remote task. Larger values reduce the
+    #: scheduling overhead per sample. To keep all workers busy, a task holds at most
+    #: ceil(remaining samples / workers) samples.
+    samples_per_task = Int(16, desc='maximum number of data samples calculated per remote task')
 
     #: additional arguments to be passed to ray remote tasks, e.g. num_gpus for GPU
     #: resource allocation (e.g. num_gpus=0.25 for 1 GPU per 4 tasks)
@@ -420,35 +385,30 @@ class DistributedPipeline(BasePipeline):
         self.logger.info(f'id {task_index} on pid {pid}: full time: {times[3] - times[0]:.32f} sec')
         # self.logger.info(f"{f.__name__} args:[{args}] took: {end - start:.4f} sec")
 
-    def _sample_and_schedule_task(self, actor, task_dict):
-        self.logger.info(f'id {self._idx}: start task.')
+    def _schedule_task(self, actor, task_dict, remaining, nworkers):
+        """Schedule the next samples as one remote task of the actor and return their number."""
+        num = min(self.samples_per_task, -(-remaining // nworkers))  # keeps all workers busy at the end
+        indices = list(range(self._idx + 1, self._idx + 1 + num))
+        self._idx += num
+        self.logger.info(f'id {indices[0]}: start task with {num} samples.')
         times = [time(), None, None, None]  # (schedule timestamp, execution timestamp, stop timestamp, get timestamp)
         if callable(self.feature_func):
-            result_id = actor.extract_features.remote(self._seeds, times)  # calculation is started in new remote task
+            result_id = actor.extract_features.remote(indices, times)  # calculation is started in new remote task
         elif isinstance(self.feature_func, tuple):
-            result_id = actor.extract_features.remote(self._seeds, times, *list(self.feature_func[1:]))
+            result_id = actor.extract_features.remote(indices, times, *list(self.feature_func[1:]))
         else:
             msg = 'feature_func attribute must be a callable or a tuple containing a callable and its arguments!'
             raise ValueError(msg)
-        task_dict[result_id] = (
-            actor,
-            {'idx': self._idx, 'seeds': np.array(list(self._seeds.items()))},
-        )  # add index, and seeds
-
-    def _update_sample_index_and_seeds(self, seed_iter=None):
-        """Update seeds and running index for the current data sample of the dataset."""
-        self._idx += 1
-        if not self.random_seeds:
-            return
-        self._seeds = {k: next(seed_iter[k]) for k in seed_iter}
+        task_dict[result_id] = (actor, indices)
+        return num
 
     def get_data(self, progress_bar=True, start_idx=1):
-        """Provide the extracted features, sampler seeds and indices.
+        """Provide the extracted features and indices.
 
         The calculation of all data samples is performed in parallel and asynchronously.
         In case of specifying more than one worker in the :attr:`numworker` attribute,
         the output of this generator yields non-ordered features/data samples.
-        However, the exact order can be recovered via the "idx" item (or "seeds" item)
+        However, the exact order can be recovered via the "idx" item
         provided in the output dictionary.
 
         Parameters
@@ -461,43 +421,33 @@ class DistributedPipeline(BasePipeline):
         Yields
         ------
         dict
-            A sample of the dataset containing the extracted feature data, seeds, and index
+            A sample of the dataset containing the extracted feature data and index
         """
         self._validate_feature_func()
         self._idx = start_idx - 1
-        if self.random_seeds:
-            self.validate_random_seeds()
-            seed_iter = {k: iter(v) for k, v in self.random_seeds.items()}
-            nsamples = len(list(self.random_seeds.values())[0])
-        else:
-            seed_iter = None
-            nsamples = self.numsamples
+        nsamples = self.numsamples
         nworkers = min(nsamples, self.numworkers)
         progress_bar = tqdm(range(nsamples), colour='#1f77b4', disable=(not progress_bar))
         feature_func = self.feature_func if callable(self.feature_func) else self.feature_func[0]
         task_dict = {}
-        finished_tasks = 0
-        with ActorHandler(nworkers, self.sampler, feature_func, remote_args=self.remote_args) as actors:
+        scheduled = 0
+        with ActorHandler(nworkers, self.sampler, feature_func, self.seed, remote_args=self.remote_args) as actors:
             for actor in actors:
-                self._update_sample_index_and_seeds(seed_iter)
-                self._sample_and_schedule_task(actor, task_dict)
-            while finished_tasks < nsamples:
-                done_ids, pending_ids = ray.wait(list(task_dict.keys()))
-                if done_ids:
-                    did = done_ids[0]
-                    finished_tasks += 1
-                    try:
-                        data, times, pid = ray.get(did)
-                    except Exception as exception:
-                        self.logger.info(f'task with id {task_dict[did]} failed with Traceback:', exc_info=True)
-                        raise exception
-                    times[-1] = time()  # add getter time
-                    actor, new_data = task_dict.pop(did)
-                    data.update(new_data)  # add the remaining task_dict items to the data dict
-                    self.logger.info(f'id {data["idx"]} on pid {pid}: finished task.')
-                    self._log_execution_time(data['idx'], times, pid)
-                    if (nsamples + start_idx - 1 - self._idx) > 0:  # directly _schedule next task
-                        self._update_sample_index_and_seeds(seed_iter)
-                        self._sample_and_schedule_task(actor, task_dict)
+                scheduled += self._schedule_task(actor, task_dict, nsamples - scheduled, nworkers)
+            while task_dict:
+                did = ray.wait(list(task_dict.keys()))[0][0]
+                try:
+                    results, times, pid = ray.get(did)
+                except Exception as exception:
+                    self.logger.info(f'task with id {task_dict[did][1][0]} failed with Traceback:', exc_info=True)
+                    raise exception
+                times[-1] = time()  # add getter time
+                actor, indices = task_dict.pop(did)
+                self.logger.info(f'id {indices[0]} on pid {pid}: finished task with {len(indices)} samples.')
+                self._log_execution_time(indices[0], times, pid)
+                if scheduled < nsamples:  # directly schedule the next task
+                    scheduled += self._schedule_task(actor, task_dict, nsamples - scheduled, nworkers)
+                for data, idx in zip(results, indices, strict=True):
+                    data['idx'] = idx
                     yield data
                     progress_bar.update(1)

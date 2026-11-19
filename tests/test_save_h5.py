@@ -164,7 +164,7 @@ def test_nested_h5_roundtrip(write_method, write_features, read_method, read_fea
     loader = LoadH5Dataset(name=filename)
     with loader.h5f:
         assert loader.numsamples == 2
-        assert set(loader.features) == ({'idx', 'method'} if write_features else {'idx', 'seeds', 'flat', 'method'})
+        assert set(loader.features) == ({'idx', 'method'} if write_features else {'idx', 'flat', 'method'})
         assert_nested_equal(loader.metadata, metadata)
         if read_method == 'get_data':
             loaded = list(loader.get_data())
@@ -174,5 +174,5 @@ def test_nested_h5_roundtrip(write_method, write_features, read_method, read_fea
         for index, (actual, sample) in enumerate(zip(loaded, samples, strict=True), start=1):
             expected = {'idx': str(index), 'method': sample['method']}
             if not write_features and read_features is None:
-                expected.update(flat=sample['flat'], seeds=np.array([]))
+                expected['flat'] = sample['flat']
             assert_nested_equal(actual, expected)

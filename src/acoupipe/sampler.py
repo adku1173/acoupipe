@@ -74,6 +74,52 @@ from traits.api import (
 )
 
 
+class AttributeSampler(BaseSampler):
+    """Sample one value and optionally assign it to one target attribute.
+
+    ``AttributeSampler`` is the generic sampler primitive for high-level
+    Dataset parameter sampling. A sampler may draw from ``random_var`` or call
+    ``random_func``. The sampled value is stored as ``value`` and, when
+    ``attribute`` is set, assigned to ``target.attribute``.
+    """
+
+    target = Any(desc='object whose attribute is assigned when attribute is set')
+    attribute = Str(desc='name of the target attribute to assign')
+    random_func = Callable(desc='callable that samples a value from the random state')
+    parameters = Any(desc='current Dataset parameter object')
+    value = Any(desc='last sampled value')
+
+    def _call_random_func(self):
+        sig = signature(self.random_func)
+        num_parameters = len(sig.parameters)
+        if num_parameters == 1:
+            return self.random_func(self.random_state)
+        if num_parameters == 2:
+            return self.random_func(self.random_state, self.parameters)
+        msg = 'the random_func callable has to have a signature of (rng) or (rng, parameters).'
+        raise ValueError(msg)
+
+    def rvs(self):
+        """Draw one value from the configured random process."""
+        if self.random_func:
+            return self._call_random_func()
+        return self.random_var.rvs(random_state=self.random_state)
+
+    def set_value(self, target, value):
+        """Assign a sampled value to a possibly dotted attribute path."""
+        attributes = self.attribute.split('.')
+        for attribute in attributes[:-1]:
+            target = getattr(target, attribute)
+        setattr(target, attributes[-1], value)
+
+    def sample(self):
+        """Sample one value, store it, and optionally assign it to ``target.attribute``."""
+        self.value = self.rvs()
+        if self.attribute:
+            self.set_value(self.target, self.value)
+        return self.value
+
+
 class NumericAttributeSampler(BaseSampler):
     """Samples attributes of numeric type (e.g. int, float).
 

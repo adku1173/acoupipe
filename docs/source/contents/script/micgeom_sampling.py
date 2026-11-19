@@ -8,6 +8,9 @@ the current figure instead of displaying it.
 import runpy
 from pathlib import Path
 
+# Configure OpenBLAS before matplotlib loads NumPy.
+import acoular as ac  # noqa: F401
+
 import matplotlib
 
 matplotlib.use("Agg")
