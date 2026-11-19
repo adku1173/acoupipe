@@ -1,4 +1,10 @@
 import os
+
+# Under `uv run`, Ray would start the workers in a copy of the project with a separately built
+# environment and an empty numba cache, which concurrently starting workers corrupt. The workers
+# must use the test environment instead. Ray reads this variable when it is imported.
+os.environ['RAY_ENABLE_UV_RUN_RUNTIME_ENV'] = '0'
+
 import shutil
 import tempfile
 from pathlib import Path
