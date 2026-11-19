@@ -12,6 +12,7 @@ MODULES = [
     'acoupipe.loader',
     'acoupipe.pipeline',
     'acoupipe.sampler',
+    'acoupipe.tf',
     'acoupipe.writer',
 ]
 

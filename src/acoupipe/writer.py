@@ -6,7 +6,7 @@ The :code:`writer.py` module provides classes to store the data extracted by the
 The current implementation includes classes to save data in a container-like file format
 (.h5 file with the :code:`WriteH5Dataset` class). The TFRecord format, which can be efficiently
 consumed by the Tensorflow framework for machine learning, is written by
-:class:`~acoupipe.tfrecord.WriteTFRecord`.
+:class:`~acoupipe.tf.writer.WriteTFRecord`.
 
 .. code-block:: python
 

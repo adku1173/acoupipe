@@ -729,7 +729,7 @@ def get_tf_mappers(feature_objects):
     The features ``idx`` and ``seeds``, which are added to each sample by the
     pipeline, are always included first, followed by the given features in list
     order. Requires TensorFlow, since the encodings are inferred with
-    :func:`~acoupipe.tfrecord.infer_tf_encoding`.
+    :func:`~acoupipe.tf.encodings.infer_tf_encoding`.
 
     Parameters
     ----------
@@ -745,7 +745,7 @@ def get_tf_mappers(feature_objects):
     dtypes : dict
         Feature names mapped to the TensorFlow dtypes.
     """
-    from acoupipe.tfrecord import infer_tf_encoding  # noqa: PLC0415
+    from acoupipe.tf.encodings import infer_tf_encoding  # noqa: PLC0415
 
     encoders, shapes, dtypes = {}, {}, {}
     specs = [('idx', np.int32, ()), ('seeds', np.int32, (None, 2))]

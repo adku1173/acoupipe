@@ -341,7 +341,7 @@ class DatasetBase(HasPrivateTraits):
                 f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
             )
         """
-        from acoupipe.tfrecord import WriteTFRecord  # noqa: PLC0415
+        from acoupipe.tf.writer import WriteTFRecord  # noqa: PLC0415
 
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
@@ -509,7 +509,7 @@ class DatasetBase(HasPrivateTraits):
             data = next(dataset)
 
         """
-        from acoupipe.tfrecord import complex_list_feature  # noqa: PLC0415
+        from acoupipe.tf.encodings import complex_list_feature  # noqa: PLC0415
 
         import tensorflow as tf  # noqa: PLC0415
 
