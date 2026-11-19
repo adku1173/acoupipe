@@ -617,7 +617,7 @@ class DatasetSyntheticConfig(ConfigBase):
                 ac.WNoiseGenerator(
                     seed=i + 1,
                     sample_freq=self.fs,
-                    num_samples=self.signal_length * self.fs,
+                    num_samples=int(self.signal_length * self.fs),
                 ),
             )
         return signals
@@ -664,7 +664,7 @@ class DatasetSyntheticConfig(ConfigBase):
             )
         return PowerSpectraAnalytic(
             mode=self.mode,
-            num_samples=self.signal_length * self.fs,
+            num_samples=int(self.signal_length * self.fs),
             sample_freq=self.fs,
             steer=self.source_steer,
             cached=False,
@@ -675,7 +675,7 @@ class DatasetSyntheticConfig(ConfigBase):
         return ac.WNoiseGenerator(
             seed=1000,
             sample_freq=self.fs,
-            num_samples=self.signal_length * self.fs,
+            num_samples=int(self.signal_length * self.fs),
         )
 
     def create_mic_noise_source(self):
@@ -761,7 +761,7 @@ class DatasetSyntheticConfig(ConfigBase):
         loc = loc_sampler.target
         rms_sq = rms_sampler.target[: loc.shape[1]] ** 2
         source_seeds = [seed_sampler.target + i for i in range(loc.shape[1])]
-        num_samples = signal_length_sampler.target * fs if signal_length_sampler is not None else None
+        num_samples = int(signal_length_sampler.target * fs) if signal_length_sampler is not None else None
         return loc, rms_sq, source_seeds, num_samples
 
     @staticmethod
