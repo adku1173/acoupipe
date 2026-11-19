@@ -10,10 +10,6 @@ from functools import partial
 
 import acoular as ac
 import acoupipe.sampler as sp
-from acoupipe.datasets._shared.utils import (
-    get_all_source_signals,
-    get_uncorrelated_noise_source_recursively,
-)
 from acoupipe.datasets.base.legacy_config import ConfigBase
 from acoupipe.datasets.features import (
     AnalyticNoiseStrengthFeature,
@@ -30,12 +26,48 @@ from acoupipe.datasets.features import (
     TimeDataFeature,
     create_feature,
 )
+from acoupipe.datasets.features._sources import get_uncorrelated_noise_source_recursively
 from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 from acoupipe.datasets.synthetic.micgeom import tub_vogel64_ap1
 
 import numpy as np
 from scipy.stats import norm, poisson
 from traits.api import Bool, Dict, Enum, Float, Instance, Int, List, observe
+
+
+def _get_signals_recursively(source, signals):
+    if hasattr(source, 'signal') and isinstance(source.signal, ac.SignalGenerator):
+        signals.append(source.signal)
+    elif hasattr(source, 'sources') or hasattr(source, 'sources') and isinstance(source, ac.SamplesGenerator):
+        if hasattr(source, 'sources'):
+            for s in source.sources:
+                signals = _get_signals_recursively(s, signals)
+        if hasattr(source, 'source'):
+            signals = _get_signals_recursively(source.source, signals)
+    return signals
+
+
+def get_all_source_signals(source_list):
+    """Get all signals from a list of `acoular.SamplesGenerator` derived objects.
+
+    Parameters
+    ----------
+    source_list : list
+        list of `acoular.SamplesGenerator` derived objects
+
+
+    Returns
+    -------
+    list
+        list of all `acoular.SignalGenerator` derived objects
+    """
+    signals = []
+    for source in source_list:
+        if not isinstance(source, ac.SamplesGenerator):
+            msg = 'source must be of type `acoular.SamplesGenerator`'
+            raise ValueError(msg)
+        signals = _get_signals_recursively(source, signals)
+    return signals
 
 
 def sample_rms(nsources, rng):

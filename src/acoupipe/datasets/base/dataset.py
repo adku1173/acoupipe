@@ -3,13 +3,35 @@
 import logging
 from functools import partial
 
-from acoupipe.datasets._shared.utils import set_pipeline_seed
 from acoupipe.datasets.base.legacy_config import ConfigBase
 from acoupipe.datasets.features import Feature, combine_feature_funcs, get_tf_mappers, remove_unrequested
-from acoupipe.pipeline import BasePipeline, DistributedPipeline
+from acoupipe.pipeline import BasePipeline, DistributedPipeline, seed_key
 from acoupipe.writer import WriteH5Dataset
 
 from traits.api import Any, Dict, HasPrivateTraits, Instance, Int, Property
+
+
+def _set_pipeline_seed(pipeline, size, split, seed):
+    """Set the number of samples and the seed of the pipeline for a dataset split.
+
+    The samplers of the data sample with index ``idx`` are seeded from
+    ``(seed, seed_key(split), idx, sampler key)`` (see :func:`~acoupipe.pipeline.reseed_sampler`).
+    Different splits and dataset seeds therefore yield independent random streams for any number
+    of samples.
+
+    Parameters
+    ----------
+    pipeline : instance of class BasePipeline
+        the pipeline object holding the sampler classes
+    size : int
+        number of samples to be yielded by the pipeline
+    split : str
+        name of the dataset split, e.g. 'training', 'validation' or 'test'
+    seed : int
+        non-negative seed of the dataset
+    """
+    pipeline.numsamples = size
+    pipeline.seed = (seed, seed_key(split))
 
 
 class DatasetBase(HasPrivateTraits):
@@ -227,7 +249,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, _ = self.get_features(features, f, num)
-        set_pipeline_seed(pipeline, size, split, self.seed)
+        _set_pipeline_seed(pipeline, size, split, self.seed)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
     def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
@@ -286,7 +308,7 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, _ = self.get_features(features, f, num)
-        set_pipeline_seed(pipeline, size, split, self.seed)
+        _set_pipeline_seed(pipeline, size, split, self.seed)
         WriteH5Dataset(
             name=name,
             source=pipeline,
@@ -352,7 +374,7 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, feature_objects = self.get_features(features, f, num)
-        set_pipeline_seed(pipeline, size, split, self.seed)
+        _set_pipeline_seed(pipeline, size, split, self.seed)
         encoders, shapes, _ = get_tf_mappers(feature_objects)
         # get features with varying length to handle them correctly in the TFRecord writer
         shape_features = []
@@ -449,7 +471,7 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, _ = self.get_features(features, f, num)
-        set_pipeline_seed(pipeline, size, split, self.seed)
+        _set_pipeline_seed(pipeline, size, split, self.seed)
         features = features + ['idx']
         output_signature = self.get_output_signature(features, f=f, num=num)
         return tf.data.Dataset.from_generator(

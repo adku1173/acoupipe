@@ -3,8 +3,7 @@ import warnings
 from functools import partial
 
 import acoular as ac
-from acoupipe.datasets._shared.utils import (
-    get_frequency_index_range,
+from acoupipe.datasets.features._sources import (
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
@@ -13,6 +12,64 @@ from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 import numpy as np
 from numpy.linalg import eigh
 from traits.api import Callable, Either, Enum, Float, HasPrivateTraits, Instance, Int, List, Property, Str, Tuple
+
+
+def get_frequency_index_range(freq, f, num):
+    """Return the left and right indices that define the frequency range to integrate over.
+
+    Parameters
+    ----------
+    freq : numpy.array
+        frequency vector (can be determined by evaluating `freqdata()` method
+        at a `acoular.PowerSpectra` instance)
+    f : float
+        the frequency (or center frequency) of interest
+    num : int
+        the frequency band (0: single frequency line, 1: octave band, 3: third octave band)
+
+    Returns
+    -------
+    tuple
+        left and right index that belongs to the frequency of interest
+    """
+    if num == 0:
+        # single frequency line
+        ind = np.searchsorted(freq, f)
+        if ind >= len(freq):
+            warnings.warn(
+                f'Queried frequency ({f:g} Hz) not in resolved frequency range. Returning zeros.',
+                Warning,
+                stacklevel=2,
+            )
+            ind = None
+        else:
+            if freq[ind] != f:
+                warnings.warn(
+                    f'Queried frequency ({f:g} Hz) not in set of '
+                    'discrete FFT sample frequencies. '
+                    f'Using frequency {freq[ind]:g} Hz instead.',
+                    Warning,
+                    stacklevel=2,
+                )
+        return (ind, ind + 1)
+    # fractional octave band
+    if isinstance(num, list):
+        f1 = num[0]
+        f2 = num[-1]
+    else:
+        f1 = f * 2.0 ** (-0.5 / num)
+        f2 = f * 2.0 ** (+0.5 / num)
+    ind1 = np.searchsorted(freq, f1)
+    ind2 = np.searchsorted(freq, f2)
+    if ind1 == ind2:
+        warnings.warn(
+            f'Queried frequency band ({f1:g} to {f2:g} Hz) does not '
+            'include any discrete FFT sample frequencies. '
+            'Returning zeros.',
+            Warning,
+            stacklevel=2,
+        )
+    return (ind1, ind2)
 
 
 class Feature(HasPrivateTraits):

@@ -18,9 +18,7 @@ from functools import partial
 from pathlib import Path
 
 import acoular as ac
-from acoupipe.datasets._shared.utils import (
-    calc_transfer,
-)
+from acoupipe.datasets.ism.ir import calc_transfer
 from acoupipe.datasets.synthetic.legacy_config import DatasetSyntheticConfig
 
 import h5py as h5
