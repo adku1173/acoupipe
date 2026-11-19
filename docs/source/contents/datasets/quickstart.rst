@@ -45,7 +45,7 @@ There are a few things to note when extracting features with the data generator:
 
     In [4]: data_sample = next(data_generator)
 
-First, the data generator returns a single sample at a time, consisting of a dictionary with the feature names as keys and the corresponding data as values. Second, the :code:`data_sample` dictionary includes two additional items, namely the :code:`idx` and :code:`seeds` of the sample. The :code:`idx` is the sample index and the :code:`seeds` are the random seeds used to generate the sample. Both are included for reproducible data generation, especially in multi-processing scenarios where the sample order may not be maintained.
+First, the data generator returns a single sample at a time, consisting of a dictionary with the feature names as keys and the corresponding data as values. Second, the :code:`data_sample` dictionary includes the additional item :code:`idx`, the sample index. Together with the dataset seed and the split, it determines the sample (see :ref:`reproducibility`) and identifies it in multi-processing scenarios where the sample order may not be maintained.
 
 .. note::
     The frequency included in the data might be slightly different from the specified frequency. This is usually indicated by a warning and is due to the fact that the frequency is chosen from a discrete set of frequencies, which depends on the parameters of the FFT and the sampling rate :code:`fs` of the dataset. 
@@ -89,6 +89,25 @@ Now, the data can be plotted, e.g. by using the `matplotlib`_ library:
        ...: plt.xlabel('x (m)')
        ...: plt.ylabel('y (m)')
 
+
+.. _reproducibility:
+
+Reproducibility
+---------------
+
+Each sample is determined by the dataset :code:`seed` (default: 0), the :code:`split` name and the sample
+index :code:`idx`. Generating a split again yields identical samples, independent of the number of parallel
+tasks and of :code:`start_idx`. A single sample can be regenerated with
+:code:`generate(..., start_idx=idx, size=1)`.
+
+.. code-block:: python
+
+    dataset = DatasetSynthetic()
+    dataset.seed = 1  # an independent realization of all splits
+
+Different split names (e.g. :code:`'training'`, :code:`'validation'`, :code:`'test'` or custom names) and
+different seeds yield statistically independent samples. Each sampler draws from its own random stream, so
+switching a sampler off (e.g. :code:`mic_pos_noise=False`) does not change the values drawn by the others.
 
 .. _parallel-generation:
 

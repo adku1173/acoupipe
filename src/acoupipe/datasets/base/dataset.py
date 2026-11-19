@@ -3,7 +3,7 @@
 import logging
 from functools import partial
 
-from acoupipe.datasets._shared.utils import set_pipeline_seeds
+from acoupipe.datasets._shared.utils import set_pipeline_seed
 from acoupipe.datasets.base.legacy_config import ConfigBase
 from acoupipe.datasets.features import Feature, combine_feature_funcs, get_tf_mappers, remove_unrequested
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
@@ -25,12 +25,16 @@ class DatasetBase(HasPrivateTraits):
         For tasks > 1, limit each worker process to a single thread, see :ref:`parallel-generation`.
     samples_per_task : int
         Maximum number of samples calculated per remote call if tasks > 1. Defaults to 16.
+    seed : int
+        Non-negative seed of the dataset. Defaults to 0. A sample is determined by the seed, the split
+        name and its index; different seeds or split names yield independent samples.
     """
 
     config = Any(desc='configuration object')
     tasks = Property(desc='number of parallel tasks for data generation')
     remote_args = Dict({})
     samples_per_task = Int(16, desc='maximum number of samples calculated per remote call')
+    seed = Int(0, desc='non-negative seed of the dataset')
     #: logger instance to log calculation times for each data sample
     logger = Property(desc='Logger instance to log timing statistics')
 
@@ -38,10 +42,11 @@ class DatasetBase(HasPrivateTraits):
     _logger = Instance(logging.Logger, desc='Internal logger instance')
     _tasks = Int(1, desc='number of parallel tasks for data generation')
 
-    def __init__(self, config=None, tasks=1, remote_args=None, logger=None, samples_per_task=16):
+    def __init__(self, config=None, tasks=1, remote_args=None, logger=None, samples_per_task=16, seed=0):
         HasPrivateTraits.__init__(self)
         self.tasks = tasks
         self.samples_per_task = samples_per_task
+        self.seed = seed
         if config is None:
             config = ConfigBase()
         if not hasattr(config, 'get_sampler'):
@@ -170,7 +175,7 @@ class DatasetBase(HasPrivateTraits):
         Parameters
         ----------
         features : list
-            List of features included in the dataset. The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The feature "idx" is always included.
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         size : int
@@ -222,7 +227,7 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, _ = self.get_features(features, f, num)
-        set_pipeline_seeds(pipeline, start_idx, size, split)
+        set_pipeline_seed(pipeline, size, split, self.seed)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
     def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
@@ -231,7 +236,7 @@ class DatasetBase(HasPrivateTraits):
         Parameters
         ----------
         features : list
-            List of features included in the dataset. The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The feature "idx" is always included.
         size : int
             Size of the dataset (number of source cases).
         name : str
@@ -281,7 +286,7 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, _ = self.get_features(features, f, num)
-        set_pipeline_seeds(pipeline, start_idx, size, split)
+        set_pipeline_seed(pipeline, size, split, self.seed)
         WriteH5Dataset(
             name=name,
             source=pipeline,
@@ -293,7 +298,7 @@ class DatasetBase(HasPrivateTraits):
         Parameters
         ----------
         features : list
-            List of features included in the dataset. The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The feature "idx" is always included.
         size : int
             Size of the dataset (number of source cases).
         name : str
@@ -347,7 +352,7 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, feature_objects = self.get_features(features, f, num)
-        set_pipeline_seeds(pipeline, start_idx, size, split)
+        set_pipeline_seed(pipeline, size, split, self.seed)
         encoders, shapes, _ = get_tf_mappers(feature_objects)
         # get features with varying length to handle them correctly in the TFRecord writer
         shape_features = []
@@ -372,7 +377,7 @@ class DatasetBase(HasPrivateTraits):
         Parameters
         ----------
         features : list
-            List of features included in the dataset. The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The feature "idx" is always included.
         f : float
             The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
         num : integer
@@ -408,7 +413,7 @@ class DatasetBase(HasPrivateTraits):
         Parameters
         ----------
         features : list
-            List of features included in the dataset. The features "seeds" and "idx" are always included.
+            List of features included in the dataset. The feature "idx" is always included.
         size : int
             Size of the dataset (number of source cases).
         split : str
@@ -444,8 +449,8 @@ class DatasetBase(HasPrivateTraits):
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
         pipeline.feature_func, _ = self.get_features(features, f, num)
-        set_pipeline_seeds(pipeline, start_idx, size, split)
-        features = features + ['idx', 'seeds']
+        set_pipeline_seed(pipeline, size, split, self.seed)
+        features = features + ['idx']
         output_signature = self.get_output_signature(features, f=f, num=num)
         return tf.data.Dataset.from_generator(
             partial(self._generate, pipeline=pipeline, start_idx=start_idx, progress_bar=progress_bar),
@@ -515,7 +520,7 @@ class DatasetBase(HasPrivateTraits):
 
         _, feature_objects = self.get_features(features, f, num)
         encoders, shapes, dtypes = get_tf_mappers(feature_objects)
-        features = features + ['idx', 'seeds']
+        features = features + ['idx']
 
         feature_description = {}
 

@@ -10,7 +10,9 @@ class ConfigBase(HasPrivateTraits):
         """Return dictionary containing the sampler objects of type :class:`acoupipe.base.BaseSampler`.
 
         this function has to be manually defined in a dataset subclass.
-        It includes the sampler objects as values. The key defines the idx in the sample order.
+        It includes the sampler objects as values. The samplers are invoked in dict order. The key
+        identifies the random stream of a sampler, so that its samples do not change if other
+        samplers are added or removed.
 
         Examples
         --------
@@ -59,7 +61,7 @@ class ConfigBase(HasPrivateTraits):
         feature_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
-            if feature_name not in ['idx', 'seeds']:
+            if feature_name != 'idx':
                 get_feature = getattr(self, f'_get_default_feature_{feature_name}', None)
                 if get_feature is None:
                     msg = f'Unknown feature "{feature_name}".'

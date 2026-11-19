@@ -115,7 +115,7 @@ This reduces storage requirements and enables:
 
 - generation of **portable** datasets of manageable size,
 - **on-the-fly** data generation during training,
-- **reproducibility** via stored random seeds and deterministic pipelines.
+- **reproducibility**, since each sample is determined by the dataset seed, split and sample index.
 
 Quick start
 ===========

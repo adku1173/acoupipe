@@ -726,10 +726,9 @@ def get_tf_mappers(feature_objects):
     """
     Get the TensorFlow encoders, shapes and dtypes of features.
 
-    The features ``idx`` and ``seeds``, which are added to each sample by the
-    pipeline, are always included first, followed by the given features in list
-    order. Requires TensorFlow, since the encodings are inferred with
-    :func:`~acoupipe.tf.encodings.infer_tf_encoding`.
+    The feature ``idx``, which is added to each sample by the pipeline, is always included
+    first, followed by the given features in list order. Requires TensorFlow, since the
+    encodings are inferred with :func:`~acoupipe.tf.encodings.infer_tf_encoding`.
 
     Parameters
     ----------
@@ -748,7 +747,7 @@ def get_tf_mappers(feature_objects):
     from acoupipe.tf.encodings import infer_tf_encoding  # noqa: PLC0415
 
     encoders, shapes, dtypes = {}, {}, {}
-    specs = [('idx', np.int32, ()), ('seeds', np.int32, (None, 2))]
+    specs = [('idx', np.int32, ())]
     specs += [(feature.name, feature.dtype, feature.shape) for feature in feature_objects]
     for name, dtype, shape in specs:
         encoders[name], dtypes[name], shapes[name] = infer_tf_encoding(dtype, shape)
@@ -763,7 +762,7 @@ def remove_unrequested(sampler, data, keep):  # noqa: ARG001
     :func:`combine_feature_funcs`) to remove auxiliary outputs, e.g. of the prepare
     function. The dictionary is modified in-place, since `combine_feature_funcs`
     merges the returned dictionary into ``data``.
-    The keys ``idx`` and ``seeds`` are added afterwards by the pipeline and are not affected.
+    The key ``idx`` is added afterwards by the pipeline and is not affected.
 
     Parameters
     ----------

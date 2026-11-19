@@ -50,5 +50,5 @@ def test_samples_per_task_matches_sequential_generation(samples_per_task):
     distributed = generate(tasks=2, size=7, samples_per_task=samples_per_task)
     assert distributed.keys() == sequential.keys()
     for idx, expected in sequential.items():
-        for name in [*FEATURES, 'seeds']:
+        for name in FEATURES:
             assert np.array_equal(distributed[idx][name], expected[name])

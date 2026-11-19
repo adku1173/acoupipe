@@ -4,6 +4,7 @@ from time import time
 from warnings import warn
 
 import acoular as ac
+from acoupipe.pipeline import seed_key
 
 import numpy as np
 import scipy.signal
@@ -268,36 +269,27 @@ def get_frequency_index_range(freq, f, num):
     return (ind1, ind2)
 
 
-def set_pipeline_seeds(pipeline, start_idx, size, dataset='training'):
-    """Create the random seed list for each sampler object held by the pipeline.
+def set_pipeline_seed(pipeline, size, split, seed):
+    """Set the number of samples and the seed of the pipeline for a dataset split.
+
+    The samplers of the data sample with index ``idx`` are seeded from
+    ``(seed, seed_key(split), idx, sampler key)`` (see :func:`~acoupipe.pipeline.reseed_sampler`).
+    Different splits and dataset seeds therefore yield independent random streams for any number
+    of samples.
 
     Parameters
     ----------
     pipeline : instance of class BasePipeline
         the pipeline object holding the sampler classes
-    start_idx : int
-        start index to be calculated by the pipeline
     size : int
         number of samples to be yielded by the pipeline
-    dataset : str, optional
-        the data set type, by default "training". Choose from ["training","validation"]
+    split : str
+        name of the dataset split, e.g. 'training', 'validation' or 'test'
+    seed : int
+        non-negative seed of the dataset
     """
-    if dataset == 'training':
-        off = 0
-    elif dataset == 'validation':
-        # we assume that the training set will never be larger than 1e12 samples
-        off = int(1e12)  # a general offset to ensure that validation and training seeds never match
-    elif dataset == 'test':
-        off = int(1e21)
-    sampler_keys = list(pipeline.sampler.keys())
-    if not sampler_keys:
-        pipeline.numsamples = size
-        pipeline.random_seeds = None
-        return
-    soff = int(1e7)  # offset to ensure that seeds of sampler object doesn't match
-    pipeline.random_seeds = {
-        i: range(off + (i * soff) + start_idx, off + (i * soff) + size + start_idx) for i in sampler_keys
-    }
+    pipeline.numsamples = size
+    pipeline.seed = (seed, seed_key(split))
 
 
 def complex_to_real(func):

@@ -112,7 +112,7 @@ class DatasetMIRACLEConfig(DatasetSyntheticConfig):
             sampler[5] = self.mic_noise_sampler
         if self.random_signal_length:
             sampler[6] = self.signal_length_sampler
-        return sampler
+        return dict(sorted(sampler.items()))  # keys define the sampling order
 
     def create_mics(self):
         with h5.File(self.filename, 'r') as file:

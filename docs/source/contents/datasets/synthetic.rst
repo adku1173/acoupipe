@@ -79,6 +79,6 @@ Example
     # print the keys of the dataset
     print(data.keys())
 
-The generator yields one sample at a time as a dictionary. It includes the chosen features and the helper fields ``idx`` (sample index) and ``seeds`` (random seeds) for reproducibility in multi-processing scenarios.
+The generator yields one sample at a time as a dictionary. It includes the chosen features and the helper field ``idx`` (sample index), which identifies the sample in multi-processing scenarios (see :ref:`reproducibility`).
 
 API reference: :class:`~acoupipe.datasets.synthetic.dataset.DatasetSynthetic`

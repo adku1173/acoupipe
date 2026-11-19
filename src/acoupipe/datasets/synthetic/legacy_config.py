@@ -231,7 +231,7 @@ class DatasetSyntheticConfig(ConfigBase):
             sampler[5] = self.mic_noise_sampler
         if self.random_signal_length:
             sampler[6] = self.signal_length_sampler
-        return sampler
+        return dict(sorted(sampler.items()))  # keys define the sampling order
 
     def _get_fftfreq(self):
         return self.freq_data.fftfreq()

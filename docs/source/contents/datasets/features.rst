@@ -279,13 +279,7 @@ The index referencing the sampled case in the dataset (default: starts at 0). A 
     Limit each worker process to a single thread when using parallel tasks, see :ref:`parallel-generation`.
 
 When using multiple parallel tasks, the sample order may not be preserved. The :code:`idx` feature allows then to identify the source case in the dataset.
-
-
-Random seeds (:code:`'seeds'`)
-------------------------------
-
-A list with random seeds used by the Sampler objects involved.
-The combination is unique for each source case in the dataset. Primarily for internal use.
+Together with the dataset seed and the split, :code:`idx` determines the sample, see :ref:`reproducibility`.
 
 
 

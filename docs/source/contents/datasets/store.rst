@@ -18,12 +18,12 @@ The sample index acts as the group header.
         |── 'sourcemap'
         |── 'loc' 
         |── 'f' 
-        |── 'seeds'
+        |── 'idx'
     └──'1'
         |── 'sourcemap'
         |── 'loc' 
         |── 'f' 
-        |── 'seeds'
+        |── 'idx'
     └──...
         |   ...
 
@@ -48,7 +48,7 @@ TFRecord format
 
 The TFRecord_ file format is a binary file format to store sequences of data developed by Tensorflow_. 
 In case of running the simulation with multiple CPU threads, the initial sampling order of the source cases may not be maintained in the file. 
-However, the exact source case number can be figured out with the :code:`idx` and :code:`seeds` features when the file is parsed.
+However, the exact source case number can be figured out with the :code:`idx` feature when the file is parsed.
 
 The following code snippet shows how to store the data in TFRecord format:
 

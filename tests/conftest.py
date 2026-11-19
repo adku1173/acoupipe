@@ -130,22 +130,14 @@ def container_sampler():
 
 @pytest.fixture
 def base_pipeline():
-    size = 1
-    pipeline = get_pipeline(size)
-    test_seeds = {1: range(1, 1 + size), 2: range(2, 2 + size), 3: range(3, 3 + size), 4: range(4, 4 + size)}
-    return pipeline, test_seeds
+    return get_pipeline(1)
 
 
 @pytest.fixture
 def h5_test_file():
     """Create and clean up a temporary HDF5 test file."""
     pipeline = get_pipeline(5)
-    pipeline.random_seeds = {
-        1: range(1, 6),
-        2: range(2, 7),
-        3: range(3, 8),
-        4: range(4, 9),
-    }
+    pipeline.seed = (1,)
     temp_dir = tempfile.mkdtemp()
     file_path = os.path.join(temp_dir, 'test_data.h5')
     writer = WriteH5Dataset(source=pipeline, name=file_path)

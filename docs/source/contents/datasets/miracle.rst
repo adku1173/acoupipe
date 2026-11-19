@@ -141,8 +141,8 @@ used to create the figure below.
    :linenos:
    :end-before: dpath
 
-The generator yields one sample at a time as a dictionary, including helper fields ``idx`` and
-``seeds`` to keep data generation reproducible when running in parallel.
+The generator yields one sample at a time as a dictionary, including the helper field ``idx`` that
+identifies the sample when running in parallel (see :ref:`reproducibility`).
 
 Example sourcemaps
 ------------------

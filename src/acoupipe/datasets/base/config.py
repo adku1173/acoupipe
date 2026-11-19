@@ -15,6 +15,7 @@ from acoupipe.base import BaseSampler
 from acoupipe.datasets.base.callbacks import call_with_supported_context
 from acoupipe.datasets.base.parameters import ParameterSet
 from acoupipe.datasets.features import Feature, combine_feature_funcs, create_feature
+from acoupipe.pipeline import seed_key
 from acoupipe.sampler import AttributeSampler
 
 from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, List
@@ -59,9 +60,11 @@ class Config(HasPrivateTraits):
     During :meth:`acoupipe.datasets.base.DatasetBase.generate`, each generated
     sample follows the same high-level order:
 
-    1. The pipeline updates the sample index and sampler random seeds.
-    2. Registered parameter samplers are executed. Samplers created with
-       :meth:`sample` receive integer keys and are sampled in registration order.
+    1. The pipeline re-seeds every sampler from the dataset seed, the split, the sample
+       index and the sampler key (see :func:`~acoupipe.pipeline.reseed_sampler`).
+    2. Registered parameter samplers are executed in registration order. The key of a
+       sampler created with :meth:`sample` is derived from its parameter path, so that its
+       samples do not change if other samplers are added or removed.
     3. Prepare callbacks registered with :meth:`prepare` are evaluated in
        registration order and may add intermediate values to the per-sample
        ``data`` dictionary.
@@ -256,9 +259,9 @@ class Config(HasPrivateTraits):
         >>> float(sample['c']), float(sample['fs'])
         (340.0, 48000.0)
 
-        The pipeline samples registered samplers in sorted sampler-key order.
-        Samplers registered through this method are stored with integer keys in
-        registration order, so the examples above sample ``c`` before ``fs``.
+        The pipeline samples registered samplers in registration order, so the
+        example above samples ``c`` before ``fs``. Each parameter path can be
+        sampled by one sampler only.
 
         A random function may also request the current parameter set. This allows
         one sampler to draw a coupled pair: it returns the value for its own path
@@ -283,6 +286,9 @@ class Config(HasPrivateTraits):
         feature : Register feature callbacks with full context injection.
         """
         self._resolve_parameter_path(path)
+        if any(sampler.attribute == path for sampler in self._parameter_samplers):
+            msg = f'Sampling path "{path}" is already sampled.'
+            raise ValueError(msg)
         if sampler_class not in (None, AttributeSampler):
             msg = f'Sampling path "{path}" supports only AttributeSampler.'
             raise ValueError(msg)
@@ -468,9 +474,10 @@ class Config(HasPrivateTraits):
         Returns
         -------
         dict
-            A dictionary mapping sampler indices to sampler instances.
+            A dictionary in registration order that maps the key of each sampler's parameter
+            path (see :func:`~acoupipe.pipeline.seed_key`) to the sampler instance.
         """
-        return dict(enumerate(self._parameter_samplers))
+        return {seed_key(sampler.attribute): sampler for sampler in self._parameter_samplers}
 
     def _get_config_hook(self, name):
         """Return a subclass hook method if the config class defines it.
@@ -551,7 +558,7 @@ class Config(HasPrivateTraits):
         default_feature_names = []
 
         for feature_name in [feat for feat in features if isinstance(feat, str)]:
-            if feature_name in ['idx', 'seeds'] or feature_name in registered_feature_names:
+            if feature_name == 'idx' or feature_name in registered_feature_names:
                 continue
             parameter_feature = self._get_parameter_feature(feature_name)
             if parameter_feature is None:
@@ -625,7 +632,7 @@ class Config(HasPrivateTraits):
         feature_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
-            if feature_name not in ['idx', 'seeds']:
+            if feature_name != 'idx':
                 get_feature = getattr(self, f'_get_default_feature_{feature_name}', None)
                 if get_feature is None:
                     msg = f'Unknown feature "{feature_name}".'

@@ -15,4 +15,4 @@ def test_legacy_save_h5_still_writes_requested_features(tmp_path):
 
     with h5py.File(path, 'r') as h5:
         assert '0/loc' in h5
-        assert '0/seeds' in h5
+        assert '0/idx' in h5
