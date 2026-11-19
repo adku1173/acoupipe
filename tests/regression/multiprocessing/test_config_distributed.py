@@ -5,6 +5,7 @@ import sys
 from acoupipe.datasets import Config, Dataset
 from acoupipe.datasets.base.parameters import ParameterSet
 
+import numpy as np
 import pytest
 
 pytestmark = pytest.mark.multiprocessing
@@ -26,10 +27,10 @@ def create_config():
     return config
 
 
-def generate(tasks):
-    """Generate four samples with the given number of tasks, keyed by sample index."""
-    dataset = Dataset(config=create_config(), tasks=tasks)
-    samples = dataset.generate(features=FEATURES, size=4, progress_bar=False)
+def generate(tasks, size=4, samples_per_task=16):
+    """Generate samples with the given number of tasks, keyed by sample index."""
+    dataset = Dataset(config=create_config(), tasks=tasks, samples_per_task=samples_per_task)
+    samples = dataset.generate(features=FEATURES, size=size, progress_bar=False)
     return {sample['idx']: sample for sample in samples}
 
 
@@ -44,3 +45,16 @@ def test_distributed_samples_reach_parameter_outputs_features_and_prepare_callba
         for name in FEATURES:
             assert float(distributed[idx][name]) == float(expected[name])
     assert len({float(sample['c']) for sample in distributed.values()}) == len(distributed)
+
+
+@pytest.mark.parametrize('samples_per_task', [1, 3])
+def test_samples_per_task_matches_sequential_generation(samples_per_task):
+    """Tasks with several samples, including shorter final tasks, reproduce sequential samples."""
+    if sys.platform == 'darwin':
+        pytest.skip('Ray tests are not stable on macOS runners')
+    sequential = generate(tasks=1, size=7)
+    distributed = generate(tasks=2, size=7, samples_per_task=samples_per_task)
+    assert distributed.keys() == sequential.keys()
+    for idx, expected in sequential.items():
+        for name in [*FEATURES, 'seeds']:
+            assert np.array_equal(distributed[idx][name], expected[name])

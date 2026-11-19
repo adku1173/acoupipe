@@ -90,4 +90,26 @@ Now, the data can be plotted, e.g. by using the `matplotlib`_ library:
        ...: plt.ylabel('y (m)')
 
 
+.. _parallel-generation:
+
+Parallel Generation
+-------------------
+
+With :code:`tasks > 1`, the samples are calculated in parallel by :code:`tasks` Ray worker processes.
+Each worker calculates up to :code:`samples_per_task` samples (default: 16) per call, which reduces the
+scheduling overhead for samples that are fast to compute. The sample order is not preserved; the
+:code:`idx` item identifies each sample.
+
+.. code-block:: python
+
+    dataset = DatasetSynthetic(tasks=8)
+    dataset.samples_per_task = 16
+
+.. warning::
+
+    Each worker process should use a single thread. Set :code:`NUMBA_NUM_THREADS=1`,
+    :code:`OMP_NUM_THREADS=1`, :code:`OPENBLAS_NUM_THREADS=1` and :code:`MKL_NUM_THREADS=1` in the
+    environment before starting Python or the Ray cluster (:code:`ray start`). Otherwise, every worker
+    starts as many threads as there are CPU cores, and the workers slow each other down severely.
+
 A more in-depth example on how to generate the data, and how to create a TensorFlow-ready pipeline that produces data on the fly can be found in the :ref:`Model training with training data generated on the fly <Examples>` example.

@@ -28,11 +28,15 @@ class DatasetBase(HasPrivateTraits):
         Configuration object for dataset generation.
     tasks : int
         Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
+        For tasks > 1, limit each worker process to a single thread, see :ref:`parallel-generation`.
+    samples_per_task : int
+        Maximum number of samples calculated per remote call if tasks > 1. Defaults to 16.
     """
 
     config = Any(desc='configuration object')
     tasks = Property(desc='number of parallel tasks for data generation')
     remote_args = Dict({})
+    samples_per_task = Int(16, desc='maximum number of samples calculated per remote call')
     #: logger instance to log calculation times for each data sample
     logger = Property(desc='Logger instance to log timing statistics')
 
@@ -40,9 +44,10 @@ class DatasetBase(HasPrivateTraits):
     _logger = Instance(logging.Logger, desc='Internal logger instance')
     _tasks = Int(1, desc='number of parallel tasks for data generation')
 
-    def __init__(self, config=None, tasks=1, remote_args=None, logger=None):
+    def __init__(self, config=None, tasks=1, remote_args=None, logger=None, samples_per_task=16):
         HasPrivateTraits.__init__(self)
         self.tasks = tasks
+        self.samples_per_task = samples_per_task
         if config is None:
             config = ConfigBase()
         if not hasattr(config, 'get_sampler'):
@@ -81,7 +86,9 @@ class DatasetBase(HasPrivateTraits):
 
     def get_pipeline_instance(self):
         if self.tasks > 1:
-            return DistributedPipeline(numworkers=self.tasks, remote_args=self.remote_args)
+            return DistributedPipeline(
+                numworkers=self.tasks, samples_per_task=self.samples_per_task, remote_args=self.remote_args
+            )
         return BasePipeline()
 
     def _generate(self, pipeline, progress_bar, start_idx):

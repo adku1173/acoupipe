@@ -274,6 +274,10 @@ The index referencing the sampled case in the dataset (default: starts at 0). A 
    for data in dataset.generate(start_idx=100, ...):
          ...
 
+.. warning::
+
+    Limit each worker process to a single thread when using parallel tasks, see :ref:`parallel-generation`.
+
 When using multiple parallel tasks, the sample order may not be preserved. The :code:`idx` feature allows then to identify the source case in the dataset.
 
 

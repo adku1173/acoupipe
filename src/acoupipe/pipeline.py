@@ -351,10 +351,10 @@ class SamplerActor:
                 self.sampler[k].sample()
         return self.sampler
 
-    def extract_features(self, seeds, times, *feature_args):
-        """Remote calculation of all features."""
+    def extract_features(self, seeds_list, times, *feature_args):
+        """Remote calculation of all features for each seed dict in seeds_list."""
         times[1] = time()
-        data = self.feature_func(self.sample(seeds), *feature_args)
+        data = [self.feature_func(self.sample(seeds), *feature_args) for seeds in seeds_list]
         times[2] = time()
         return (data, times, os.getpid())
 
@@ -402,11 +402,26 @@ class DistributedPipeline(BasePipeline):
     of type :class:`BaseSampler` specified to the :attr:`sampler` list.
     Re-seeding is performed at each iteration if :attr:`random_seeds` are
     given.
+
+    Each remote task calculates up to :attr:`samples_per_task` data samples before returning them.
+    Since the samples of a task are serialized together, feature functions must not return objects
+    that are modified in place by subsequent sampling.
+
+    .. warning::
+
+        Set ``NUMBA_NUM_THREADS=1``, ``OMP_NUM_THREADS=1``, ``OPENBLAS_NUM_THREADS=1`` and
+        ``MKL_NUM_THREADS=1`` before starting Python or the Ray cluster. Otherwise, every worker
+        starts as many threads as there are CPU cores, and the workers slow each other down.
     """
 
     #: number of workers to be used for parallel calculation (usually number of CPUs).
     #: each worker is associated with a stateless task.
     numworkers = Int(1, desc='number of tasks to be performed in parallel (usually number of CPUs)')
+
+    #: maximum number of data samples calculated per remote task. Larger values reduce the
+    #: scheduling overhead per sample. To keep all workers busy, a task holds at most
+    #: ceil(remaining samples / workers) samples.
+    samples_per_task = Int(16, desc='maximum number of data samples calculated per remote task')
 
     #: additional arguments to be passed to ray remote tasks, e.g. num_gpus for GPU
     #: resource allocation (e.g. num_gpus=0.25 for 1 GPU per 4 tasks)
@@ -419,20 +434,26 @@ class DistributedPipeline(BasePipeline):
         self.logger.info(f'id {task_index} on pid {pid}: full time: {times[3] - times[0]:.32f} sec')
         # self.logger.info(f"{f.__name__} args:[{args}] took: {end - start:.4f} sec")
 
-    def _sample_and_schedule_task(self, actor, task_dict):
-        self.logger.info(f'id {self._idx}: start task.')
+    def _sample_and_schedule_task(self, actor, task_dict, seed_iter, remaining, nworkers):
+        """Schedule the next samples as one remote task of the actor and return their number."""
+        num = min(self.samples_per_task, -(-remaining // nworkers))  # keeps all workers busy at the end
+        seeds_list = []
+        samples = []
+        for _ in range(num):
+            self._update_sample_index_and_seeds(seed_iter)
+            seeds_list.append(dict(self._seeds))
+            samples.append({'idx': self._idx, 'seeds': np.array(list(self._seeds.items()))})
+        self.logger.info(f'id {samples[0]["idx"]}: start task with {num} samples.')
         times = [time(), None, None, None]  # (schedule timestamp, execution timestamp, stop timestamp, get timestamp)
         if callable(self.feature_func):
-            result_id = actor.extract_features.remote(self._seeds, times)  # calculation is started in new remote task
+            result_id = actor.extract_features.remote(seeds_list, times)  # calculation is started in new remote task
         elif isinstance(self.feature_func, tuple):
-            result_id = actor.extract_features.remote(self._seeds, times, *list(self.feature_func[1:]))
+            result_id = actor.extract_features.remote(seeds_list, times, *list(self.feature_func[1:]))
         else:
             msg = 'feature_func attribute must be a callable or a tuple containing a callable and its arguments!'
             raise ValueError(msg)
-        task_dict[result_id] = (
-            actor,
-            {'idx': self._idx, 'seeds': np.array(list(self._seeds.items()))},
-        )  # add index, and seeds
+        task_dict[result_id] = (actor, samples)  # index and seeds of each sample
+        return num
 
     def _update_sample_index_and_seeds(self, seed_iter=None):
         """Update seeds and running index for the current data sample of the dataset."""
@@ -475,28 +496,28 @@ class DistributedPipeline(BasePipeline):
         progress_bar = tqdm(range(nsamples), colour='#1f77b4', disable=(not progress_bar))
         feature_func = self.feature_func if callable(self.feature_func) else self.feature_func[0]
         task_dict = {}
-        finished_tasks = 0
+        scheduled = 0
         with ActorHandler(nworkers, self.sampler, feature_func, remote_args=self.remote_args) as actors:
             for actor in actors:
-                self._update_sample_index_and_seeds(seed_iter)
-                self._sample_and_schedule_task(actor, task_dict)
-            while finished_tasks < nsamples:
-                done_ids, pending_ids = ray.wait(list(task_dict.keys()))
-                if done_ids:
-                    did = done_ids[0]
-                    finished_tasks += 1
-                    try:
-                        data, times, pid = ray.get(did)
-                    except Exception as exception:
-                        self.logger.info(f'task with id {task_dict[did]} failed with Traceback:', exc_info=True)
-                        raise exception
-                    times[-1] = time()  # add getter time
-                    actor, new_data = task_dict.pop(did)
-                    data.update(new_data)  # add the remaining task_dict items to the data dict
-                    self.logger.info(f'id {data["idx"]} on pid {pid}: finished task.')
-                    self._log_execution_time(data['idx'], times, pid)
-                    if (nsamples + start_idx - 1 - self._idx) > 0:  # directly _schedule next task
-                        self._update_sample_index_and_seeds(seed_iter)
-                        self._sample_and_schedule_task(actor, task_dict)
+                scheduled += self._sample_and_schedule_task(actor, task_dict, seed_iter, nsamples - scheduled, nworkers)
+            while task_dict:
+                did = ray.wait(list(task_dict.keys()))[0][0]
+                try:
+                    results, times, pid = ray.get(did)
+                except Exception as exception:
+                    self.logger.info(
+                        f'task with id {task_dict[did][1][0]["idx"]} failed with Traceback:', exc_info=True
+                    )
+                    raise exception
+                times[-1] = time()  # add getter time
+                actor, samples = task_dict.pop(did)
+                self.logger.info(f'id {samples[0]["idx"]} on pid {pid}: finished task with {len(samples)} samples.')
+                self._log_execution_time(samples[0]['idx'], times, pid)
+                if scheduled < nsamples:  # directly schedule the next task
+                    scheduled += self._sample_and_schedule_task(
+                        actor, task_dict, seed_iter, nsamples - scheduled, nworkers
+                    )
+                for data, sample in zip(results, samples, strict=True):
+                    data.update(sample)  # add index and seeds
                     yield data
                     progress_bar.update(1)
