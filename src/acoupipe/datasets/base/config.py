@@ -20,7 +20,7 @@ from acoupipe.datasets.features import Feature, combine_feature_funcs, create_fe
 from acoupipe.pipeline import seed_key
 from acoupipe.sampler import AttributeSampler
 
-from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, List
+from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, List, Str
 
 
 class Config(HasPrivateTraits):
@@ -105,14 +105,8 @@ class Config(HasPrivateTraits):
     #: List of user-registered prepare callbacks.
     _registered_prepare_funcs = List(Callable, desc='user-registered prepare callbacks')
 
-    #: List of user-registered feature callbacks.
-    _registered_feature_funcs = List(Callable, desc='user-registered feature callbacks')
-
-    #: Names of user-registered feature callbacks.
-    _registered_feature_names = List(desc='names of user-registered feature callbacks')
-
-    #: Metadata (dtype and shape) for user-registered feature callbacks.
-    _registered_feature_metadata = Dict(desc='dtype and shape metadata for user-registered feature callbacks')
+    #: User-registered features, mapped from feature name to Feature object.
+    _registered_features = Dict(Str, Instance(Feature), desc='user-registered features')
 
     def __init__(self, parameters=None, **traits):
         """Initialize the Config object.
@@ -418,9 +412,11 @@ class Config(HasPrivateTraits):
             The feature function. It should accept keyword arguments `parameters`,
             `sampler`, and `data`, and return the feature value.
         dtype : numpy.dtype, optional
-            The data type of the feature. If provided, shape must also be provided.
+            The data type of the feature. Required together with shape for
+            TensorFlow datasets and TFRecord files.
         shape : tuple, optional
-            The shape of the feature. If provided, dtype must also be provided.
+            The shape of the feature. Required together with dtype for
+            TensorFlow datasets and TFRecord files.
 
         Returns
         -------
@@ -430,7 +426,7 @@ class Config(HasPrivateTraits):
         Raises
         ------
         ValueError
-            If dtype and shape are not both provided or both None.
+            If a feature with the same name is already registered.
 
         Examples
         --------
@@ -461,8 +457,8 @@ class Config(HasPrivateTraits):
         >>> config.feature('derived', compute_derived, dtype=np.float64, shape=()) is compute_derived
         True
         """
-        if (dtype is None) != (shape is None):
-            msg = f'Feature "{name}" metadata requires both dtype and shape.'
+        if name in self._registered_features:
+            msg = f'Feature "{name}" is already registered.'
             raise ValueError(msg)
 
         def feature_func(sampler, data):
@@ -474,10 +470,7 @@ class Config(HasPrivateTraits):
             )
             return {name: value}
 
-        self._registered_feature_names.append(name)
-        if dtype is not None:
-            self._registered_feature_metadata[name] = (dtype, shape)
-        self._registered_feature_funcs.append(feature_func)
+        self._registered_features[name] = create_feature(feature_func, name=name, shape=shape, dtype=dtype)
         return func
 
     def get_sampler(self):
@@ -547,13 +540,12 @@ class Config(HasPrivateTraits):
         """
         features = [] if features is None else list(features)
         requested = [feat.name if isinstance(feat, Feature) else feat for feat in features]
-        registered_feature_names = set(self._registered_feature_names)
         feature_objects = [feat for feat in features if isinstance(feat, Feature)]
         parameter_feature_funcs = []
         default_feature_names = []
 
         for feature_name in [feat for feat in features if isinstance(feat, str)]:
-            if feature_name == 'idx' or feature_name in registered_feature_names:
+            if feature_name == 'idx' or feature_name in self._registered_features:
                 continue
             parameter_feature = self._get_parameter_feature(feature_name)
             if parameter_feature is None:
@@ -566,13 +558,13 @@ class Config(HasPrivateTraits):
         feature_funcs = list(self._registered_prepare_funcs)
         feature_funcs += [feature.get_feature_func() for feature in feature_objects]
         feature_funcs += parameter_feature_funcs
-        for name, feature_func in zip(self._registered_feature_names, self._registered_feature_funcs, strict=True):
+        for name, feature in self._registered_features.items():
             if name not in requested:
                 continue
-            feature_funcs.append(feature_func)
-            if name in self._registered_feature_metadata:
-                dtype, shape = self._registered_feature_metadata[name]
-                feature_objects.append(create_feature(feature_func, name=name, shape=shape, dtype=dtype))
+            feature_funcs.append(feature.get_feature_func())
+            # Features without metadata are not passed on to the TF paths yet.
+            if feature.dtype is not None and feature.shape is not None:
+                feature_objects.append(feature)
         feature_funcs.append(partial(remove_unrequested, keep=requested))
         return combine_feature_funcs(feature_funcs), feature_objects
 

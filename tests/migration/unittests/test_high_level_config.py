@@ -297,6 +297,36 @@ def test_requested_feature_can_read_prepare_data():
     assert sample == {'idx': 0, 'double_c_plus_one': 687.0}
 
 
+def test_registering_duplicate_feature_name_raises():
+    """Test that a feature name can be registered only once.
+
+    ``Config.feature`` stores one Feature object per name, so registering the
+    same name again would silently replace the first callback. Like
+    ``Config.sample`` for parameter paths, it raises instead.
+    """
+    config = Config(parameters=ParameterSet())
+    config.feature('value', lambda: 1)
+
+    with pytest.raises(ValueError, match='Feature "value" is already registered.'):
+        config.feature('value', lambda: 2)
+
+
+def test_registered_feature_without_metadata_is_evaluated_but_not_a_feature_object():
+    """Test registered features without ``dtype`` and ``shape``.
+
+    Such features are generated like any other requested feature, but are not
+    returned as Feature objects, since the TensorFlow paths require known
+    metadata.
+    """
+    config = Config(parameters=ParameterSet())
+    config.feature('value', lambda: 1)
+
+    feature_func, feature_objects = config.get_features(['value'], f=None, num=0)
+
+    assert feature_func({}) == {'value': 1}
+    assert feature_objects == []
+
+
 def test_feature_objects_contain_only_requested_registered_features():
     """Test feature metadata matches the requested features.
 
