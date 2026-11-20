@@ -307,7 +307,7 @@ def test_registering_duplicate_feature_name_raises():
     config = Config(parameters=ParameterSet())
     config.feature('value', lambda: 1)
 
-    with pytest.raises(ValueError, match='Feature "value" is already registered.'):
+    with pytest.raises(ValueError, match='Feature "value" is already registered'):
         config.feature('value', lambda: 2)
 
 
