@@ -250,6 +250,69 @@ def test_feature_output_names_are_not_parameter_aliases():
         next(Dataset(config=config).generate(features=['loc'], size=1, progress_bar=False))
 
 
+def test_prepare_outputs_are_removed_from_generated_sample():
+    """Test prepare outputs are intermediate values, not generated features.
+
+    A prepare callback may add values to the per-sample ``data`` context, but
+    only requested features appear in the sample yielded by ``Dataset.generate``.
+    """
+    config = Config(parameters=ParameterSet.from_dict({'c': 343.0}))
+    config.prepare(lambda: {'intermediate': 1.0})
+
+    sample = next(Dataset(config=config).generate(features=['c'], size=1, progress_bar=False))
+
+    assert set(sample) == {'idx', 'c'}
+
+
+def test_unrequested_registered_feature_is_not_evaluated():
+    """Test registered features run only when they are requested.
+
+    Registering a feature with ``Config.feature`` makes it available by name,
+    but neither evaluates it nor adds it to the sample unless it is listed in
+    ``features=[...]``.
+    """
+    calls = []
+    config = Config(parameters=ParameterSet.from_dict({'c': 343.0}))
+    config.feature('requested', lambda: 1)
+    config.feature('unrequested', lambda: calls.append('unrequested'))
+
+    sample = next(Dataset(config=config).generate(features=['requested'], size=1, progress_bar=False))
+
+    assert set(sample) == {'idx', 'requested'}
+    assert calls == []
+
+
+def test_requested_feature_can_read_prepare_data():
+    """Test requested features still see prepare outputs through ``data``.
+
+    The cleanup removes prepare outputs only after all requested features were
+    evaluated, so intermediate values remain usable as feature inputs.
+    """
+    config = Config(parameters=ParameterSet.from_dict({'c': 343.0}))
+    config.prepare(lambda parameters: {'double_c': 2 * parameters.c})
+    config.feature('double_c_plus_one', lambda data: data['double_c'] + 1)
+
+    sample = next(Dataset(config=config).generate(features=['double_c_plus_one'], size=1, progress_bar=False))
+
+    assert sample == {'idx': 0, 'double_c_plus_one': 687.0}
+
+
+def test_feature_objects_contain_only_requested_registered_features():
+    """Test feature metadata matches the requested features.
+
+    Feature objects are used to derive TensorFlow signatures and TFRecord
+    encoders, so registered features with metadata must only be included when
+    they are requested and therefore present in the generated sample.
+    """
+    config = Config(parameters=ParameterSet())
+    config.feature('requested', lambda: np.float32(1.0), dtype=np.float32, shape=())
+    config.feature('unrequested', lambda: np.float32(2.0), dtype=np.float32, shape=())
+
+    _, feature_objects = config.get_features(['requested'], f=None, num=0)
+
+    assert [feature.name for feature in feature_objects] == ['requested']
+
+
 def constant_sampler(value):
     """Return a random-function callback that always returns ``value``.
 

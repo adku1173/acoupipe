@@ -11,10 +11,12 @@ pipeline configuration.
     Config
 """
 
+from functools import partial
+
 from acoupipe.base import BaseSampler
 from acoupipe.datasets.base.callbacks import call_with_supported_context
 from acoupipe.datasets.base.parameters import ParameterSet
-from acoupipe.datasets.features import Feature, combine_feature_funcs, create_feature
+from acoupipe.datasets.features import Feature, combine_feature_funcs, create_feature, remove_unrequested
 from acoupipe.pipeline import seed_key
 from acoupipe.sampler import AttributeSampler
 
@@ -69,8 +71,10 @@ class Config(HasPrivateTraits):
        registration order and may add intermediate values to the per-sample
        ``data`` dictionary.
     4. Requested default or parameter-backed features are evaluated.
-    5. User features registered with :meth:`feature` are evaluated and may use
-       both sampled parameters and values already present in ``data``.
+    5. Requested user features registered with :meth:`feature` are evaluated and
+       may use both sampled parameters and values already present in ``data``.
+    6. All outputs that were not requested, e.g. intermediate values of prepare
+       callbacks, are removed from the generated sample.
 
     Users normally configure these steps on the Config object and then let the
     Dataset execute them. Calling a sampler's ``sample()`` method directly is
@@ -527,10 +531,9 @@ class Config(HasPrivateTraits):
         The feature functions are called in the following order: the registered
         prepare callbacks, the ``get_prepare_func`` hook of a subclass (if any),
         the custom feature objects (Feature instances) and the requested default
-        features, the requested ParameterSet attributes, the registered feature
-        callbacks and finally the ``get_cleanup_func`` hook of a subclass (if any).
-
-        Outputs that were not requested are not removed by default.
+        features, the requested ParameterSet attributes, the requested registered
+        feature callbacks and finally a cleanup that removes all outputs that were
+        not requested (see :func:`~acoupipe.datasets.features.remove_unrequested`).
 
         Parameters
         ----------
@@ -552,6 +555,7 @@ class Config(HasPrivateTraits):
             includes registered feature callbacks with ``dtype`` and ``shape``.
         """
         features = [] if features is None else list(features)
+        requested = [feat.name if isinstance(feat, Feature) else feat for feat in features]
         registered_feature_names = set(self._registered_feature_names)
         feature_objects = [feat for feat in features if isinstance(feat, Feature)]
         parameter_feature_funcs = []
@@ -577,13 +581,13 @@ class Config(HasPrivateTraits):
         feature_funcs += [feature.get_feature_func() for feature in feature_objects]
         feature_funcs += parameter_feature_funcs
         for name, feature_func in zip(self._registered_feature_names, self._registered_feature_funcs, strict=True):
+            if name not in requested:
+                continue
             feature_funcs.append(feature_func)
             if name in self._registered_feature_metadata:
                 dtype, shape = self._registered_feature_metadata[name]
                 feature_objects.append(create_feature(feature_func, name=name, shape=shape, dtype=dtype))
-        cleanup_hook = self._get_config_hook('get_cleanup_func')
-        if cleanup_hook is not None:
-            feature_funcs.append(cleanup_hook(features))
+        feature_funcs.append(partial(remove_unrequested, keep=requested))
         return combine_feature_funcs(feature_funcs), feature_objects
 
     def _get_default_feature_kwargs(self, f, num):
