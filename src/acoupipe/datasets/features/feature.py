@@ -22,14 +22,16 @@ class Feature(HasPrivateTraits):
     ----------
     name : str
         Name of the feature.
-    dtype : callable
-        Numpy dtype of the feature.
+    dtype : callable or None
+        Numpy dtype of the feature. ``None`` if unknown.
+    shape : tuple or None
+        Shape of the feature. ``None`` if unknown.
 
     """
 
     name = Str
-    dtype = Callable
-    shape = Tuple
+    dtype = Callable(None)
+    shape = Either(Tuple, None)
 
     def get_feature_func(self):
         """Will return a method depending on the class parameters."""
