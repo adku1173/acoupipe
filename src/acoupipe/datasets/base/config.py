@@ -67,9 +67,9 @@ class Config(HasPrivateTraits):
     2. Registered parameter samplers are executed in registration order. The key of a
        sampler created with :meth:`sample` is derived from its parameter path, so that its
        samples do not change if other samplers are added or removed.
-    3. Prepare callbacks registered with :meth:`prepare` are evaluated in
-       registration order and may add intermediate values to the per-sample
-       ``data`` dictionary.
+    3. Dataset-specific :meth:`_global_prepare` and the prepare callbacks registered with
+       :meth:`prepare` are evaluated in registration order and may add
+       intermediate values to the per-sample ``data`` dictionary.
     4. Requested default or parameter-backed features are evaluated.
     5. Requested user features registered with :meth:`feature` are evaluated and
        may use both sampled parameters and values already present in ``data``.
@@ -129,6 +129,14 @@ class Config(HasPrivateTraits):
         if parameters is None:
             parameters = self.create_parameters()
         super().__init__(parameters=parameters, **traits)
+        self.prepare(self._global_prepare)
+
+    def _global_prepare(self):
+        """Run dataset-specific preparation before all user prepare callbacks.
+
+        Subclasses override this method and may declare ``parameters``, ``sampler``
+        or ``data`` by name, like any :meth:`prepare` callback.
+        """
 
     def create_parameters(self):
         """Create the default parameter set for this configuration.
@@ -483,23 +491,6 @@ class Config(HasPrivateTraits):
         """
         return {seed_key(sampler.attribute): sampler for sampler in self._parameter_samplers}
 
-    def _get_config_hook(self, name):
-        """Return a subclass hook method if the config class defines it.
-
-        Parameters
-        ----------
-        name : str
-            The name of the hook method to look up.
-
-        Returns
-        -------
-        callable or None
-            The hook method if found, None otherwise.
-        """
-        if not any(name in cls.__dict__ for cls in type(self).__mro__):
-            return None
-        return getattr(self, name)
-
     def _get_parameter_feature(self, name):
         """Return a feature function for a direct ParameterSet attribute.
 
@@ -528,12 +519,12 @@ class Config(HasPrivateTraits):
     def get_features(self, features, f, num):
         """Get the combined feature function and the feature objects of this config.
 
-        The feature functions are called in the following order: the registered
-        prepare callbacks, the ``get_prepare_func`` hook of a subclass (if any),
-        the custom feature objects (Feature instances) and the requested default
-        features, the requested ParameterSet attributes, the requested registered
-        feature callbacks and finally a cleanup that removes all outputs that were
-        not requested (see :func:`~acoupipe.datasets.features.remove_unrequested`).
+        The feature functions are called in the following order:
+        prepare callbacks (starting with dataset-specific :meth:`_global_prepare`),
+        the custom feature objects and the requested default features,
+        the requested ParameterSet attributes, the requested registered feature callbacks
+        and finally a cleanup that removes all outputs that were not requested
+        (see :func:`~acoupipe.datasets.features.remove_unrequested`).
 
         Parameters
         ----------
@@ -573,11 +564,6 @@ class Config(HasPrivateTraits):
         feature_objects += self.get_default_features(default_feature_names, f, num)
 
         feature_funcs = list(self._registered_prepare_funcs)
-        prepare_hook = self._get_config_hook('get_prepare_func')
-        if prepare_hook is not None:
-            prepare_func = prepare_hook()
-            if prepare_func is not None:
-                feature_funcs.append(prepare_func)
         feature_funcs += [feature.get_feature_func() for feature in feature_objects]
         feature_funcs += parameter_feature_funcs
         for name, feature_func in zip(self._registered_feature_names, self._registered_feature_funcs, strict=True):
