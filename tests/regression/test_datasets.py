@@ -57,7 +57,7 @@ def test_get_feature_shapes(mode, feature, num, f, create_dataset):
 
     dataset = create_dataset(mode)
     data = next(dataset.generate(f=f, num=num, features=[feature], split='training', size=1, progress_bar=False))
-    _, feature_objects = dataset.get_features(features=[feature], f=f, num=num)
+    _, feature_objects = dataset.config.get_features(features=[feature], f=f, num=num)
     _, shapes, _ = get_tf_mappers(feature_objects)
     desired_shape = shapes[feature]
     for i in range(len(desired_shape)):
@@ -70,7 +70,7 @@ def test_get_feature_shapes(mode, feature, num, f, create_dataset):
 def test_estimated_features_raise_in_non_welch_mode(mode, feature, create_dataset):
     dataset = create_dataset(mode=mode)
     with pytest.raises(ValueError, match='not possible with modes'):
-        dataset.get_features(features=[feature], f=1000, num=0)
+        dataset.config.get_features(features=[feature], f=1000, num=0)
 
 
 @pytest.mark.parametrize('mode', MODES)

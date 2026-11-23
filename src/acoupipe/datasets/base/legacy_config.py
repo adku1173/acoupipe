@@ -1,5 +1,9 @@
 """Legacy dataset configuration base class."""
 
+from functools import partial
+
+from acoupipe.datasets.features import Feature, combine_feature_funcs, remove_unrequested
+
 from traits.api import HasPrivateTraits
 
 
@@ -89,6 +93,59 @@ class ConfigBase(HasPrivateTraits):
             preparation is needed (default).
         """
         return
+
+    def get_features(self, features, f, num):
+        """
+        Get the combined feature function and the feature objects of this config.
+
+        The feature functions are called in the following order: the prepare
+        function of the config (if any), the default features requested by name,
+        the custom feature objects (Feature instances) and finally a cleanup that
+        removes all outputs that were not requested (see
+        :func:`~acoupipe.datasets.features.remove_unrequested`).
+
+        Parameters
+        ----------
+        features : list
+            List of features included in the dataset. Contains names of default
+            features (str) and/or custom feature objects (Feature).
+        f : float
+            The center frequency or list of frequencies of the dataset.
+            If None, all frequencies are included.
+        num : integer
+            Controls the width of the frequency bands considered; defaults to
+            0 (single frequency line).
+
+            ===  =====================
+            num  frequency band width
+            ===  =====================
+            0    single frequency line
+            1    octave band
+            3    third-octave band
+            n    1/n-octave band
+            ===  =====================
+
+        Returns
+        -------
+        feature_func : callable
+            Single combined callable with signature ``f(sampler) -> dict`` (see
+            :func:`~acoupipe.datasets.features.combine_feature_funcs`). It chains the
+            prepare function, the feature functions of all requested features and the
+            cleanup, and returns their merged outputs as one dictionary.
+        feature_objects : list of Feature
+            Feature objects in the order in which they are calculated.
+        """
+        feature_funcs = []
+        prepare_func = self.get_prepare_func()
+        if prepare_func is not None:
+            feature_funcs.append(prepare_func)
+        default_feature_names = [feat for feat in features if isinstance(feat, str)]
+        custom_features = [feat for feat in features if isinstance(feat, Feature)]
+        feature_objects = self.get_default_features(default_feature_names, f, num) + custom_features
+        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
+        keep = default_feature_names + [feature.name for feature in custom_features]
+        feature_funcs.append(partial(remove_unrequested, keep=keep))
+        return combine_feature_funcs(feature_funcs), feature_objects
 
 
 __all__ = ['ConfigBase']

@@ -2,7 +2,7 @@
 
 import warnings
 
-from acoupipe.datasets.features.catalog import (
+from acoupipe.datasets.features.feature import (
     AnalyticNoiseStrengthFeature,
     AnalyticSourceStrengthFeature,
     CSMFeature,
