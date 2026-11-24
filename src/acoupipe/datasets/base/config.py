@@ -510,7 +510,7 @@ class Config(HasPrivateTraits):
 
         return parameter_feature
 
-    def get_features(self, features, f, num):
+    def get_features(self, features):
         """Get the combined feature function and the feature objects of this config.
 
         The feature functions are called in the following order:
@@ -525,10 +525,6 @@ class Config(HasPrivateTraits):
         ----------
         features : list of str or Feature, optional
             The list of feature names or feature objects to include.
-        f : float or list of float or None
-            Frequencies used for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
 
         Returns
         -------
@@ -556,7 +552,7 @@ class Config(HasPrivateTraits):
                 parameter_feature_funcs.append(parameter_feature)
 
         # default Features followed by Feature objects passed directly by the user
-        feature_objects = self.get_default_features(default_feature_names, f, num)
+        feature_objects = self.get_default_features(default_feature_names)
         feature_objects += [feat for feat in features if isinstance(feat, Feature)]
 
         # Call order per sample:
@@ -579,38 +575,16 @@ class Config(HasPrivateTraits):
         feature_funcs.append(partial(remove_unrequested, keep=requested))
         return combine_feature_funcs(feature_funcs), feature_objects
 
-    def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to the `_get_default_feature_{name}` methods.
-
-        Parameters
-        ----------
-        f : float or list of float or None
-            Frequencies for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
-
-        Returns
-        -------
-        dict
-            Keyword arguments for the `_get_default_feature_{name}` methods.
-        """
-        return {'f': f, 'num': num}
-
-    def get_default_features(self, features, f, num):
+    def get_default_features(self, features):
         """Build default features using `_get_default_feature_{name}` methods.
 
         For each feature name, this method looks for a corresponding
-        `_get_default_feature_{name}` method and calls it with the
-        appropriate arguments.
+        `_get_default_feature_{name}` method and calls it.
 
         Parameters
         ----------
         features : list of str
             The list of feature names to build.
-        f : float or list of float or None
-            Frequencies for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
 
         Returns
         -------
@@ -622,7 +596,6 @@ class Config(HasPrivateTraits):
         ValueError
             If a feature name does not have a corresponding `_get_default_feature_{name}` method.
         """
-        feature_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
             if feature_name != 'idx':
@@ -630,7 +603,7 @@ class Config(HasPrivateTraits):
                 if get_feature is None:
                     msg = f'Unknown feature "{feature_name}".'
                     raise ValueError(msg)
-                default_features.append(get_feature(**feature_kwargs))
+                default_features.append(get_feature())
         return default_features
 
 
