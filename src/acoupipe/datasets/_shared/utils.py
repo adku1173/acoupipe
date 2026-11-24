@@ -250,12 +250,8 @@ def get_frequency_index_range(freq, f, num):
                 )
         return (ind, ind + 1)
     # fractional octave band
-    if isinstance(num, list):
-        f1 = num[0]
-        f2 = num[-1]
-    else:
-        f1 = f * 2.0 ** (-0.5 / num)
-        f2 = f * 2.0 ** (+0.5 / num)
+    f1 = f * 2.0 ** (-0.5 / num)
+    f2 = f * 2.0 ** (+0.5 / num)
     ind1 = np.searchsorted(freq, f1)
     ind2 = np.searchsorted(freq, f2)
     if ind1 == ind2:
