@@ -51,7 +51,7 @@ class Config(HasPrivateTraits):
     See Also
     --------
     acoupipe.datasets.base.parameters.ParameterSet : Base class for parameter sets.
-    acoupipe.datasets.base.DatasetBase : Base class for datasets.
+    acoupipe.datasets.base.Dataset : Dataset class for this configuration.
 
     Notes
     -----
@@ -59,7 +59,7 @@ class Config(HasPrivateTraits):
     Existing code using ConfigBase continues to work, while new code can use
     the more flexible Config API.
 
-    During :meth:`acoupipe.datasets.base.DatasetBase.generate`, each generated
+    During :meth:`acoupipe.datasets.base.Dataset.generate`, each generated
     sample follows the same high-level order:
 
     1. The pipeline re-seeds every sampler from the dataset seed, the split, the sample
@@ -222,7 +222,7 @@ class Config(HasPrivateTraits):
 
         >>> import numpy as np
         >>> from scipy.stats import norm
-        >>> from acoupipe.datasets.base import DatasetBase
+        >>> from acoupipe.datasets.base import Dataset
         >>> from acoupipe.datasets.base.parameters import ParameterSet
 
         Register a sampler using a ``scipy.stats`` distribution:
@@ -252,7 +252,7 @@ class Config(HasPrivateTraits):
         for every generated sample. Calling :meth:`sample` only registers the
         sampling rule; users normally do not call the returned sampler's
         ``sample()`` method themselves. During dataset generation,
-        :class:`~acoupipe.datasets.base.DatasetBase` configures the underlying
+        :class:`~acoupipe.datasets.base.Dataset` configures the underlying
         pipeline. For each generated sample, the pipeline assigns random states,
         calls the registered samplers, and then evaluates prepare and feature
         callbacks.
@@ -261,7 +261,7 @@ class Config(HasPrivateTraits):
         >>> config = Config(parameters=parameters)
         >>> _ = config.sample('c', random_var=norm(loc=340.0, scale=0.0))
         >>> _ = config.sample('fs', random_var=norm(loc=48000.0, scale=0.0))
-        >>> dataset = DatasetBase(config=config)
+        >>> dataset = Dataset(config=config)
         >>> sample = next(dataset.generate(features=['c', 'fs'], size=1, progress_bar=False))
         >>> float(sample['c']), float(sample['fs'])
         (340.0, 48000.0)
@@ -342,7 +342,7 @@ class Config(HasPrivateTraits):
         Imports only need to appear once inside a docstring example block; all
         examples in this block share the same doctest namespace.
 
-        >>> from acoupipe.datasets.base import DatasetBase
+        >>> from acoupipe.datasets.base import Dataset
         >>> from acoupipe.datasets.base.parameters import ParameterSet
 
         Prepare callbacks are useful for intermediate quantities that should be
@@ -358,7 +358,7 @@ class Config(HasPrivateTraits):
         >>> def wavelength_feature(data):
         ...     return data['wavelength']
         >>> _ = config.feature('wavelength', wavelength_feature)
-        >>> dataset = DatasetBase(config=config)
+        >>> dataset = Dataset(config=config)
         >>> sample = next(dataset.generate(features=['wavelength'], size=1, progress_bar=False))
         >>> float(sample['wavelength'])
         0.025
@@ -377,7 +377,7 @@ class Config(HasPrivateTraits):
         >>> def wavelength_feature(data):
         ...     return data['wavelength']
         >>> _ = config.feature('wavelength', wavelength_feature)
-        >>> dataset = DatasetBase(config=config)
+        >>> dataset = Dataset(config=config)
         >>> sample = next(dataset.generate(features=['wavelength'], size=1, progress_bar=False))
         >>> float(sample['wavelength'])
         0.1

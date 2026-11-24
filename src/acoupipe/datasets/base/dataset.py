@@ -4,21 +4,27 @@ import logging
 from functools import partial
 
 from acoupipe.datasets._shared.utils import set_pipeline_seed
-from acoupipe.datasets.base.legacy_config import ConfigBase
+from acoupipe.datasets.base.config import Config
 from acoupipe.datasets.features import get_tf_mappers
 from acoupipe.pipeline import BasePipeline, DistributedPipeline
 from acoupipe.writer import WriteH5Dataset
 
-from traits.api import Any, Dict, HasPrivateTraits, Instance, Int, Property
+from traits.api import Dict, HasPrivateTraits, Instance, Int, Property
 
 
-class DatasetBase(HasPrivateTraits):
+class Dataset(HasPrivateTraits):
     """
-    Base class for generating microphone array datasets with specified features and labels.
+    Generate microphone array datasets from a :class:`~acoupipe.datasets.base.config.Config`.
+
+    Frequency settings are part of the configuration: set ``config.parameters.f``
+    and ``config.parameters.num`` instead of passing ``f`` and ``num`` to the
+    generation methods. Legacy configurations based on
+    :class:`~acoupipe.datasets.base.legacy_config.ConfigBase` are used with
+    :class:`~acoupipe.datasets.base.legacy_dataset.DatasetBase`.
 
     Attributes
     ----------
-    config : ConfigBase
+    config : Config
         Configuration object for dataset generation.
     tasks : int
         Number of parallel tasks for data generation. Defaults to 1 (sequential calculation).
@@ -30,7 +36,7 @@ class DatasetBase(HasPrivateTraits):
         name and its index; different seeds or split names yield independent samples.
     """
 
-    config = Any(desc='configuration object')
+    config = Instance(Config, desc='configuration object')
     tasks = Property(desc='number of parallel tasks for data generation')
     remote_args = Dict({})
     samples_per_task = Int(16, desc='maximum number of samples calculated per remote call')
@@ -47,12 +53,7 @@ class DatasetBase(HasPrivateTraits):
         self.tasks = tasks
         self.samples_per_task = samples_per_task
         self.seed = seed
-        if config is None:
-            config = ConfigBase()
-        if not (hasattr(config, 'get_sampler') and hasattr(config, 'get_features')):
-            msg = 'config must provide get_sampler() and get_features()'
-            raise TypeError(msg)
-        self.config = config
+        self.config = Config() if config is None else config
         self.remote_args = remote_args or {}
         self.logger = logger
 
@@ -109,7 +110,7 @@ class DatasetBase(HasPrivateTraits):
         """
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
-    def generate(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=True):
+    def generate(self, features, size, split='training', start_idx=0, progress_bar=True):
         """Generate dataset samples iteratively.
 
         Parameters
@@ -120,20 +121,6 @@ class DatasetBase(HasPrivateTraits):
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
         size : int
             Size of the dataset (number of source cases).
-        f : float
-            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
         start_idx : int, optional
             Starting sample index (default is 0).
         progress_bar : bool, optional
@@ -146,19 +133,15 @@ class DatasetBase(HasPrivateTraits):
 
         Examples
         --------
-        Generate features iteratively (example below requires a dataset configuration).
+        Generate features iteratively.
 
         .. code-block:: python
 
-            from acoupipe.datasets.synthetic import DatasetSynthetic
+            from acoupipe.datasets import Dataset, SyntheticConfig
 
-            # define the features
-            features = ['csm', 'source_strength_analytic', 'loc']
-            f = 1000
-            num = 3
-
-            # generate the dataset
-            generator = DatasetSynthetic().generate(f=f, num=num, split='training', size=2, features=features)
+            config = SyntheticConfig()
+            config.parameters.add_parameter('f', 1000.0)
+            generator = Dataset(config=config).generate(features=['c', 'f'], split='training', size=2)
 
             # iterate over the dataset
             for data in generator:
@@ -166,11 +149,11 @@ class DatasetBase(HasPrivateTraits):
         """
         pipeline = self.get_pipeline_instance()
         pipeline.sampler = self.config.get_sampler()
-        pipeline.feature_func, _ = self.config.get_features(features, f, num)
+        pipeline.feature_func, _ = self.config.get_features(features)
         set_pipeline_seed(pipeline, size, split, self.seed)
         yield from pipeline.get_data(progress_bar=progress_bar, start_idx=start_idx)
 
-    def save_h5(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
+    def save_h5(self, features, size, name, split='training', start_idx=0, progress_bar=True):
         """Save dataset to a HDF5 file.
 
         Parameters
@@ -183,20 +166,6 @@ class DatasetBase(HasPrivateTraits):
             Name of the HDF5 file.
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
-        f : float
-            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
         start_idx : int, optional
             Starting sample index (default is 0).
         progress_bar : bool, optional
@@ -212,27 +181,21 @@ class DatasetBase(HasPrivateTraits):
 
         .. code-block:: python
 
-            from acoupipe.datasets.synthetic import DatasetSynthetic
+            from acoupipe.datasets import Dataset, SyntheticConfig
 
-            # define the features
-            features = ['csm', 'source_strength_analytic', 'loc']
-            f = 1000
-            num = 3
-
-            # save the dataset
-            dataset = DatasetSynthetic().save_h5(f=f, num=num, split='training', size=10, features=features, name='/tmp/example.h5')
+            Dataset(config=SyntheticConfig()).save_h5(features=['c', 'fs'], split='training', size=10, name='/tmp/example.h5')
         """
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.feature_func, _ = self.config.get_features(features, f, num)
+        pipeline.feature_func, _ = self.config.get_features(features)
         set_pipeline_seed(pipeline, size, split, self.seed)
         WriteH5Dataset(
             name=name,
             source=pipeline,
         ).save(progress_bar, start_idx)  # start the calculation
 
-    def save_tfrecord(self, features, size, name, split='training', f=None, num=0, start_idx=0, progress_bar=True):
+    def save_tfrecord(self, features, size, name, split='training', start_idx=0, progress_bar=True):
         """Save dataset to a .tfrecord file.
 
         Parameters
@@ -245,20 +208,6 @@ class DatasetBase(HasPrivateTraits):
             Name of the TFRecord file.
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
-        f : float
-            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
         start_idx : int, optional
             Starting sample index (default is 0).
         progress_bar : bool, optional
@@ -274,24 +223,20 @@ class DatasetBase(HasPrivateTraits):
 
         .. code-block:: python
 
-            from acoupipe.datasets.synthetic import DatasetSynthetic
+            import numpy as np
+            from acoupipe.datasets import Dataset, SyntheticConfig
 
-            # define the features
-            features = ['csm', 'source_strength_analytic', 'loc']
-            f = 1000
-            num = 3
-
-            # save the dataset
-            dataset = DatasetSynthetic().save_tfrecord(
-                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
-            )
+            # TFRecord files require dtype and shape of each feature
+            config = SyntheticConfig()
+            config.feature('c_squared', lambda parameters: parameters.c**2, dtype=np.float64, shape=())
+            Dataset(config=config).save_tfrecord(features=['c_squared'], split='training', size=10, name='/tmp/example.tfrecord')
         """
         from acoupipe.tf.writer import WriteTFRecord  # noqa: PLC0415
 
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.feature_func, feature_objects = self.config.get_features(features, f, num)
+        pipeline.feature_func, feature_objects = self.config.get_features(features)
         set_pipeline_seed(pipeline, size, split, self.seed)
         encoders, shapes, _ = get_tf_mappers(feature_objects)
         # get features with varying length to handle them correctly in the TFRecord writer
@@ -311,27 +256,13 @@ class DatasetBase(HasPrivateTraits):
             start_idx,
         )
 
-    def get_output_signature(self, features, f=None, num=0):
+    def get_output_signature(self, features):
         """Get the output signature of the dataset.
 
         Parameters
         ----------
         features : list
             List of features included in the dataset. The feature "idx" is always included.
-        f : float
-            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
 
         Returns
         -------
@@ -341,13 +272,13 @@ class DatasetBase(HasPrivateTraits):
         import tensorflow as tf  # noqa: PLC0415
 
         signature = {}
-        _, feature_objects = self.config.get_features(features, f, num)
+        _, feature_objects = self.config.get_features(features)
         _, shapes, dtypes = get_tf_mappers(feature_objects)
         for feature in features:
             signature[feature] = tf.TensorSpec(shapes[feature], dtypes[feature])
         return signature
 
-    def get_tf_dataset(self, features, size, split='training', f=None, num=0, start_idx=0, progress_bar=False):
+    def get_tf_dataset(self, features, size, split='training', start_idx=0, progress_bar=False):
         """Get a TensorFlow dataset from the generated data.
 
         Parameters
@@ -358,20 +289,6 @@ class DatasetBase(HasPrivateTraits):
             Size of the dataset (number of source cases).
         split : str
             Split name for the dataset ('training', 'validation' or 'test'). Defaults to 'training'.
-        f : float
-            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
         start_idx : int, optional
             Starting sample index (default is 0).
         progress_bar : bool, optional
@@ -388,16 +305,16 @@ class DatasetBase(HasPrivateTraits):
         pipeline = self.get_pipeline_instance()
         # self._setup_logging(pipeline=pipeline)
         pipeline.sampler = self.config.get_sampler()
-        pipeline.feature_func, _ = self.config.get_features(features, f, num)
+        pipeline.feature_func, _ = self.config.get_features(features)
         set_pipeline_seed(pipeline, size, split, self.seed)
         features = features + ['idx']
-        output_signature = self.get_output_signature(features, f=f, num=num)
+        output_signature = self.get_output_signature(features)
         return tf.data.Dataset.from_generator(
             partial(self._generate, pipeline=pipeline, start_idx=start_idx, progress_bar=progress_bar),
             output_signature=output_signature,
         )
 
-    def get_tfrecord_parser(self, features, f, num):
+    def get_tfrecord_parser(self, features):
         """Get a parser function for a TFRecord dataset.
 
         The parser function can be used to parse the TFRecord dataset into a TensorFlow dataset.
@@ -409,20 +326,6 @@ class DatasetBase(HasPrivateTraits):
         ----------
         features : list
             List of features included in the dataset.
-        f : float
-            The center frequency or list of frequencies of the dataset. If None, all frequencies are included.
-        num : integer
-            Controls the width of the frequency bands considered; defaults to
-            0 (single frequency line).
-
-            ===  =====================
-            num  frequency band width
-            ===  =====================
-            0    single frequency line
-            1    octave band
-            3    third-octave band
-            n    1/n-octave band
-            ===  =====================
 
         Returns
         -------
@@ -435,30 +338,26 @@ class DatasetBase(HasPrivateTraits):
 
         .. code-block:: python
 
-            from acoupipe.datasets.synthetic import DatasetSynthetic
+            import numpy as np
+            import tensorflow as tf
+            from acoupipe.datasets import Dataset, SyntheticConfig
 
-            # define the features
-            features = ['csm', 'source_strength_analytic', 'loc']
-            f = 1000
-            num = 3
-
-            # save the dataset
-            dataset = DatasetSynthetic().save_tfrecord(
-                f=f, num=num, split='training', size=10, features=features, name='/tmp/example.tfrecord'
-            )
+            features = ['c_squared']
+            config = SyntheticConfig()
+            config.feature('c_squared', lambda parameters: parameters.c**2, dtype=np.float64, shape=())
+            dataset = Dataset(config=config)
+            dataset.save_tfrecord(features=features, split='training', size=10, name='/tmp/example.tfrecord')
 
             # parse the dataset
-            parser = dataset.get_tfrecord_parser(features, f, num)
-            dataset = tf.data.TFRecordDataset('/tmp/example.tfrecord')
-            dataset = iter(dataset.map(parser))
-            data = next(dataset)
-
+            parser = dataset.get_tfrecord_parser(features)
+            tf_dataset = tf.data.TFRecordDataset('/tmp/example.tfrecord')
+            data = next(iter(tf_dataset.map(parser)))
         """
         from acoupipe.tf.encodings import complex_list_feature  # noqa: PLC0415
 
         import tensorflow as tf  # noqa: PLC0415
 
-        _, feature_objects = self.config.get_features(features, f, num)
+        _, feature_objects = self.config.get_features(features)
         encoders, shapes, dtypes = get_tf_mappers(feature_objects)
         features = features + ['idx']
 
@@ -506,3 +405,6 @@ class DatasetBase(HasPrivateTraits):
             return data
 
         return _parse_function
+
+
+__all__ = ['Dataset']

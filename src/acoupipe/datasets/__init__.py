@@ -1,6 +1,6 @@
 """The datasets subpackage contains default classes to create acoustical datasets with microphone array data."""
 
-from acoupipe.datasets.base import Config, ConfigBase, DatasetBase, ParameterSet
+from acoupipe.datasets.base import Config, ConfigBase, Dataset, DatasetBase, ParameterSet
 from acoupipe.datasets.ism.config import SyntheticISMConfig
 from acoupipe.datasets.ism.parameters import SyntheticISMParameters
 from acoupipe.datasets.miracle.config import MIRACLEConfig
@@ -9,8 +9,6 @@ from acoupipe.datasets.sriracha.config import SRIRACHAConfig
 from acoupipe.datasets.sriracha.parameters import SRIRACHAParameters
 from acoupipe.datasets.synthetic.config import SyntheticConfig
 from acoupipe.datasets.synthetic.parameters import SyntheticParameters
-
-Dataset = DatasetBase
 
 __all__ = [
     'Config',
