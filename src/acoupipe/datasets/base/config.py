@@ -70,9 +70,10 @@ class Config(HasPrivateTraits):
     3. Dataset-specific :meth:`_global_prepare` and the prepare callbacks registered with
        :meth:`prepare` are evaluated in registration order and may add
        intermediate values to the per-sample ``data`` dictionary.
-    4. Requested default or parameter-backed features are evaluated.
-    5. Requested user features registered with :meth:`feature` are evaluated and
-       may use both sampled parameters and values already present in ``data``.
+    4. Requested ParameterSet attributes are copied to ``data``.
+    5. Requested default features, feature objects and user features registered
+       with :meth:`feature` are evaluated, in this order. They may use both
+       sampled parameters and values already present in ``data``.
     6. All outputs that were not requested, e.g. intermediate values of prepare
        callbacks, are removed from the generated sample.
 
@@ -514,10 +515,11 @@ class Config(HasPrivateTraits):
 
         The feature functions are called in the following order:
         prepare callbacks (starting with dataset-specific :meth:`_global_prepare`),
-        the custom feature objects and the requested default features,
-        the requested ParameterSet attributes, the requested registered feature callbacks
-        and finally a cleanup that removes all outputs that were not requested
-        (see :func:`~acoupipe.datasets.features.remove_unrequested`).
+        the requested ParameterSet attributes, the requested Features (default features,
+        custom feature objects and registered feature callbacks) and
+        finally a cleanup that removes all outputs that were not requested
+        (see :func:`~acoupipe.datasets.features.remove_unrequested`). Within each
+        of these groups, the functions are called in the order of ``features``.
 
         Parameters
         ----------
@@ -540,10 +542,10 @@ class Config(HasPrivateTraits):
         """
         features = [] if features is None else list(features)
         requested = [feat.name if isinstance(feat, Feature) else feat for feat in features]
-        feature_objects = [feat for feat in features if isinstance(feat, Feature)]
         parameter_feature_funcs = []
         default_feature_names = []
 
+        # resolve strings for ParameterSet attributes and default Features.
         for feature_name in [feat for feat in features if isinstance(feat, str)]:
             if feature_name == 'idx' or feature_name in self._registered_features:
                 continue
@@ -553,18 +555,27 @@ class Config(HasPrivateTraits):
             else:
                 parameter_feature_funcs.append(parameter_feature)
 
-        feature_objects += self.get_default_features(default_feature_names, f, num)
+        # default Features followed by Feature objects passed directly by the user
+        feature_objects = self.get_default_features(default_feature_names, f, num)
+        feature_objects += [feat for feat in features if isinstance(feat, Feature)]
 
+        # Call order per sample:
+        # 1. prepare callbacks
         feature_funcs = list(self._registered_prepare_funcs)
-        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
+        # 2. ParameterSet attributes
         feature_funcs += parameter_feature_funcs
-        for name, feature in self._registered_features.items():
-            if name not in requested:
+        # 3. default Features, then user Feature objects
+        feature_funcs += [feature.get_feature_func() for feature in feature_objects]
+        # 4. requested registered Features
+        for name in requested:
+            if name not in self._registered_features:
                 continue
+            feature = self._registered_features[name]
             feature_funcs.append(feature.get_feature_func())
             # Features without metadata are not passed on to the TF paths yet.
             if feature.dtype is not None and feature.shape is not None:
                 feature_objects.append(feature)
+        # 5. cleanup
         feature_funcs.append(partial(remove_unrequested, keep=requested))
         return combine_feature_funcs(feature_funcs), feature_objects
 
