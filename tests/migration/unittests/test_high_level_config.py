@@ -128,7 +128,8 @@ def test_public_config_and_dataset_keep_legacy_base_classes():
     subclass hooks continue to target the old implementation.
     """
     assert Config is not ConfigBase
-    assert Dataset is DatasetBase
+    assert Dataset is not DatasetBase
+    assert issubclass(DatasetBase, Dataset)
 
 
 def test_config_sample_registers_parameter_sampler():
@@ -321,7 +322,7 @@ def test_registered_feature_without_metadata_is_evaluated_but_not_a_feature_obje
     config = Config(parameters=ParameterSet())
     config.feature('value', lambda: 1)
 
-    feature_func, feature_objects = config.get_features(['value'], f=None, num=0)
+    feature_func, feature_objects = config.get_features(['value'])
 
     assert feature_func({}) == {'value': 1}
     assert feature_objects == []
@@ -338,7 +339,7 @@ def test_feature_objects_contain_only_requested_registered_features():
     config.feature('requested', lambda: np.float32(1.0), dtype=np.float32, shape=())
     config.feature('unrequested', lambda: np.float32(2.0), dtype=np.float32, shape=())
 
-    _, feature_objects = config.get_features(['requested'], f=None, num=0)
+    _, feature_objects = config.get_features(['requested'])
 
     assert [feature.name for feature in feature_objects] == ['requested']
 
