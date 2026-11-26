@@ -13,6 +13,8 @@ pipeline configuration.
 
 from functools import partial
 
+import numpy as np
+
 from acoupipe.base import BaseSampler
 from acoupipe.datasets.base.callbacks import call_with_supported_context
 from acoupipe.datasets.base.parameters import ParameterSet
@@ -20,7 +22,7 @@ from acoupipe.datasets.features import Feature, combine_feature_funcs, create_fe
 from acoupipe.pipeline import seed_key
 from acoupipe.sampler import AttributeSampler
 
-from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, List, Str
+from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, Int, List, Str
 
 
 class Config(HasPrivateTraits):
@@ -108,6 +110,10 @@ class Config(HasPrivateTraits):
 
     #: User-registered features, mapped from feature name to Feature object.
     _registered_features = Dict(Str, Instance(Feature), desc='user-registered features')
+
+    # TODO: Remove together with _get_fftfreq once the spectral features are migrated.
+    #: Block size of the legacy FFT defaults, used by :meth:`_get_fftfreq`.
+    _fft_block_size = Int(128, desc='temporary FFT block size of the legacy defaults')
 
     def __init__(self, parameters=None, **traits):
         """Initialize the Config object.
@@ -605,6 +611,77 @@ class Config(HasPrivateTraits):
                     raise ValueError(msg)
                 default_features.append(get_feature())
         return default_features
+
+    def _get_frequency_settings(self):
+        """Return the frequencies and the bandwidth of frequency-dependent features.
+
+        ``f`` and ``num`` are read from :attr:`parameters`. They are fixed per
+        dataset. If they are not set, ``f=None`` (all discrete FFT frequencies)
+        and ``num=0`` (single frequency lines) are used.
+
+        Returns
+        -------
+        tuple
+            ``(f, num)``.
+        """
+        return getattr(self.parameters, 'f', None), getattr(self.parameters, 'num', 0)
+
+    # TODO: Remove this helper (and _fft_block_size) once the spectral features are migrated
+    # to the new Config. The FFT frequencies are then provided by the PowerSpectra object.
+    def _get_fftfreq(self):
+        """Return the discrete FFT frequencies of the default spectral settings.
+
+        Temporary helper until the spectral features are migrated. It uses
+        ``parameters.fs`` and the block size of the legacy FFT defaults
+        (:attr:`_fft_block_size`).
+
+        Returns
+        -------
+        numpy.ndarray
+            Discrete FFT frequencies in hertz.
+
+        Raises
+        ------
+        ValueError
+            If the parameters do not define a sampling frequency ``fs``.
+        """
+        fs = getattr(self.parameters, 'fs', None)
+        if fs is None:
+            msg = 'The parameters must define a sampling frequency "fs" to compute the FFT frequencies.'
+            raise ValueError(msg)
+        return np.fft.rfftfreq(self._fft_block_size, 1.0 / fs)
+
+    def _get_default_feature_freq_bins(self):
+        """Return the default feature with the frequencies that are actually used.
+
+        For single frequency lines (``num == 0``), each nominal frequency ``f`` is
+        replaced by the discrete FFT frequency that is used for the calculation
+        (the first FFT frequency greater than or equal to ``f``). For fractional
+        octave bands (``num > 0``), the nominal center frequencies ``f`` are
+        returned. If ``f`` is ``None``, all discrete FFT frequencies are returned.
+
+        Returns
+        -------
+        Feature
+            Feature ``freq_bins`` with shape ``(n_f,)``.
+        """
+        f, num = self._get_frequency_settings()
+        fftfreq = self._get_fftfreq()
+        if f is None:
+            freq_bins = fftfreq
+        else:
+            f = np.atleast_1d(np.asarray(f, dtype=float))
+            freq_bins = fftfreq[np.searchsorted(fftfreq, f)] if num == 0 else f
+
+        def get_freq_bins(sampler, freq_bins):  # noqa: ARG001
+            return {'freq_bins': freq_bins}
+
+        return create_feature(
+            feature_func=partial(get_freq_bins, freq_bins=freq_bins),
+            name='freq_bins',
+            shape=freq_bins.shape,
+            dtype=np.float32,
+        )
 
 
 __all__ = ['Config']
