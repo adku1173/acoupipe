@@ -13,8 +13,6 @@ pipeline configuration.
 
 from functools import partial
 
-import numpy as np
-
 from acoupipe.base import BaseSampler
 from acoupipe.datasets.base.callbacks import call_with_supported_context
 from acoupipe.datasets.base.parameters import ParameterSet
@@ -22,6 +20,7 @@ from acoupipe.datasets.features import Feature, combine_feature_funcs, create_fe
 from acoupipe.pipeline import seed_key
 from acoupipe.sampler import AttributeSampler
 
+import numpy as np
 from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, Int, List, Str
 
 
@@ -111,7 +110,7 @@ class Config(HasPrivateTraits):
     #: User-registered features, mapped from feature name to Feature object.
     _registered_features = Dict(Str, Instance(Feature), desc='user-registered features')
 
-    # TODO: Remove together with _get_fftfreq once the spectral features are migrated.
+    # Temporary: remove together with _get_fftfreq once the spectral features are migrated.
     #: Block size of the legacy FFT defaults, used by :meth:`_get_fftfreq`.
     _fft_block_size = Int(128, desc='temporary FFT block size of the legacy defaults')
 
@@ -626,7 +625,7 @@ class Config(HasPrivateTraits):
         """
         return getattr(self.parameters, 'f', None), getattr(self.parameters, 'num', 0)
 
-    # TODO: Remove this helper (and _fft_block_size) once the spectral features are migrated
+    # Temporary: remove this helper (and _fft_block_size) once the spectral features are migrated
     # to the new Config. The FFT frequencies are then provided by the PowerSpectra object.
     def _get_fftfreq(self):
         """Return the discrete FFT frequencies of the default spectral settings.

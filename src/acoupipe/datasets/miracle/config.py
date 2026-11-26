@@ -9,7 +9,7 @@ from traits.api import Int
 class MIRACLEConfig(Config):
     """High-level Config using MIRACLE default parameters."""
 
-    # TODO: Remove together with Config._get_fftfreq once the spectral features are migrated.
+    # Temporary: remove together with Config._get_fftfreq once the spectral features are migrated.
     _fft_block_size = Int(1024, desc='temporary FFT block size of the legacy defaults')
 
     def create_parameters(self):

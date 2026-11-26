@@ -25,9 +25,9 @@ from acoupipe.datasets.base import Config as BasePackageConfig
 from acoupipe.datasets.base import ConfigBase as BasePackageConfigBase
 from acoupipe.datasets.base import DatasetBase as BasePackageDataset
 from acoupipe.datasets.base.config import Config as BaseConfigModuleConfig
-from acoupipe.datasets.base.legacy_dataset import DatasetBase as BaseDatasetModuleDataset
 from acoupipe.datasets.base.legacy_config import ConfigBase as BaseLegacyConfigModuleConfigBase
 from acoupipe.datasets.base.legacy_config import ConfigBase as LegacyConfigBase
+from acoupipe.datasets.base.legacy_dataset import DatasetBase as BaseDatasetModuleDataset
 from acoupipe.datasets.base.parameters import ParameterSet as BaseParametersModuleParameterSet
 from acoupipe.datasets.ism.config import SyntheticISMConfig as ISMSubmoduleConfig
 from acoupipe.datasets.ism.dataset import DatasetSyntheticISM as ISMSubmoduleDataset

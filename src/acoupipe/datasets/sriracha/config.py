@@ -9,7 +9,7 @@ from traits.api import Int
 class SRIRACHAConfig(Config):
     """High-level Config using SRIRACHA default parameters."""
 
-    # TODO: Remove together with Config._get_fftfreq once the spectral features are migrated.
+    # Temporary: remove together with Config._get_fftfreq once the spectral features are migrated.
     _fft_block_size = Int(1024, desc='temporary FFT block size of the legacy defaults')
 
     def create_parameters(self):
