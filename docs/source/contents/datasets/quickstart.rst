@@ -45,7 +45,7 @@ There are a few things to note when extracting features with the data generator:
 
     In [4]: data_sample = next(data_generator)
 
-First, the data generator returns a single sample at a time, consisting of a dictionary with the feature names as keys and the corresponding data as values. Second, the :code:`data_sample` dictionary includes two additional items, namely the :code:`idx` and :code:`seeds` of the sample. The :code:`idx` is the sample index and the :code:`seeds` are the random seeds used to generate the sample. Both are included for reproducible data generation, especially in multi-processing scenarios where the sample order may not be maintained.
+First, the data generator returns a single sample at a time, consisting of a dictionary with the feature names as keys and the corresponding data as values. Second, the :code:`data_sample` dictionary includes the additional item :code:`idx`, the sample index. Together with the dataset seed and the split, it determines the sample (see :ref:`reproducibility`) and identifies it in multi-processing scenarios where the sample order may not be maintained.
 
 .. note::
     The frequency included in the data might be slightly different from the specified frequency. This is usually indicated by a warning and is due to the fact that the frequency is chosen from a discrete set of frequencies, which depends on the parameters of the FFT and the sampling rate :code:`fs` of the dataset. 
@@ -89,5 +89,53 @@ Now, the data can be plotted, e.g. by using the `matplotlib`_ library:
        ...: plt.xlabel('x (m)')
        ...: plt.ylabel('y (m)')
 
+
+.. _reproducibility:
+
+Reproducibility
+---------------
+
+Each sample is determined by the dataset :code:`seed` (default: 0), the :code:`split` name and the sample
+index :code:`idx`. Generating a split again yields identical samples, independent of the number of parallel
+tasks and of :code:`start_idx`. A single sample can be regenerated with
+:code:`generate(..., start_idx=idx, size=1)`.
+
+.. code-block:: python
+
+    dataset = DatasetSynthetic(seed=1)  # an independent realization of all splits
+
+Different split names (e.g. :code:`'training'`, :code:`'validation'`, :code:`'test'` or custom names) and
+different seeds yield statistically independent samples. Each sampler draws from its own random stream, so
+switching a sampler off (e.g. :code:`mic_pos_noise=False`) does not change the values drawn by the others.
+
+.. _parallel-generation:
+
+Parallel Generation
+-------------------
+
+With :code:`tasks > 1`, the samples are calculated in parallel by :code:`tasks` Ray worker processes.
+Each worker calculates up to :code:`samples_per_task` samples (default: 16) per call, which reduces the
+scheduling overhead for samples that are fast to compute. The sample order is not preserved; the
+:code:`idx` item identifies each sample.
+
+.. code-block:: python
+
+    dataset = DatasetSynthetic(tasks=8, samples_per_task=16)
+
+.. warning::
+
+    Each worker process should use a single thread. Set :code:`NUMBA_NUM_THREADS=1`,
+    :code:`OMP_NUM_THREADS=1`, :code:`OPENBLAS_NUM_THREADS=1` and :code:`MKL_NUM_THREADS=1` in the
+    environment before starting Python or the Ray cluster (:code:`ray start`). Otherwise, every worker
+    starts as many threads as there are CPU cores, and the workers slow each other down severely.
+
+.. warning::
+
+    Acoular compiles its Numba functions when it is imported and caches them on disk. If several
+    workers compile into an empty cache at the same time, the cache can become inconsistent and the
+    workers crash with :code:`LLVM ERROR: Symbol not found`. On a single machine, the main process
+    fills the cache before the workers start, as long as the workers use the same Python environment
+    (see :ref:`known-issues` for :code:`uv run`). On clusters, fill a node-local cache on every node
+    before starting the Ray workers, see :ref:`hpc-singularity`.
 
 A more in-depth example on how to generate the data, and how to create a TensorFlow-ready pipeline that produces data on the fly can be found in the :ref:`Model training with training data generated on the fly <Examples>` example.

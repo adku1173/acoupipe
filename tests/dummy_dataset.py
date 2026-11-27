@@ -64,7 +64,6 @@ class DatasetDummyConfig(ConfigBase):
             'num': (),  # scalar
             'targetmap_analytic': (None, None),  # (freq_bins, grid_points)
             'targetmap_estimated': (None, None),  # (freq_bins, grid_points)
-            'seeds': (None,),  # variable length
             'idx': (),  # scalar
         }
     )
@@ -87,7 +86,6 @@ class DatasetDummyConfig(ConfigBase):
             'num': np.int64,
             'targetmap_analytic': np.float32,
             'targetmap_estimated': np.float32,
-            'seeds': np.int64,
             'idx': np.int64,
         }
     )
@@ -106,7 +104,7 @@ class DatasetDummyConfig(ConfigBase):
         """Build dummy feature objects."""
         default_features = []
         for feature_name in features:
-            if feature_name in ['idx', 'seeds']:
+            if feature_name == 'idx':
                 continue
             default_features.append(self._get_dummy_feature(feature_name, f, num))
         return default_features
@@ -203,8 +201,6 @@ class DatasetDummyConfig(ConfigBase):
             return (freq_dim * num_dim, num_grid_points)
         elif feature_name == 'targetmap_estimated':
             return (freq_dim * num_dim, num_grid_points)
-        elif feature_name == 'seeds':
-            return (4,)  # Fixed number of seeds
         elif feature_name == 'idx':
             return ()
         else:
@@ -242,8 +238,6 @@ class DatasetDummyConfig(ConfigBase):
             # Integer features
             if feature_name == 'idx':
                 return np.array(0, dtype=dtype)
-            elif feature_name == 'seeds':
-                return rng.randint(0, 1000, shape, dtype=dtype)
             else:
                 return rng.randint(0, 100, shape, dtype=dtype)
         else:
@@ -396,7 +390,6 @@ class DatasetDummy(DatasetBase):
         # Add mandatory features
         all_features = set(features)
         all_features.add('idx')
-        all_features.add('seeds')
         all_features = list(all_features)
 
         for idx in range(start_idx, start_idx + size):
@@ -421,7 +414,7 @@ class DatasetDummy(DatasetBase):
                 data = self._generate_dummy_sample(idx, all_features, f, num)
 
             # Filter to requested features only
-            yield {k: v for k, v in data.items() if k in features or k in ['idx', 'seeds']}
+            yield {k: v for k, v in data.items() if k in features or k == 'idx'}
 
     def _generate_dummy_sample(self, idx, features, f, num):
         """Generate a single dummy sample with the requested features."""
@@ -431,11 +424,9 @@ class DatasetDummy(DatasetBase):
         for feature in features:
             sample[feature] = self._generate_dummy_feature(feature, f, num, idx)
 
-        # Ensure idx and seeds are always present
+        # Ensure idx is always present
         if 'idx' not in sample:
             sample['idx'] = np.array(idx, dtype=np.int64)
-        if 'seeds' not in sample:
-            sample['seeds'] = np.array([idx, idx + 1, idx + 2, idx + 3], dtype=np.int64)
 
         return sample
 
@@ -463,9 +454,6 @@ class DatasetDummy(DatasetBase):
 
         elif feature_name == 'idx':
             return np.array(idx, dtype=np.int64)
-
-        elif feature_name == 'seeds':
-            return np.array([idx, idx + 1, idx + 2, idx + 3], dtype=np.int64)
 
         elif np.issubdtype(dtype, np.complexfloating):
             # Complex features
@@ -532,10 +520,10 @@ class DatasetDummy(DatasetBase):
             raise ImportError(msg)
 
         from acoupipe.datasets.features import get_tf_mappers
-        from acoupipe.writer import WriteTFRecord
+        from acoupipe.tf.writer import WriteTFRecord
 
         # Get the TF encoder and shape mappings of the features
-        _, feature_objects = self.get_features(features, f, num)
+        _, feature_objects = self.config.get_features(features, f, num)
         encoders, shapes, _ = get_tf_mappers(feature_objects)
 
         # Get features with varying length to handle them correctly in the TFRecord writer
@@ -661,7 +649,7 @@ class DatasetDummy(DatasetBase):
         import tensorflow as tf
 
         # Add mandatory features
-        all_features = list(features) + ['idx', 'seeds']
+        all_features = list(features) + ['idx']
 
         # Get output signature
         output_signature = self.get_output_signature(all_features, f=f, num=num)

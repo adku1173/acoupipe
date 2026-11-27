@@ -158,3 +158,19 @@ If  Docker_ is allready installed, simply pull the latest image with the command
     $ docker pull adku1173/acoupipe:latest-full
 
 
+.. _known-issues:
+
+Known Issues
+------------
+
+**OpenBLAS and Numba threads:** Import AcouPipe (or Acoular) before NumPy, SciPy, Matplotlib,
+Numba or TensorFlow. This allows Acoular to limit OpenBLAS to one thread while leaving Numba
+parallel. If another library or a notebook startup hook loads NumPy first, set
+``OPENBLAS_NUM_THREADS=1`` before starting Python or the notebook kernel. This also matters with
+``tasks=1``. See `Acoular issue #322 <https://github.com/acoular/acoular/issues/322>`__.
+
+**Parallel generation with** ``uv run``: for ``tasks > 1``, Ray starts the workers with the same ``uv run``
+command in a copy of the working directory. With ``--no-sync``, worker startup fails; otherwise, the workers
+build a separate environment with an empty Numba cache, into which they compile concurrently and may crash
+(``LLVM ERROR: Symbol not found``). Run the script with the environment's Python or set
+``RAY_ENABLE_UV_RUN_RUNTIME_ENV=0``.

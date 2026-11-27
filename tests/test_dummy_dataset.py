@@ -62,19 +62,16 @@ class TestDatasetDummy:
 
     def test_basic_generation(self, dummy_dataset):
         """Test basic data generation."""
-        features = ['csm', 'loc', 'idx', 'seeds']
+        features = ['csm', 'loc', 'idx']
         gen = dummy_dataset.generate(features=features, size=1, split='training', f=1000, num=0, progress_bar=False)
 
         data = next(gen)
 
         assert 'idx' in data
-        assert 'seeds' in data
         assert 'csm' in data
         assert 'loc' in data
 
         assert data['idx'] == 0
-        assert isinstance(data['seeds'], np.ndarray)
-        assert len(data['seeds']) == 4
 
     def test_feature_shapes(self, dummy_dataset):
         """Test that generated features have correct shapes."""
@@ -91,7 +88,7 @@ class TestDatasetDummy:
 
         for features, f, num in test_cases:
             gen = dummy_dataset.generate(
-                features=features + ['idx', 'seeds'], size=1, split='training', f=f, num=num, progress_bar=False
+                features=features + ['idx'], size=1, split='training', f=f, num=num, progress_bar=False
             )
 
             data = next(gen)
@@ -122,12 +119,11 @@ class TestDatasetDummy:
             ('loc', np.float32),
             ('f', np.float32),
             ('idx', np.int64),
-            ('seeds', np.int64),
         ]
 
         for feature_name, expected_dtype in test_cases:
             gen = dummy_dataset.generate(
-                features=[feature_name, 'idx', 'seeds'], size=1, split='training', f=1000, num=0, progress_bar=False
+                features=[feature_name, 'idx'], size=1, split='training', f=1000, num=0, progress_bar=False
             )
 
             data = next(gen)
@@ -139,7 +135,7 @@ class TestDatasetDummy:
 
     def test_multiple_samples(self, dummy_dataset):
         """Test generating multiple samples."""
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
         size = 5
 
         gen = dummy_dataset.generate(features=features, size=size, split='training', f=1000, num=0, progress_bar=False)
@@ -156,7 +152,7 @@ class TestDatasetDummy:
         # Create dataset with caching
         dataset = DatasetDummy(mode='welch', cache_dir=temp_cache_dir, use_cache=True, regenerate_cache=False)
 
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
 
         # First generation should miss cache
         gen1 = dataset.generate(
@@ -192,7 +188,7 @@ class TestDatasetDummy:
             regenerate_cache=True,  # Force regeneration
         )
 
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
 
         # Generate data
         gen = dataset.generate(
@@ -209,7 +205,7 @@ class TestDatasetDummy:
         """Test with caching disabled."""
         dataset = DatasetDummy(mode='welch', cache_dir=temp_cache_dir, use_cache=False)
 
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
 
         # Generate data multiple times
         for _ in range(3):
@@ -227,7 +223,7 @@ class TestDatasetDummy:
         """Test clearing the cache."""
         dataset = DatasetDummy(mode='welch', cache_dir=temp_cache_dir, use_cache=True)
 
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
 
         # Generate and cache data
         gen = dataset.generate(
@@ -252,9 +248,7 @@ class TestDatasetDummy:
         for mode in ['welch', 'analytic', 'wishart']:
             dataset = DatasetDummy(mode=mode)
 
-            gen = dataset.generate(
-                features=['csm', 'idx', 'seeds'], size=1, split='training', f=1000, num=0, progress_bar=False
-            )
+            gen = dataset.generate(features=['csm', 'idx'], size=1, split='training', f=1000, num=0, progress_bar=False)
 
             data = next(gen)
             assert 'csm' in data
@@ -272,7 +266,7 @@ class TestDatasetDummy:
 
         for params in parameter_combinations:
             gen = dummy_dataset.generate(
-                features=['csm', 'idx', 'seeds'], size=1, split='training', progress_bar=False, **params
+                features=['csm', 'idx'], size=1, split='training', progress_bar=False, **params
             )
 
             data = next(gen)
@@ -291,7 +285,7 @@ class TestDummyDatasetWithTFRecord:
         else:
             pytest.skip('TensorFlow not available')
 
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
 
         # Save to TFRecord
         dummy_dataset.save_tfrecord(
@@ -315,7 +309,6 @@ class TestDummyDatasetWithTFRecord:
         for data in data_list:
             assert 'csm' in data
             assert 'idx' in data
-            assert 'seeds' in data
 
     @pytest.mark.skipif(not bool(int(os.environ.get('TF_FLAG', 0))), reason='TensorFlow not available')
     def test_get_tf_dataset(self, dummy_dataset):
@@ -323,7 +316,7 @@ class TestDummyDatasetWithTFRecord:
         if not TF_FLAG:
             pytest.skip('TensorFlow not available')
 
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
 
         tf_dataset = dummy_dataset.get_tf_dataset(
             features=features, size=3, split='training', f=1000, num=0, progress_bar=False
@@ -336,7 +329,6 @@ class TestDummyDatasetWithTFRecord:
         for data in data_list:
             assert 'csm' in data
             assert 'idx' in data
-            assert 'seeds' in data
 
 
 class TestDummyDatasetWithHDF5:
@@ -346,7 +338,7 @@ class TestDummyDatasetWithHDF5:
         """Test saving HDF5 files with dummy dataset."""
         import h5py
 
-        features = ['csm', 'idx', 'seeds']
+        features = ['csm', 'idx']
 
         # Save to HDF5
         dummy_dataset.save_h5(
@@ -376,7 +368,7 @@ class TestDummyDatasetWithHDF5:
         import h5py
         import numpy as np
 
-        features = ['csm', 'loc', 'idx', 'seeds']
+        features = ['csm', 'loc', 'idx']
 
         # First generate data to compare
         gen = dummy_dataset.generate(
@@ -441,5 +433,5 @@ class TestDummyDatasetWithHDF5:
             # Check features are present
             with h5py.File(h5_path, 'r') as f:
                 assert '0' in f
-                for feature in features + ['idx', 'seeds']:
+                for feature in features + ['idx']:
                     assert feature in f['0'], f'Feature {feature} not found in HDF5 file for feature set {features}'

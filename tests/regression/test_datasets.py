@@ -1,6 +1,6 @@
 import acoular as ac
-from acoupipe.datasets.experimental import DatasetMIRACLEConfig
 from acoupipe.datasets.features import get_tf_mappers
+from acoupipe.datasets.miracle.legacy_config import DatasetMIRACLEConfig
 
 from tests.constants import FREQUENCIES, IMPLEMENTED_FEATURES, MODES, NUMS, START_IDX, TEST_SIGNAL_LENGTH
 
@@ -57,7 +57,7 @@ def test_get_feature_shapes(mode, feature, num, f, create_dataset):
 
     dataset = create_dataset(mode)
     data = next(dataset.generate(f=f, num=num, features=[feature], split='training', size=1, progress_bar=False))
-    _, feature_objects = dataset.get_features(features=[feature], f=f, num=num)
+    _, feature_objects = dataset.config.get_features(features=[feature], f=f, num=num)
     _, shapes, _ = get_tf_mappers(feature_objects)
     desired_shape = shapes[feature]
     for i in range(len(desired_shape)):
@@ -70,7 +70,7 @@ def test_get_feature_shapes(mode, feature, num, f, create_dataset):
 def test_estimated_features_raise_in_non_welch_mode(mode, feature, create_dataset):
     dataset = create_dataset(mode=mode)
     with pytest.raises(ValueError, match='not possible with modes'):
-        dataset.get_features(features=[feature], f=1000, num=0)
+        dataset.config.get_features(features=[feature], f=1000, num=0)
 
 
 @pytest.mark.parametrize('mode', MODES)
@@ -134,8 +134,8 @@ def test_sourcemap_max(mode, num, create_dataset):
     data = next(gen)
     sourcemap_max = ac.L_p(data['sourcemap'].max())
     source_strength = ac.L_p(data[f'source_strength_{strength_type}'].max())
-    # the Wishart-distributed CSM fluctuates around the analytic source strength
-    atol = 5e-1 if mode == 'wishart' else 1e-1
+    # the Welch-estimated and Wishart-distributed CSMs fluctuate around the analytic source strength
+    atol = 1e-1 if mode == 'analytic' else 5e-1
     np.testing.assert_allclose(sourcemap_max, source_strength, atol=atol)
 
 

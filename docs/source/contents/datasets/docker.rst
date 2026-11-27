@@ -17,11 +17,18 @@ To initiate the dataset generation, run a Docker container with the following co
     #SIZE=<enter desired size of the dataset>
     NTASKS=<enter the number of parallel tasks> # should match the number of CPUs on the host
     
-    docker run -e NUMBA_NUM_THREADS=1 -it --user "$(id -u)":"$(id -g)" -v $(pwd):/app adku1173/acoupipe:latest-full python /app/main.py --tasks=$NTASKS --size=$SIZE --split=$SPLIT --features 'csm'
+    docker run -e NUMBA_NUM_THREADS=1 -e OMP_NUM_THREADS=1 -e OPENBLAS_NUM_THREADS=1 -e MKL_NUM_THREADS=1 -it --user "$(id -u)":"$(id -g)" -v $(pwd):/app adku1173/acoupipe:latest-full python /app/main.py --tasks=$NTASKS --size=$SIZE --split=$SPLIT --features 'csm'
 
 Take note that the current user on the host is specified as the user of the Docker environment using the additional argument :code:`--user "$(id -u)":"$(id -g)"`. Running the container as a root user is not recommended. It's essential to bind a directory where the dataset files are stored to the container. With the command :code:`-v $(pwd):/app`, the current working directory on Linux or macOS hosts is bound.
 
-The simulation is capable of running on multiple CPU threads concurrently, enhancing computation speed. Users can specify the exact number of threads using the :code:`--tasks`` argument. To prevent thread overloading caused by multiple parallel processes, we enforce Numba to use only one thread by passing the environment variable :code:`NUMBA_NUM_THREADS=1`. For demonstration purposes, the script calculates the training split.
+The simulation is capable of running on multiple CPU threads concurrently, enhancing computation speed. Users can specify the exact number of threads using the :code:`--tasks` argument. For demonstration purposes, the script calculates the training split.
+
+.. warning::
+
+    To prevent thread overloading caused by multiple parallel processes, pass
+    :code:`NUMBA_NUM_THREADS=1`, :code:`OMP_NUM_THREADS=1`, :code:`OPENBLAS_NUM_THREADS=1` and
+    :code:`MKL_NUM_THREADS=1` to the container as shown above, see :ref:`parallel-generation`.
+
 After starting the main script, a progress bar should appear that logs the current simulation status:
 
 .. code-block:: bash

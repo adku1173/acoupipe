@@ -1,5 +1,3 @@
-import os
-
 from tests.constants import MODES, START_IDX, TEST_SIGNAL_LENGTH
 
 import numpy as np
@@ -9,10 +7,7 @@ import pytest
 tasks = 2
 
 
-pytestmark = [
-    pytest.mark.multiprocessing,
-    pytest.mark.skipif(os.environ.get('CI') == 'true', reason='Skip multiprocessing tests in CI'),
-]
+pytestmark = pytest.mark.multiprocessing
 
 
 @pytest.mark.parametrize('mode', MODES)

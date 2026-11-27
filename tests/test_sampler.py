@@ -200,26 +200,9 @@ def test_sampler_seeding(cls, state):
         cls(random_state=state)
 
 
-def test_pipeline_without_explicit_seeds(base_pipeline):
-    pipeline, _ = base_pipeline
-    data = next(pipeline.get_data(progress_bar=False))
+def test_pipeline_with_default_seed(base_pipeline):
+    data = next(base_pipeline.get_data(progress_bar=False))
     assert data['data']
-
-
-def test_too_short_random_seeds_input(base_pipeline):
-    pipeline, _ = base_pipeline
-    seeds = {1: range(1, 2)}
-    pipeline.random_seeds = seeds
-    with pytest.raises(ValueError):
-        next(pipeline.get_data(progress_bar=False))
-
-
-def test_non_equal_length_random_seeds_input(base_pipeline):
-    pipeline, test_seeds = base_pipeline
-    test_seeds[0] = range(0, 10)
-    pipeline.random_seeds = test_seeds
-    with pytest.raises(ValueError):
-        next(pipeline.get_data(progress_bar=False))
 
 
 @pytest.mark.parametrize(
@@ -229,8 +212,7 @@ def test_non_equal_length_random_seeds_input(base_pipeline):
         (lambda sampler, x: {'res': x}, True),
     ],
 )
-def test_valid_pipeline_funcs(base_pipeline, finput):
-    _, _ = base_pipeline
+def test_valid_pipeline_funcs(finput):
     pipeline = BasePipeline(numsamples=2, feature_func=finput)
     data = next(pipeline.get_data(progress_bar=False))
     assert data['res']
@@ -244,8 +226,7 @@ def test_valid_pipeline_funcs(base_pipeline, finput):
         (lambda sampler, x: {'res': x}, True, True),
     ],
 )
-def test_invalid_pipeline_funcs(base_pipeline, finput):
-    _, _ = base_pipeline
+def test_invalid_pipeline_funcs(finput):
     pipeline = BasePipeline(numsamples=2, feature_func=finput)
     with pytest.raises(ValueError):
         next(pipeline.get_data(progress_bar=False))
