@@ -25,9 +25,9 @@ from acoupipe.datasets.base import Config as BasePackageConfig
 from acoupipe.datasets.base import ConfigBase as BasePackageConfigBase
 from acoupipe.datasets.base import DatasetBase as BasePackageDataset
 from acoupipe.datasets.base.config import Config as BaseConfigModuleConfig
-from acoupipe.datasets.base.dataset import DatasetBase as BaseDatasetModuleDataset
 from acoupipe.datasets.base.legacy_config import ConfigBase as BaseLegacyConfigModuleConfigBase
 from acoupipe.datasets.base.legacy_config import ConfigBase as LegacyConfigBase
+from acoupipe.datasets.base.legacy_dataset import DatasetBase as BaseDatasetModuleDataset
 from acoupipe.datasets.base.parameters import ParameterSet as BaseParametersModuleParameterSet
 from acoupipe.datasets.ism.config import SyntheticISMConfig as ISMSubmoduleConfig
 from acoupipe.datasets.ism.dataset import DatasetSyntheticISM as ISMSubmoduleDataset
@@ -60,7 +60,7 @@ def test_base_package_owns_dataset_and_config_classes():
     assert BaseConfigModuleConfig is Config
     assert Config.__module__ == 'acoupipe.datasets.base.config'
     assert BasePackageDataset is BaseDatasetModuleDataset
-    assert BaseDatasetModuleDataset.__module__ == 'acoupipe.datasets.base.dataset'
+    assert BaseDatasetModuleDataset.__module__ == 'acoupipe.datasets.base.legacy_dataset'
 
 
 def test_legacy_config_base_lives_in_base_legacy_config_module():

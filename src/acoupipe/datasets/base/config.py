@@ -20,7 +20,8 @@ from acoupipe.datasets.features import Feature, combine_feature_funcs, create_fe
 from acoupipe.pipeline import seed_key
 from acoupipe.sampler import AttributeSampler
 
-from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, List, Str
+import numpy as np
+from traits.api import Any, Callable, Dict, HasPrivateTraits, Instance, Int, List, Str
 
 
 class Config(HasPrivateTraits):
@@ -51,7 +52,7 @@ class Config(HasPrivateTraits):
     See Also
     --------
     acoupipe.datasets.base.parameters.ParameterSet : Base class for parameter sets.
-    acoupipe.datasets.base.DatasetBase : Base class for datasets.
+    acoupipe.datasets.base.Dataset : Dataset class for this configuration.
 
     Notes
     -----
@@ -59,7 +60,7 @@ class Config(HasPrivateTraits):
     Existing code using ConfigBase continues to work, while new code can use
     the more flexible Config API.
 
-    During :meth:`acoupipe.datasets.base.DatasetBase.generate`, each generated
+    During :meth:`acoupipe.datasets.base.Dataset.generate`, each generated
     sample follows the same high-level order:
 
     1. The pipeline re-seeds every sampler from the dataset seed, the split, the sample
@@ -108,6 +109,10 @@ class Config(HasPrivateTraits):
 
     #: User-registered features, mapped from feature name to Feature object.
     _registered_features = Dict(Str, Instance(Feature), desc='user-registered features')
+
+    # Temporary: remove together with _get_fftfreq once the spectral features are migrated.
+    #: Block size of the legacy FFT defaults, used by :meth:`_get_fftfreq`.
+    _fft_block_size = Int(128, desc='temporary FFT block size of the legacy defaults')
 
     def __init__(self, parameters=None, **traits):
         """Initialize the Config object.
@@ -222,7 +227,7 @@ class Config(HasPrivateTraits):
 
         >>> import numpy as np
         >>> from scipy.stats import norm
-        >>> from acoupipe.datasets.base import DatasetBase
+        >>> from acoupipe.datasets.base import Dataset
         >>> from acoupipe.datasets.base.parameters import ParameterSet
 
         Register a sampler using a ``scipy.stats`` distribution:
@@ -252,7 +257,7 @@ class Config(HasPrivateTraits):
         for every generated sample. Calling :meth:`sample` only registers the
         sampling rule; users normally do not call the returned sampler's
         ``sample()`` method themselves. During dataset generation,
-        :class:`~acoupipe.datasets.base.DatasetBase` configures the underlying
+        :class:`~acoupipe.datasets.base.Dataset` configures the underlying
         pipeline. For each generated sample, the pipeline assigns random states,
         calls the registered samplers, and then evaluates prepare and feature
         callbacks.
@@ -261,7 +266,7 @@ class Config(HasPrivateTraits):
         >>> config = Config(parameters=parameters)
         >>> _ = config.sample('c', random_var=norm(loc=340.0, scale=0.0))
         >>> _ = config.sample('fs', random_var=norm(loc=48000.0, scale=0.0))
-        >>> dataset = DatasetBase(config=config)
+        >>> dataset = Dataset(config=config)
         >>> sample = next(dataset.generate(features=['c', 'fs'], size=1, progress_bar=False))
         >>> float(sample['c']), float(sample['fs'])
         (340.0, 48000.0)
@@ -342,7 +347,7 @@ class Config(HasPrivateTraits):
         Imports only need to appear once inside a docstring example block; all
         examples in this block share the same doctest namespace.
 
-        >>> from acoupipe.datasets.base import DatasetBase
+        >>> from acoupipe.datasets.base import Dataset
         >>> from acoupipe.datasets.base.parameters import ParameterSet
 
         Prepare callbacks are useful for intermediate quantities that should be
@@ -358,7 +363,7 @@ class Config(HasPrivateTraits):
         >>> def wavelength_feature(data):
         ...     return data['wavelength']
         >>> _ = config.feature('wavelength', wavelength_feature)
-        >>> dataset = DatasetBase(config=config)
+        >>> dataset = Dataset(config=config)
         >>> sample = next(dataset.generate(features=['wavelength'], size=1, progress_bar=False))
         >>> float(sample['wavelength'])
         0.025
@@ -377,7 +382,7 @@ class Config(HasPrivateTraits):
         >>> def wavelength_feature(data):
         ...     return data['wavelength']
         >>> _ = config.feature('wavelength', wavelength_feature)
-        >>> dataset = DatasetBase(config=config)
+        >>> dataset = Dataset(config=config)
         >>> sample = next(dataset.generate(features=['wavelength'], size=1, progress_bar=False))
         >>> float(sample['wavelength'])
         0.1
@@ -510,7 +515,7 @@ class Config(HasPrivateTraits):
 
         return parameter_feature
 
-    def get_features(self, features, f, num):
+    def get_features(self, features):
         """Get the combined feature function and the feature objects of this config.
 
         The feature functions are called in the following order:
@@ -525,10 +530,6 @@ class Config(HasPrivateTraits):
         ----------
         features : list of str or Feature, optional
             The list of feature names or feature objects to include.
-        f : float or list of float or None
-            Frequencies used for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
 
         Returns
         -------
@@ -556,7 +557,7 @@ class Config(HasPrivateTraits):
                 parameter_feature_funcs.append(parameter_feature)
 
         # default Features followed by Feature objects passed directly by the user
-        feature_objects = self.get_default_features(default_feature_names, f, num)
+        feature_objects = self.get_default_features(default_feature_names)
         feature_objects += [feat for feat in features if isinstance(feat, Feature)]
 
         # Call order per sample:
@@ -579,38 +580,16 @@ class Config(HasPrivateTraits):
         feature_funcs.append(partial(remove_unrequested, keep=requested))
         return combine_feature_funcs(feature_funcs), feature_objects
 
-    def _get_default_feature_kwargs(self, f, num):
-        """Return keyword arguments passed to the `_get_default_feature_{name}` methods.
-
-        Parameters
-        ----------
-        f : float or list of float or None
-            Frequencies for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
-
-        Returns
-        -------
-        dict
-            Keyword arguments for the `_get_default_feature_{name}` methods.
-        """
-        return {'f': f, 'num': num}
-
-    def get_default_features(self, features, f, num):
+    def get_default_features(self, features):
         """Build default features using `_get_default_feature_{name}` methods.
 
         For each feature name, this method looks for a corresponding
-        `_get_default_feature_{name}` method and calls it with the
-        appropriate arguments.
+        `_get_default_feature_{name}` method and calls it.
 
         Parameters
         ----------
         features : list of str
             The list of feature names to build.
-        f : float or list of float or None
-            Frequencies for frequency-dependent features.
-        num : int
-            Bandwidth selector for fractional octave features.
 
         Returns
         -------
@@ -622,7 +601,6 @@ class Config(HasPrivateTraits):
         ValueError
             If a feature name does not have a corresponding `_get_default_feature_{name}` method.
         """
-        feature_kwargs = self._get_default_feature_kwargs(f, num)
         default_features = []
         for feature_name in features:
             if feature_name != 'idx':
@@ -630,8 +608,79 @@ class Config(HasPrivateTraits):
                 if get_feature is None:
                     msg = f'Unknown feature "{feature_name}".'
                     raise ValueError(msg)
-                default_features.append(get_feature(**feature_kwargs))
+                default_features.append(get_feature())
         return default_features
+
+    def _get_frequency_settings(self):
+        """Return the frequencies and the bandwidth of frequency-dependent features.
+
+        ``f`` and ``num`` are read from :attr:`parameters`. They are fixed per
+        dataset. If they are not set, ``f=None`` (all discrete FFT frequencies)
+        and ``num=0`` (single frequency lines) are used.
+
+        Returns
+        -------
+        tuple
+            ``(f, num)``.
+        """
+        return getattr(self.parameters, 'f', None), getattr(self.parameters, 'num', 0)
+
+    # Temporary: remove this helper (and _fft_block_size) once the spectral features are migrated
+    # to the new Config. The FFT frequencies are then provided by the PowerSpectra object.
+    def _get_fftfreq(self):
+        """Return the discrete FFT frequencies of the default spectral settings.
+
+        Temporary helper until the spectral features are migrated. It uses
+        ``parameters.fs`` and the block size of the legacy FFT defaults
+        (:attr:`_fft_block_size`).
+
+        Returns
+        -------
+        numpy.ndarray
+            Discrete FFT frequencies in hertz.
+
+        Raises
+        ------
+        ValueError
+            If the parameters do not define a sampling frequency ``fs``.
+        """
+        fs = getattr(self.parameters, 'fs', None)
+        if fs is None:
+            msg = 'The parameters must define a sampling frequency "fs" to compute the FFT frequencies.'
+            raise ValueError(msg)
+        return np.fft.rfftfreq(self._fft_block_size, 1.0 / fs)
+
+    def _get_default_feature_freq_bins(self):
+        """Return the default feature with the frequencies that are actually used.
+
+        For single frequency lines (``num == 0``), each nominal frequency ``f`` is
+        replaced by the discrete FFT frequency that is used for the calculation
+        (the first FFT frequency greater than or equal to ``f``). For fractional
+        octave bands (``num > 0``), the nominal center frequencies ``f`` are
+        returned. If ``f`` is ``None``, all discrete FFT frequencies are returned.
+
+        Returns
+        -------
+        Feature
+            Feature ``freq_bins`` with shape ``(n_f,)``.
+        """
+        f, num = self._get_frequency_settings()
+        fftfreq = self._get_fftfreq()
+        if f is None:
+            freq_bins = fftfreq
+        else:
+            f = np.atleast_1d(np.asarray(f, dtype=float))
+            freq_bins = fftfreq[np.searchsorted(fftfreq, f)] if num == 0 else f
+
+        def get_freq_bins(sampler, freq_bins):  # noqa: ARG001
+            return {'freq_bins': freq_bins}
+
+        return create_feature(
+            feature_func=partial(get_freq_bins, freq_bins=freq_bins),
+            name='freq_bins',
+            shape=freq_bins.shape,
+            dtype=np.float32,
+        )
 
 
 __all__ = ['Config']

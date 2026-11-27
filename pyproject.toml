@@ -134,6 +134,7 @@ extend-ignore = [
 "src/acoupipe/datasets/miracle/legacy_config.py" = ["ANN001", "ANN201", "ANN202", "ANN204", "ANN205", "ARG002", "ARG004", "COM812", "D102", "D412", "D413", "D416", "D417", "E501", "N806", "Q000", "S101", "SLF001", "W505"]
 "src/acoupipe/datasets/features/spectra_analytic.py" = ["ANN001", "ANN201", "ANN202", "D100", "D101", "D212", "D413", "E501", "ERA001", "N802", "N806", "Q000"]
 "src/acoupipe/datasets/sriracha/legacy_config.py" = ["ANN001", "ANN201", "ANN202", "D102", "D413", "Q000"]
+"src/acoupipe/datasets/base/legacy_dataset.py" = ["E501", "W505"]
 "src/acoupipe/datasets/synthetic/dataset.py" = ["E501", "W505"]
 "src/acoupipe/datasets/synthetic/legacy_config.py" = ["ANN001", "ANN003", "ANN201", "ANN202", "ANN204", "ANN205", "ARG001", "ARG004", "COM812", "D102", "D103", "D107", "D205", "D212", "D413", "D416", "D417", "E501", "N806", "Q000", "SLF001", "W505"]
 "src/acoupipe/datasets/_shared/utils.py" = ["ANN001", "ANN002", "ANN003", "ANN201", "ANN202", "D100", "D103", "D205", "D212", "D413", "ERA001", "N806", "Q000"]

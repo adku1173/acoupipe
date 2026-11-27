@@ -13,6 +13,7 @@ from acoupipe.datasets import (
     ConfigBase,
     Dataset,
     DatasetBase,
+    DatasetSynthetic,
     MIRACLEConfig,
     ParameterSet,
     SRIRACHAConfig,
@@ -128,7 +129,8 @@ def test_public_config_and_dataset_keep_legacy_base_classes():
     subclass hooks continue to target the old implementation.
     """
     assert Config is not ConfigBase
-    assert Dataset is DatasetBase
+    assert Dataset is not DatasetBase
+    assert issubclass(DatasetBase, Dataset)
 
 
 def test_config_sample_registers_parameter_sampler():
@@ -321,7 +323,7 @@ def test_registered_feature_without_metadata_is_evaluated_but_not_a_feature_obje
     config = Config(parameters=ParameterSet())
     config.feature('value', lambda: 1)
 
-    feature_func, feature_objects = config.get_features(['value'], f=None, num=0)
+    feature_func, feature_objects = config.get_features(['value'])
 
     assert feature_func({}) == {'value': 1}
     assert feature_objects == []
@@ -338,7 +340,7 @@ def test_feature_objects_contain_only_requested_registered_features():
     config.feature('requested', lambda: np.float32(1.0), dtype=np.float32, shape=())
     config.feature('unrequested', lambda: np.float32(2.0), dtype=np.float32, shape=())
 
-    _, feature_objects = config.get_features(['requested'], f=None, num=0)
+    _, feature_objects = config.get_features(['requested'])
 
     assert [feature.name for feature in feature_objects] == ['requested']
 
@@ -356,3 +358,124 @@ def constant_sampler(value):
         return value
 
     return sample_value
+
+
+def generate_freq_bins(config):
+    """Return the ``freq_bins`` feature of one generated sample."""
+    sample = next(Dataset(config=config).generate(features=['freq_bins'], size=1, progress_bar=False))
+    return sample['freq_bins']
+
+
+def test_f_feature_returns_nominal_frequency():
+    """Test that the parameter feature ``f`` returns the nominal frequency unchanged."""
+    config = SyntheticConfig()
+    config.parameters.add_parameter('f', 1000.0)
+
+    sample = next(Dataset(config=config).generate(features=['f'], size=1, progress_bar=False))
+
+    assert sample['f'] == 1000.0
+
+
+def generate_legacy_f(f, num):
+    """Return the legacy ``f`` feature of ``DatasetSynthetic`` as reference.
+
+    The legacy ``f`` feature is the frequency axis of the legacy spectral
+    features and therefore an independent reference for ``freq_bins``.
+
+    The comparison with the legacy API ensures that the migration is a pure
+    refactoring without changes in behavior.
+    """
+    dataset = DatasetSynthetic()
+    sample = next(dataset.generate(features=['f'], f=f, num=num, size=1, progress_bar=False))
+    return sample['f']
+
+
+def test_freq_bins_without_f_matches_legacy_frequency_axis():
+    """Test ``freq_bins`` without ``f`` against the legacy ``f`` feature.
+
+    Without ``f``, spectral features contain all discrete FFT frequencies and
+    ``freq_bins`` is their frequency axis.
+
+    The comparison with the legacy API ensures that the migration is a pure
+    refactoring without changes in behavior.
+    """
+    np.testing.assert_allclose(generate_freq_bins(SyntheticConfig()), generate_legacy_f(None, 0))
+
+
+@pytest.mark.parametrize('f', [1000.0, [1000.0, 2000.0]], ids=['scalar', 'list'])
+def test_freq_bins_single_lines_match_legacy_frequencies(f):
+    """Test ``freq_bins`` for single lines (``num == 0``) against the legacy ``f``.
+
+    Each nominal frequency is replaced by the discrete FFT frequency that is
+    used for the calculation.
+
+    The comparison with the legacy API ensures that the migration is a pure
+    refactoring without changes in behavior.
+    """
+    config = SyntheticConfig()
+    config.parameters.add_parameter('f', f)
+
+    np.testing.assert_allclose(generate_freq_bins(config), generate_legacy_f(f, 0))
+
+
+def test_freq_bins_bands_match_legacy_center_frequencies():
+    """Test ``freq_bins`` for bands (``num > 0``) against the legacy ``f``.
+
+    The comparison with the legacy API ensures that the migration is a pure
+    refactoring without changes in behavior.
+    """
+    config = SyntheticConfig()
+    config.parameters.add_parameter('f', [1000.0, 2000.0])
+    config.parameters.add_parameter('num', 3)
+
+    np.testing.assert_allclose(generate_freq_bins(config), generate_legacy_f([1000.0, 2000.0], 3))
+
+
+def test_freq_bins_single_line_with_scalar_f_returns_next_fft_frequency():
+    """Test ``freq_bins`` for a scalar ``f`` with ``num == 0``.
+
+    ``freq_bins`` returns the first discrete FFT frequency that is greater than
+    or equal to ``f``. With the Synthetic defaults (``fs=13720``, block size 128)
+    the frequency resolution is 107.1875 Hz, so 1000 Hz is replaced by the
+    10th FFT frequency, 1071.875 Hz.
+    """
+    config = SyntheticConfig()
+    config.parameters.add_parameter('f', 1000.0)
+
+    np.testing.assert_allclose(generate_freq_bins(config), [1071.875])
+
+
+def test_freq_bins_band_with_scalar_f_returns_nominal_center_frequency():
+    """Test ``freq_bins`` for a scalar ``f`` with ``num > 0``.
+
+    The legacy ``f`` feature rounds a scalar ``f`` to an FFT frequency even for
+    bands, which is inconsistent with lists. ``freq_bins`` returns the nominal
+    center frequency in both cases.
+    """
+    config = SyntheticConfig()
+    config.parameters.add_parameter('f', 1000.0)
+    config.parameters.add_parameter('num', 3)
+
+    np.testing.assert_allclose(generate_freq_bins(config), [1000.0])
+
+
+def test_freq_bins_feature_object_has_shape_of_frequencies():
+    """Test the metadata of the ``freq_bins`` Feature object.
+
+    The feature always has shape ``(n_f,)`` so that it can be used in the
+    TensorFlow paths.
+    """
+    config = SyntheticConfig()
+    config.parameters.add_parameter('f', [1000.0, 2000.0])
+
+    _, feature_objects = config.get_features(['freq_bins'])
+
+    assert [(feature.name, feature.shape) for feature in feature_objects] == [('freq_bins', (2,))]
+
+
+def test_freq_bins_requires_sampling_frequency():
+    """Test that ``freq_bins`` reports a missing sampling frequency ``fs``."""
+    config = Config(parameters=ParameterSet())
+
+    with pytest.raises(ValueError, match='"fs"'):
+        config.get_features(['freq_bins'])
