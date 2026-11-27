@@ -8,6 +8,7 @@ from acoupipe.datasets._shared.utils import (
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
+from acoupipe.datasets.base.callbacks import call_with_supported_context
 from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 
 import numpy as np
@@ -26,16 +27,75 @@ class Feature(HasPrivateTraits):
         Numpy dtype of the feature. ``None`` if unknown.
     shape : tuple or None
         Shape of the feature. ``None`` if unknown.
+    prepare_func : callable or None
+        Optional callback that runs immediately before the calculation of this
+        feature, for every sample. ``None`` if no preparation is needed.
 
     """
 
     name = Str
     dtype = Callable(None)
     shape = Either(Tuple, None)
+    prepare_func = Callable(None, desc='optional per-feature prepare callback')
 
-    def get_feature_func(self):
-        """Will return a method depending on the class parameters."""
+    def get_prepare_func(self):
+        """Return the optional prepare callback of this feature.
+
+        Returns
+        -------
+        callable or None
+            The value of :attr:`prepare_func`.
+        """
+        return self.prepare_func
+
+    def get_calc_func(self):
+        """Return the callable that calculates the feature.
+
+        Subclasses override this method. The callable returns a dictionary that
+        maps the feature name to its value.
+
+        Returns
+        -------
+        callable or None
+            Calculation callable, or None if not implemented.
+        """
         return
+
+    def get_feature_func(self, parameters=None):
+        """Return the callable that is evaluated for every sample.
+
+        The returned callable runs the prepare callback (:meth:`get_prepare_func`),
+        if any, and then the calculation (:meth:`get_calc_func`). A dictionary
+        returned by the prepare callback is merged into ``data`` before the
+        calculation.
+
+        Parameters
+        ----------
+        parameters : ParameterSet, optional
+            Parameters of the :class:`~acoupipe.datasets.base.config.Config`.
+
+        Returns
+        -------
+        callable or None
+            Callable with signature ``f(sampler, data) -> dict``.
+
+        Notes
+        -----
+        Legacy code still works as subclasses that override this method
+        (legacy workflow) replace this wrapper.
+        """
+        calc_func = self.get_calc_func()
+        prepare_func = self.get_prepare_func()
+        context = {} if parameters is None else {'parameters': parameters}
+
+        def feature_func(sampler, data):
+            if prepare_func is not None:
+                result = call_with_supported_context(prepare_func, sampler=sampler, data=data, **context)
+                if isinstance(result, dict):
+                    data.update(result)
+            return call_with_supported_context(calc_func, sampler=sampler, data=data, **context)
+
+        return feature_func
 
 
 def __getattr__(name):
@@ -79,7 +139,7 @@ class TimeDataFeature(Feature):
     name = Str('time_data')
     time_data = Instance(ac.SamplesGenerator, desc='time data')
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         """Return the callable for calculating the time data."""
 
         def _calc_time_data(sampler, time_data, name, dtype):
@@ -121,7 +181,7 @@ class TargetmapFeature(Feature):
             target_map[(slice(None),) + index] += strength[:, j]
         return {name: target_map}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         if self.strength_type == 'analytic':
             strength_feature = AnalyticSourceStrengthFeature
         else:
@@ -207,7 +267,7 @@ class SourcemapFeature(Feature):
         sm = np.array([beamformer.synthetic(freq, num=0) for freq in f])
         return {name: sm}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         """Return the callable for calculating the sourcemap."""
         self.set_freq_limits()
         if self.f is not None:
@@ -294,7 +354,7 @@ class SpectrogramFeature(SpectraFeature):
         ).swapaxes(0, 1)
         return {name: spectrogram}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         if self.fidx is None:
             return partial(self.calc_spectrogram1, freq_data=self.freq_data, name=self.name)
         return partial(self.calc_spectrogram2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
@@ -360,7 +420,7 @@ class CSMFeature(SpectraFeature):
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: csm}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         """Return the callable for calculating the cross-spectral matrix."""
         self.set_freq_limits()
         if self.fidx is None:
@@ -424,7 +484,7 @@ class CSMtriuFeature(SpectraFeature):
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: CSMtriuFeature.transform(csm)}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         self.set_freq_limits()
         if self.fidx is None:
             return partial(self.calc_csmtriu1, freq_data=self.freq_data, name=self.name)
@@ -480,7 +540,7 @@ class EigmodeFeature(SpectraFeature):
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: EigmodeFeature.transform(csm)}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         self.set_freq_limits()
         if self.fidx is None:
             return partial(self.calc_eigmode1, freq_data=self.freq_data, name=self.name)
@@ -490,7 +550,7 @@ class EigmodeFeature(SpectraFeature):
 class LocFeature(Feature):
     name = Str('loc')
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         def get_loc(sampler, data, name):
             return {name: data['loc']}
 
@@ -510,7 +570,7 @@ class AnalyticSourceStrengthFeature(SpectraFeature):
             return {name: strength}
         return {name: np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         return partial(
             self.calc_source_strength_analytic,
             freq_data=self.freq_data,
@@ -545,7 +605,7 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
         freq_data.source = init_source  # reset source in case of subsequent feature calculation
         return {name: strength}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         _raise_if_analytic_spectra(self.freq_data, self.name)
         self.set_freq_limits()
         return partial(
@@ -619,7 +679,7 @@ class AnalyticNoiseStrengthFeature(SpectraFeature):
         )
         return {name: np.real(strength)}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         if isinstance(self.freq_data, PowerSpectraAnalytic):
             self.set_freq_limits()
             if self.fidx is None:
@@ -675,7 +735,7 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
         msg = 'Only one uncorrelated noise source is supported.'
         raise ValueError(msg)
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         _raise_if_analytic_spectra(self.freq_data, self.name)
         if isinstance(self.freq_data, ac.RFFT):
             if self.fidx is None:
@@ -785,9 +845,11 @@ def remove_unrequested(sampler, data, keep):  # noqa: ARG001
     return data
 
 
-def create_feature(feature_func, name, shape, dtype):
+def create_feature(feature_func, name, shape, dtype, prepare_func=None):
+    """Create a feature object from a calculation function and an optional prepare callback."""
+
     class _CustomFeature(Feature):
-        def get_feature_func(self):
+        def get_calc_func(self):
             return feature_func
 
-    return _CustomFeature(name=name, shape=shape, dtype=dtype)
+    return _CustomFeature(name=name, shape=shape, dtype=dtype, prepare_func=prepare_func)
