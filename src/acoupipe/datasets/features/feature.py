@@ -33,9 +33,30 @@ class Feature(HasPrivateTraits):
     dtype = Callable(None)
     shape = Either(Tuple, None)
 
-    def get_feature_func(self):
-        """Will return a method depending on the class parameters."""
+    def get_calc_func(self):
+        """Return the callable that calculates the feature.
+
+        Subclasses override this method. The callable returns a dictionary that
+        maps the feature name to its value.
+
+        Returns
+        -------
+        callable or None
+            Calculation callable, or None if not implemented.
+        """
         return
+
+    def get_feature_func(self):
+        """Return the callable that is evaluated for every sample.
+
+        Currently returns :meth:`get_calc_func`.
+
+        Returns
+        -------
+        callable or None
+            Feature callable, or None if not implemented.
+        """
+        return self.get_calc_func()
 
 
 def __getattr__(name):
@@ -79,7 +100,7 @@ class TimeDataFeature(Feature):
     name = Str('time_data')
     time_data = Instance(ac.SamplesGenerator, desc='time data')
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         """Return the callable for calculating the time data."""
 
         def _calc_time_data(sampler, time_data, name, dtype):
@@ -121,7 +142,7 @@ class TargetmapFeature(Feature):
             target_map[(slice(None),) + index] += strength[:, j]
         return {name: target_map}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         if self.strength_type == 'analytic':
             strength_feature = AnalyticSourceStrengthFeature
         else:
@@ -207,7 +228,7 @@ class SourcemapFeature(Feature):
         sm = np.array([beamformer.synthetic(freq, num=0) for freq in f])
         return {name: sm}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         """Return the callable for calculating the sourcemap."""
         self.set_freq_limits()
         if self.f is not None:
@@ -294,7 +315,7 @@ class SpectrogramFeature(SpectraFeature):
         ).swapaxes(0, 1)
         return {name: spectrogram}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         if self.fidx is None:
             return partial(self.calc_spectrogram1, freq_data=self.freq_data, name=self.name)
         return partial(self.calc_spectrogram2, freq_data=self.freq_data, fidx=self.fidx, name=self.name)
@@ -360,7 +381,7 @@ class CSMFeature(SpectraFeature):
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: csm}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         """Return the callable for calculating the cross-spectral matrix."""
         self.set_freq_limits()
         if self.fidx is None:
@@ -424,7 +445,7 @@ class CSMtriuFeature(SpectraFeature):
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: CSMtriuFeature.transform(csm)}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         self.set_freq_limits()
         if self.fidx is None:
             return partial(self.calc_csmtriu1, freq_data=self.freq_data, name=self.name)
@@ -480,7 +501,7 @@ class EigmodeFeature(SpectraFeature):
         csm = np.array([csm[indices[0] : indices[1]].sum(0) for indices in fidx], dtype=complex)
         return {name: EigmodeFeature.transform(csm)}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         self.set_freq_limits()
         if self.fidx is None:
             return partial(self.calc_eigmode1, freq_data=self.freq_data, name=self.name)
@@ -490,7 +511,7 @@ class EigmodeFeature(SpectraFeature):
 class LocFeature(Feature):
     name = Str('loc')
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         def get_loc(sampler, data, name):
             return {name: data['loc']}
 
@@ -510,7 +531,7 @@ class AnalyticSourceStrengthFeature(SpectraFeature):
             return {name: strength}
         return {name: np.array([strength[indices[0] : indices[1]].sum(0) for indices in fidx])}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         return partial(
             self.calc_source_strength_analytic,
             freq_data=self.freq_data,
@@ -545,7 +566,7 @@ class EstimatedSourceStrengthFeature(SpectraFeature):
         freq_data.source = init_source  # reset source in case of subsequent feature calculation
         return {name: strength}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         _raise_if_analytic_spectra(self.freq_data, self.name)
         self.set_freq_limits()
         return partial(
@@ -619,7 +640,7 @@ class AnalyticNoiseStrengthFeature(SpectraFeature):
         )
         return {name: np.real(strength)}
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         if isinstance(self.freq_data, PowerSpectraAnalytic):
             self.set_freq_limits()
             if self.fidx is None:
@@ -675,7 +696,7 @@ class EstimatedNoiseStrengthFeature(SpectraFeature):
         msg = 'Only one uncorrelated noise source is supported.'
         raise ValueError(msg)
 
-    def get_feature_func(self):
+    def get_calc_func(self):
         _raise_if_analytic_spectra(self.freq_data, self.name)
         if isinstance(self.freq_data, ac.RFFT):
             if self.fidx is None:
@@ -787,7 +808,7 @@ def remove_unrequested(sampler, data, keep):  # noqa: ARG001
 
 def create_feature(feature_func, name, shape, dtype):
     class _CustomFeature(Feature):
-        def get_feature_func(self):
+        def get_calc_func(self):
             return feature_func
 
     return _CustomFeature(name=name, shape=shape, dtype=dtype)
