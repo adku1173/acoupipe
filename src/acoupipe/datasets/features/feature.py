@@ -8,6 +8,7 @@ from acoupipe.datasets._shared.utils import (
     get_point_sources_recursively,
     get_uncorrelated_noise_source_recursively,
 )
+from acoupipe.datasets.base.callbacks import call_with_supported_context
 from acoupipe.datasets.features.spectra_analytic import PowerSpectraAnalytic
 
 import numpy as np
@@ -26,12 +27,26 @@ class Feature(HasPrivateTraits):
         Numpy dtype of the feature. ``None`` if unknown.
     shape : tuple or None
         Shape of the feature. ``None`` if unknown.
+    prepare_func : callable or None
+        Optional callback that runs immediately before the calculation of this
+        feature, for every sample. ``None`` if no preparation is needed.
 
     """
 
     name = Str
     dtype = Callable(None)
     shape = Either(Tuple, None)
+    prepare_func = Callable(None, desc='optional per-feature prepare callback')
+
+    def get_prepare_func(self):
+        """Return the optional prepare callback of this feature.
+
+        Returns
+        -------
+        callable or None
+            The value of :attr:`prepare_func`.
+        """
+        return self.prepare_func
 
     def get_calc_func(self):
         """Return the callable that calculates the feature.
@@ -46,17 +61,41 @@ class Feature(HasPrivateTraits):
         """
         return
 
-    def get_feature_func(self):
+    def get_feature_func(self, parameters=None):
         """Return the callable that is evaluated for every sample.
 
-        Currently returns :meth:`get_calc_func`.
+        The returned callable runs the prepare callback (:meth:`get_prepare_func`),
+        if any, and then the calculation (:meth:`get_calc_func`). A dictionary
+        returned by the prepare callback is merged into ``data`` before the
+        calculation.
+
+        Parameters
+        ----------
+        parameters : ParameterSet, optional
+            Parameters of the :class:`~acoupipe.datasets.base.config.Config`.
 
         Returns
         -------
         callable or None
-            Feature callable, or None if not implemented.
+            Callable with signature ``f(sampler, data) -> dict``.
+
+        Notes
+        -----
+        Legacy code still works as subclasses that override this method
+        (legacy workflow) replace this wrapper.
         """
-        return self.get_calc_func()
+        calc_func = self.get_calc_func()
+        prepare_func = self.get_prepare_func()
+        context = {} if parameters is None else {'parameters': parameters}
+
+        def feature_func(sampler, data):
+            if prepare_func is not None:
+                result = call_with_supported_context(prepare_func, sampler=sampler, data=data, **context)
+                if isinstance(result, dict):
+                    data.update(result)
+            return call_with_supported_context(calc_func, sampler=sampler, data=data, **context)
+
+        return feature_func
 
 
 def __getattr__(name):
@@ -806,9 +845,11 @@ def remove_unrequested(sampler, data, keep):  # noqa: ARG001
     return data
 
 
-def create_feature(feature_func, name, shape, dtype):
+def create_feature(feature_func, name, shape, dtype, prepare_func=None):
+    """Create a feature object from a calculation function and an optional prepare callback."""
+
     class _CustomFeature(Feature):
         def get_calc_func(self):
             return feature_func
 
-    return _CustomFeature(name=name, shape=shape, dtype=dtype)
+    return _CustomFeature(name=name, shape=shape, dtype=dtype, prepare_func=prepare_func)
